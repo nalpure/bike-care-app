@@ -7,7 +7,7 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 
 - Cards: 0 of 39 fully approved
 - Flow trees: 0 of 3 fully approved
-- Journeys: 0 of 8 fully approved
+- Journeys: 0 of 9 fully approved
 
 | Unit | Title | Mechanic | Beginner | File |
 | --- | --- | --- | --- | --- |
@@ -55,6 +55,7 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:tool:derailleur-screw-tool` | Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `journey:city-derailleur-no-stand/slow-shifting-upside-down` | Slow shifting, adjusted at home with the bike upside down | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:city-derailleur-no-stand/bent-derailleur` | The derailleur looks bent, so the owner goes to a shop | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
+| `journey:city-derailleur-no-stand/routine-check-slow-shifting` | Routine check finds slow shifting; the to-do item opens the guide | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:e-trekking-hub-gear/hub-gear-not-covered` | Gears do not shift cleanly on a hub gear | — | ⬜ not reviewed | [journeys/e-trekking-hub-gear.md](journeys/e-trekking-hub-gear.md) |
 | `journey:mtb-rapid-rise/rapid-rise-not-supported` | Gears do not shift cleanly on a rapid-rise derailleur | — | ⬜ not reviewed | [journeys/mtb-rapid-rise.md](journeys/mtb-rapid-rise.md) |
 | `journey:road-bike-stand/chain-touches-spokes` | Adjusting in the stand, but the chain touches the spokes at the end | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |

@@ -41,6 +41,7 @@ describe('the real content', () => {
     expect(endings).toEqual({
       'city-derailleur-no-stand/slow-shifting-upside-down': 'tutorial complete',
       'city-derailleur-no-stand/bent-derailleur': 'shop: Have the rear gears checked',
+      'city-derailleur-no-stand/routine-check-slow-shifting': '1 to-do item(s)',
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
       'mtb-rapid-rise/rapid-rise-not-supported': 'not covered (gears-shift-badly)',
       'road-bike-stand/chain-touches-spokes': 'stop, jump ahead, bike put back, shop',

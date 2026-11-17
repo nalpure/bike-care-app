@@ -33,3 +33,11 @@ profile:
       start: { diagnosis: gears-shift-badly }
       sees:
         derailleur-alignment: crooked
+
+    - id: routine-check-slow-shifting
+      title: "Routine check finds slow shifting; the to-do item opens the guide"
+      start: { check: routine-check }
+      sees:
+        derailleur-alignment: straight
+        chain-condition: clean
+        shift-test-ride: slow-to-bigger
