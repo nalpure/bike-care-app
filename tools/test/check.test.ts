@@ -1,7 +1,7 @@
 // Tests of the build tool. Each test breaks one rule on purpose in a copy of the real content
 // and expects a one-line error that names the file, the id and the rule.
 
-import { existsSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatIssue } from '../lib/issues.js';
@@ -68,20 +68,23 @@ describe('the real content', () => {
     expect(md).toMatch(/##### \d+\. Test ride the gears · `shift-test-ride`/);
   });
 
-  it('writes the bundle, the report and the walkthroughs', () => {
+  it('writes the bundle, the report and the review files, but no single paths', () => {
     const b = sandbox();
     const r = b.run(true);
     expect(show(r)).toBe('');
     for (const rel of [
       'build/bundle.json',
       'build/report.md',
-      'build/walkthroughs/adjust-rear-shifting/derailleur.mechanical.stand.md',
-      'build/walkthroughs/gears-shift-badly/derailleur.mechanical--no-hit.md',
-      'build/walkthroughs/routine-check/routine-check.md',
-      'build/walkthroughs/profiles/unknown-bike.md',
+      'build/review/index.md',
+      'build/review/cards.md',
+      'build/review/trees/adjust-rear-shifting.md',
+      'build/review/trees/gears-shift-badly.md',
+      'build/review/trees/routine-check.md',
+      'build/review/journeys/unknown-bike.md',
     ]) {
       expect(existsSync(join(b.root, rel)), rel).toBe(true);
     }
+    expect(existsSync(join(b.root, 'build/walkthroughs'))).toBe(false);
     const bundle = JSON.parse(r.bundle!);
     expect(bundle.unverified).toBe(true);
     expect(bundle.tutorials[0].cases[0].cases[1].case.sequence.length).toBeGreaterThan(5);
@@ -92,6 +95,75 @@ describe('the real content', () => {
     const b = runCheck(REPO, { write: false });
     expect(a.report).toBe(b.report);
     expect(a.bundle).toBe(b.bundle);
+  });
+});
+
+describe('review units and the ledger', () => {
+  const unit = (r: ReturnType<typeof runCheck>, id: string) => r.review.find((s) => s.unit.id === id)!;
+  const sign = (b: Sandbox, id: string, hash: string, role: string) =>
+    writeFileSync(join(b.root, 'reviews/ledger.yaml'), `reviews:\n  - { unit: "${id}", hash: "${hash}", role: ${role}, by: "test", date: "2026-11-17", verdict: approved }\n`);
+
+  it('lists every card, tree and journey once', () => {
+    const r = runCheck(REPO, { write: false });
+    const ids = r.review.map((s) => s.unit.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toContain('card:step:check-high-limit');
+    expect(ids).toContain('card:inspection:derailleur-alignment');
+    expect(ids).toContain('card:choice:hold_bike');
+    expect(ids).toContain('tree:tutorial:adjust-rear-shifting');
+    expect(ids).toContain('journey:road-bike-stand/chain-touches-spokes');
+    // Each step appears once in the card sheet, however many paths use it.
+    const cards = r.outputs!.files.get('build/review/cards.md')!;
+    expect(cards.match(/`check-high-limit`/g)?.length ?? 0).toBeLessThanOrEqual(2);
+  });
+
+  it('a sign-off holds while the unit is unchanged', () => {
+    const b = sandbox();
+    mkdirSync(join(b.root, 'reviews'));
+    const before = b.run();
+    const card = unit(before, 'card:step:check-high-limit');
+    sign(b, card.unit.id, card.unit.hash, 'mechanic');
+    const after = b.run();
+    expect(show(after)).toBe('');
+    expect(unit(after, 'card:step:check-high-limit').byRole.mechanic.status).toBe('approved');
+    expect(unit(after, 'card:step:check-high-limit').byRole.beginner.status).toBe('unreviewed');
+  });
+
+  it('rewording a step invalidates its card and the journeys that show it, not the flow tree', () => {
+    const b = sandbox();
+    mkdirSync(join(b.root, 'reviews'));
+    const before = b.run();
+    const card = unit(before, 'card:step:check-b-gap').unit;
+    const tree = unit(before, 'tree:tutorial:adjust-rear-shifting').unit;
+    writeFileSync(join(b.root, 'reviews/ledger.yaml'), `reviews:
+  - { unit: "${card.id}", hash: "${card.hash}", role: mechanic, by: "test", date: "2026-11-17", verdict: approved }
+  - { unit: "${tree.id}", hash: "${tree.hash}", role: mechanic, by: "test", date: "2026-11-17", verdict: approved }
+`);
+    b.edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').text = 'Look from the side at the small gap between the upper toothed wheel and the largest sprocket.'));
+    const after = b.run();
+    expect(unit(after, card.id).byRole.mechanic.status).toBe('changed');
+    expect(unit(after, tree.id).byRole.mechanic.status).toBe('approved');
+    expect(unit(after, 'journey:road-bike-stand/chain-touches-spokes').unit.hash).not.toBe(unit(before, 'journey:road-bike-stand/chain-touches-spokes').unit.hash);
+  });
+
+  it('reordering steps invalidates the flow tree', () => {
+    const b = sandbox();
+    const before = b.run();
+    b.edit('content/tutorials/adjust-rear-shifting/cases/test-rides.yaml', (d) => {
+      const i = d.sequence.findIndex((x: any) => x.step === 'check-b-gap');
+      const [item] = d.sequence.splice(i, 1);
+      d.sequence.splice(i + 1, 0, item);
+    });
+    const after = b.run();
+    expect(unit(after, 'tree:tutorial:adjust-rear-shifting').unit.hash).not.toBe(unit(before, 'tree:tutorial:adjust-rear-shifting').unit.hash);
+  });
+
+  it('warns about a ledger entry for a unit that no longer exists', () => {
+    const b = sandbox();
+    mkdirSync(join(b.root, 'reviews'));
+    sign(b, 'card:step:gone', 'abcdefabcdef', 'mechanic');
+    const r = b.run();
+    expect(r.issues.warnings.some((w) => w.rule === 'ledger-unknown-unit')).toBe(true);
   });
 });
 

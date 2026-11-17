@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "5f6fe72c56e73885",
+  "content_hash": "2cfa2d0d9522dd5c",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -250,16 +250,6 @@
         {
           "name": "A screwdriver that is too big or too small",
           "reason": "It slips and damages the screw head"
-        }
-      ]
-    },
-    {
-      "id": "clean-cloth",
-      "name": "Clean cloth",
-      "kind": "consumable",
-      "substitutes": [
-        {
-          "name": "Kitchen paper"
         }
       ]
     }

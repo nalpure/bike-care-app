@@ -12,22 +12,31 @@ schema/          JSON Schema for every content file (*.schema.json), 3d-catalog.
 content/         facts.yaml, choices.yaml, states.yaml, tools.yaml, inspections.yaml, jobs.yaml,
                  steps/, procedures.yaml, tutorials/<job>/, diagnoses/, checks/, review/
 profiles/        test bikes (facts, answers, tools, journeys), one YAML each. Only for review.
-tools/           build script: validate, expand, simulate, walkthroughs, bundle (tools/check.ts)
-build/           generated: bundle.json, walkthroughs/, report.md (never edited by hand)
+reviews/         ledger.yaml: sign-offs of review units (append only, via npm run review -- sign)
+tools/           build script: validate, expand, simulate, review files, bundle (tools/check.ts),
+                 walk.ts (paths on demand), review.ts (review status and sign-off)
+build/           generated, never edited by hand: bundle.json, report.md,
+                 review/ (index.md, cards.md, trees/, journeys/); paths/ is on demand and not committed
 player/          the web app (Vite, TypeScript, three.js)
 .claude/         subagent definitions, commands, hooks for the content workflow
 ```
 
-The golden example is the symptom "My gears don't shift cleanly": `content/diagnoses/gears-shift-badly.yaml`, `content/tutorials/adjust-rear-shifting/`, and the walkthroughs it produces in `build/walkthroughs/`.
+The golden example is the symptom "My gears don't shift cleanly": `content/diagnoses/gears-shift-badly.yaml`, `content/tutorials/adjust-rear-shifting/`, and what it produces in `build/review/`.
 
 ## Commands
 
 - `npm run check`  validate, expand, simulate, write `build/`. Must pass before any task is done.
 - `npm test`       automated tests of the build tool (`tools/test/`).
+- `npm run walk -- --list` / `npm run walk -- <path-id>`   render paths on demand.
+- `npm run review -- status` / `npm run review -- sign <unit> --role <role> --by <name>`   review units and sign-offs.
 - `npm run dev`    start the player locally.
 - `npm run build`  static build of the player for sharing.
 
 Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fix them from the message; you should not need to read the build tool.
+
+## Reviewing content
+
+Review units, not paths: cards (`build/review/cards.md`), flow trees (`build/review/trees/`) and profile journeys (`build/review/journeys/`). Each has a hash; a sign-off in `reviews/ledger.yaml` holds while the hash is unchanged. Findings name the unit id, and the path id when it came from a single path. Never edit the ledger by hand except to append; never sign a unit you did not read.
 
 ## Recording decisions
 

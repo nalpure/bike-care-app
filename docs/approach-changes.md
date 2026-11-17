@@ -198,6 +198,24 @@ No changes.
 - **Date:** 2026-11-17 · **Decided by:** agent
 - **Now:** Until the player exports `build/3d-manifest.json`, focus nodes, views, clips and animation targets are checked against `schema/3d-catalog.yaml`, which was seeded from the prototype. Once the manifest exists it wins.
 
+### AC-26 Review units instead of per-path walkthroughs (changes)
+
+- **Date:** 2026-11-17 · **Decided by:** owner
+- **approach.md:** "Generate walkthroughs per path as plain numbered text. Reviewers read these, never the YAML." and, under How content gets made, "Sign-off follows paths, not files."
+- **Now:** Paths share most of their content, so reviewing them one by one repeats the same cards many times (one simple tutorial: 25 paths, about 300 cards, about 20 distinct). Review is done on **units**, each shown once with a content hash:
+
+| Unit | What it holds | Signed by | File |
+| --- | --- | --- | --- |
+| `card:<kind>:<id>` | One piece of user-facing text: step, inspection, fact question, run choice, job, state label, tool. Listed with every context it appears in (flow, case, what is apart). | mechanic and beginner (facts and jobs: beginner) | `build/review/cards.md` |
+| `tree:<kind>:<id>` | The structure of one tutorial, diagnosis or routine check: branches, order, procedure implementations, what is apart at each item, block and exit outcomes, jump targets. No card texts. | mechanic | `build/review/trees/<flow>.md` |
+| `journey:<profile>/<journey>` | One profile journey end to end. | beginner | `build/review/journeys/<profile>.md` |
+
+  - Sign-offs live in `reviews/ledger.yaml` (append only, written with `npm run review -- sign`). A sign-off counts only while the unit's hash is unchanged. Rewording a step invalidates its card and the journeys that show it, not the flow tree; reordering invalidates the tree, not the cards.
+  - `build/review/index.md` and the report show what is signed, changed since sign-off, or never reviewed.
+  - Single paths are no longer committed. `npm run walk -- --list` lists them; `npm run walk -- <path-id>` prints one; `npm run walk -- --all` writes all to `build/paths/` (ignored by git).
+  - The simulation still expands and checks every path; only what humans and agents read has changed.
+- **Where:** `tools/lib/review.ts`, `tools/review.ts`, `tools/walk.ts`, `schema/ledger.schema.json`.
+
 ## Player and 3D
 
 No changes yet. AC-17 names the interim 3D catalog.

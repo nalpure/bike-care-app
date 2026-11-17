@@ -43,6 +43,8 @@ export interface Content {
   checks: Map<string, Entry>;
   profiles: Map<string, Entry>;
   catalog: Catalog3d;
+  /** reviews/ledger.yaml, when it exists */
+  ledger?: YamlFile;
 }
 
 export function where(e: Entry): { file: string; line?: number } {
@@ -179,6 +181,9 @@ export function loadContent(root: string, issues: Issues): Content | null {
     const f = load(rel, 'profile');
     if (f) single(c.profiles, 'profile', f, 'profile');
   }
+
+  const ledger = load('reviews/ledger.yaml', 'ledger', false);
+  if (ledger) c.ledger = ledger;
 
   // 3D names: the player's manifest wins once it exists.
   const manifest = join(root, 'build/3d-manifest.json');

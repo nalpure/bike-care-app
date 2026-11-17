@@ -7,8 +7,9 @@ import { loadContent, type Content } from './content.js';
 import { buildFlows, type Flows } from './flows.js';
 import { Issues } from './issues.js';
 import { runProfile, type JourneyResult } from './journeys.js';
-import { buildBundle, buildOutputs, pathCount, renderReport, writeOutputs, type Outputs } from './output.js';
+import { buildBundle, journeyFiles, pathCount, renderReport, writeOutputs, type Outputs } from './output.js';
 import { checkStatic } from './refs.js';
+import { cardUnits, checkLedger, journeyUnits, reviewFiles, statusOf, treeUnits, type UnitStatus } from './review.js';
 
 export interface RunOptions {
   /** write build/ (bundle only when there are no errors) */
@@ -21,6 +22,8 @@ export interface RunResult {
   flows: Flows | null;
   profiles: Map<string, { markdown: string; results: JourneyResult[] }>;
   outputs: Outputs | null;
+  /** every review unit with its sign-off status */
+  review: UnitStatus[];
   report: string | null;
   bundle: string | null;
   summary: string[];
@@ -28,7 +31,7 @@ export interface RunResult {
 
 export function runCheck(root: string, opts: RunOptions): RunResult {
   const issues = new Issues();
-  const result: RunResult = { issues, content: null, flows: null, profiles: new Map(), outputs: null, report: null, bundle: null, summary: [] };
+  const result: RunResult = { issues, content: null, flows: null, profiles: new Map(), outputs: null, review: [], report: null, bundle: null, summary: [] };
   const content = loadContent(root, issues);
   result.content = content;
   if (!content) {
@@ -44,8 +47,10 @@ export function runCheck(root: string, opts: RunOptions): RunResult {
   result.flows = flows;
   for (const p of content.profiles.values()) result.profiles.set(p.def.id, runProfile(content, p, issues));
 
-  result.outputs = buildOutputs(content, flows, result.profiles);
-  result.report = renderReport(content, flows, result.profiles, issues);
+  const units = [...treeUnits(content, flows), ...cardUnits(content, flows), ...journeyUnits(result.profiles)];
+  result.review = statusOf(units, checkLedger(content, units, issues));
+  result.outputs = { files: reviewFiles(result.review, journeyFiles(result.profiles)) };
+  result.report = renderReport(content, flows, result.profiles, issues, result.review);
   result.bundle = issues.errors.length ? null : buildBundle(content);
   if (opts.write) writeOutputs(root, result.outputs, result.report, result.bundle);
 
@@ -53,6 +58,8 @@ export function runCheck(root: string, opts: RunOptions): RunResult {
   for (const t of flows.tutorials) result.summary.push(`  tutorial ${t.id}: ${t.paths.length} paths, ${t.exits.length} exits before the first step`);
   for (const d of flows.diagnoses) result.summary.push(`  diagnosis ${d.id}: ${d.paths.length} paths, ${d.exits.length} not-covered exits`);
   for (const [id, p] of result.profiles) for (const r of p.results) result.summary.push(`  profile ${id} / ${r.journey}: ${r.ending}, ${r.minutes} min`);
-  if (opts.write) result.summary.push(`Wrote build/walkthroughs/ (${result.outputs.files.size} files), build/report.md${result.bundle ? ', build/bundle.json' : ''}.`);
+  const open = result.review.filter((s) => Object.values(s.byRole).some((x) => x.status !== 'approved')).length;
+  result.summary.push(`Review: ${units.length} units, ${open} not fully signed. See build/review/index.md.`);
+  if (opts.write) result.summary.push(`Wrote build/review/ (${result.outputs.files.size} files), build/report.md${result.bundle ? ', build/bundle.json' : ''}.`);
   return result;
 }

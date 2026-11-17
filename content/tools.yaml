@@ -30,10 +30,4 @@ tools:
     do_not_use:
       - { name: "A screwdriver that is too big or too small", reason: "It slips and damages the screw head" }
 
-  - id: clean-cloth
-    name: "Clean cloth"
-    kind: consumable
-    substitutes:
-      - { name: "Kitchen paper" }
-
 parts: []

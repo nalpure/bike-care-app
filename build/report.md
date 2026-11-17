@@ -15,9 +15,21 @@
 
 | Flow | Kind | Paths | Complete paths | Time of complete paths | Stop paths | Exits before the first step |
 | --- | --- | --- | --- | --- | --- | --- |
-| [adjust-rear-shifting](walkthroughs/adjust-rear-shifting/index.md) | tutorial | 25 | 4 | 26 to 29 min | 21 | 7 |
-| [gears-shift-badly](walkthroughs/gears-shift-badly/index.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 8 |
-| [routine-check](walkthroughs/routine-check/routine-check.md) | routine check | - | - | - | - | - |
+| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 25 | 4 | 26 to 29 min | 21 | 7 |
+| [gears-shift-badly](review/trees/gears-shift-badly.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 8 |
+| [routine-check](review/trees/routine-check.md) | routine check | - | - | - | - | - |
+
+Read any single path with `npm run walk -- --list` and `npm run walk -- <path-id>`.
+
+## Review status
+
+Details per unit in [review/index.md](review/index.md).
+
+| Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
+| --- | --- | --- | --- | --- |
+| card | 39 | 0 of 31 | 0 of 39 | 0 |
+| tree | 3 | 0 of 3 | — | 0 |
+| journey | 8 | — | 0 of 8 | 0 |
 
 ## Time per bike and choice (complete paths)
 
@@ -54,14 +66,14 @@ Use this list to decide what to cover next.
 
 | Profile | Journey | Ends | Time | Questions asked |
 | --- | --- | --- | --- | --- |
-| [city-derailleur-no-stand](walkthroughs/profiles/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 30 min | 1 |
-| [city-derailleur-no-stand](walkthroughs/profiles/city-derailleur-no-stand.md) | The derailleur looks bent, so the owner goes to a shop | shop: Have the rear gears checked | 1 min | 1 |
-| [e-trekking-hub-gear](walkthroughs/profiles/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
-| [mtb-rapid-rise](walkthroughs/profiles/mtb-rapid-rise.md) | Gears do not shift cleanly on a rapid-rise derailleur | not covered (gears-shift-badly) | 0 min | 0 |
-| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 27 min | 0 |
-| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-present | 2 min | 0 |
-| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
-| [unknown-bike](walkthroughs/profiles/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 33 min | 2 |
+| [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 30 min | 1 |
+| [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | The derailleur looks bent, so the owner goes to a shop | shop: Have the rear gears checked | 1 min | 1 |
+| [e-trekking-hub-gear](review/journeys/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
+| [mtb-rapid-rise](review/journeys/mtb-rapid-rise.md) | Gears do not shift cleanly on a rapid-rise derailleur | not covered (gears-shift-badly) | 0 min | 0 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 27 min | 0 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-present | 2 min | 0 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
+| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 33 min | 2 |
 
 Journeys that end at a shop, a stop or not covered: 4 of 8.
 

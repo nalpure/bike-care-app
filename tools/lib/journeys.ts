@@ -23,6 +23,8 @@ export interface JourneyResult {
   ending: string;
   minutes: number;
   questions: number;
+  /** this journey on its own, for its review hash */
+  markdown: string;
 }
 
 interface Finding {
@@ -427,7 +429,7 @@ export function runProfile(c: Content, p: Entry, issues: Issues): { markdown: st
     for (const k of Object.keys(j.tutorial_sees ?? {})) if (!r.usedTutorialSees.has(k)) issues.warn(p.file.rel, `profile ${prof.id} / journey ${j.id}`, 'profile-unused-entry', `tutorial_sees.${k} is never reached on this journey.`, lineAt(p.file, [...p.path, 'journeys', ji, 'tutorial_sees', k]));
     r.L.push(`**Journey ends:** ${ending}. **Time:** ${r.minutes} min. **Questions asked:** ${r.asked.length}.`, '', '---', '');
     L.push(...r.L);
-    results.push({ profile: prof.id, journey: j.id, title: j.title, ending, minutes: r.minutes, questions: r.asked.length });
+    results.push({ profile: prof.id, journey: j.id, title: j.title, ending, minutes: r.minutes, questions: r.asked.length, markdown: r.L.join('\n') });
   });
   return { markdown: L.join('\n'), results };
 }
