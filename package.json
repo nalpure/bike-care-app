@@ -6,7 +6,7 @@
   "description": "Bike maintenance app: content, build tool and player",
   "scripts": {
     "check": "tsx tools/check.ts",
-    "test": "vitest run",
+    "test": "node tools/run-tests.mjs",
     "typecheck": "tsc --noEmit",
     "dev": "node -e \"console.log('The player is built in prompt 2. Nothing to run yet.')\"",
     "build": "node -e \"console.log('The player is built in prompt 2. Nothing to build yet.')\""
