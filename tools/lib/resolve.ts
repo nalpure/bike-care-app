@@ -107,6 +107,90 @@ export interface Reader {
   peek(key: string): Value;
 }
 
+// ---------------------------------------------------------------- enumeration
+
+/** Thrown by a reader when a key has no value yet. */
+export class NeedKey {
+  constructor(public key: string) {}
+}
+
+export interface Enumerated<T> {
+  assign: Record<string, Value>;
+  /** keys asked, in the order they were first read */
+  asked: string[];
+  /** every key read (asked or branched), in order */
+  read: string[];
+  result: T;
+}
+
+/** Every value a key can take: tools true or false, a choice's options, a fact's values plus unknown. */
+export function domainOf(ix: Index, key: string): Value[] {
+  if (key.startsWith('tool.')) return [true, false];
+  if (key.startsWith('choice.')) return (ix.choices.get(key.slice(7))?.options ?? []).map((o: any) => o.id);
+  const f = factOf(ix, key);
+  if (!f) return [UNKNOWN];
+  if (f.type === 'enum') return [...f.values, UNKNOWN];
+  if (f.type === 'boolean') return [true, false, UNKNOWN];
+  return [UNKNOWN];
+}
+
+/** Tools implied by chosen run-choice options (option stand requires bike-stand). */
+export function impliedTool(ix: Index, assign: Record<string, Value>, key: string): boolean {
+  if (!key.startsWith('tool.')) return false;
+  const tool = key.slice(5);
+  for (const [k, v] of Object.entries(assign)) {
+    if (!k.startsWith('choice.')) continue;
+    const opt = ix.choices.get(k.slice(7))?.options.find((o: any) => o.id === v);
+    if (opt?.requires_tools?.includes(tool)) return true;
+  }
+  return false;
+}
+
+/**
+ * Runs `resolve` once per combination of the keys it reads, branching on every key that is
+ * neither fixed nor assigned yet. Keys are read in written order, so only keys that matter branch.
+ */
+export function enumerate<T>(ix: Index, resolve: (r: Reader) => T, fixed: Record<string, Value> = {}): Enumerated<T>[] {
+  const out: Enumerated<T>[] = [];
+  const stack: Record<string, Value>[] = [{}];
+  let guard = 0;
+  while (stack.length) {
+    if (++guard > 20000) throw new Error('Path expansion exceeded 20000 combinations. Split the flow.');
+    const assign = stack.pop()!;
+    const asked: string[] = [];
+    const read: string[] = [];
+    const get = (key: string, isAsk: boolean): Value => {
+      let v: Value;
+      if (key in fixed) v = fixed[key];
+      else if (key in assign) v = assign[key];
+      else if (impliedTool(ix, assign, key)) v = true;
+      else throw new NeedKey(key);
+      if (!read.includes(key)) read.push(key);
+      if (isAsk && !asked.includes(key) && !neverAsked(ix, key)) asked.push(key);
+      return v;
+    };
+    const reader: Reader = {
+      ask: (k) => get(k, true),
+      branch: (k) => get(k, false),
+      peek: (k) => (k in fixed ? fixed[k] : k in assign ? assign[k] : UNKNOWN),
+    };
+    try {
+      const result = resolve(reader);
+      out.push({ assign, asked, read, result });
+    } catch (e) {
+      if (!(e instanceof NeedKey)) throw e;
+      const values = domainOf(ix, e.key);
+      for (let i = values.length - 1; i >= 0; i--) stack.push({ ...assign, [e.key]: values[i] });
+    }
+  }
+  return out;
+}
+
+/** Minutes of a list of items. */
+export function minutesOf(items: { def: any }[]): number {
+  return items.reduce((s, it) => s + (it.def.minutes ?? 0), 0);
+}
+
 // ---------------------------------------------------------------- shared shapes
 
 /** unsafe: do not ride. not_covered: not supported yet. not_needed: repair not needed. shop_only: a shop must do it. */

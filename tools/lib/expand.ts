@@ -1,16 +1,14 @@
 // Turns a tutorial or diagnosis into concrete runs, one per combination of the keys it reads.
 //
 // The resolving itself (case selection, procedure implementations, conditional steps, button sets,
-// exits, jump targets, skips) lives in resolve.ts, which the player imports too. This file adds what
+// exits, jump targets, skips) and the enumeration of combinations live in resolve.ts, which the player imports too. This file adds what
 // only the build needs:
-//  - enumerate(): a Reader that branches on every key it has not seen yet, to find all paths;
 //  - path variants (stops, jumps, skips) and path ids;
 //  - wrappers that run the shared resolver on this content's bundle data, with YAML source locations.
 
 import type { Content, Entry, TutorialEntry } from './content.js';
 import { UNKNOWN, type Value } from './conditions.js';
 import { bundleOf } from './bundle.js';
-import { factDef, neverAsked } from './refs.js';
 import * as R from './resolve.js';
 import type { YamlFile, YPath } from './yamlfile.js';
 
@@ -43,75 +41,10 @@ export function resolveDiagnosis(c: Content, d: Entry, r: R.Reader, params: Reco
 
 // ---------------------------------------------------------------- enumeration
 
-export class NeedKey {
-  constructor(public key: string) {}
-}
+export { NeedKey, type Enumerated } from './resolve.js';
 
-export interface Enumerated<T> {
-  assign: Record<string, Value>;
-  /** keys asked, in the order they were first read */
-  asked: string[];
-  /** every key read (asked or branched), in order */
-  read: string[];
-  result: T;
-}
-
-export function domainFor(c: Content, key: string): Value[] {
-  if (key.startsWith('tool.')) return [true, false];
-  if (key.startsWith('choice.')) return (c.choices.get(key.slice(7))?.def.options ?? []).map((o: any) => o.id);
-  const f = factDef(c, key);
-  if (!f) return [UNKNOWN];
-  if (f.def.type === 'enum') return [...f.def.values, UNKNOWN];
-  if (f.def.type === 'boolean') return [true, false, UNKNOWN];
-  return [UNKNOWN];
-}
-
-/** Tools implied by chosen run-choice options (option stand requires bike-stand). */
-function impliedTool(c: Content, assign: Record<string, Value>, key: string): boolean {
-  if (!key.startsWith('tool.')) return false;
-  const tool = key.slice(5);
-  for (const [k, v] of Object.entries(assign)) {
-    if (!k.startsWith('choice.')) continue;
-    const opt = c.choices.get(k.slice(7))?.def.options.find((o: any) => o.id === v);
-    if (opt?.requires_tools?.includes(tool)) return true;
-  }
-  return false;
-}
-
-export function enumerate<T>(c: Content, resolve: (r: R.Reader) => T, fixed: Record<string, Value> = {}): Enumerated<T>[] {
-  const out: Enumerated<T>[] = [];
-  const stack: Record<string, Value>[] = [{}];
-  let guard = 0;
-  while (stack.length) {
-    if (++guard > 20000) throw new Error('Path expansion exceeded 20000 combinations. Split the flow.');
-    const assign = stack.pop()!;
-    const asked: string[] = [];
-    const read: string[] = [];
-    const get = (key: string, isAsk: boolean): Value => {
-      let v: Value;
-      if (key in fixed) v = fixed[key];
-      else if (key in assign) v = assign[key];
-      else if (impliedTool(c, assign, key)) v = true;
-      else throw new NeedKey(key);
-      if (!read.includes(key)) read.push(key);
-      if (isAsk && !asked.includes(key) && !neverAsked(c, key)) asked.push(key);
-      return v;
-    };
-    const reader: R.Reader = {
-      ask: (k) => get(k, true),
-      branch: (k) => get(k, false),
-      peek: (k) => (k in fixed ? fixed[k] : k in assign ? assign[k] : UNKNOWN),
-    };
-    try {
-      const result = resolve(reader);
-      out.push({ assign, asked, read, result });
-    } catch (e) {
-      if (!(e instanceof NeedKey)) throw e;
-      const values = domainFor(c, e.key);
-      for (let i = values.length - 1; i >= 0; i--) stack.push({ ...assign, [e.key]: values[i] });
-    }
-  }
-  return out;
+export function enumerate<T>(c: Content, resolve: (r: R.Reader) => T, fixed: Record<string, Value> = {}): R.Enumerated<T>[] {
+  return R.enumerate(bundleOf(c).index, resolve, fixed);
 }
 
 // ---------------------------------------------------------------- tutorial path variants
