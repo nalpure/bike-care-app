@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/profile.schema.json",
+  "title": "profiles/*.yaml: a test bike and the journeys a reviewer reads for it. The app never reads profiles.",
+  "$defs": {
+    "factValues": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
+      "additionalProperties": { "type": ["string", "boolean", "integer"] }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "profile": {
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "name": { "$ref": "common.schema.json#/$defs/text" },
+        "description": { "$ref": "common.schema.json#/$defs/text" },
+        "facts": {
+          "description": "Known on the bike before any flow starts. Never asked.",
+          "$ref": "#/$defs/factValues"
+        },
+        "answers": {
+          "description": "What the owner answers when the app asks. The value unknown means 'I'll check later'.",
+          "$ref": "#/$defs/factValues"
+        },
+        "tools": {
+          "description": "Helpful tools the owner has with them.",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "journeys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "title": { "$ref": "common.schema.json#/$defs/text" },
+              "start": {
+                "type": "object",
+                "properties": {
+                  "diagnosis": { "$ref": "common.schema.json#/$defs/id" },
+                  "tutorial": { "$ref": "common.schema.json#/$defs/id" },
+                  "check": { "$ref": "common.schema.json#/$defs/id" }
+                },
+                "minProperties": 1,
+                "maxProperties": 1,
+                "additionalProperties": false
+              },
+              "params": { "type": "object", "additionalProperties": { "type": "string" } },
+              "sees": {
+                "description": "Diagnosis or routine check: inspection id (plus .front or .rear where the check names positions) to the state id the owner sees.",
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "job_choice": { "enum": ["diy", "shop"] },
+              "choices": {
+                "description": "Run choices, such as hold_bike: stand.",
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "tutorial_sees": {
+                "description": "Tutorial: inspection id to state id, and safety-check step id to the label of the button the owner taps.",
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              },
+              "after_stop": {
+                "description": "At a stop with a jump button: show_how follows the jump ahead, find_shop leaves the tutorial.",
+                "enum": ["show_how", "find_shop"]
+              }
+            },
+            "required": ["id", "title", "start"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["id", "name", "facts", "answers", "tools", "journeys"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["profile"],
+  "additionalProperties": false
+}

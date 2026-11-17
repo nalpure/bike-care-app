@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/procedures.schema.json",
+  "title": "content/procedures.yaml: reusable runs of steps with one implementation per fact or choice value",
+  "type": "object",
+  "properties": {
+    "procedures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "implementations": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "properties": {
+                "when": { "$ref": "common.schema.json#/$defs/condition" },
+                "steps": {
+                  "type": "array",
+                  "items": {
+                    "description": "A step id, or an object with exactly one of procedure, shop, not_covered.",
+                    "type": ["string", "object"],
+                    "pattern": "^[a-z0-9<>]+(-[a-z0-9<>]+)*$",
+                    "properties": {
+                      "procedure": { "$ref": "common.schema.json#/$defs/id" },
+                      "shop": { "$ref": "common.schema.json#/$defs/text" },
+                      "not_covered": { "$ref": "common.schema.json#/$defs/text" }
+                    },
+                    "minProperties": 1,
+                    "maxProperties": 1,
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": ["when", "steps"],
+              "additionalProperties": false
+            }
+          },
+          "if_unknown": { "enum": ["ask"] }
+        },
+        "required": ["id", "implementations"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["procedures"],
+  "additionalProperties": false
+}

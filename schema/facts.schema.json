@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/facts.schema.json",
+  "title": "content/facts.yaml: lasting properties of a bike",
+  "type": "object",
+  "properties": {
+    "facts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": { "$ref": "common.schema.json#/$defs/factKey" },
+          "type": { "enum": ["enum", "boolean", "text", "number"] },
+          "values": { "type": "array", "minItems": 2, "items": { "type": ["string", "integer"] } },
+          "question": {
+            "description": "Beginner question. Required for every fact that a condition reads, because only those are asked.",
+            "type": "object",
+            "properties": {
+              "en": { "$ref": "common.schema.json#/$defs/text" },
+              "de": { "$ref": "common.schema.json#/$defs/text" },
+              "picture": { "type": "string", "description": "Name of the picture set shown with the answers." }
+            },
+            "required": ["en"],
+            "additionalProperties": false
+          },
+          "answers": {
+            "description": "The answer button for each value, in the user's words.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "en": { "$ref": "common.schema.json#/$defs/text" },
+                "de": { "$ref": "common.schema.json#/$defs/text" }
+              },
+              "required": ["en"],
+              "additionalProperties": false
+            }
+          },
+          "safety": { "type": "boolean" },
+          "note": { "type": "string", "description": "For authors. Never shown." }
+        },
+        "required": ["key", "type", "safety"],
+        "additionalProperties": false,
+        "if": { "properties": { "type": { "const": "enum" } } },
+        "then": { "required": ["values"] }
+      }
+    }
+  },
+  "required": ["facts"],
+  "additionalProperties": false
+}

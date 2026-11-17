@@ -1,0 +1,26 @@
+# Run choices: asked fresh at the start of each tutorial, never stored on the bike.
+# The app recommends; the user decides what they are comfortable doing.
+# Conditions read a choice as choice.<id>, for example { choice.hold_bike: [stand] }.
+
+choices:
+  - id: hold_bike
+    question: "How will you hold the bike while you work?"
+    options:
+      - id: stand
+        label: "In a work stand"
+        recommended: true
+        requires_tools: [bike-stand]
+        note: "The easiest way. The rear wheel turns freely and the bike cannot fall."
+        warning: "Heavy bikes, such as e-bikes, can be too heavy for a small stand. Check the stand's maximum load."
+      - id: hang
+        label: "Hanging from a hook or a rope"
+        requires_tools: [hook-or-rope]
+        note: "The rear wheel hangs free, so you can turn the pedals by hand."
+        warning: "The hook or rope must carry the whole bike. A heavy bike can fall and hurt you."
+      - id: upside_down
+        label: "Upside down, on saddle and handlebar"
+        note: "Needs no tools. The rear wheel turns freely."
+        warning: "Turning a heavy bike over can hurt you. Ask someone to help."
+      - id: ground
+        label: "On its wheels, and test with short rides"
+        note: "Needs no tools, but takes longer. You adjust while the bike stands and test by riding."

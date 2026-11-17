@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/inspections.schema.json",
+  "title": "content/inspections.yaml: shared looks, listens and feels",
+  "type": "object",
+  "properties": {
+    "inspections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "applies_when": { "$ref": "common.schema.json#/$defs/condition" },
+          "hands_off": { "type": "boolean" },
+          "minutes": { "$ref": "common.schema.json#/$defs/minutes" },
+          "text": { "$ref": "common.schema.json#/$defs/text" },
+          "tools": { "$ref": "common.schema.json#/$defs/toolUse" },
+          "focus": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
+          "view": { "$ref": "common.schema.json#/$defs/nodeName" },
+          "animation": { "$ref": "common.schema.json#/$defs/animation" },
+          "details": { "$ref": "common.schema.json#/$defs/details" },
+          "states": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 3,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "$ref": "common.schema.json#/$defs/id" },
+                "label": { "$ref": "common.schema.json#/$defs/text" },
+                "meaning": { "$ref": "common.schema.json#/$defs/text" },
+                "leads_to": { "$ref": "common.schema.json#/$defs/leadsTo" }
+              },
+              "required": ["id", "label", "meaning"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["id", "hands_off", "minutes", "text", "states"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["inspections"],
+  "additionalProperties": false
+}

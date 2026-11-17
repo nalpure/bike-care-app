@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/jobs.schema.json",
+  "title": "content/jobs.yaml: what can be done about a finding",
+  "type": "object",
+  "properties": {
+    "jobs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "title": { "$ref": "common.schema.json#/$defs/text" },
+          "tutorial": { "$ref": "common.schema.json#/$defs/id" },
+          "shop": {
+            "type": "object",
+            "properties": {
+              "tell": { "$ref": "common.schema.json#/$defs/text" },
+              "price_eur": { "type": "string", "description": "A range such as 20-35, or the placeholder <range>." },
+              "price_source": { "type": "string", "description": "Source and date, or the placeholder <source, date>." }
+            },
+            "required": ["tell", "price_eur", "price_source"],
+            "additionalProperties": false
+          }
+        },
+        "required": ["id", "title", "shop"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["jobs"],
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+# Mechanical rear derailleur, rear wheel off the ground (stand, hanging, or upside down).
+
+sequence:
+  # Nothing is apart yet: a stop here has no jump button.
+  - inspect: derailleur-alignment
+    outcomes:
+      straight: continue
+      crooked:
+        stop: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+
+  # The work
+  - procedure: hold-bike                 # sets bike_in_stand, bike_hung or bike_upside_down
+  - step: shift-to-smallest-sprocket
+  - step: check-high-limit
+  - step: shift-to-largest-sprocket
+  - step: check-low-limit                # block while the pulley is past the largest sprocket
+  - step: check-b-gap
+  - step: find-barrel-adjuster
+  - step: check-cable-tension
+  - step: check-all-gears                # its stop: show_how_from release-bike
+  - procedure: release-bike              # clears the holding label
+
+finish:
+  - inspect: shift-test-ride
+    outcomes:
+      fine: continue
+      slow-to-bigger:
+        stop: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+      slow-to-smaller:
+        stop: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."

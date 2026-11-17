@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/states.schema.json",
+  "title": "content/states.yaml: session state labels (what is apart, or makes the bike not ready to ride)",
+  "type": "object",
+  "properties": {
+    "states": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/stateLabel" },
+          "description": { "$ref": "common.schema.json#/$defs/text" },
+          "put_back": { "$ref": "common.schema.json#/$defs/text" },
+          "warning": {
+            "description": "Standing warning the player shows while this label holds.",
+            "$ref": "common.schema.json#/$defs/text"
+          },
+          "safety_checks": {
+            "description": "Step ids that every path must pass after the step that clears this label.",
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/id" }
+          }
+        },
+        "required": ["id", "description", "put_back"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["states"],
+  "additionalProperties": false
+}

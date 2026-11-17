@@ -1,0 +1,16 @@
+# A German-market e-trekking bike with a hub gear. Not covered by the shifting content yet.
+
+profile:
+  id: e-trekking-hub-gear
+  name: "E-trekking bike with hub gear"
+  description: "E-trekking bike with a mid motor and an internal hub gear. The shifting content does not cover hub gears yet."
+  facts:
+    bike.category: trekking_city
+    bike.ebike: true
+    drive.gear_type: hub_gear
+  answers: {}
+  tools: []
+  journeys:
+    - id: hub-gear-not-covered
+      title: "Gears do not shift cleanly on a hub gear"
+      start: { diagnosis: gears-shift-badly }

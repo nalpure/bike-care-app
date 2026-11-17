@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/common.schema.json",
+  "title": "Shared definitions",
+  "$defs": {
+    "id": {
+      "description": "Lower-case words joined by hyphens. May contain a parameter such as <pos>.",
+      "type": "string",
+      "pattern": "^[a-z0-9<>]+(-[a-z0-9<>]+)*$"
+    },
+    "text": {
+      "description": "User-facing English text. Placeholders: {fact.key|fallback wording}.",
+      "type": "string",
+      "minLength": 1
+    },
+    "factKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_<>]+)+$"
+    },
+    "stateLabel": {
+      "description": "A session state label such as bike_in_stand or wheel_out.<pos>.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_<>]+)?$"
+    },
+    "nodeName": {
+      "description": "A named 3D node, view or clip.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]*$"
+    },
+    "minutes": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 120
+    },
+    "condition": {
+      "description": "Keys are fact keys, tool.<tool-id> or choice.<choice-id>. All keys must match (AND), evaluated in the written order. any_of holds alternatives (OR). The value unknown matches a fact the user could not answer.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(any_of|[a-z][a-z0-9_]*(\\.[a-z0-9_<>-]+)+)$"
+      },
+      "properties": {
+        "any_of": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "$ref": "#/$defs/condition" }
+        }
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "type": ["string", "boolean", "integer"] }
+      }
+    },
+    "toolRef": {
+      "description": "A tool id, or a tool id with a condition.",
+      "type": ["string", "object"],
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "when": { "$ref": "#/$defs/condition" }
+      },
+      "required": ["id"],
+      "additionalProperties": false
+    },
+    "toolUse": {
+      "type": "object",
+      "properties": {
+        "required": { "type": "array", "items": { "$ref": "#/$defs/toolRef" } },
+        "helpful": { "type": "array", "items": { "$ref": "#/$defs/toolRef" } }
+      },
+      "additionalProperties": false
+    },
+    "animation": {
+      "description": "Either a generic motion (target, motion, direction, amount) or a named clip (clip). Always a caption.",
+      "type": "object",
+      "properties": {
+        "target": { "$ref": "#/$defs/nodeName" },
+        "motion": { "enum": ["rotate", "push", "pull", "slide", "squeeze", "remove", "insert"] },
+        "direction": { "type": "string", "minLength": 1 },
+        "amount": { "type": "string", "minLength": 1 },
+        "clip": { "$ref": "#/$defs/nodeName" },
+        "view": { "$ref": "#/$defs/nodeName" },
+        "caption": { "$ref": "#/$defs/text" }
+      },
+      "required": ["caption"],
+      "additionalProperties": false
+    },
+    "button": {
+      "type": "object",
+      "properties": {
+        "label": { "$ref": "#/$defs/text" },
+        "text": { "$ref": "#/$defs/text" },
+        "solution": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/animation" }
+        },
+        "block": { "$ref": "#/$defs/text" },
+        "stop": { "$ref": "#/$defs/text" },
+        "show_how_from": { "$ref": "#/$defs/id" },
+        "when": { "$ref": "#/$defs/condition" }
+      },
+      "required": ["label"],
+      "additionalProperties": false,
+      "dependentRequired": { "show_how_from": ["stop"] }
+    },
+    "details": {
+      "description": "Extra lines shown only when every fact in needs is known. Facts used only here are never asked.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "needs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/factKey" } },
+          "text": { "$ref": "#/$defs/text" }
+        },
+        "required": ["needs", "text"],
+        "additionalProperties": false
+      }
+    },
+    "leadsTo": {
+      "type": "object",
+      "properties": {
+        "job": { "$ref": "#/$defs/id" },
+        "urgency": { "enum": ["soon", "do_not_ride"] }
+      },
+      "required": ["job", "urgency"],
+      "additionalProperties": false
+    },
+    "params": {
+      "description": "Flow parameters such as pos. Each value is expanded as its own run.",
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z]+$" },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "values": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "from": { "enum": ["entry"] }
+        },
+        "required": ["values", "from"],
+        "additionalProperties": false
+      }
+    },
+    "outcome": {
+      "description": "continue, or an object with exactly one of block, stop, end.",
+      "anyOf": [
+        { "const": "continue" },
+        {
+          "type": "object",
+          "properties": {
+            "block": { "$ref": "#/$defs/text" },
+            "stop": { "$ref": "#/$defs/text" },
+            "end": { "$ref": "#/$defs/text" },
+            "show_how_from": { "$ref": "#/$defs/id" }
+          },
+          "minProperties": 1,
+          "additionalProperties": false
+        }
+      ]
+    },
+    "flowItem": {
+      "description": "Exactly one of step, procedure, inspect. outcomes only with inspect.",
+      "type": "object",
+      "properties": {
+        "step": { "$ref": "#/$defs/id" },
+        "procedure": { "$ref": "#/$defs/id" },
+        "inspect": { "$ref": "#/$defs/id" },
+        "outcomes": {
+          "type": "object",
+          "minProperties": 2,
+          "maxProperties": 3,
+          "additionalProperties": { "$ref": "#/$defs/outcome" }
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    }
+  }
+}

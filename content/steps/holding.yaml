@@ -1,0 +1,71 @@
+# Shared steps: holding the bike while working on it, and putting it back.
+# Which one runs is chosen by the run choice hold_bike (content/choices.yaml),
+# through the procedures hold-bike and release-bike.
+
+steps:
+  - id: clamp-in-stand
+    kind: action
+    minutes: 2
+    text: "Clamp the seat post in the stand so the rear wheel hangs free. With a heavy bike, ask someone to help you lift it."
+    tools: { required: [bike-stand], helpful: [] }
+    sets: [bike_in_stand]
+    focus: [stand_clamp, seat_post]
+    view: whole_bike
+    animation: { target: stand_clamp, motion: rotate, direction: "tighten", amount: "until the bike sits firm", caption: "Close the clamp around the seat post" }
+
+  - id: hang-bike
+    kind: action
+    minutes: 3
+    text: "Hang the bike by the front of its saddle from the hook or rope, so the rear wheel is off the ground. Check that it hangs firmly before you let go."
+    tools: { required: [hook-or-rope], helpful: [] }
+    sets: [bike_hung]
+    focus: [saddle, rear_wheel]
+    view: whole_bike
+    animation: { target: bike, motion: pull, direction: "up at the saddle", amount: "until the rear wheel is off the ground", caption: "Lift the rear of the bike onto the hook" }
+
+  - id: turn-upside-down
+    kind: action
+    minutes: 2
+    text: "Lay a soft mat on the floor and turn the bike over onto its saddle and handlebar. With a heavy bike, ask someone to help."
+    tools: { required: [], helpful: [work-mat] }
+    sets: [bike_upside_down]
+    focus: [saddle, handlebar]
+    view: whole_bike
+    animation: { target: bike, motion: rotate, direction: "over, wheels up", amount: "half a turn", caption: "Turn the bike over onto the mat" }
+
+  - id: unclamp-from-stand
+    kind: action
+    minutes: 1
+    text: "Hold the bike, open the stand clamp and put the bike on its wheels. With a heavy bike, ask someone to help."
+    tools: { required: [bike-stand], helpful: [] }
+    clears: [bike_in_stand]
+    focus: [stand_clamp]
+    view: whole_bike
+    animation: { target: stand_clamp, motion: rotate, direction: "loosen", amount: "until open", caption: "Open the clamp while you hold the bike" }
+
+  - id: take-bike-down
+    kind: action
+    minutes: 1
+    text: "Hold the bike, lift it off the hook or rope and put the rear wheel on the ground."
+    tools: { required: [hook-or-rope], helpful: [] }
+    clears: [bike_hung]
+    focus: [saddle, rear_wheel]
+    view: whole_bike
+    animation: { target: bike, motion: push, direction: "down", amount: "until the rear wheel is on the ground", caption: "Lift the bike off and set it down" }
+
+  - id: turn-bike-upright
+    kind: action
+    minutes: 1
+    text: "Turn the bike back onto its wheels. With a heavy bike, ask someone to help."
+    clears: [bike_upside_down]
+    focus: [bike]
+    view: whole_bike
+    animation: { target: bike, motion: rotate, direction: "over, wheels down", amount: "half a turn", caption: "Turn the bike back onto its wheels" }
+
+  - id: park-bike
+    kind: action
+    minutes: 1
+    text: "Put the bike on its kickstand, or lean it against a wall at the saddle and rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls."
+    forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
+    focus: [kickstand, rear_wheel]
+    view: whole_bike

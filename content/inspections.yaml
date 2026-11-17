@@ -1,0 +1,68 @@
+# Shared inspections: a look, listen or feel that reports one of two or three named states.
+# Used by diagnoses, the routine check and tutorials.
+#
+# hands_off: true means the inspection takes nothing apart and changes nothing on the bike.
+# Only those may be used by a diagnosis or the routine check.
+# leads_to on a state is routing data (job and urgency). Labels and meanings stay neutral.
+#
+# All mechanics here are unverified drafts. Doubts: content/review/adjust-rear-shifting.md
+
+inspections:
+  - id: derailleur-alignment
+    applies_when: { drive.gear_type: [derailleur] }
+    hands_off: true
+    minutes: 1
+    text: "Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain."
+    tools: { required: [], helpful: [torch] }
+    focus: [rear_derailleur, derailleur_hanger, cassette]
+    view: derailleur_from_behind
+    states:
+      - id: straight
+        label: "It hangs straight down, in line with the sprockets"
+        meaning: "The derailleur does not look bent."
+      - id: crooked
+        label: "It leans towards the spokes, or looks twisted"
+        meaning: "The derailleur or the part that holds it may be bent."
+        leads_to: { job: derailleur-check-at-shop, urgency: do_not_ride }
+
+  - id: chain-condition
+    applies_when: { drive.gear_type: [derailleur, hub_gear, gearbox, single_speed] }
+    hands_off: true
+    minutes: 1
+    text: "Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it."
+    tools: { required: [], helpful: [torch] }
+    focus: [chain]
+    view: chain_close
+    animation: { target: crank, motion: rotate, direction: "backwards", amount: "slowly, two full turns", caption: "Turn the pedals backwards" }
+    states:
+      - id: clean
+        label: "Clean, with a thin film of oil"
+        meaning: "The chain looks cared for."
+      - id: dry-or-rusty
+        label: "Dry, rusty, or it squeaks"
+        meaning: "The chain needs cleaning and oil."
+        leads_to: { job: chain-care, urgency: soon }
+      - id: dirty
+        label: "Black and gritty"
+        meaning: "The chain needs cleaning and oil."
+        leads_to: { job: chain-care, urgency: soon }
+
+  - id: shift-test-ride
+    applies_when: { drive.gear_type: [derailleur] }
+    hands_off: true
+    minutes: 3
+    text: "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down."
+    focus: [shifter_rear, cassette]
+    view: drive_side
+    states:
+      - id: slow-to-bigger
+        label: "Slow or rattling when pedalling gets lighter"
+        meaning: "The chain is slow to climb to the bigger sprockets."
+        leads_to: { job: adjust-rear-shifting, urgency: soon }
+      - id: slow-to-smaller
+        label: "Slow or rattling when pedalling gets harder"
+        meaning: "The chain is slow to drop to the smaller sprockets."
+        leads_to: { job: adjust-rear-shifting, urgency: soon }
+      - id: fine
+        label: "Every gear changes quickly and runs quietly"
+        meaning: "The rear gears shift well."

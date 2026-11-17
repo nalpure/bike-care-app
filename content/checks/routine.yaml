@@ -1,0 +1,11 @@
+# The routine check: a fixed list of hands-off inspections.
+# Every state with leads_to becomes a to-do item on the bike.
+# Inspections whose applies_when does not fit the bike are skipped.
+
+check:
+  id: routine-check
+  title: "Routine check"
+  inspections:
+    - inspect: derailleur-alignment
+    - inspect: chain-condition
+    - inspect: shift-test-ride

@@ -1,0 +1,25 @@
+# A bike the app knows nothing about. The owner answers each question when asked.
+
+profile:
+  id: unknown-bike
+  name: "Unknown bike"
+  description: "Nothing is stored about this bike. The owner can answer the picture questions. No tools."
+  facts: {}
+  answers:
+    drive.gear_type: derailleur
+    drive.shifting: mechanical
+  tools: []
+  journeys:
+    - id: test-rides
+      title: "Slow shifting, adjusted between short test rides"
+      start: { diagnosis: gears-shift-badly }
+      sees:
+        derailleur-alignment: straight
+        chain-condition: clean
+        shift-test-ride: slow-to-bigger
+      job_choice: diy
+      choices: { hold_bike: ground }
+      tutorial_sees:
+        derailleur-alignment: straight
+        check-low-limit-by-hand: "Straight below the largest sprocket"
+        check-all-gears-riding: "Every gear runs quietly"

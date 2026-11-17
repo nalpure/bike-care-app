@@ -1,0 +1,25 @@
+# Jobs: what can be done about a finding. A job has a tutorial, a shop route, or both.
+# Prices are placeholders until a curated price table exists. The app shows "no estimate yet".
+
+jobs:
+  - id: adjust-rear-shifting
+    title: "Adjust the rear gears"
+    tutorial: adjust-rear-shifting
+    shop:
+      tell: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
+      price_eur: "<range>"
+      price_source: "<source, date>"
+
+  - id: chain-care
+    title: "Clean and oil the chain"
+    shop:
+      tell: "The chain is dry, dirty or rusty. Please clean and oil it, and check it for wear."
+      price_eur: "<range>"
+      price_source: "<source, date>"
+
+  - id: derailleur-check-at-shop
+    title: "Have the rear gears checked"
+    shop:
+      tell: "The rear gears do not work as they should. Please check the rear derailleur, the part that holds it, and the gear cable."
+      price_eur: "<range>"
+      price_source: "<source, date>"

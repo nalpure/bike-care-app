@@ -1,0 +1,34 @@
+# Adjust the rear gears (mechanical rear derailleur).
+# Golden example for the content format. Mechanics are unverified drafts:
+# see content/review/adjust-rear-shifting.md.
+#
+# Branch 1, by mechanism: only a mechanical derailleur is covered.
+# Branch 2, nested, by how the bike is held: with the rear wheel free the user turns the pedals
+# by hand; on its wheels the user adjusts between short test rides. The order of work differs,
+# which is the one case where approach.md allows a nested branch.
+
+tutorial:
+  id: adjust-rear-shifting
+  job: adjust-rear-shifting
+  difficulty: 2
+  choices: [hold_bike]
+  cases:
+    - when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
+      cases:
+        - when: { choice.hold_bike: [stand, hang, upside_down] }
+          include: cases/wheel-free.yaml
+        - when: { choice.hold_bike: [ground] }
+          include: cases/test-rides.yaml
+    - when: { drive.gear_type: [derailleur], drive.shifting: [electronic] }
+      not_covered: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+    - when: { drive.gear_type: [derailleur], drive.shifting: [unknown] }
+      not_covered: "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop."
+    - when: { drive.gear_type: [hub_gear] }
+      not_covered: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+    - when: { drive.gear_type: [gearbox] }
+      not_covered: "Gearboxes at the pedals are not covered yet."
+    - when: { drive.gear_type: [single_speed] }
+      not_covered: "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help."
+    - when: { drive.gear_type: [unknown] }
+      not_covered: "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop."
+  if_unknown: ask

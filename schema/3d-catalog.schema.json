@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/3d-catalog.schema.json",
+  "title": "schema/3d-catalog.yaml: named 3D nodes, views and clips. Replaced by build/3d-manifest.json once the player exports it.",
+  "type": "object",
+  "properties": {
+    "nodes": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
+    "views": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
+    "clips": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
+    "motions": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["nodes", "views", "clips"],
+  "additionalProperties": false
+}

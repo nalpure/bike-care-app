@@ -1,0 +1,21 @@
+# Procedures: reusable runs of steps with one implementation per fact or choice value.
+# Implementations are evaluated in order; the first whose when matches runs.
+
+procedures:
+  - id: hold-bike
+    implementations:
+      - when: { choice.hold_bike: [stand] }
+        steps: [clamp-in-stand]
+      - when: { choice.hold_bike: [hang] }
+        steps: [hang-bike]
+      - when: { choice.hold_bike: [upside_down] }
+        steps: [turn-upside-down]
+
+  - id: release-bike
+    implementations:
+      - when: { choice.hold_bike: [stand] }
+        steps: [unclamp-from-stand]
+      - when: { choice.hold_bike: [hang] }
+        steps: [take-bike-down]
+      - when: { choice.hold_bike: [upside_down] }
+        steps: [turn-bike-upright]

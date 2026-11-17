@@ -1,0 +1,17 @@
+# Session state labels: what is apart, or what makes the bike not ready to ride.
+# Steps declare sets, clears and forbidden_while with these ids.
+# The build checks that every path ends with no label set, and that a stop reached while a
+# label is set names what to put back and has show_how_from.
+
+states:
+  - id: bike_in_stand
+    description: "The bike is clamped in a work stand."
+    put_back: "Take the bike out of the stand."
+
+  - id: bike_hung
+    description: "The bike hangs from a hook or a rope."
+    put_back: "Take the bike down."
+
+  - id: bike_upside_down
+    description: "The bike stands upside down on its saddle and handlebar."
+    put_back: "Turn the bike back onto its wheels."

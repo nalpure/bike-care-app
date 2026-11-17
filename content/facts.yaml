@@ -1,0 +1,68 @@
+# Facts: lasting properties of a bike, stored on the bike and asked at most once.
+#
+# A fact is asked only when a condition in the user's flow reads it (a route fact).
+# Facts used only in placeholders {key|fallback} or in details lines are never asked;
+# when they are known, the text becomes more specific (a detail fact).
+# Any fact may be unknown. Conditions can test the value unknown explicitly.
+
+facts:
+  - key: bike.category
+    type: enum
+    values: [mtb, road_gravel, trekking_city, cargo]
+    safety: false
+    question:
+      en: "What kind of bike is it?"
+      de: "Was für ein Fahrrad ist es?"
+      picture: bike-categories
+    answers:
+      mtb: { en: "Mountain bike", de: "Mountainbike" }
+      road_gravel: { en: "Road or gravel bike", de: "Rennrad oder Gravelbike" }
+      trekking_city: { en: "Trekking or city bike", de: "Trekking- oder Stadtrad" }
+      cargo: { en: "Cargo bike", de: "Lastenrad" }
+
+  - key: bike.ebike
+    type: boolean
+    safety: false
+    question:
+      en: "Does your bike have a motor?"
+      de: "Hat dein Fahrrad einen Motor?"
+    answers:
+      "true": { en: "Yes, it is an e-bike", de: "Ja, es ist ein E-Bike" }
+      "false": { en: "No motor", de: "Kein Motor" }
+
+  - key: drive.gear_type
+    type: enum
+    values: [derailleur, hub_gear, gearbox, single_speed]
+    safety: false
+    question:
+      en: "Look at the rear wheel. Which picture looks like your bike?"
+      de: "Schau dir das Hinterrad an. Welches Bild sieht aus wie dein Fahrrad?"
+      picture: rear-gear-types
+    answers:
+      derailleur: { en: "Several sprockets, and a part below them that guides the chain", de: "Mehrere Ritzel und darunter ein Teil, das die Kette führt" }
+      hub_gear: { en: "One sprocket, and a thick hub in the middle of the wheel", de: "Ein Ritzel und eine dicke Nabe in der Mitte des Rads" }
+      gearbox: { en: "One sprocket, and a box at the pedals", de: "Ein Ritzel und ein Kasten an den Pedalen" }
+      single_speed: { en: "One sprocket, and no way to change gear", de: "Ein Ritzel und keine Schaltung" }
+
+  - key: drive.shifting
+    type: enum
+    values: [mechanical, electronic]
+    safety: false
+    note: "Only asked when drive.gear_type is derailleur, because conditions test it after the gear type."
+    question:
+      en: "Follow the shifter on the right of the handlebar. What connects it to the rear gears?"
+      de: "Folge dem Schalthebel rechts am Lenker. Was verbindet ihn mit der hinteren Schaltung?"
+      picture: shifting-types
+    answers:
+      mechanical: { en: "A thin cable in a housing", de: "Ein dünner Zug in einer Hülle" }
+      electronic: { en: "A wire with a plug, or no wire at all", de: "Ein Kabel mit Stecker, oder gar kein Kabel" }
+
+  - key: drive.rear_speeds
+    type: number
+    safety: false
+    note: "Detail fact. Never asked. Used in text when known."
+
+  - key: drive.rear_derailleur_model
+    type: text
+    safety: false
+    note: "Detail fact, for example the model printed on the derailleur. Never asked. Used in text when known."

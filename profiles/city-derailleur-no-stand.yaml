@@ -1,0 +1,34 @@
+# A city bike with a derailleur. The owner has no work stand.
+
+profile:
+  id: city-derailleur-no-stand
+  name: "City bike with derailleur, no stand"
+  description: "Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows the gear type but not how the gears are connected."
+  facts:
+    bike.category: trekking_city
+    bike.ebike: false
+    drive.gear_type: derailleur
+  answers:
+    drive.shifting: mechanical
+  tools: []
+  journeys:
+    - id: slow-shifting-upside-down
+      title: "Slow shifting, adjusted at home with the bike upside down"
+      start: { diagnosis: gears-shift-badly }
+      sees:
+        derailleur-alignment: straight
+        chain-condition: clean
+        shift-test-ride: slow-to-bigger
+      job_choice: diy
+      choices: { hold_bike: upside_down }
+      tutorial_sees:
+        derailleur-alignment: straight
+        check-low-limit: "Further in, towards the spokes"
+        check-all-gears: "Every gear runs quietly"
+        shift-test-ride: fine
+
+    - id: bent-derailleur
+      title: "The derailleur looks bent, so the owner goes to a shop"
+      start: { diagnosis: gears-shift-badly }
+      sees:
+        derailleur-alignment: crooked

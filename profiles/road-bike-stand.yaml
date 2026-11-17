@@ -1,0 +1,38 @@
+# A road bike whose owner has a work stand. Much is known about the bike.
+
+profile:
+  id: road-bike-stand
+  name: "Road bike with a work stand"
+  description: "Road bike, 11-speed mechanical rear derailleur. The owner has a stand and a torch."
+  facts:
+    bike.category: road_gravel
+    bike.ebike: false
+    drive.gear_type: derailleur
+    drive.shifting: mechanical
+    drive.rear_speeds: 11
+    drive.rear_derailleur_model: "Shimano 105 RD-R7000"
+  answers: {}
+  tools: [bike-stand, torch]
+  journeys:
+    - id: chain-touches-spokes
+      title: "Adjusting in the stand, but the chain touches the spokes at the end"
+      start: { diagnosis: gears-shift-badly }
+      sees:
+        derailleur-alignment: straight
+        chain-condition: clean
+        shift-test-ride: slow-to-smaller
+      job_choice: diy
+      choices: { hold_bike: stand }
+      tutorial_sees:
+        derailleur-alignment: straight
+        check-low-limit: "Straight below the sprocket"
+        check-all-gears: "The chain falls off, or touches the spokes"
+      after_stop: show_how
+
+    - id: routine-check-dirty-chain
+      title: "Routine check finds a dirty chain"
+      start: { check: routine-check }
+      sees:
+        derailleur-alignment: straight
+        chain-condition: dirty
+        shift-test-ride: fine

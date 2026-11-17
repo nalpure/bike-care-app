@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/steps.schema.json",
+  "title": "content/steps/*.yaml: shared steps",
+  "type": "object",
+  "properties": {
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "kind": { "enum": ["action", "check", "safety_check"] },
+          "minutes": { "$ref": "common.schema.json#/$defs/minutes" },
+          "text": { "$ref": "common.schema.json#/$defs/text" },
+          "when": { "$ref": "common.schema.json#/$defs/condition" },
+          "if_unknown": {
+            "description": "When a fact in when is unknown. ask: ask before the start; if still unknown, as include. generic: show generic_text. skip: leave the step out. include: show the step as written.",
+            "enum": ["ask", "generic", "skip", "include"]
+          },
+          "generic_text": { "$ref": "common.schema.json#/$defs/text" },
+          "tools": { "$ref": "common.schema.json#/$defs/toolUse" },
+          "parts": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } },
+          "sets": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/stateLabel" } },
+          "clears": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/stateLabel" } },
+          "forbidden_while": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/stateLabel" } },
+          "focus": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
+          "view": { "$ref": "common.schema.json#/$defs/nodeName" },
+          "animation": { "$ref": "common.schema.json#/$defs/animation" },
+          "details": { "$ref": "common.schema.json#/$defs/details" },
+          "buttons": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": { "$ref": "common.schema.json#/$defs/button" }
+          }
+        },
+        "required": ["id", "kind", "minutes", "text"],
+        "additionalProperties": false,
+        "dependentRequired": { "when": ["if_unknown"], "if_unknown": ["when"] }
+      }
+    }
+  },
+  "required": ["steps"],
+  "additionalProperties": false
+}

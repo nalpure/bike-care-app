@@ -1,0 +1,39 @@
+# Tool catalog and parts.
+# Tools are picked fresh for each run. Parts are bought and fitted.
+
+tools:
+  - id: bike-stand
+    name: "Bike work stand"
+    kind: tool
+
+  - id: hook-or-rope
+    name: "Strong hook or rope that can carry the bike"
+    kind: tool
+    do_not_use:
+      - { name: "Thin string or a coat hook", reason: "It can break, and the bike falls" }
+
+  - id: work-mat
+    name: "Soft mat or old blanket"
+    kind: tool
+    substitutes:
+      - { name: "Flattened cardboard box" }
+
+  - id: torch
+    name: "Torch or phone light"
+    kind: tool
+
+  - id: derailleur-screw-tool
+    name: "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur"
+    kind: tool
+    substitutes:
+      - { name: "Bike multi-tool with a small cross-head bit and small hex keys" }
+    do_not_use:
+      - { name: "A screwdriver that is too big or too small", reason: "It slips and damages the screw head" }
+
+  - id: clean-cloth
+    name: "Clean cloth"
+    kind: consumable
+    substitutes:
+      - { name: "Kitchen paper" }
+
+parts: []
