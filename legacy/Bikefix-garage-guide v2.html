@@ -1,0 +1,2118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<title>Bikefix Garage Guide</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: app shell with five tabs (Repair, Garage, Shop, Workshops, Ask). Repair opens a wizard (bike, tools) that ends in the pinned 3D guide. */
+:root {
+  --bg: #E9EDF0;
+  --panel: #F7F9FA;
+  --ink: #14202A;
+  --ink2: #4F5E6A;
+  --line: #C9D2D8;
+  --accent: #F2B600;
+  --accent-ink: #1A1500;
+  --accent-text: #7A5800;
+  --good: #1E9E5A;
+  --bad: #D6453D;
+  --stage: #DCE3E8;
+  --stage2: #C9D4DB;
+  --part: #5C6D7B;
+  --f-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
+  --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E151B; --panel: #151E26; --ink: #E8EEF2; --ink2: #9AA9B5; --line: #28343E;
+    --accent: #FFC71F; --accent-ink: #1A1500; --accent-text: #FFC71F;
+    --good: #34C77B; --bad: #FF6B5E;
+    --stage: #0A1015; --stage2: #18232C; --part: #8998A5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E151B; --panel: #151E26; --ink: #E8EEF2; --ink2: #9AA9B5; --line: #28343E;
+  --accent: #FFC71F; --accent-ink: #1A1500; --accent-text: #FFC71F;
+  --good: #34C77B; --bad: #FF6B5E;
+  --stage: #0A1015; --stage2: #18232C; --part: #8998A5;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+  overflow: hidden; display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+h1, h2, h3, p, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+
+/* ---------- shell ---------- */
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-block: 8px 20px; display: flex; flex-direction: column; gap: 16px; -webkit-overflow-scrolling: touch; }
+.h1 { font-family: var(--f-display); font-weight: 700; font-size: 32px; line-height: 1.02; letter-spacing: .005em; text-wrap: balance; }
+.lead { color: var(--ink2); font-size: 15.5px; max-width: 60ch; }
+.eyebrow { font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); }
+.brandrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-top: 8px; flex: none; }
+.brand { font-family: var(--f-display); font-weight: 700; font-size: 24px; letter-spacing: .02em; line-height: 1; }
+.demo { font: 500 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); border: 1px solid var(--line); padding: 5px 7px; border-radius: 6px; }
+
+.tabbar { flex: none; display: flex; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))) calc(-1 * max(16px, env(safe-area-inset-right, 0px))); padding-inline: max(8px, env(safe-area-inset-left, 0px)) max(8px, env(safe-area-inset-right, 0px)); border-top: 1px solid var(--line); background: var(--panel); }
+.tabbar button { flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; background: none; font: 600 12px/1 var(--f-body); color: var(--ink2); position: relative; }
+.tabbar svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tabbar button[aria-current="page"] { color: var(--ink); }
+.tabbar button[aria-current="page"]::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent); }
+.tabbar .pro { position: absolute; top: 5px; right: calc(50% - 26px); font: 500 8px/1 var(--f-mono); letter-spacing: .05em; padding: 3px 4px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); }
+
+.wh { display: flex; align-items: center; gap: 6px; padding-block: 6px 2px; flex: none; margin-left: -8px; }
+.wh .t { flex: 1; min-width: 0; }
+.wh .t b { display: block; font-family: var(--f-display); font-size: 22px; line-height: 1.05; }
+.wh .t small { display: block; font: 500 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); }
+.ib { width: 44px; height: 44px; flex: none; display: grid; place-items: center; border: 0; background: none; border-radius: 12px; }
+.ib svg, .fab svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.cta { flex: none; padding-block: 10px 12px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); }
+.cta small { color: var(--ink2); font-size: 13px; text-align: center; }
+.btn { min-height: 46px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; font-size: 16px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.wide { width: 100%; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.link { background: none; border: 0; padding: 8px 0; text-decoration: underline; color: var(--ink2); font-size: 14px; }
+
+/* ---------- lists, cards, forms ---------- */
+.list { border-top: 1px solid var(--line); }
+.list li { border-bottom: 1px solid var(--line); }
+.li { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 2px; border: 0; background: none; text-align: left; }
+.li .tx { flex: 1; min-width: 0; }
+.li .tx b { display: block; font-size: 17px; line-height: 1.25; }
+.li .tx span { display: block; font-size: 14px; color: var(--ink2); }
+.badge { flex: none; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 5px 7px; border-radius: 6px; background: var(--stage2); color: var(--ink2); }
+.badge.ready { background: var(--accent); color: var(--accent-ink); }
+.badge.warn { background: color-mix(in srgb, var(--bad) 18%, var(--panel)); color: var(--ink); }
+.search { width: 100%; min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 0 14px; }
+
+.card { border: 1px solid var(--line); background: var(--panel); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+button.card { width: 100%; text-align: left; }
+.card .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.card b { font-family: var(--f-display); font-size: 22px; line-height: 1.05; }
+.card span.s { font-size: 14px; color: var(--ink2); }
+.bikes { display: flex; flex-direction: column; gap: 10px; }
+.note { border-radius: 10px; padding: 10px 12px; font-size: 14px; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); }
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.field > label, .field > .lbl { font-weight: 600; font-size: 15px; }
+.field .help { font-size: 13.5px; color: var(--ink2); }
+.field.need > .lbl::after, .field.need > label::after { content: "Needed"; margin-left: 8px; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 3px 5px; border-radius: 5px; background: var(--accent); color: var(--accent-ink); vertical-align: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cb { min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; font-size: 15px; }
+.cb[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.chips.nums .cb { min-width: 46px; padding: 0 10px; }
+.text { min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 0 14px; width: 100%; }
+
+.tick { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 2px; border: 0; background: none; text-align: left; min-height: 58px; }
+.tick .box { flex: none; width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--ink2); display: grid; place-items: center; }
+.tick .box svg { width: 16px; height: 16px; stroke: var(--accent-ink); fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; opacity: 0; }
+.tick[aria-checked="true"] .box { background: var(--accent); border-color: var(--accent); }
+.tick[aria-checked="true"] .box svg { opacity: 1; }
+.tick .tx { flex: 1; min-width: 0; }
+.tick .tx b { display: block; font-size: 16px; line-height: 1.25; }
+.tick .tx span { display: block; font-size: 13.5px; color: var(--ink2); }
+.tools-group { border-top: 1px solid var(--line); }
+.tools-group > .row { border-bottom: 1px solid var(--line); display: flex; align-items: center; }
+.tools-group > .row .tick { flex: 1; }
+.tools-group .getit { flex: none; font-size: 13.5px; padding: 10px 4px; min-height: 44px; }
+
+/* ---------- chat ---------- */
+.chat { display: flex; flex-direction: column; gap: 10px; }
+.msg { max-width: 88%; padding: 10px 12px; border-radius: 14px; font-size: 15.5px; line-height: 1.4; }
+.msg.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); border-bottom-right-radius: 4px; }
+.msg.ai { align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 4px; display: flex; flex-direction: column; gap: 8px; }
+.msg .acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.msg .acts .btn { min-height: 40px; font-size: 14px; padding: 0 12px; }
+.sugg { display: flex; flex-wrap: wrap; gap: 8px; }
+.sugg .cb { font-size: 14px; font-weight: 400; }
+.chatin { display: flex; gap: 8px; }
+
+/* ---------- shop and workshops ---------- */
+.shoprow { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; padding: 6px 0; border-top: 1px dashed var(--line); }
+.shoprow:first-of-type { border-top: 0; }
+.shoprow span:last-child { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.total { font-family: var(--f-display); font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.tag2 { font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 6px; border-radius: 5px; background: var(--stage2); }
+
+.toast { position: fixed; left: 50%; top: calc(10px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 90; background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: 14px; max-width: calc(100% - 32px); text-align: center; }
+.modal { position: fixed; inset: 0; z-index: 80; background: rgba(8, 12, 16, .55); display: flex; align-items: flex-end; justify-content: center; padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.modal .card { width: 100%; max-width: 460px; }
+
+/* ---------- guide ---------- */
+.gtop { flex: none; display: flex; align-items: center; gap: 6px; padding-block: 4px; margin-left: -8px; }
+.gtop .t { flex: 1; min-width: 0; font: 500 11px/1.25 var(--f-mono); letter-spacing: .05em; text-transform: uppercase; color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toggle { min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); font-size: 13px; font-weight: 600; }
+.toggle[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+.app { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
+.stage {
+  position: relative; flex: 0 0 clamp(150px, 30%, 330px); min-height: 0; border-radius: 14px; overflow: hidden;
+  background: radial-gradient(ellipse at 50% 35%, var(--stage2), var(--stage));
+  border: 1px solid var(--line);
+}
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.nogl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--ink2); }
+.chip, .stnote, .cap { position: absolute; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
+.chip { left: 10px; top: 10px; background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; }
+.cap { left: 50%; top: 10px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line); padding: 6px 9px; border-radius: 8px; white-space: nowrap; opacity: 0; transition: opacity .25s; font-size: 11px; font-variant-numeric: tabular-nums; }
+.cap.on { opacity: 1; }
+.stnote { left: 12px; bottom: 14px; color: var(--ink2); max-width: calc(100% - 120px); line-height: 1.3; }
+.stnote.pick { color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; left: 10px; bottom: 12px; }
+.fabs { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; }
+.fab { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
+.tags { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tag { position: absolute; left: 0; top: 0; background: var(--accent); color: var(--accent-ink); font: 500 10px/1 var(--f-mono); letter-spacing: .03em; padding: 3px 5px; border-radius: 5px; white-space: nowrap; will-change: transform; opacity: 0; transition: opacity .5s; }
+.tag.on { opacity: .95; }
+
+.side { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+.guide { flex: 1; min-height: 0; position: relative; overflow-y: auto; scroll-snap-type: y proximity; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.guide::-webkit-scrollbar { display: none; }
+.step { min-height: 100%; scroll-snap-align: start; display: flex; flex-direction: column; gap: 8px; padding-block: 2px 8px; opacity: .45; transition: opacity .3s; }
+.step.on { opacity: 1; }
+.kicker { font: 500 11.5px/1.25 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); }
+.kicker .draft { margin-left: 6px; padding: 2px 5px; border-radius: 4px; background: var(--accent); color: var(--accent-ink); }
+.step h2 { font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 6.6vw, 33px); line-height: 1.02; letter-spacing: .005em; text-wrap: balance; }
+.step p { font-size: 15.5px; line-height: 1.42; max-width: 62ch; }
+.needs { font: 500 11.5px/1.35 var(--f-mono); color: var(--ink2); }
+.watch { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 0 11px; font-size: 14px; line-height: 1.38; color: var(--ink2); max-width: 62ch; }
+.watch[open] { padding-bottom: 9px; }
+.watch summary, .more summary { min-height: 40px; display: flex; align-items: center; cursor: pointer; font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); }
+.more summary { color: var(--ink2); text-decoration: underline; text-transform: none; letter-spacing: 0; font: 400 14px/1 var(--f-body); min-height: 36px; }
+.more p { font-size: 14.5px; color: var(--ink2); }
+.step.answered > p, .step.answered > .needs, .step.answered > .more { display: none; }
+.verdict b { display: block; font: 500 10.5px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); margin-bottom: 5px; }
+.q { display: flex; flex-direction: column; gap: 7px; max-width: 62ch; }
+.opt { min-height: 44px; text-align: left; padding: 0 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-weight: 600; font-size: 15.5px; }
+.verdict { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 9px 12px; font-size: 14.5px; line-height: 1.4; }
+.verdict.good { border-color: var(--good); }
+.verdict.bad { border-color: var(--bad); }
+.verdict p { font-size: 14.5px; }
+.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.actions .muted { color: var(--ink2); font-size: 14px; }
+.actions .btn { min-height: 44px; }
+
+.pager { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pager .btn { min-height: 46px; padding: 0 16px; }
+.dots { display: flex; gap: 0; }
+.dots button { width: 22px; height: 44px; padding: 0; border: 0; background: none; display: grid; place-items: center; }
+.dots i { display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--line); transition: transform .2s, background .2s; }
+.dots button.on i { background: var(--accent-text); transform: scale(1.5); }
+.app.textonly .stage { display: none; }
+.app.textonly .side { max-width: 640px; width: 100%; margin-inline: auto; }
+
+.stage.explore { position: fixed; inset: 0; z-index: 50; border-radius: 0; border: 0; flex: none; }
+.stage.explore .chip, .stage.explore .stnote, .stage.explore .fabs, .stage.explore .tags, .stage.explore .cap { display: none; }
+.xui { display: none; position: absolute; left: 0; right: 0; pointer-events: none; gap: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.stage.explore .xui { display: flex; }
+.xtop { top: 0; padding-top: calc(12px + env(safe-area-inset-top, 0px)); justify-content: space-between; align-items: center; }
+.xbottom { bottom: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.xui > * { pointer-events: auto; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); min-width: 0; }
+.seg button { border: 0; background: none; min-height: 44px; padding: 0 14px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.pcard { width: 100%; max-width: 460px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+.pcard strong { font-family: var(--f-display); font-size: 22px; font-weight: 700; line-height: 1.1; }
+.pcard span { font-size: 14px; color: var(--ink2); }
+
+.stage.garage { flex: none; height: clamp(230px, 40vh, 380px); }
+.stage.garage .chip, .stage.garage .cap, .stage.garage .stnote, .stage.garage .fabs, .stage.garage .tags { display: none; }
+.ghint { display: none; position: absolute; left: 10px; bottom: 10px; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; pointer-events: none; }
+.stage.garage .ghint { display: block; }
+.sw { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw button { width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--line); padding: 0; }
+.sw button.def { width: auto; padding: 0 14px; border-radius: 22px; background: var(--panel); font-size: 14px; font-weight: 600; }
+.sw button[aria-pressed="true"] { outline: 3px solid var(--accent-text); outline-offset: 2px; }
+.gcard { gap: 2px; }
+.gcard b { font-size: 20px; }
+.progress { height: 4px; border-radius: 2px; background: var(--line); flex: none; }
+.progress i { display: block; height: 100%; border-radius: 2px; background: var(--accent); transition: width .25s; }
+.qopts { display: flex; flex-direction: column; gap: 10px; }
+.qopts .opt { min-height: 56px; font-size: 17px; }
+.chips.nums .cb { min-height: 52px; min-width: 52px; font-size: 18px; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--ink2); font-size: 14px; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.h2q { font-family: var(--f-display); font-weight: 700; font-size: 30px; line-height: 1.05; text-wrap: balance; }
+
+@media (max-height: 740px) {
+  .step h2 { font-size: clamp(22px, 6vw, 28px); }
+  .step p { font-size: 15px; }
+  .watch { font-size: 13.5px; }
+  .stage { flex-basis: clamp(130px, 27%, 280px); }
+}
+@media (min-width: 860px) {
+  .app { flex-direction: row; gap: 20px; }
+  .stage { flex: 1.15 1 0; }
+  .side { flex: 1 1 0; max-width: 560px; }
+  .step { justify-content: center; }
+  .scroll, .cta, .wh, .brandrow { max-width: 720px; width: 100%; margin-inline: auto; }
+}
+@media (prefers-reduced-motion: reduce) { .step, .tag, .dots i, .cap { transition: none; } }
+</style>
+</head>
+<body>
+<section class="screen" data-screen="repair"></section>
+<section class="screen" data-screen="shop" hidden></section>
+<section class="screen" data-screen="shops" hidden></section>
+<section class="screen" data-screen="ask" hidden></section>
+<section class="screen" data-screen="pick" hidden></section>
+<section class="screen" data-screen="garage" hidden></section>
+<section class="screen" data-screen="bike" hidden></section>
+<section class="screen" data-screen="q" hidden></section>
+<section class="screen" data-screen="tools" hidden></section>
+<section class="screen" data-screen="nohelp" hidden></section>
+
+<section class="screen" data-screen="guide" hidden>
+  <div class="gtop">
+    <button class="ib" data-do="leaveGuide" aria-label="Close guide"><svg viewBox="0 0 24 24" width="22" height="22" style="stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="t" id="gtitle"></div>
+    <button class="toggle" id="textonly" aria-pressed="false">Text only</button>
+  </div>
+  <main class="app" id="app">
+    <section class="stage" id="stage" aria-label="3D view of the bike">
+      <canvas id="gl"></canvas>
+      <div class="nogl" id="nogl">The 3D view is not available on this device. The written steps still work.</div>
+      <div class="tags" id="tags"></div>
+      <div class="ghint">Drag to turn · pinch to zoom · tap a part</div>
+      <div class="chip" id="chip" aria-live="polite">1 / 5</div>
+      <div class="cap" id="cap"></div>
+      <div class="stnote" id="note"></div>
+      <div class="fabs">
+        <button class="fab" id="replay" aria-label="Replay animation"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+        <button class="fab" id="expand" aria-label="Explore in 3D"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
+      <div class="xui xtop">
+        <button class="fab" id="xclose" aria-label="Close 3D explorer"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="seg" role="group" aria-label="Which parts to show">
+          <button id="xfocus" aria-pressed="false">Step focus</button>
+          <button id="xall" aria-pressed="true">Show all</button>
+        </div>
+      </div>
+      <div class="xui xbottom">
+        <div class="pcard" aria-live="polite"><strong id="pname">Tap a part</strong><span id="palias">Drag to rotate, pinch to zoom.</span><span id="pdesc"></span></div>
+      </div>
+    </section>
+    <section class="side">
+      <div class="guide" id="guide"></div>
+      <div class="pager">
+        <button class="btn" id="prev">Back</button>
+        <div class="dots" id="dots"></div>
+        <button class="btn primary" id="next">Next step</button>
+      </div>
+    </section>
+  </main>
+</section>
+
+<nav class="tabbar" id="tabbar" aria-label="Main">
+  <button data-tab="repair" aria-current="page"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3.5 17.2a1.8 1.8 0 0 0 2.5 2.5l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.5 2.5-2.1-.6-.6-2.1z"/></svg>Repair</button>
+  <button data-tab="garage"><svg viewBox="0 0 24 24"><circle cx="6" cy="16" r="3.5"/><circle cx="18" cy="16" r="3.5"/><path d="M6 16l4-8h5l3 8M10 8l3 8M9 6h3"/></svg>Garage</button>
+  <button data-tab="shop"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1 11H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Shop</button>
+  <button data-tab="shops"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>Workshops</button>
+  <button data-tab="ask"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Ask<span class="pro">PRO</span></button>
+</nav>
+<div class="toast" id="toast" hidden></div>
+<div class="modal" id="done" hidden>
+  <div class="card" role="dialog" aria-label="Did it work?">
+    <b>Did the shifting get better?</b>
+    <span class="s">Test ride it for a minute, then pick one.</span>
+    <button class="btn primary wide" data-do="doneYes">Yes, all good</button>
+    <button class="btn wide" data-do="doneNo">Not yet, help me</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const TAU = Math.PI * 2, HP = Math.PI / 2;
+  const ease = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+  const ramp = (t, a, b) => ease((t - a) / (b - a));
+  const nowS = () => performance.now() / 1000;
+  const eur = (n) => '€' + n.toFixed(2);
+
+  /* ============================================================
+     APP DATA (example data for the demo)
+     ============================================================ */
+  const TYPES = { city: 'City bike', road: 'Road bike', mtb: 'Mountain bike' };
+  const SHIFT = { mechanical: 'Mechanical derailleur', electronic: 'Electronic derailleur', hub: 'Hub gears', single: 'Single speed' };
+  const BRANDS = { shimano: 'Shimano', sram: 'SRAM', campagnolo: 'Campagnolo', other: 'Other / not sure' };
+  const SCREWS = { cross: 'Cross (Phillips)', hex: 'Hex (Allen)', unknown: 'Not sure' };
+
+  const SAVED = [
+    { id: 'racer', name: 'Red Racer', type: 'road', motor: false, shifting: null, brand: null, speeds: null, screws: null, colors: {} },
+    { id: 'daily', name: 'Everyday', type: 'city', motor: false, shifting: 'mechanical', brand: 'shimano', speeds: 7, screws: 'cross', colors: {} },
+    { id: 'trail', name: 'Trail Hardtail', type: 'mtb', susp: 'hard', motor: false, shifting: 'mechanical', brand: 'sram', speeds: 10, screws: 'hex', colors: {} },
+    { id: 'ecom', name: 'Commuter E-bike', type: 'city', motor: true, shifting: 'hub', brand: null, speeds: null, screws: null, colors: {} },
+    { id: 'enduro', name: 'Enduro', type: 'mtb', susp: 'full', motor: false, shifting: 'mechanical', brand: 'sram', speeds: 12, screws: 'hex', colors: {} }
+  ];
+  const TUTS = [
+    { id: 'index', title: 'Gears skip or shift slowly', sub: 'Adjust the rear derailleur', ready: true },
+    { id: 'flat', title: 'Fix a flat tire', sub: 'Patch or replace the inner tube' },
+    { id: 'chain', title: 'Chain falls off or keeps dropping', sub: 'Find the cause, put it back' },
+    { id: 'brakes', title: 'Brakes squeal or feel weak', sub: 'Pads, alignment, cables' },
+    { id: 'noise', title: 'Creaking or clicking noises', sub: 'Find where it comes from' },
+    { id: 'wheel', title: 'Remove and refit a wheel', sub: 'Quick release and thru axle' }
+  ];
+
+  function summary(b) {
+    const p = [(b.type === 'mtb' && b.susp === 'full' ? 'Full-suspension MTB' : TYPES[b.type]) + (b.motor ? ' · electric' : '')];
+    if (b.shifting) p.push(SHIFT[b.shifting] + (b.speeds ? ', ' + b.speeds + '-speed' : ''));
+    if (b.brand && b.shifting === 'mechanical') p.push(BRANDS[b.brand]);
+    return p.join(' · ');
+  }
+  function missing(b) {
+    const m = [];
+    if (!b.shifting) m.push('type of shifting');
+    else if (b.shifting === 'mechanical') {
+      if (!b.speeds) m.push('number of gears');
+      if (!b.screws) m.push('screw heads');
+    }
+    return m;
+  }
+
+  const state = {
+    screen: 'repair', tut: null, bike: null, orig: null, isNew: false, saveMode: 'new', saveChanges: true,
+    have: {}, pickId: null, q: null, gb: null, gsel: '', nohelp: null, query: '', chat: [],
+    shop: { bikes: ['daily'], items: ['chain', 'cables'] },
+    work: { bike: 'racer', express: false, partner: false }
+  };
+  const hist = [];
+
+  /* ============================================================
+     GUIDE DATA: bike record -> 3D bike, steps built from the record
+     ============================================================ */
+  const PITCH = 0.0254;                       // chain pitch in scene units (1 unit = 0.5 m)
+  const rOf = (teeth) => PITCH / (2 * Math.sin(Math.PI / teeth));
+  const HUBY = 0.7, RX = -0.9, RT = 0.73;
+  const LIFT = 0.3, GROUND = -0.03;
+  const GAP_OK = 0.011, GAP_BIG = 0.036, GAP_SMALL = 0.004;   // pulley to cog gap (x500 = mm)
+
+  function cassetteFor(type, n) {
+    const last = type === 'road' ? 28 : type === 'city' ? (n <= 8 ? 28 : 34) : (n >= 11 ? 51 : n >= 9 ? 42 : 34);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      let t = Math.round(11 * Math.pow(last / 11, i / (n - 1)));
+      if (i && t <= out[i - 1]) t = out[i - 1] + 1;
+      out.push(t);
+    }
+    return out;
+  }
+  function toBike(rec) {
+    const road = rec.type === 'road', mtb = rec.type === 'mtb', full = mtb && rec.susp === 'full';
+    rec.colors = rec.colors || {};
+    const Bk = {
+      type: road ? 'road' : mtb ? 'mountain' : 'city', name: rec.name || 'Your bike', motor: !!rec.motor,
+      frame: full ? 'full' : road ? 'road' : 'regular', forkKind: mtb ? 'susp' : 'rigid', FX: full ? 1.47 : 1.0, colors: rec.colors,
+      bar: road ? 'drop' : mtb ? 'riser' : 'flat',
+      cassette: cassetteFor(rec.type, rec.speeds || 8), chainring: road ? 50 : mtb ? 32 : 44,
+      tt: road ? 0.028 : mtb ? 0.07 : 0.045, barrelAt: road ? 'derailleur' : 'shifter',
+      shifterName: road ? 'brake lever' : 'trigger shifter'
+    };
+    const r = Bk.frame === 'road';
+    Bk.n = Bk.cassette.length;
+    Bk.sp = 0.16 / (Bk.n - 1);
+    Bk.zs = Bk.cassette.map((t, i) => 0.32 - i * Bk.sp);
+    Bk.rs = Bk.cassette.map(rOf);
+    Bk.rc = rOf(Bk.chainring);
+    Bk.chainW = Math.min(0.02, Bk.sp * 0.7);
+    Bk.ST = full ? [-0.3, 1.45] : r ? [-0.2, 1.5] : [-0.22, 1.5];
+    Bk.HT = full ? [1.04, 1.58] : r ? [0.84, 1.42] : [0.78, 1.5];
+    Bk.HB = full ? [1.198, 1.256] : r ? [0.9, 1.17] : [0.86, 1.15];
+    Bk.saddleY = full ? 1.84 : r ? 1.8 : 1.76;
+    const hx = Bk.HT[0], hy = Bk.HT[1];
+    Bk.C = [hx + 0.14, hy + 0.03];
+    Bk.S = Bk.bar === 'drop' ? [Bk.C[0] + 0.1, Bk.C[1] - 0.03, 0.21] : Bk.bar === 'riser' ? [hx - 0.04, hy + 0.125, 0.25] : [hx - 0.04, hy + 0.085, 0.27];
+    Bk.barTop = Bk.bar === 'drop' ? [Bk.S[0] - 0.05, Bk.S[1] + 0.04] : Bk.bar === 'riser' ? [hx - 0.04, hy + 0.18] : [hx - 0.04, hy + 0.14];
+    return Bk;
+  }
+  let B = toBike(SAVED[1]);
+  let CTX = { stand: true, ruler: false, screws: 'cross', motor: false };
+
+  function makeSteps(B, X) {
+    const sm = B.zs[0], lg = B.zs[B.n - 1];
+    const barrelDer = B.barrelAt === 'derailleur';
+    const barrelWhere = barrelDer ? 'on the rear derailleur, where the cable enters it' : 'on the ' + B.shifterName + ', where the cable leaves it';
+    const m = Math.floor(B.n / 2);
+    const lim = X.screws === 'hex' ? 'Allen key (2.5 or 3 mm)' : X.screws === 'cross' ? 'Phillips screwdriver' : 'Phillips screwdriver or Allen key';
+    const behind = () => ({ p: [RX - 1.7, 0.7, 0.24], t: [RX, 0.52, 0.24] });
+    const gapCam = () => ({ p: [RX - 0.85, 0.62, 0.95], t: [RX, 0.52, 0.14] });
+    const barrelCam = () => {
+      if (barrelDer) return { p: [RX - 1.0, 0.95, 1.3], t: [RX, 0.6, 0.2] };
+      const t = [B.S[0] - 0.07, B.S[1], B.S[2]];
+      return { p: [t[0] - 0.55, t[1] + 0.55, t[2] + 0.85], t: t };
+    };
+    const mainCam = () => barrelDer ? barrelCam() : { p: [RX - 1.5, 1.0, 2.3], t: [RX, 0.55, 0.22] };
+    const inCtx = ['derailleur', 'cassette', 'chain', 'rearWheel', 'frame'];
+    const stand = X.stand;
+    return [
+      {
+        kicker: 'Prep',
+        title: stand ? 'Clamp the bike, shift to the smallest cog' : 'Flip the bike, shift to the smallest cog',
+        text: (stand ? 'Clamp the seatpost in the repair stand so the rear wheel hangs free. '
+          : 'Turn the bike upside down so it rests on the saddle and handlebars, with the rear wheel free to spin. ') +
+          'Turn the pedals by hand and use the ' + B.shifterName + ' until the chain sits on the smallest cog (' + B.cassette[0] + ' teeth), the one furthest from the wheel.',
+        watch: 'Shift while turning the pedals. Moving the shifter with the cranks still does nothing, which is easy to mistake for a broken cable.' +
+          (stand ? '' : B.motor ? ' This is an e-bike: switch the assist off and ask someone to help you flip it.' : ' Do not leave hydraulic disc brakes upside down for long.'),
+        tools: stand ? ['Repair stand'] : ['Towel for the saddle'],
+        cam: () => ({ p: [-1.6, 1.3, 5.2], t: [0, 0.9, 0.1] }),
+        hot: ['derailleur', 'shifter'], ctx: 'all',
+        tags: [{ a: 'cogS', text: 'Cog' }, { a: 'pulley', text: 'Derailleur' }, { a: 'shifter', text: 'Shifter' }],
+        cycle: 5, anim: (t) => ({ z: lg + (sm - lg) * ramp(t, 1, 2.4) })
+      },
+      {
+        kicker: 'Derailleur / high limit', title: 'Check the high limit (H)',
+        text: 'Chain on the smallest cog? Look from directly behind the bike. Where is the upper pulley compared with the cog?',
+        watch: 'Turn directions in this guide are as you look at the screw from behind the bike. Use small steps and check the pulley after each one.',
+        tools: [lim],
+        cam: behind, hot: ['hScrew'], ctx: inCtx,
+        tags: [{ a: 'cogS', text: 'Cog' }, { a: 'pulley', text: 'Pulley' }, { a: 'h', text: 'H' }],
+        decision: {
+          kind: 'align', autoFix: true, target: 'small', screw: 'h',
+          fixedTitle: 'Aligned', fixedText: 'The pulley now sits straight under the cog. Continue to the next step.',
+          opts: [
+            { id: 'ok', label: 'Straight under the cog', off: 0, title: 'Nothing to change', text: 'The H limit is set. Continue to the next step.' },
+            { id: 'in', label: 'Toward the spokes', off: -0.07, dir: 'ccw', title: 'The H screw is too tight',
+              text: 'The derailleur cannot reach the smallest cog. Turn the H screw counterclockwise, a quarter turn at a time, until the pulley sits straight under the cog.' },
+            { id: 'out', label: 'Away from the spokes', off: 0.07, dir: 'cw', title: 'The H screw is too loose',
+              text: 'The pulley goes past the smallest cog and the chain can drop off. Turn the H screw clockwise, a quarter turn at a time, until the pulley sits straight under the cog.' }
+          ]
+        }
+      },
+      {
+        kicker: 'Derailleur / low limit', title: 'Check the low limit (L)',
+        text: 'Shift to the largest cog (' + B.cassette[B.n - 1] + ' teeth) and look from behind again. Where is the upper pulley compared with it?',
+        watch: 'If the L screw is too loose the chain can fall into the spokes. After adjusting, check this limit by hand before you ride.',
+        tools: [lim],
+        cam: behind, hot: ['lScrew'], ctx: inCtx,
+        tags: [{ a: 'cogL', text: 'Cog' }, { a: 'pulley', text: 'Pulley' }, { a: 'l', text: 'L' }],
+        decision: {
+          kind: 'align', autoFix: true, target: 'large', screw: 'l',
+          fixedTitle: 'Aligned', fixedText: 'The pulley now sits straight under the cog. Continue to the next step.',
+          opts: [
+            { id: 'ok', label: 'Straight under the cog', off: 0, title: 'Nothing to change', text: 'The L limit is set. Continue to the next step.' },
+            { id: 'in', label: 'Toward the spokes', off: -0.07, dir: 'cw', title: 'The L screw is too loose',
+              text: 'The pulley goes past the largest cog and the chain can fall into the spokes. Turn the L screw clockwise, a quarter turn at a time, until the pulley sits straight under the cog.' },
+            { id: 'out', label: 'Away from the spokes', off: 0.07, dir: 'ccw', title: 'The L screw is too tight',
+              text: 'The derailleur cannot reach the largest cog. Turn the L screw counterclockwise, a quarter turn at a time, until the pulley sits straight under the cog.' }
+          ]
+        }
+      },
+      {
+        kicker: 'B screw gap', draft: true, title: 'Set the gap to the cassette',
+        text: 'Keep the chain on the largest cog. Looking from the side, how big is the gap between the upper pulley and the cog?',
+        more: 'About 5 to 6 mm is a common target, but your derailleur manual has the exact value. ' + (X.ruler ? 'Measure the gap with your ruler.' : 'No ruler? A 5 mm Allen key held across the gap works as a gauge.') + ' If the bike has several chainrings at the front, use the smallest one.',
+        watch: 'Changing this gap affects shifting, so the next step checks the shifting again. Too small and the pulley rubs the big cog, too big and shifting to it gets sluggish.',
+        tools: ['Allen key'].concat(X.ruler ? ['Small ruler'] : []),
+        cam: gapCam, hot: ['bScrew'], ctx: inCtx,
+        tags: [{ a: 'cogL', text: 'Largest cog' }, { a: 'pulley', text: 'Pulley' }, { a: 'b', text: 'B screw' }],
+        decision: {
+          kind: 'gap', screw: 'b',
+          fixedTitle: 'Gap is right', fixedText: 'The gap is about 5 to 6 mm. Shift through the gears next to make sure nothing rubs.',
+          opts: [
+            { id: 'ok', label: 'About 5 to 6 mm', gap: GAP_OK, title: 'Nothing to change', text: 'The gap is right. Continue to the next step.' },
+            { id: 'big', label: 'Wider than that', gap: GAP_BIG, dir: 'ccw', title: 'The pulley sits too far from the cog',
+              text: 'A big gap makes shifting to the largest cog sluggish. Turn the B screw counterclockwise, a little at a time, until the gap is about 5 to 6 mm.' },
+            { id: 'small', label: 'Narrower, nearly touching', gap: GAP_SMALL, dir: 'cw', title: 'The pulley sits too close to the cog',
+              text: 'The pulley can rub the largest cog. Turn the B screw clockwise, a little at a time, until the gap is about 5 to 6 mm.' }
+          ]
+        }
+      },
+      {
+        kicker: 'Cable tension', title: 'Fix slow or noisy shifting',
+        text: 'Shift one gear at a time and watch the chain. Which direction is slow or noisy?',
+        more: 'The barrel adjuster is the knurled ring ' + barrelWhere + '. Turn it in quarter turns and shift again after each one.',
+        watch: 'This applies to standard mechanical derailleurs. Rapid-rise derailleurs work the other way round. Finish with a short test ride.',
+        tools: ['Your fingers'],
+        cam: mainCam, hot: ['barrel'], ctx: 'all',
+        tags: [{ a: 'barrel', text: 'Barrel' }, { a: 'pulley', text: 'Derailleur' }],
+        decision: {
+          kind: 'shift', screw: 'barrel', m: m, cams: { main: mainCam, barrel: barrelCam },
+          fixedTitle: 'Shifts well now', fixedText: 'The chain follows the shifter again. Shift through all ' + B.n + ' gears once more, then take a short test ride.',
+          opts: [
+            { id: 'up', label: 'Slow to a bigger cog', cap: 'Slow to bigger cog', goal: m + 1, dir: 'ccw', title: 'Not enough cable tension',
+              text: 'The derailleur lags when moving to a bigger cog, toward the spokes. Turn the barrel adjuster ' + barrelWhere + ' counterclockwise (unscrew it), a quarter turn at a time, and shift again.' },
+            { id: 'down', label: 'Slow to a smaller cog', cap: 'Slow to smaller cog', goal: m - 1, dir: 'cw', title: 'Too much cable tension',
+              text: 'The derailleur lags when moving to a smaller cog, away from the spokes. Turn the barrel adjuster ' + barrelWhere + ' clockwise (screw it in), a quarter turn at a time, and shift again.' },
+            { id: 'ok', label: 'Smooth both ways', cap: 'Smooth shifting', goal: m + 1, title: 'Nothing to change', text: 'Your shifting is indexed. Finish with a short test ride.' }
+          ]
+        }
+      }
+    ];
+  }
+  let STEPS = makeSteps(B, CTX);
+
+  const META = {
+    frame: ['Frame', 'Main frame and rear triangle', 'Everything bolts to this.'],
+    fork: ['Fork', 'Holds the front wheel', 'Steers the bike and, on mountain bikes, soaks up bumps.'],
+    shock: ['Rear shock', 'Damper and spring', 'Controls how the rear wheel moves over bumps.'],
+    rearWheel: ['Rear wheel', 'Rim, tyre and spokes', 'Carries the cassette on its hub.'],
+    frontWheel: ['Front wheel', 'Rim, tyre and spokes', 'Steers the bike.'],
+    cassette: ['Cassette', 'Also called the cogs or sprockets', 'The stack of rear gears the chain moves across.'],
+    chainring: ['Chainring and crank', 'Front gear', 'Where your pedalling force enters the chain.'],
+    chain: ['Chain', 'Drivetrain', 'Wraps the chainring, cog and both pulleys.'],
+    derailleur: ['Rear derailleur', 'Also called the rear mech or Schaltwerk', 'Pushes the chain from cog to cog.'],
+    hScrew: ['High limit screw (H)', 'Marked H on the derailleur', 'Stops the derailleur at the smallest cog.'],
+    lScrew: ['Low limit screw (L)', 'Marked L on the derailleur', 'Stops the derailleur before the spokes.'],
+    bScrew: ['B screw', 'Also called the B-tension or B-gap screw', 'Sets the distance between the upper pulley and the cogs.'],
+    shifter: ['Shifter', 'Also called the shift lever', 'Pulls or releases the cable.'],
+    barrel: ['Barrel adjuster', 'Also called the cable adjuster', 'Fine-tunes cable tension in quarter turns.'],
+    handlebar: ['Handlebar and stem', 'Cockpit', 'Holds the shifter and brake levers.'],
+    cable: ['Shift cable', 'Inner wire in its housing', 'Carries the pull from shifter to derailleur.']
+  };
+
+  /* ============================================================
+     GUIDE PANEL (text side)
+     ============================================================ */
+  const guide = $('#guide'), dotsEl = $('#dots');
+  let stepEls = [], dotEls = [], cur = -1, exploring = false, gl = null;
+  const hooks = { onStep: () => {}, arrow: () => {}, rebuild: () => {}, exit: null, replay: () => {}, garageOpen: () => {}, garageClose: () => {}, garageSelect: () => {}, garageName: () => {}, picked: null };
+
+  function stepHTML(S, i) {
+    let h = '<div class="kicker">Step ' + (i + 1) + ' of ' + STEPS.length + ' &middot; ' + S.kicker + (S.draft ? '<span class="draft">Draft</span>' : '') + '</div><h2>' + S.title + '</h2>';
+    h += '<div class="needs">Needs: ' + S.tools.join(', ') + '</div><p>' + S.text + '</p>';
+    if (S.more) h += '<details class="more"><summary>More detail</summary><p>' + S.more + '</p></details>';
+    if (S.decision) h += '<div class="q"></div>';
+    if (S.watch) h += '<details class="watch"' + (S.decision ? '' : ' open') + '><summary>Watch for</summary>' + S.watch + '</details>';
+    return '<article class="step" data-i="' + i + '">' + h + '</article>';
+  }
+  function renderGuide() {
+    guide.innerHTML = STEPS.map(stepHTML).join('');
+    stepEls = $$('.step', guide);
+    STEPS.forEach((S, i) => { if (S.decision) $('.q', stepEls[i]).innerHTML = decHTML(S, blankDec()); });
+    dotsEl.innerHTML = STEPS.map((s, i) => '<button aria-label="Go to step ' + (i + 1) + '"><i></i></button>').join('');
+    dotEls = $$('button', dotsEl);
+    dotEls.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+  }
+  function goTo(i, instant) {
+    i = Math.max(0, Math.min(STEPS.length - 1, i));
+    if (!stepEls[i]) return;
+    guide.scrollTo({ top: stepEls[i].offsetTop, behavior: (reduce || instant) ? 'auto' : 'smooth' });
+  }
+  let raf = 0;
+  guide.addEventListener('scroll', () => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => {
+      let idx = 0;
+      const line = guide.scrollTop + guide.clientHeight * 0.4;
+      stepEls.forEach((el, i) => { if (el.offsetTop <= line) idx = i; });
+      if (idx !== cur) setStep(idx);
+    });
+  }, { passive: true });
+  $('#prev').addEventListener('click', () => goTo(cur - 1));
+  $('#next').addEventListener('click', () => { if (cur >= STEPS.length - 1) $('#done').hidden = false; else goTo(cur + 1); });
+  document.addEventListener('keydown', (e) => {
+    if (state.screen !== 'guide') return;
+    if (exploring) { if (e.key === 'Escape' && hooks.exit) hooks.exit(); return; }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { e.preventDefault(); goTo(cur + 1); }
+    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { e.preventDefault(); goTo(cur - 1); }
+  });
+  $('#textonly').addEventListener('click', (e) => {
+    const on = $('#app').classList.toggle('textonly');
+    e.currentTarget.setAttribute('aria-pressed', on);
+    e.currentTarget.textContent = on ? '3D view' : 'Text only';
+    setTimeout(() => goTo(cur, true), 50);
+  });
+
+  /* ---- decision steps ---- */
+  const blankDec = () => ({ choice: null, fix: false, fixT0: 0, fixed: false });
+  let DEC = blankDec();
+  function decHTML(S, D) {
+    const d = S.decision;
+    if (!D.choice) {
+      return '<div class="kicker">What do you see on your bike?</div>' +
+        d.opts.map((o) => '<button class="opt" data-act="opt" data-id="' + o.id + '">' + o.label + '</button>').join('');
+    }
+    const o = d.opts.find((x) => x.id === D.choice);
+    const good = o.id === 'ok';
+    let title = o.title, text = o.text;
+    if (D.fixed) { title = d.fixedTitle; text = d.fixedText; }
+    let h = '<div class="verdict ' + (good ? 'good' : 'bad') + '"><b>' + (good ? 'Looks right' : 'Needs adjusting') + '</b><strong>' + title + '.</strong><p>' + text + '</p></div><div class="actions">';
+    if (!good) {
+      if (d.autoFix) h += '<span class="muted">' + (D.fix ? 'Showing the fix...' : '') + '</span>';
+      else h += '<button class="btn primary" data-act="fix"' + (D.fix ? ' disabled' : '') + '>' + (D.fix ? 'Turning...' : 'Show me the fix') + '</button>';
+    }
+    h += '<button class="link" data-act="again">Choose again</button></div>';
+    return h;
+  }
+  function renderDecision() {
+    const S = STEPS[cur];
+    if (!S || !S.decision || !stepEls[cur]) return;
+    $('.q', stepEls[cur]).innerHTML = decHTML(S, DEC);
+    stepEls[cur].classList.toggle('answered', !!DEC.choice);
+  }
+  function resetDec() { DEC = blankDec(); hooks.arrow(null); }
+  function finishFix() {
+    DEC.fix = false; DEC.fixed = true; DEC.choice = 'ok';
+    hooks.arrow(null);
+    renderDecision();
+  }
+  function startFix(S, o) {
+    if (!gl) { finishFix(); return; }
+    DEC.fix = true; DEC.fixT0 = nowS();
+    hooks.arrow(S.decision.screw, o.dir);
+  }
+  guide.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (!b) return;
+    const S = STEPS[cur];
+    if (!S || !S.decision) return;
+    const act = b.dataset.act;
+    if (act === 'opt') {
+      DEC = blankDec(); DEC.choice = b.dataset.id; hooks.arrow(null);
+      const o = S.decision.opts.find((x) => x.id === DEC.choice);
+      if (S.decision.autoFix && o.id !== 'ok') startFix(S, o);
+      renderDecision();
+    }
+    if (act === 'again') { resetDec(); renderDecision(); }
+    if (act === 'fix') {
+      startFix(S, S.decision.opts.find((x) => x.id === DEC.choice));
+      renderDecision();
+    }
+  });
+
+  function setStep(i) {
+    const first = cur === -1;
+    cur = i;
+    stepEls.forEach((el, k) => el.classList.toggle('on', k === i));
+    dotEls.forEach((d, k) => d.classList.toggle('on', k === i));
+    $('#chip').textContent = (i + 1) + ' / ' + STEPS.length;
+    $('#prev').disabled = i === 0;
+    $('#next').textContent = i === STEPS.length - 1 ? 'Finish' : 'Next step';
+    resetDec();
+    renderDecision();
+    hooks.onStep(STEPS[i], first);
+  }
+  function updateNote() {
+    const n = $('#note');
+    n.classList.remove('pick');
+    n.textContent = B.name + ' · ' + B.n + '-speed ' + B.cassette[0] + '-' + B.cassette[B.n - 1] + 't';
+  }
+  function launchGuide() {
+    B = toBike(state.bike);
+    STEPS = makeSteps(B, CTX);
+    renderGuide();
+    hooks.rebuild();
+    updateNote();
+    $('#gtitle').textContent = B.name + ' · ' + (CTX.stand ? 'in stand' : 'flipped');
+    $('#app').classList.remove('textonly');
+    $('#textonly').setAttribute('aria-pressed', 'false');
+    $('#textonly').textContent = 'Text only';
+    cur = -1;
+    setStep(0);
+    goTo(0, true);
+  }
+
+  /* ============================================================
+     APP SCREENS
+     ============================================================ */
+  const screens = {};
+  $$('.screen').forEach((s) => { screens[s.dataset.screen] = s; });
+  const TABS = ['repair', 'garage', 'shop', 'shops', 'ask'];
+  const ICON_BACK = '<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>';
+  const ICON_CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+  function go(name, isBack) {
+    if (exploring && hooks.exit) hooks.exit();
+    if (!isBack && state.screen !== name) {
+      if (TABS.indexOf(name) >= 0) hist.length = 0; else hist.push(state.screen);
+    }
+    if (state.screen === 'bike' && name !== 'bike') leaveBike();
+    state.screen = name;
+    if (RENDER[name]) RENDER[name]();
+    Object.keys(screens).forEach((k) => { screens[k].hidden = k !== name; });
+    $('#tabbar').hidden = TABS.indexOf(name) < 0;
+    $$('#tabbar button').forEach((b) => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
+  }
+  function mountStage(where) {
+    const st = $('#stage');
+    if (where === 'garage') { const g = $('#gslot'); if (g) { g.appendChild(st); st.classList.add('garage'); } }
+    else { const a = $('#app'); if (st.parentNode !== a) a.insertBefore(st, a.firstChild); st.classList.remove('garage'); }
+  }
+  function leaveBike() { hooks.garageClose(); mountStage('guide'); }
+  function back() { go(hist.pop() || 'repair', true); }
+  let toastT = 0;
+  function toast(msg) {
+    const t = $('#toast');
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastT);
+    toastT = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+  function keepScroll(el, fn) {
+    const sc = $('.scroll', el), top = sc ? sc.scrollTop : 0;
+    fn();
+    const n = $('.scroll', el);
+    if (n) n.scrollTop = top;
+  }
+  function whHTML(title, small) {
+    return '<div class="wh"><button class="ib" data-do="back" aria-label="Back">' + ICON_BACK + '</button><div class="t"><small>' + small + '</small><b>' + title + '</b></div></div>';
+  }
+  const chips = (key, opts, val, cls) => '<div class="chips ' + (cls || '') + '" role="group">' + opts.map((o) =>
+    '<button class="cb" data-do="set" data-k="' + key + '" data-v="' + o[0] + '" aria-pressed="' + (String(val) === String(o[0])) + '">' + o[1] + '</button>').join('') + '</div>';
+
+  const RENDER = {};
+
+  /* ---- Repair tab ---- */
+  RENDER.repair = function () {
+    const q = state.query.trim().toLowerCase();
+    const list = TUTS.filter((t) => !q || (t.title + ' ' + t.sub).toLowerCase().indexOf(q) >= 0);
+    screens.repair.innerHTML =
+      '<div class="brandrow"><span class="brand">Bikefix</span><span class="demo">Concept demo</span></div>' +
+      '<div class="scroll"><h1 class="h1">What needs fixing?</h1>' +
+      '<input class="search" id="q" type="search" placeholder="Search, e.g. skipping gears" value="' + esc(state.query) + '" aria-label="Search guides">' +
+      '<ul class="list" id="tutlist">' + tutRows(list) + '</ul>' +
+      '<p class="lead">Not sure what is wrong? Describe it to the assistant in the Ask tab and it points you to the right guide.</p></div>';
+  };
+  function tutRows(list) {
+    if (!list.length) return '<li><p class="lead" style="padding:14px 2px">No guide matches yet. The assistant can still help.</p></li>';
+    return list.map((t) => '<li><button class="li" data-do="openTut" data-id="' + t.id + '"><span class="tx"><b>' + t.title + '</b><span>' + t.sub + '</span></span><span class="badge ' + (t.ready ? 'ready' : '') + '">' + (t.ready ? 'Ready' : 'Soon') + '</span></button></li>').join('');
+  }
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'q') { state.query = e.target.value; $('#tutlist').innerHTML = tutRows(TUTS.filter((t) => !state.query.trim() || (t.title + ' ' + t.sub).toLowerCase().indexOf(state.query.trim().toLowerCase()) >= 0)); }
+    if (e.target.id === 'gnm') {
+      const rec = SAVED.find((x) => x.id === state.gb);
+      if (rec) { rec.name = e.target.value; hooks.garageName(rec.name); const t = $('.wh .t b', screens.bike); if (t) t.textContent = rec.name || 'Your bike'; }
+    }
+    if (e.target.id === 'qname') { const g = $('#qnameGo'); if (g) g.disabled = !e.target.value.trim(); }
+  });
+
+  /* ---- Repair step 1: which bike (dropdown or new) ---- */
+  RENDER.pick = function () {
+    const t = TUTS.find((x) => x.id === state.tut) || TUTS[0], sel = state.pickId;
+    screens.pick.innerHTML = whHTML('Which bike?', t.title) +
+      '<div class="scroll"><p class="lead">Pick one of your bikes, or tell us about a new one.</p>' +
+      '<div class="field"><label for="bikesel">Your bikes</label><select class="text" id="bikesel"><option value="">Choose a bike</option>' +
+      SAVED.map((b) => '<option value="' + b.id + '"' + (b.id === sel ? ' selected' : '') + '>' + esc(b.name) + '</option>').join('') + '</select></div>' +
+      '<button class="btn primary wide" id="pickGo" data-do="pickContinue"' + (sel ? '' : ' disabled') + '>Continue</button>' +
+      '<div class="or">or</div><button class="btn wide" data-do="pickNew">A new or unknown bike</button></div>';
+  };
+
+  /* ---- one question at a time ---- */
+  const QDEF = {
+    type: { t: 'What kind of bike is it?', opts: [['city', 'City or trekking'], ['road', 'Road'], ['mtb', 'Mountain']] },
+    motor: { t: 'Does it have an electric motor?', opts: [['no', 'No'], ['yes', 'Yes, it is an e-bike']] },
+    susp: { t: 'Does it have rear suspension?', help: 'A shock absorber between the frame and the rear wheel.', opts: [['hard', 'No, front suspension only'], ['full', 'Yes, full suspension']] },
+    shifting: { t: 'How does it shift gears?', help: 'Mechanical means a cable runs from the shifter to the rear derailleur.', opts: [['mechanical', 'Mechanical derailleur'], ['electronic', 'Electronic derailleur'], ['hub', 'Hub gears'], ['single', 'Single speed'], ['unknown', 'Not sure']] },
+    speeds: { t: 'How many gears at the back?', help: 'Count the cogs on the rear wheel.', nums: [6, 7, 8, 9, 10, 11, 12] },
+    screws: { t: 'What do the screws marked H and L look like?', help: 'They sit on the rear derailleur. A cross-shaped slot means Phillips, a hex socket means Allen key.', opts: [['cross', 'Cross-shaped slot'], ['hex', 'Hex socket'], ['unknown', 'Not sure']] },
+    name: { t: 'What do you want to call this bike?', help: 'The name appears on the down tube in your garage.' }
+  };
+  function needed(q) {
+    const b = q.bike, g = q.purpose === 'garage', out = [];
+    const open = (k, c) => { if (c && q.done.indexOf(k) < 0) out.push(k); };
+    open('type', b.type == null);
+    open('motor', b.motor == null);
+    open('susp', g && b.type === 'mtb' && b.susp == null);
+    open('shifting', b.shifting == null);
+    if (b.shifting === 'mechanical') { open('speeds', !b.speeds); open('screws', !g && !b.screws); }
+    open('name', g);
+    return out;
+  }
+  function startQ(purpose, rec) {
+    const bike = rec ? Object.assign({}, rec) : { id: 'new', name: '', type: null, motor: null, susp: null, shifting: null, brand: null, speeds: null, screws: null, colors: {} };
+    state.q = { purpose: purpose, isNew: !rec, orig: rec || null, bike: bike, stack: [], done: [], phase: 'ask' };
+    state.bike = bike;
+    if (needed(state.q).length) go('q'); else qNext();
+  }
+  function qNext() {
+    const q = state.q;
+    if (needed(q).length) { q.phase = 'ask'; RENDER.q(); return; }
+    if (q.purpose === 'garage') {
+      const b = q.bike;
+      b.id = 'u' + Date.now(); b.colors = b.colors || {}; SAVED.push(b);
+      state.gb = b.id; hist.length = 0; hist.push('garage');
+      toast('Added "' + b.name + '" to your garage'); go('bike', true); return;
+    }
+    if (q.isNew || q.done.length) { q.phase = 'save'; RENDER.q(); } else routeAfterBike();
+  }
+  function qUndo(q) {
+    const s = q.stack.pop(); if (!s) return;
+    q.bike[s.k] = s.prev;
+    const i = q.done.lastIndexOf(s.k); if (i >= 0) q.done.splice(i, 1);
+  }
+  RENDER.q = function () {
+    const q = state.q, key = q.phase === 'ask' ? needed(q)[0] : q.phase === 'save' ? 'save' : 'name';
+    if (!key) { qNext(); return; }
+    const nd = needed(q), done = q.done.length, ask = q.phase === 'ask';
+    const total = done + nd.length + (nd.indexOf('shifting') >= 0 ? (q.purpose === 'garage' ? 1 : 2) : 0);
+    let def;
+    if (key === 'save') def = q.isNew
+      ? { t: 'Save this bike to your garage?', help: 'Next time the guide starts right away, without these questions.', opts: [['save', 'Save as new bike'], ['no', 'Not now']] }
+      : { t: 'Save the new details to ' + esc(q.orig.name) + '?', help: 'Then you will not be asked again.', opts: [['upd', 'Yes, update ' + esc(q.orig.name)], ['no', 'Not now']] };
+    else if (key === 'name' && !ask) def = { t: QDEF.name.t, help: 'So you can find it again in your garage.' };
+    else def = QDEF[key];
+    let h = whHTML(q.bike.name ? esc(q.bike.name) : (q.isNew ? 'New bike' : esc(q.orig.name)), ask ? 'Question ' + (done + 1) + ' of ' + total : 'Last step').replace('data-do="back"', 'data-do="qBack"') + '<div class="scroll">';
+    h += '<div class="progress"><i style="width:' + Math.round(100 * (ask ? done / total : 1)) + '%"></i></div>';
+    h += '<h1 class="h2q">' + def.t + '</h1>' + (def.help ? '<p class="lead">' + def.help + '</p>' : '');
+    if (key === 'name') h += '<input class="text" id="qname" maxlength="24" value="' + esc(q.bike.name || '') + '" placeholder="e.g. Blue Gravel" autocomplete="off"><button class="btn primary wide" id="qnameGo" data-do="qName"' + (q.bike.name ? '' : ' disabled') + '>Continue</button>';
+    else if (def.nums) h += '<div class="chips nums">' + def.nums.map((n) => '<button class="cb" data-do="qAns" data-k="' + key + '" data-v="' + n + '">' + n + '</button>').join('') + '</div>';
+    else h += '<div class="qopts">' + def.opts.map((o) => '<button class="opt" data-do="qAns" data-k="' + key + '" data-v="' + o[0] + '">' + o[1] + '</button>').join('') + '</div>';
+    screens.q.innerHTML = h + '</div>';
+  };
+
+  function routeAfterBike() {
+    const b = state.bike;
+    if (b.shifting !== 'mechanical') { state.nohelp = { kind: b.shifting || 'unknown', title: 'Gears skip or shift slowly' }; go('nohelp'); }
+    else { state.have = {}; go('tools'); }
+    if (hist[hist.length - 1] === 'q') hist.pop();
+  }
+
+  /* ---- Step 2: tools ---- */
+  function toolList(b) {
+    const must = [];
+    if (b.screws === 'cross') must.push({ id: 'phillips', name: 'Phillips screwdriver', why: 'Limit screws H and L' });
+    else if (b.screws === 'hex') must.push({ id: 'hex25', name: 'Allen key, 2.5 mm (some use 3 mm)', why: 'Limit screws H and L' });
+    else { must.push({ id: 'phillips', name: 'Phillips screwdriver', why: 'Limit screws, if they have a cross slot' }); must.push({ id: 'hex25', name: 'Allen key, 2.5 mm (some use 3 mm)', why: 'Limit screws, if they have a hex socket' }); }
+    must.push({ id: 'allenset', name: 'Allen key set, about 2 to 5 mm', why: 'B screw (gap to the cassette)' });
+    const opt = [
+      { id: 'stand', name: 'Repair stand', why: 'With it the bike hangs in the stand. Without it we flip the bike.' },
+      { id: 'ruler', name: 'Small ruler', why: 'To measure the 5 to 6 mm gap' }
+    ];
+    return { must: must, opt: opt };
+  }
+  RENDER.tools = function () {
+    keepScroll(screens.tools, function () {
+      const b = state.bike, T = toolList(b);
+      const row = (t, shop) => '<div class="row"><button class="tick" role="checkbox" aria-checked="' + !!state.have[t.id] + '" data-do="tick" data-id="' + t.id + '"><span class="box">' + ICON_CHECK + '</span><span class="tx"><b>' + t.name + '</b><span>' + t.why + '</span></span></button>' +
+        (shop && !state.have[t.id] ? '<button class="link getit" data-do="shopTool" data-id="' + t.id + '">Get it</button>' : '') + '</div>';
+      const allMust = T.must.every((t) => state.have[t.id]);
+      let h = whHTML('Your tools', 'Step 2 of 2 · Tools') + '<div class="scroll">';
+      h += '<div class="card"><div class="top"><b>' + esc(b.name) + '</b><button class="link" data-do="editBike" style="padding:0">Change</button></div><span class="s">' + summary(b) + '</span></div>';
+      h += '<div class="field"><span class="eyebrow">You need</span><div class="tools-group">' + T.must.map((t) => row(t, true)).join('') + '</div></div>';
+      h += '<div class="field"><span class="eyebrow">Nice to have</span><div class="tools-group">' + T.opt.map((t) => row(t, false)).join('') + '</div></div>';
+      if (b.motor && !state.have.stand) h += '<div class="note">E-bikes are heavy to flip. A stand helps, or ask someone to hold the bike.</div>';
+      h += '</div><div class="cta"><button class="btn primary wide" data-do="startGuide"' + (allMust ? '' : ' disabled') + '>Start guide</button><small>' + (allMust ? 'Ready when you are.' : 'Tick every tool under "You need" to continue.') + '</small></div>';
+      screens.tools.innerHTML = h;
+    });
+  };
+
+  /* ---- no reviewed guide: fallback with an AI draft ---- */
+  const DRAFTS = {
+    hub: 'Hub gears are adjusted at the rear hub, not at a derailleur. Many have two alignment marks you line up in one specific gear that your hub manual names. If the marks do not line up, turn the cable barrel adjuster in small steps until they do, then check each gear.',
+    electronic: 'Electronic shifting has no cable to tension. Check the battery charge first, then use the manufacturer\'s app or button sequence to run the derailleur calibration. Do not force the derailleur by hand while the system is on.',
+    single: 'A single-speed bike has no gears to adjust. If the chain feels loose or noisy, check the chain tension and that the rear wheel is straight in the frame.',
+    unknown: 'Without knowing how the bike shifts we cannot pick the right guide. Look at the rear wheel: a chain moving across several cogs with a derailleur hanging below is mechanical shifting. One cog and no derailleur is usually hub gears or a single speed. A battery on the derailleur and no cable means electronic.',
+    soon: 'We do not have a reviewed guide for this yet. As a start: make the bike safe to work on, look for the obvious cause (a loose bolt, something stuck, visible wear) and change one thing at a time. For brakes and wheels, if you are not sure, let a workshop check it.'
+  };
+  RENDER.nohelp = function () {
+    const n = state.nohelp, kind = n.kind;
+    const reason = kind === 'soon' ? 'This guide is still being written.' :
+      kind === 'unknown' ? 'We need to know how your bike shifts first.' :
+      kind === 'hub' ? 'Hub gears work differently from a derailleur.' :
+      kind === 'electronic' ? 'Electronic shifting has its own procedure.' : 'Single speed bikes have no gears to adjust.';
+    screens.nohelp.innerHTML = whHTML('No reviewed guide yet', n.title) +
+      '<div class="scroll"><p class="lead">' + reason + ' We have not published a reviewed guide for this setup.</p>' +
+      '<div class="card"><span class="eyebrow">Draft written by AI, not reviewed</span><p>' + (DRAFTS[kind] || DRAFTS.soon) + '</p>' +
+      '<span class="s">In the real app this text is generated for your bike, and shown with this warning. Demo text only.</span></div>' +
+      '<div class="note">Take extra care with brakes, wheels and anything on an e-bike. If in doubt, ask a workshop.</div>' +
+      '<button class="btn wide" data-do="gotoAsk">Ask the assistant</button><button class="btn wide" data-do="gotoShops">Find a workshop</button></div>';
+  };
+
+  /* ---- Garage tab and bike detail ---- */
+  const SWATCH = [['', 'Default'], ['#C8372D', 'Red'], ['#2F6FD6', 'Blue'], ['#2E9E5B', 'Green'], ['#E8890C', 'Orange'], ['#7B4FD1', 'Purple'], ['#1B1F23', 'Black'], ['#C9CED3', 'Silver']];
+  const swatches = (k, cur) => '<div class="sw" role="group">' + SWATCH.map((c) => c[0]
+    ? '<button data-do="color" data-k="' + k + '" data-v="' + c[0] + '" aria-label="' + c[1] + '" aria-pressed="' + (cur === c[0]) + '" style="background:' + c[0] + '"></button>'
+    : '<button class="def" data-do="color" data-k="' + k + '" data-v="" aria-pressed="' + !cur + '">Default</button>').join('') + '</div>';
+  RENDER.garage = function () {
+    screens.garage.innerHTML = '<div class="brandrow"><span class="brand">Garage</span><span class="demo">Concept demo</span></div><div class="scroll">' +
+      '<p class="lead">Your bikes. Open one to turn it in 3D, see its parts and change the colors.</p><div class="bikes">' +
+      SAVED.map((b) => '<button class="card" data-do="openBike" data-id="' + b.id + '"><div class="top"><b>' + esc(b.name) + '</b><span class="badge">3D</span></div><span class="s">' + summary(b) + '</span></button>').join('') +
+      '<button class="card" data-do="addBike" style="border-style:dashed"><div class="top"><b>Add a bike</b></div><span class="s">Answer a few questions and it appears here.</span></button></div></div>';
+  };
+  function compRows(rec) {
+    const K = toBike(rec), full = K.frame === 'full', last = K.cassette[K.n - 1], mech = rec.shifting === 'mechanical';
+    const r = [
+      { l: 'Frame', s: full ? 'Full-suspension frame' : K.frame === 'road' ? 'Road frame' : rec.type === 'mtb' ? 'Hardtail frame' : 'City frame', ids: 'frame' },
+      { l: 'Fork', s: K.forkKind === 'susp' ? 'Suspension fork' : 'Rigid fork', ids: 'fork' }
+    ];
+    if (full) r.push({ l: 'Rear shock', s: 'Coil shock', ids: 'shock' });
+    r.push({ l: 'Wheels and tires', s: rec.type === 'mtb' ? 'Wide off-road tires' : rec.type === 'road' ? 'Narrow road tires' : 'Medium city tires', ids: 'rearWheel,frontWheel' });
+    r.push({ l: 'Rear derailleur', s: mech ? 'Mechanical' + (rec.brand && rec.brand !== 'other' ? ', ' + BRANDS[rec.brand] : '') : (rec.shifting ? SHIFT[rec.shifting] : 'Shifting not set') + ' · generic model shown', ids: 'derailleur' });
+    r.push({ l: 'Cassette', s: K.n + '-speed, ' + K.cassette[0] + '-' + last + ' teeth' + (rec.speeds ? '' : ' (estimated)'), ids: 'cassette' });
+    r.push({ l: 'Chainring and chain', s: K.chainring + ' teeth (estimated)', ids: 'chainring,chain' });
+    r.push({ l: 'Shifter', s: K.shifterName.charAt(0).toUpperCase() + K.shifterName.slice(1), ids: 'shifter' });
+    r.push({ l: 'Handlebar', s: { drop: 'Drop bar', riser: 'Riser bar', flat: 'Flat bar' }[K.bar], ids: 'handlebar' });
+    return r;
+  }
+  const gcardHTML = (t, s, d) => '<b>' + esc(t) + '</b><span class="s">' + esc(s) + '</span>' + (d ? '<span class="s">' + esc(d) + '</span>' : '');
+  const GHINT = ['Tap a part', 'Drag to turn the bike, pinch to zoom.', ''];
+  RENDER.bike = function () {
+    const rec = SAVED.find((b) => b.id === state.gb);
+    if (!rec) return;
+    mountStage('guide');
+    state.gsel = '';
+    const K = toBike(rec);
+    let h = whHTML(esc(rec.name), 'Garage') + '<div class="scroll"><div id="gslot"></div>';
+    h += '<div class="card gcard" id="gcard" aria-live="polite">' + gcardHTML.apply(null, GHINT) + '</div>';
+    h += '<div class="field"><label for="gnm">Name on the down tube</label><input class="text" id="gnm" maxlength="24" value="' + esc(rec.name) + '"></div>';
+    h += '<div class="field"><span class="lbl">Frame color</span>' + swatches('frame', rec.colors.frame) + '</div>';
+    h += '<div class="field"><span class="lbl">Rim color</span>' + swatches('rims', rec.colors.rims) + '</div>';
+    h += '<div class="field"><span class="eyebrow">Components</span><ul class="list">' + compRows(rec).map((c) =>
+      '<li><button class="li" data-do="gpart" data-ids="' + c.ids + '" data-l="' + esc(c.l) + '" data-s="' + esc(c.s) + '"><span class="tx"><b>' + c.l + '</b><span>' + esc(c.s) + '</span></span></button></li>').join('') +
+      '<li><div class="li"><span class="tx"><b>Brakes</b><span>Not set</span></span><span class="badge warn">Add</span></div></li></ul></div>';
+    h += '<div class="note">The 3D model is a simplified bike built from what you told us. Anything not set is estimated or generic.</div>';
+    h += '<button class="btn primary wide" data-do="bikeRepair">Repair guides for this bike</button></div>';
+    screens.bike.innerHTML = h;
+    mountStage('garage');
+    hooks.garageOpen(rec);
+  };
+  hooks.picked = function (id) {
+    state.gsel = '';
+    const c = $('#gcard'); if (!c) return;
+    const m = id ? META[id] : null;
+    c.innerHTML = m ? gcardHTML(m[0], m[1], m[2]) : gcardHTML.apply(null, GHINT);
+  };
+
+  /* ---- Shop tab ---- */
+  const ITEMS = [
+    { key: 'chain', name: 'Chain', perBike: true }, { key: 'cables', name: 'Shift cable set', perBike: true }, { key: 'pads', name: 'Brake pads', perBike: true },
+    { key: 'allenset', name: 'Allen key set' }, { key: 'phillips', name: 'Phillips screwdriver' }, { key: 'hex25', name: 'Allen key 2.5 mm' },
+    { key: 'ruler', name: 'Small ruler' }, { key: 'stand', name: 'Repair stand' }
+  ];
+  const TOOLBASE = { allenset: 14, phillips: 7, hex25: 5, ruler: 5, stand: 80 };
+  const SHOPS = [
+    { name: 'Example Bikeparts', ship: 5.9, free: 60, f: { chain: .92, cables: 1.05, pads: .95, allenset: .9, phillips: 1.1, hex25: 1, ruler: 1, stand: .95 } },
+    { name: 'Demo Cycle Supply', ship: 3.9, free: 40, f: { chain: 1, cables: .9, pads: 1, allenset: 1, phillips: .85, hex25: .9, ruler: null, stand: 1 } },
+    { name: 'Sample Drivetrain Co.', ship: 0, free: 0, f: { chain: 1.12, cables: 1.1, pads: 1.05, allenset: 1.15, phillips: 1, hex25: 1.1, ruler: .9, stand: null } }
+  ];
+  function shopLines() {
+    const lines = [], notes = [];
+    const bikes = SAVED.filter((b) => state.shop.bikes.indexOf(b.id) >= 0);
+    ITEMS.forEach((it) => {
+      if (state.shop.items.indexOf(it.key) < 0) return;
+      if (it.perBike) {
+        bikes.forEach((b) => {
+          if (it.key === 'chain') {
+            if (!b.speeds) { notes.push('Add the number of gears for ' + b.name + ' to price its chain.'); return; }
+            lines.push({ key: 'chain', label: 'Chain, ' + b.speeds + '-speed · ' + b.name, base: b.speeds <= 8 ? 18 : b.speeds <= 10 ? 26 : 38 });
+          } else if (it.key === 'cables') lines.push({ key: 'cables', label: 'Shift cable set · ' + b.name, base: 14 });
+          else lines.push({ key: 'pads', label: 'Brake pads · ' + b.name, base: b.type === 'road' ? 18 : 13 });
+        });
+      } else lines.push({ key: it.key, label: it.name, base: TOOLBASE[it.key] });
+    });
+    return { lines: lines.slice(0, 9), notes: notes, bikes: bikes };
+  }
+  function shopPlan(lines) {
+    const n = SHOPS.length, L = lines.length;
+    if (!L) return null;
+    const price = (s, l) => { const f = SHOPS[s].f[l.key]; return f == null ? null : Math.round(l.base * f * 100) / 100; };
+    const evalA = (a) => {
+      const sub = new Array(n).fill(0);
+      for (let i = 0; i < L; i++) { const p = price(a[i], lines[i]); if (p == null) return null; sub[a[i]] += p; }
+      let t = 0;
+      for (let s = 0; s < n; s++) if (sub[s] > 0) t += sub[s] + ((SHOPS[s].ship === 0 || sub[s] >= SHOPS[s].free) ? 0 : SHOPS[s].ship);
+      return { t: t, sub: sub, a: a.slice() };
+    };
+    let best = null, single = null;
+    const a = new Array(L).fill(0), total = Math.pow(n, L);
+    for (let k = 0; k < total; k++) {
+      let x = k;
+      for (let i = 0; i < L; i++) { a[i] = x % n; x = Math.floor(x / n); }
+      const r = evalA(a);
+      if (!r) continue;
+      if (!best || r.t < best.t) best = r;
+      if (a.every((v) => v === a[0]) && (!single || r.t < single.t)) single = r;
+    }
+    return { best: best, single: single, price: price };
+  }
+  RENDER.shop = function () {
+    keepScroll(screens.shop, function () {
+      const S = shopLines(), plan = shopPlan(S.lines);
+      let h = '<div class="brandrow"><span class="brand">Shop</span><span class="demo">Example prices</span></div><div class="scroll">';
+      h += '<p class="lead">Say what you need and for which bike. We compare shops and find the cheapest way to get everything, including shipping.</p>';
+      h += '<div class="field"><span class="lbl">For which bike?</span><div class="chips">' + SAVED.map((b) => '<button class="cb" data-do="shopBike" data-id="' + b.id + '" aria-pressed="' + (state.shop.bikes.indexOf(b.id) >= 0) + '">' + esc(b.name) + '</button>').join('') + '</div></div>';
+      h += '<div class="field"><span class="lbl">What do you need?</span><div class="chips">' + ITEMS.map((it) => '<button class="cb" data-do="shopItem" data-id="' + it.key + '" aria-pressed="' + (state.shop.items.indexOf(it.key) >= 0) + '">' + it.name + '</button>').join('') + '</div></div>';
+      S.notes.forEach((n) => { h += '<div class="note">' + esc(n) + '</div>'; });
+      if (!plan || !plan.best) h += '<p class="lead">Pick at least one item to compare shops.</p>';
+      else {
+        const b = plan.best, s = plan.single;
+        const grp = {};
+        S.lines.forEach((l, i) => { (grp[b.a[i]] = grp[b.a[i]] || []).push([l, plan.price(b.a[i], l)]); });
+        h += '<div class="card"><span class="eyebrow">Cheapest overall</span><span class="total">' + eur(b.t) + '</span>';
+        Object.keys(grp).forEach((si) => {
+          const sh = SHOPS[si], sub = b.sub[si], ship = (sh.ship === 0 || sub >= sh.free) ? 0 : sh.ship;
+          h += '<div><b style="font-family:var(--f-body);font-size:16px">' + sh.name + '</b>' + grp[si].map((p) => '<div class="shoprow"><span>' + esc(p[0].label) + '</span><span>' + eur(p[1]) + '</span></div>').join('') +
+            '<div class="shoprow"><span>Shipping</span><span>' + (ship ? eur(ship) : 'free') + '</span></div><button class="btn wide" data-do="openShop" data-n="' + sh.name + '" style="margin-top:6px">Open ' + sh.name + '</button></div>';
+        });
+        h += '</div>';
+        if (s && s.a[0] !== undefined) {
+          const sh = SHOPS[s.a[0]];
+          h += '<div class="card"><span class="eyebrow">Cheapest from a single shop</span><div class="top"><b style="font-family:var(--f-body);font-size:17px">' + sh.name + '</b><span class="total" style="font-size:24px">' + eur(s.t) + '</span></div>' +
+            (s.t - b.t > 0.005 ? '<span class="s">Splitting the order saves ' + eur(s.t - b.t) + '.</span>' : '<span class="s">Same price as the cheapest overall.</span>') + '</div>';
+        } else h += '<div class="card"><span class="eyebrow">Single shop</span><span class="s">No single shop has everything on your list.</span></div>';
+        h += '<p class="lead" style="font-size:13.5px">Prices are made-up examples. Proposed rule for the real app: links may earn a commission, and ranking never depends on it. Compatibility comes from the bike record, so a 7-speed bike is never offered an 11-speed chain.</p>';
+      }
+      h += '</div>';
+      screens.shop.innerHTML = h;
+    });
+  };
+
+  /* ---- Workshops tab ---- */
+  const WORK = [
+    { name: 'Example Cycle Works', km: 1.2, wait: 3, price: 2, rating: 4.7, tags: ['road', 'mechanical'], partner: true },
+    { name: 'Demo Bike Garage', km: 2.8, wait: 1, price: 2, rating: 4.5, tags: ['mechanical', 'city', 'mtb'], partner: false },
+    { name: 'Sample E-Bike Service', km: 4.1, wait: 5, price: 3, rating: 4.8, tags: ['ebike', 'city', 'hub'], partner: true },
+    { name: 'Placeholder Wheels & Co.', km: 0.8, wait: 7, price: 1, rating: 4.2, tags: ['city', 'mtb', 'mechanical'], partner: false }
+  ];
+  function rankWork(bike) {
+    const need = [];
+    if (bike.motor) need.push('ebike');
+    if (bike.type === 'road' || bike.type === 'mtb') need.push(bike.type); else need.push('city');
+    if (bike.shifting) need.push(bike.shifting);
+    return WORK.filter((w) => (!state.work.express || w.wait <= 2) && (!state.work.partner || w.partner)).map((w) => {
+      const hits = need.filter((n) => w.tags.indexOf(n) >= 0);
+      return { w: w, hits: hits, score: w.rating * 2 + hits.length * 2 - w.km * 0.25 - w.wait * 0.2 };
+    }).sort((a, b) => b.score - a.score);
+  }
+  RENDER.shops = function () {
+    keepScroll(screens.shops, function () {
+      const bike = SAVED.find((b) => b.id === state.work.bike) || SAVED[0];
+      const list = rankWork(bike);
+      let h = '<div class="brandrow"><span class="brand">Workshops</span><span class="demo">Example data</span></div><div class="scroll">';
+      h += '<p class="lead">Cannot fix it, or would rather not? Pick the bike and we suggest who to ask.</p>';
+      h += '<div class="field"><span class="lbl">Which bike?</span><div class="chips">' + SAVED.map((b) => '<button class="cb" data-do="workBike" data-id="' + b.id + '" aria-pressed="' + (b.id === bike.id) + '">' + esc(b.name) + '</button>').join('') + '</div></div>';
+      h += '<div class="chips"><button class="cb" data-do="workFilter" data-k="express" aria-pressed="' + state.work.express + '">Within 2 days</button><button class="cb" data-do="workFilter" data-k="partner" aria-pressed="' + state.work.partner + '">Partners only</button></div>';
+      if (!list.length) h += '<p class="lead">No workshop matches these filters.</p>';
+      list.forEach((r, i) => {
+        const w = r.w;
+        h += '<div class="card"><div class="top"><b>' + w.name + '</b>' + (i === 0 ? '<span class="badge ready">Best match</span>' : (w.partner ? '<span class="badge">Partner</span>' : '')) + '</div>' +
+          '<span class="s">' + w.km.toFixed(1) + ' km · wait about ' + w.wait + (w.wait === 1 ? ' day' : ' days') + ' · ' + '€'.repeat(w.price) + ' · ' + w.rating.toFixed(1) + ' stars</span>' +
+          '<span class="s">' + (r.hits.length ? 'Matches your bike: ' + r.hits.map((x) => ({ ebike: 'e-bikes', road: 'road bikes', mtb: 'mountain bikes', city: 'city bikes', hub: 'hub gears', mechanical: 'mechanical shifting', electronic: 'electronic shifting', single: 'single speed' }[x] || x)).join(', ') : 'General repairs') + '</span>' +
+          '<button class="btn wide" data-do="askQuote" data-n="' + w.name + '">Request a quote</button></div>';
+      });
+      h += '<div class="note">Requests include a summary of ' + esc(bike.name) + ' (' + summary(bike) + ') and what you already tried, so nobody has to ask twice.</div>';
+      h += '<p class="lead" style="font-size:13.5px">Workshops are made-up examples. Proposed rule for the real app: partner status never changes the ranking, only the label.</p></div>';
+      screens.shops.innerHTML = h;
+    });
+  };
+
+  /* ---- Ask tab (scripted demo) ---- */
+  const SCRIPT = {
+    skip: { q: 'My Red Racer skips gears when I pedal hard.', a: 'Skipping under load is often a stretched cable, a misaligned derailleur or a worn chain. Let us start with the derailleur adjustment guide. I already know it is your road bike, so I only need to ask about its shifting.', acts: [['Open the guide', 'tutIndex', 'racer'], ['Chains in the shop', 'shopChain']] },
+    parts: { q: 'Which chain fits my Everyday?', a: 'Everyday is a 7-speed bike, so it needs a chain for 7 or 8 speeds. I have put it on a comparison for you.', acts: [['Compare shops', 'shopChain2']] },
+    brake: { q: 'My brakes feel weak. Who can look at them?', a: 'Brakes are safety-critical, and we do not have a reviewed guide for them yet. I would let a workshop check them. I can send them a summary of your bike.', acts: [['Find a workshop', 'workRacer']] }
+  };
+  RENDER.ask = function () {
+    keepScroll(screens.ask, function () {
+      let h = '<div class="brandrow"><span class="brand">Ask</span><span class="demo">Scripted demo</span></div><div class="scroll">';
+      h += '<div class="note"><b>Premium feature.</b> The assistant knows your bikes and can open guides, fill the shop and contact workshops. In this demo the replies are scripted.</div>';
+      h += '<div class="chat">' + state.chat.map((m) => m.me ? '<div class="msg me">' + esc(m.t) + '</div>' :
+        '<div class="msg ai"><span>' + esc(m.t) + '</span>' + (m.acts ? '<div class="acts">' + m.acts.map((a) => '<button class="btn" data-do="chatAct" data-a="' + a[1] + '" data-b="' + (a[2] || '') + '">' + a[0] + '</button>').join('') + '</div>' : '') + '</div>').join('') + '</div>';
+      h += '<div class="field"><span class="eyebrow">Try one</span><div class="sugg">' + Object.keys(SCRIPT).map((k) => '<button class="cb" data-do="chatQ" data-k="' + k + '">' + SCRIPT[k].q + '</button>').join('') + '</div></div>';
+      h += '</div><div class="cta"><div class="chatin"><input class="text" id="chatq" placeholder="Describe the problem" aria-label="Message"><button class="btn primary" data-do="chatSend">Send</button></div></div>';
+      screens.ask.innerHTML = h;
+    });
+  };
+  function chatAsk(k) {
+    const s = SCRIPT[k];
+    state.chat.push({ me: true, t: s.q }, { t: s.a, acts: s.acts });
+    RENDER.ask();
+    const sc = $('.scroll', screens.ask);
+    if (sc) sc.scrollTop = sc.scrollHeight;
+  }
+
+  /* ---- actions ---- */
+  const ACT = {
+    back: back,
+    openTut: function (b) {
+      const t = TUTS.find((x) => x.id === b.dataset.id);
+      state.tut = t.id;
+      if (!t.ready) { state.nohelp = { kind: 'soon', title: t.title }; go('nohelp'); return; }
+      go('pick');
+    },
+    pickContinue: function () {
+      const rec = SAVED.find((x) => x.id === state.pickId);
+      if (rec) startQ('repair', rec);
+    },
+    pickNew: function () { state.pickId = null; startQ('repair', null); },
+    qAns: function (b) {
+      const q = state.q, k = b.dataset.k, v = b.dataset.v, bike = q.bike;
+      if (k === 'save') {
+        if (v === 'save') { q.phase = 'name'; RENDER.q(); return; }
+        if (v === 'upd') { Object.assign(q.orig, q.bike); toast('Updated ' + q.orig.name); }
+        routeAfterBike(); return;
+      }
+      q.stack.push({ k: k, prev: bike[k] }); q.done.push(k);
+      if (k === 'speeds') bike.speeds = +v;
+      else if (k === 'motor') bike.motor = v === 'yes';
+      else if (k === 'shifting') bike.shifting = v === 'unknown' ? null : v;
+      else bike[k] = v;
+      if (k === 'shifting' && v === 'unknown' && q.purpose === 'repair') {
+        state.nohelp = { kind: 'unknown', title: 'Gears skip or shift slowly' }; go('nohelp');
+        if (hist[hist.length - 1] === 'q') hist.pop();
+        return;
+      }
+      qNext();
+    },
+    qName: function () {
+      const q = state.q, inp = $('#qname'), v = inp ? inp.value.trim() : '';
+      if (!v) return;
+      if (q.phase === 'ask') { q.stack.push({ k: 'name', prev: q.bike.name }); q.bike.name = v; q.done.push('name'); qNext(); return; }
+      q.bike.name = v; q.bike.id = 'u' + Date.now(); SAVED.push(Object.assign({}, q.bike));
+      toast('Saved "' + v + '" to your garage'); routeAfterBike();
+    },
+    qBack: function () {
+      const q = state.q;
+      if (q.phase === 'name') q.phase = 'save';
+      else if (q.phase === 'save') { q.phase = 'ask'; qUndo(q); }
+      else if (q.stack.length) qUndo(q);
+      else { back(); return; }
+      RENDER.q();
+    },
+    editBike: function () { hist.length = 0; hist.push('repair'); go('pick', true); },
+    openBike: function (b) { state.gb = b.dataset.id; go('bike'); },
+    addBike: function () { startQ('garage', null); },
+    bikeRepair: function () {
+      const rec = SAVED.find((x) => x.id === state.gb);
+      if (!rec) return;
+      state.tut = 'index'; state.pickId = rec.id; startQ('repair', rec);
+    },
+    gpart: function (b) {
+      const same = state.gsel === b.dataset.ids, ids = b.dataset.ids.split(',');
+      state.gsel = same ? '' : b.dataset.ids;
+      hooks.garageSelect(same ? [] : ids);
+      const c = $('#gcard');
+      if (c) c.innerHTML = same ? gcardHTML.apply(null, GHINT) : gcardHTML(b.dataset.l, b.dataset.s, META[ids[0]] ? META[ids[0]][2] : '');
+      const sc = $('.scroll', screens.bike); if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    color: function (b) {
+      const rec = SAVED.find((x) => x.id === state.gb);
+      if (!rec) return;
+      rec.colors = rec.colors || {};
+      if (b.dataset.v) rec.colors[b.dataset.k] = b.dataset.v; else delete rec.colors[b.dataset.k];
+      $$('[data-do=color][data-k="' + b.dataset.k + '"]', screens.bike).forEach((x) => x.setAttribute('aria-pressed', x === b));
+    },
+    tick: function (b) { state.have[b.dataset.id] = !state.have[b.dataset.id]; RENDER.tools(); },
+    shopTool: function (b) {
+      if (state.shop.items.indexOf(b.dataset.id) < 0) state.shop.items.push(b.dataset.id);
+      go('shop');
+    },
+    startGuide: function () {
+      CTX = { stand: !!state.have.stand, ruler: !!state.have.ruler, screws: state.bike.screws || 'unknown', motor: !!state.bike.motor };
+      go('guide');
+      requestAnimationFrame(launchGuide);
+    },
+    leaveGuide: function () { $('#done').hidden = true; go('repair'); },
+    doneYes: function () { $('#done').hidden = true; go('repair'); toast('Nice work. Happy riding.'); },
+    doneNo: function () { $('#done').hidden = true; state.work.bike = state.bike && SAVED.some((x) => x.id === state.bike.id) ? state.bike.id : 'racer'; go('shops'); },
+    gotoAsk: function () { go('ask'); },
+    gotoShops: function () { go('shops'); },
+    shopBike: function (b) { const a = state.shop.bikes, i = a.indexOf(b.dataset.id); if (i >= 0) a.splice(i, 1); else a.push(b.dataset.id); RENDER.shop(); },
+    shopItem: function (b) { const a = state.shop.items, i = a.indexOf(b.dataset.id); if (i >= 0) a.splice(i, 1); else a.push(b.dataset.id); RENDER.shop(); },
+    openShop: function (b) { toast('In the real app this opens ' + b.dataset.n + ' (affiliate link)'); },
+    workBike: function (b) { state.work.bike = b.dataset.id; RENDER.shops(); },
+    workFilter: function (b) { state.work[b.dataset.k] = !state.work[b.dataset.k]; RENDER.shops(); },
+    askQuote: function (b) { toast('Quote request sent to ' + b.dataset.n + ' (demo)'); },
+    chatQ: function (b) { chatAsk(b.dataset.k); },
+    chatSend: function () {
+      const i = $('#chatq'), t = i && i.value.trim();
+      if (!t) return;
+      state.chat.push({ me: true, t: t }, { t: 'In this demo only the three example questions are answered. The real assistant reads your bikes and the reviewed guides, and links you to the right one.' });
+      RENDER.ask();
+      const sc = $('.scroll', screens.ask);
+      if (sc) sc.scrollTop = sc.scrollHeight;
+    },
+    chatAct: function (b) {
+      const a = b.dataset.a;
+      if (a === 'tutIndex') { state.tut = 'index'; state.pickId = 'racer'; go('pick'); }
+      if (a === 'shopChain') { state.shop = { bikes: ['racer'], items: ['chain'] }; go('shop'); }
+      if (a === 'shopChain2') { state.shop = { bikes: ['daily'], items: ['chain'] }; go('shop'); }
+      if (a === 'workRacer') { state.work.bike = 'racer'; go('shops'); }
+    }
+  };
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'bikesel') { state.pickId = e.target.value || null; const g = $('#pickGo'); if (g) g.disabled = !state.pickId; }
+  });
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-tab]');
+    if (t && t.closest('#tabbar')) { go(t.dataset.tab); return; }
+    const b = e.target.closest('[data-do]');
+    if (b && ACT[b.dataset.do]) ACT[b.dataset.do](b, e);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.id === 'chatq') ACT.chatSend();
+    if (e.key === 'Enter' && e.target.id === 'qname') ACT.qName();
+  });
+
+  /* ============================================================
+     CHAIN MATH
+     ============================================================ */
+  // <chainmath>
+  // circ: [{x,y,z,r,s}] in travel order; s = +1 when the chain wraps it counterclockwise, -1 clockwise.
+  // Fills o.x/o.y/o.z with a closed polyline and o.l with cumulative length. Returns total length.
+  function buildPath(circ, o) {
+    const n = circ.length, T = [];
+    for (let i = 0; i < n; i++) {
+      const a = circ[i], b = circ[(i + 1) % n];
+      const wx = b.x - a.x, wy = b.y - a.y, D = Math.hypot(wx, wy);
+      const k = b.r * b.s - a.r * a.s;
+      const phi = Math.atan2(wy, wx) + Math.asin(Math.max(-1, Math.min(1, -k / D)));
+      T.push([Math.sin(phi), -Math.cos(phi)]);
+    }
+    let c = 0;
+    for (let i = 0; i < n; i++) {
+      const ci = circ[i], m1 = T[(i - 1 + n) % n], m2 = T[i];
+      const ta = Math.atan2(ci.s * m1[1], ci.s * m1[0]);
+      const td = Math.atan2(ci.s * m2[1], ci.s * m2[0]);
+      let dl = (td - ta) * ci.s;
+      dl = ((dl % TAU) + TAU) % TAU;
+      const sw = dl * ci.s, steps = Math.max(2, Math.ceil(dl / 0.14));
+      for (let k = 0; k <= steps; k++) {
+        const th = ta + sw * k / steps;
+        o.x[c] = ci.x + ci.r * Math.cos(th); o.y[c] = ci.y + ci.r * Math.sin(th); o.z[c] = ci.z; c++;
+      }
+    }
+    o.x[c] = o.x[0]; o.y[c] = o.y[0]; o.z[c] = o.z[0]; c++;
+    o.l[0] = 0;
+    for (let i = 1; i < c; i++) o.l[i] = o.l[i - 1] + Math.hypot(o.x[i] - o.x[i - 1], o.y[i] - o.y[i - 1], o.z[i] - o.z[i - 1]);
+    o.n = c;
+    return o.l[c - 1];
+  }
+  // </chainmath>
+
+  /* ============================================================
+     3D
+     ============================================================ */
+  const canvas = $('#gl'), stage = $('#stage');
+  try {
+    if (!window.THREE) throw new Error('no three');
+    gl = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+  } catch (err) {
+    $('#nogl').style.display = 'flex';
+  }
+
+  if (gl) {
+    const T = THREE;
+    gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const scene = new T.Scene();
+    const camera = new T.PerspectiveCamera(35, 1, 0.05, 60);
+    scene.add(new T.AmbientLight(0xffffff, 0.45));
+    scene.add(new T.HemisphereLight(0xffffff, 0x5a6b78, 0.7));
+    const sun = new T.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(-2, 4, 5);
+    scene.add(sun);
+    const holder = new T.Group();      // tilts the flipped bike onto saddle and bars
+    const root = new T.Group();        // lifts (stand) or flips the bike
+    const bike = new T.Group();        // rebuilt from the record
+    scene.add(holder); holder.add(root); root.add(bike);
+    const grid = new T.GridHelper(9, 36, 0x888888, 0x888888);
+    grid.material.transparent = true; grid.material.opacity = 0.22; grid.position.y = GROUND;
+    scene.add(grid);
+    const standG = new T.Group();
+    scene.add(standG);
+
+    const COL = { part: new T.Color(), accent: new T.Color(), good: new T.Color(), bad: new T.Color() };
+    const tmpCol = new T.Color();
+    const standMat = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.2 });
+    function readColors() {
+      const cs = getComputedStyle(document.documentElement);
+      const g = (n, d) => cs.getPropertyValue(n).trim() || d;
+      COL.part.set(g('--part', '#667788')); COL.accent.set(g('--accent', '#F2B600'));
+      COL.good.set(g('--good', '#1E9E5A')); COL.bad.set(g('--bad', '#D6453D'));
+      grid.material.color.copy(COL.part);
+      standMat.color.copy(COL.part).multiplyScalar(0.7);
+    }
+    readColors();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', readColors);
+    new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    let viewMode = 'guide', selIds = [];
+
+    /* ---- part helpers ---- */
+    let parts = {};
+    function part(id) {
+      const g = new T.Group();
+      bike.add(g);
+      parts[id] = { id: id, group: g, mats: [], vis: 1, visT: 1, hot: 0, hotT: 0 };
+      return parts[id];
+    }
+    function newMat(opt) {
+      const m = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.15, transparent: true, flatShading: !!opt.flat });
+      m.userData.k = opt.k || 1; m.userData.dark = !!opt.dark; m.userData.tint = opt.tint || null;
+      return m;
+    }
+    function add(id, geo, pos, rot, opt) {
+      opt = opt || {};
+      const m = newMat(opt);
+      const mesh = new T.Mesh(geo, m);
+      mesh.userData.partId = id;
+      if (pos) mesh.position.set(pos[0], pos[1], pos[2]);
+      if (rot) mesh.rotation.set(rot[0], rot[1], rot[2]);
+      (opt.parent || parts[id].group).add(mesh);
+      parts[id].mats.push(m);
+      return mesh;
+    }
+    const UP = new T.Vector3(0, 1, 0), AX = new T.Vector3(1, 0, 0);
+    function tubeGeo(a, b, r) {
+      const A = new T.Vector3(a[0], a[1], a[2]), Bv = new T.Vector3(b[0], b[1], b[2]);
+      const len = A.distanceTo(Bv);
+      const g = new T.CylinderGeometry(r, r, len, 10);
+      g.translate(0, len / 2, 0);
+      g.applyMatrix4(new T.Matrix4().makeRotationFromQuaternion(new T.Quaternion().setFromUnitVectors(UP, Bv.clone().sub(A).normalize())));
+      g.translate(A.x, A.y, A.z);
+      return g;
+    }
+    function curveGeo(pts, r) {
+      return new T.TubeGeometry(new T.CatmullRomCurve3(pts.map((p) => new T.Vector3(p[0], p[1], p[2]))), 48, r, 8, false);
+    }
+    const tA = new T.Vector3(), tB = new T.Vector3(), tD = new T.Vector3();
+    function seg(mesh, a, b) {
+      tA.set(a[0], a[1], a[2]); tB.set(b[0], b[1], b[2]); tD.subVectors(tB, tA);
+      const L = tD.length();
+      mesh.position.copy(tA).addScaledVector(tD, 0.5);
+      mesh.quaternion.setFromUnitVectors(UP, tD.normalize());
+      mesh.scale.set(1, L, 1);
+    }
+    function disposeChildren(g) {
+      while (g.children.length) {
+        const c = g.children[0];
+        g.remove(c);
+        c.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material !== standMat) o.material.dispose(); });
+      }
+    }
+
+    /* ---- colors chosen in the garage, and the name on the down tube ---- */
+    const custom = { frame: null, rims: null }, customHex = {};
+    function syncCustom() {
+      ['frame', 'rims'].forEach((k) => {
+        const hx = (B.colors && B.colors[k]) || '';
+        if (customHex[k] !== hx) { customHex[k] = hx; custom[k] = hx ? new T.Color(hx) : null; }
+      });
+    }
+    let decal = null;
+    function makeDecal(a, b, r) {
+      const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy), th = Math.atan2(dy, dx);
+      const w = len * 0.5, h = 0.07, cv = document.createElement('canvas');
+      cv.width = 1280; cv.height = Math.round(1280 * h / w);
+      const tex = new T.CanvasTexture(cv);
+      const mat = new T.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+      const geo = new T.PlaneGeometry(w, h), ca = Math.cos(th), sa = Math.sin(th);
+      [1, -1].forEach((sd) => {
+        const m = new T.Mesh(geo, mat);
+        m.quaternion.setFromRotationMatrix(new T.Matrix4().makeBasis(new T.Vector3(sd * ca, sd * sa, 0), new T.Vector3(-sa, ca, 0), new T.Vector3(0, 0, sd)));
+        m.position.set(a[0] + dx * 0.66, a[1] + dy * 0.66, sd * (r + 0.003));
+        m.userData.partId = 'frame';
+        parts.frame.group.add(m);
+      });
+      decal = { cv: cv, tex: tex, mat: mat, key: '' };
+    }
+    function drawDecal() {
+      if (!decal) return;
+      const fc = custom.frame || COL.part, txt = (B.name || 'Your bike').toUpperCase();
+      const key = txt + '|' + fc.getHexString();
+      if (key === decal.key) return;
+      decal.key = key;
+      const c = decal.cv.getContext('2d'), W = decal.cv.width, H = decal.cv.height;
+      c.clearRect(0, 0, W, H);
+      c.fillStyle = (0.2126 * fc.r + 0.7152 * fc.g + 0.0722 * fc.b) > 0.45 ? '#14202A' : '#F4F7F9';
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      let size = Math.round(H * 0.8);
+      const font = (z) => '700 ' + z + 'px "Barlow Condensed","Arial Narrow",sans-serif';
+      c.font = font(size);
+      while (c.measureText(txt).width > W * 0.94 && size > 20) { size -= 4; c.font = font(size); }
+      c.fillText(txt, W / 2, H / 2 + size * 0.04);
+      decal.tex.needsUpdate = true;
+    }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (decal) decal.key = ''; });
+
+    /* ---- build a whole bike from the record ---- */
+    let anchors = {}, cage = null, armA = null, armB = null, chainMesh = null, circ = null, N = 0;
+    const PATH = { x: [], y: [], z: [], l: [], n: 0 };
+    const RP = 0.04, LC = 0.13;
+    let GAPN = GAP_OK, gapCur = GAP_OK;
+    const Q = new T.Object3D();
+
+    function rAtZ(z) {
+      const zs = B.zs, rs = B.rs, n = B.n;
+      if (z >= zs[0]) return rs[0];
+      if (z <= zs[n - 1]) return rs[n - 1];
+      for (let i = 0; i < n - 1; i++) {
+        if (z <= zs[i] && z >= zs[i + 1]) return rs[i] + (rs[i + 1] - rs[i]) * ((zs[i] - z) / (zs[i] - zs[i + 1]));
+      }
+      return rs[0];
+    }
+    function layout(z) {
+      const r = rAtZ(z);
+      const u = (r - B.rs[0]) / (B.rs[B.n - 1] - B.rs[0] || 1);
+      const a = -0.55 + 0.5 * u;                       // cage swings back on small cogs
+      const gx = RX - 0.005, gy = HUBY - r - GAPN - RP;
+      return { r: r, a: a, gx: gx, gy: gy, lx: gx + LC * Math.sin(a), ly: gy - LC * Math.cos(a) };
+    }
+
+    function buildBike() {
+      disposeChildren(bike);
+      if (decal) { decal.tex.dispose(); decal.mat.dispose(); decal = null; }
+      parts = {}; anchors = {};
+      const road = B.frame === 'road', ST = B.ST, HT = B.HT, HB = B.HB, C = B.C, S = B.S;
+
+      function wheel(id, cx) {
+        part(id);
+        const rm = RT - B.tt, rim = RT - 2 * B.tt - 0.012;
+        add(id, new T.TorusGeometry(rm, B.tt, 12, 56), [cx, HUBY, 0], null, { k: 0.45 });
+        add(id, new T.TorusGeometry(rim, 0.02, 8, 56), [cx, HUBY, 0], null, { k: 1, tint: 'rims' });
+        add(id, new T.CylinderGeometry(0.032, 0.032, 0.5, 16), [cx, HUBY, 0.12], [HP, 0, 0]);
+        for (let i = 0; i < 18; i++) {
+          const a = (i / 18) * TAU;
+          add(id, tubeGeo([cx, HUBY, i % 2 ? 0.03 : -0.03], [cx + (rim - 0.01) * Math.cos(a), HUBY + (rim - 0.01) * Math.sin(a), 0], 0.004), null, null, { k: 1.2 });
+        }
+      }
+      const full = B.frame === 'full', FX = B.FX, hx = HT[0], hy = HT[1];
+      wheel('rearWheel', RX);
+      wheel('frontWheel', FX);
+
+      part('frame');
+      const TINT = { tint: 'frame' };
+      const ft = (a, b, r) => add('frame', tubeGeo(a, b, r), null, null, TINT);
+      const TT0 = [ST[0] + 0.03, ST[1] - 0.12], TT1 = [hx, hy - 0.02];
+      const Uu = [0.14, 1.0], Dd = [0.5, 0.35 + 0.5 / HB[0] * (HB[1] - 0.35) + 0.05];
+      let dtR = 0.03;
+      if (!full) {
+        const fr = B.type === 'mountain' ? 0.03 : road ? 0.02 : 0.024;
+        dtR = fr + 0.004;
+        const sy = ST[1] - (road ? 0.05 : 0);
+        [
+          [[0, 0.35, 0], [ST[0], ST[1], 0], fr + (road ? 0.004 : 0)],
+          [[ST[0], ST[1], 0], [HT[0], HT[1], 0], fr - 0.002],
+          [[HT[0], HT[1], 0], [HB[0], HB[1], 0], 0.03],
+          [[0, 0.35, 0], [HB[0], HB[1], 0], fr + 0.004],
+          [[0, 0.35, 0.1], [RX, HUBY, 0.1], 0.016], [[ST[0], sy, 0.05], [RX, HUBY, 0.1], 0.012],
+          [[0, 0.35, -0.1], [RX, HUBY, -0.1], 0.016], [[ST[0], sy, -0.05], [RX, HUBY, -0.1], 0.012],
+          [[ST[0], ST[1], 0], [ST[0] - 0.04, B.saddleY - 0.04, 0], 0.015]
+        ].forEach((f) => ft(f[0], f[1], f[2]));
+      } else {
+        // generic demo layout: stays pass outside the tire, a rocker link drives a coil shock in the front triangle
+        const PV = [-0.06, 0.43], SS = [-0.42, 1.3], RK = [-0.2, 1.1];
+        dtR = 0.038;
+        ft([0, 0.35, 0], [ST[0], ST[1], 0], 0.03);
+        ft([TT0[0], TT0[1], 0], [TT1[0], TT1[1], 0], 0.028);
+        ft([hx, hy, 0], [HB[0], HB[1], 0], 0.035);
+        ft([0, 0.35, 0], [HB[0], HB[1], 0], 0.038);
+        ft([ST[0], ST[1], 0], [ST[0] - 0.04, B.saddleY - 0.04, 0], 0.015);
+        ft([0, 0.35, 0], [PV[0], PV[1], 0], 0.03);
+        add('frame', new T.CylinderGeometry(0.028, 0.028, 0.2, 14), [PV[0], PV[1], 0], [HP, 0, 0], TINT);
+        [1, -1].forEach((sd) => {
+          ft([PV[0], PV[1], sd * 0.1], [RX, HUBY, sd * 0.1], 0.017);
+          ft([RX, HUBY, sd * 0.1], [SS[0], SS[1], sd * 0.1], 0.013);
+          ft([SS[0], SS[1], sd * 0.1], [RK[0], RK[1], sd * 0.04], 0.013);
+          ft([RK[0], RK[1], sd * 0.04], [Uu[0], Uu[1], sd * 0.04], 0.014);
+        });
+        ft([SS[0], SS[1], -0.1], [SS[0], SS[1], 0.1], 0.014);
+        add('frame', new T.CylinderGeometry(0.02, 0.02, 0.1, 12), [RK[0], RK[1], 0], [HP, 0, 0], TINT);
+        ft([Dd[0], Dd[1], 0], [Dd[0], Dd[1] - 0.06, 0], 0.014);
+      }
+      add('frame', new T.BoxGeometry(0.34, 0.05, 0.12), [-0.3, B.saddleY, 0], null, { k: 0.5 });
+      if (B.motor) {
+        add('frame', new T.BoxGeometry(0.2, 0.2, 0.22), [0.0, 0.36, 0], null, { k: 0.6 });
+        add('frame', tubeGeo([HB[0] - 0.12, HB[1] - 0.06, 0], [0.12, 0.5, 0], 0.05), null, null, { k: 0.55 });
+      }
+      makeDecal([0, 0.35], HB, dtR);
+
+      part('fork');
+      {
+        const dl = Math.hypot(hx - HB[0], hy - HB[1]);
+        const Cr = [HB[0] - (hx - HB[0]) / dl * 0.04, HB[1] - (hy - HB[1]) / dl * 0.04];
+        if (B.forkKind === 'susp') {
+          const fz = 0.095, M = [FX + (Cr[0] - FX) * 0.5, HUBY + (Cr[1] - HUBY) * 0.5];
+          [1, -1].forEach((sd) => {
+            add('fork', tubeGeo([FX, HUBY, sd * fz], [M[0], M[1], sd * fz], 0.024), null, null, { k: 0.9 });
+            add('fork', tubeGeo([M[0], M[1], sd * fz], [Cr[0], Cr[1], sd * fz], 0.019), null, null, { k: 1.3 });
+          });
+          add('fork', tubeGeo([Cr[0], Cr[1], -fz - 0.01], [Cr[0], Cr[1], fz + 0.01], 0.022));
+        } else {
+          [0.06, -0.06].forEach((z) => add('fork', tubeGeo([HB[0], HB[1], z], [FX, HUBY, z], 0.016)));
+        }
+        add('fork', tubeGeo([Cr[0], Cr[1], 0], [HB[0], HB[1], 0], 0.02));
+      }
+
+      if (full) {
+        part('shock');
+        const dx = Dd[0] - Uu[0], dy = Dd[1] - Uu[1], sl = Math.hypot(dx, dy), vx = dx / sl, vy = dy / sl;
+        const at = (s) => [Uu[0] + vx * s, Uu[1] + vy * s, 0];
+        add('shock', tubeGeo(at(0), at(sl * 0.42), 0.03), null, null, { k: 0.55 });
+        add('shock', tubeGeo(at(sl * 0.42), at(sl), 0.011), null, null, { k: 1.3 });
+        [0, sl].forEach((s) => add('shock', new T.CylinderGeometry(0.024, 0.024, 0.06, 12), at(s), [HP, 0, 0], { k: 0.6 }));
+        const pts = [], turns = 9, R = 0.05, n = turns * 14;
+        for (let i = 0; i <= n; i++) {
+          const f = i / n, th = f * turns * TAU, s = sl * (0.1 + 0.8 * f);
+          pts.push(new T.Vector3(Uu[0] + vx * s - vy * Math.cos(th) * R, Uu[1] + vy * s + vx * Math.cos(th) * R, Math.sin(th) * R));
+        }
+        add('shock', new T.TubeGeometry(new T.CatmullRomCurve3(pts), n * 2, 0.008, 6, false), null, null, { k: 0.95 });
+      }
+
+      part('handlebar'); part('shifter');
+      if (B.bar === 'flat') {
+        const b1 = [hx - 0.04, hy + 0.12];
+        add('handlebar', tubeGeo([hx, hy, 0], [b1[0], b1[1], 0], 0.018));
+        add('handlebar', tubeGeo([b1[0], b1[1], -0.4], [b1[0], b1[1], 0.4], 0.015));
+        add('handlebar', tubeGeo([b1[0], b1[1], 0.3], [b1[0], b1[1], 0.4], 0.021), null, null, { k: 0.45 });
+        add('handlebar', tubeGeo([b1[0], b1[1], -0.4], [b1[0], b1[1], -0.3], 0.021), null, null, { k: 0.45 });
+        add('shifter', new T.BoxGeometry(0.1, 0.045, 0.06), [S[0], S[1], S[2]], null, { k: 0.7 });
+      } else if (B.bar === 'riser') {
+        add('handlebar', tubeGeo([hx, hy, 0], [hx - 0.02, hy + 0.08, 0], 0.02));
+        [1, -1].forEach((sd) => {
+          add('handlebar', tubeGeo([hx - 0.02, hy + 0.08, 0], [hx - 0.02, hy + 0.08, sd * 0.14], 0.016));
+          add('handlebar', tubeGeo([hx - 0.02, hy + 0.08, sd * 0.14], [hx - 0.04, hy + 0.16, sd * 0.3], 0.015));
+          add('handlebar', tubeGeo([hx - 0.04, hy + 0.16, sd * 0.3], [hx - 0.04, hy + 0.16, sd * 0.4], 0.022), null, null, { k: 0.45 });
+        });
+        add('shifter', new T.BoxGeometry(0.1, 0.045, 0.06), [S[0], S[1], S[2]], null, { k: 0.7 });
+      } else {
+        add('handlebar', tubeGeo([HT[0], HT[1], 0], [C[0], C[1], 0], 0.02));
+        [1, -1].forEach((sd) => {
+          const z = sd * 0.21;
+          add('handlebar', tubeGeo([C[0], C[1], 0], [C[0], C[1], z], 0.014));
+          add('handlebar', curveGeo([[C[0], C[1], z], [C[0] + 0.1, C[1] + 0.01, z], [C[0] + 0.18, C[1] - 0.08, z], [C[0] + 0.16, C[1] - 0.19, z], [C[0] + 0.05, C[1] - 0.23, z]], 0.013));
+        });
+        add('shifter', new T.BoxGeometry(0.12, 0.065, 0.05), [S[0], S[1], S[2]], null, { k: 0.7 });
+        add('shifter', tubeGeo([S[0] + 0.03, S[1] - 0.03, S[2]], [S[0] + 0.09, S[1] - 0.14, S[2]], 0.008), null, null, { k: 0.5 });
+      }
+
+      part('barrel');
+      if (B.barrelAt === 'shifter') {
+        parts.barrel.group.position.set(S[0] - 0.075, S[1], S[2]);
+        add('barrel', new T.CylinderGeometry(0.02, 0.02, 0.05, 8), null, [0, 0, HP]);
+        add('barrel', new T.BoxGeometry(0.01, 0.006, 0.008), [0, 0.02, 0], null, { dark: true });
+      } else {
+        parts.barrel.group.position.set(RX - 0.03, 0.725, 0.1);
+        add('barrel', new T.CylinderGeometry(0.016, 0.016, 0.04, 8));
+        add('barrel', new T.BoxGeometry(0.008, 0.008, 0.006), [0.015, 0.012, 0], null, { dark: true });
+      }
+
+      part('cable');
+      const end = B.barrelAt === 'shifter' ? [RX - 0.03, 0.705, 0.1] : [RX - 0.03, 0.75, 0.1];
+      const dt = (u) => [HB[0] * (1 - u), 0.35 + (HB[1] - 0.35) * u, 0.06];
+      const ty = (x) => TT0[1] + (x - TT0[0]) / (TT1[0] - TT0[0]) * (TT1[1] - TT0[1]);
+      const path = B.bar === 'drop'
+        ? [[S[0] - 0.02, S[1] - 0.03, S[2]], [C[0] - 0.02, C[1] - 0.1, 0.17], [HB[0] - 0.03, HB[1] + 0.0, 0.08], [HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, 0.42, 0.06], [-0.4, 0.52, 0.12], [RX + 0.12, 0.62, 0.12], end]
+        : full
+          ? [[S[0] - 0.1, S[1], S[2]], [hx - 0.16, ty(hx - 0.16) + 0.05, 0.07], [0.6, ty(0.6) + 0.05, 0.07], [0.2, ty(0.2) + 0.05, 0.07], [-0.12, ty(-0.12) + 0.05, 0.07], [-0.34, 1.1, 0.13], [RX + 0.1, 0.9, 0.13], [RX + 0.03, 0.82, 0.12], end]
+          : [[S[0] - 0.1, S[1], S[2]], [0.5, 1.56, 0.12], [0.3, 1.54, 0.05], [-0.1, 1.54, 0.05], [-0.22, 1.54, 0.06], [-0.56, 1.12, 0.1], [RX + 0.03, 0.82, 0.12], end];
+      add('cable', curveGeo(path, 0.006), null, null, { k: 0.6 });
+
+      part('chainring');
+      add('chainring', new T.CylinderGeometry(B.rc, B.rc, 0.02, Math.min(B.chainring, 60)), [0, 0.35, 0.22], [HP, 0, 0], { flat: true });
+      add('chainring', tubeGeo([0, 0.35, 0.27], [0.12, 0.1, 0.29], 0.02));
+
+      part('cassette');
+      B.cassette.forEach((t, i) => add('cassette', new T.CylinderGeometry(B.rs[i], B.rs[i], B.sp * 0.5, Math.min(t, 48)), [RX, HUBY, B.zs[i]], [HP, 0, 0], { k: 0.9, flat: true }));
+
+      part('derailleur');
+      add('derailleur', new T.BoxGeometry(0.05, 0.12, 0.06), [RX - 0.03, 0.64, 0.1]);
+      armA = add('derailleur', new T.BoxGeometry(0.016, 1, 0.016), null, null, { k: 0.85 });
+      armB = add('derailleur', new T.BoxGeometry(0.016, 1, 0.016), null, null, { k: 0.85 });
+      cage = new T.Group();
+      parts.derailleur.group.add(cage);
+      const pw = B.chainW / 2 + 0.006;
+      add('derailleur', new T.CylinderGeometry(RP, RP, 0.012, 16), [0, 0, 0], [HP, 0, 0], { parent: cage, k: 0.7 });
+      add('derailleur', new T.CylinderGeometry(RP, RP, 0.012, 16), [0, -LC, 0], [HP, 0, 0], { parent: cage, k: 0.7 });
+      add('derailleur', tubeGeo([0, 0, pw], [0, -LC, pw], 0.008), null, null, { parent: cage });
+      add('derailleur', tubeGeo([0, 0, -pw], [0, -LC, -pw], 0.008), null, null, { parent: cage });
+
+      function screw(id, px, py) {
+        const p = part(id);
+        p.group.position.set(px, py, 0.1);
+        add(id, new T.CylinderGeometry(0.015, 0.015, 0.03, 14), [-0.01, 0, 0], [0, 0, HP]);
+        add(id, new T.BoxGeometry(0.004, 0.006, 0.026), [-0.026, 0, 0], null, { dark: true });
+      }
+      screw('hScrew', RX - 0.06, 0.67);
+      screw('lScrew', RX - 0.06, 0.61);
+      screw('bScrew', RX + 0.058, 0.655);
+
+      circ = [
+        { x: 0, y: 0.35, z: 0.22, r: B.rc, s: 1 },
+        { x: RX, y: HUBY, z: B.zs[0], r: B.rs[0], s: 1 },
+        { x: RX, y: 0.5, z: B.zs[0], r: RP, s: -1 },
+        { x: RX, y: 0.4, z: B.zs[0], r: RP, s: 1 }
+      ];
+      part('chain');
+      GAPN = gapCur = GAP_OK;
+      setCirc(B.zs[B.n - 1]);
+      const Lref = buildPath(circ, PATH);
+      N = Math.max(40, Math.round(Lref / PITCH / 2) * 2);
+      const cm = newMat({ k: 0.6 });
+      chainMesh = new T.InstancedMesh(new T.BoxGeometry(PITCH * 0.8, 0.014, B.chainW), cm, N);
+      chainMesh.frustumCulled = false;
+      chainMesh.userData.partId = 'chain';
+      chainMesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
+      parts.chain.group.add(chainMesh);
+      parts.chain.mats.push(cm);
+
+      function anchor(parent, x, y, z) { const o = new T.Object3D(); o.position.set(x, y, z); parent.add(o); return o; }
+      anchors = {
+        cogS: anchor(bike, RX, HUBY + B.rs[0] + 0.015, B.zs[0]),
+        cogL: anchor(bike, RX, HUBY + B.rs[B.n - 1] + 0.015, B.zs[B.n - 1]),
+        pulley: cage, shifter: anchor(bike, S[0], S[1] + 0.05, S[2]),
+        h: parts.hScrew.group, l: parts.lScrew.group, b: parts.bScrew.group, barrel: parts.barrel.group
+      };
+      derZ = B.zs[B.n - 1];
+      updateDer(derZ);
+      buildStand();
+      applySetup();
+    }
+
+    function buildStand() {
+      disposeChildren(standG);
+      const cx = B.ST[0] - 0.03, cz = -0.34, cy = 1.62 + LIFT, top = cy + 0.2;
+      const mk = (geo, p) => { const m = new T.Mesh(geo, standMat); if (p) m.position.set(p[0], p[1], p[2]); standG.add(m); return m; };
+      mk(tubeGeo([cx, GROUND, cz], [cx, top, cz], 0.02));
+      mk(tubeGeo([cx, cy, cz], [cx, cy, -0.02], 0.016));
+      mk(new T.BoxGeometry(0.07, 0.1, 0.07), [cx, cy, 0]);
+      [HP, HP + TAU / 3, HP + 2 * TAU / 3].forEach((a) => {
+        mk(tubeGeo([cx, GROUND + 0.02, cz], [cx + 0.5 * Math.cos(a), GROUND + 0.02, cz + 0.5 * Math.sin(a)], 0.018));
+      });
+    }
+    function applySetup() {
+      const grounded = viewMode === 'garage';
+      standG.visible = CTX.stand && !grounded;
+      if (grounded) {
+        holder.position.set(0, 0, 0); holder.rotation.set(0, 0, 0);
+        root.rotation.set(0, 0, 0); root.position.set(0, 0, 0);
+      } else if (CTX.stand) {
+        holder.position.set(0, 0, 0); holder.rotation.set(0, 0, 0);
+        root.rotation.set(0, 0, 0); root.position.set(0, LIFT, 0);
+      } else {
+        const xs = -0.3, ys = B.saddleY + 0.025, by = B.barTop;
+        const th = -Math.atan((ys - by[1]) / (by[0] - xs));
+        holder.position.set(xs, GROUND, 0); holder.rotation.set(0, 0, th);
+        root.rotation.set(Math.PI, 0, 0); root.position.set(-xs, ys, 0);
+      }
+      scene.updateMatrixWorld(true);
+    }
+
+    function setCirc(z) {
+      const L = layout(z);
+      circ[1].r = L.r; circ[1].z = z;
+      circ[2].x = L.gx; circ[2].y = L.gy; circ[2].z = z;
+      circ[3].x = L.lx; circ[3].y = L.ly; circ[3].z = z;
+      return L;
+    }
+    function updateDer(z) {
+      const L = setCirc(z);
+      cage.position.set(L.gx, L.gy, z);
+      cage.rotation.z = L.a;
+      seg(armA, [RX - 0.03, 0.585, 0.1], [L.gx, L.gy + 0.022, z]);
+      seg(armB, [RX - 0.03, 0.625, 0.1], [L.gx, L.gy + 0.052, z]);
+      const total = buildPath(circ, PATH);
+      let j = 0;
+      const sp = total / N;
+      for (let k = 0; k < N; k++) {
+        const s = k * sp;
+        while (j < PATH.n - 2 && PATH.l[j + 1] < s) j++;
+        const sl = (PATH.l[j + 1] - PATH.l[j]) || 1e-6, u = (s - PATH.l[j]) / sl;
+        Q.position.set(PATH.x[j] + (PATH.x[j + 1] - PATH.x[j]) * u, PATH.y[j] + (PATH.y[j + 1] - PATH.y[j]) * u, PATH.z[j] + (PATH.z[j + 1] - PATH.z[j]) * u);
+        tD.set(PATH.x[j + 1] - PATH.x[j], PATH.y[j + 1] - PATH.y[j], PATH.z[j + 1] - PATH.z[j]).normalize();
+        Q.quaternion.setFromUnitVectors(AX, tD);
+        Q.scale.set(1, k % 2 ? 0.7 : 1, 1);
+        Q.updateMatrix();
+        chainMesh.setMatrixAt(k, Q.matrix);
+      }
+      chainMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    /* ---- ghost target, gap marker and turn arrow (bike space) ---- */
+    const ghostMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, depthTest: false });
+    const ghost = new T.Group();
+    const ghostRing = new T.Mesh(new T.TorusGeometry(RP + 0.012, 0.005, 8, 36), ghostMat);
+    const plumb = new T.Mesh(new T.BoxGeometry(0.004, 1, 0.004), ghostMat);
+    const gapBar = new T.Mesh(new T.BoxGeometry(0.012, 1, 0.012), ghostMat);
+    ghostRing.renderOrder = plumb.renderOrder = gapBar.renderOrder = 9;
+    ghost.add(ghostRing, plumb, gapBar);
+    ghost.visible = false;
+    root.add(ghost);
+
+    const arrowMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthTest: false });
+    const arrow = new T.Group();
+    root.add(arrow);
+    arrow.visible = false;
+    function buildArrow(r) {
+      while (arrow.children.length) arrow.remove(arrow.children[0]);
+      const arc = new T.Mesh(new T.TorusGeometry(r, r * 0.16, 8, 32, Math.PI * 1.5), arrowMat);
+      const cone = new T.Mesh(new T.ConeGeometry(r * 0.4, r * 0.8, 12), arrowMat);
+      cone.position.set(0, -r, 0); cone.rotation.z = -HP;
+      arc.renderOrder = cone.renderOrder = 10;
+      arrow.add(arc, cone);
+    }
+    const wp = new T.Vector3();
+    function placeArrow(kind, dir) {
+      if (!kind) { arrow.visible = false; return; }
+      scene.updateMatrixWorld(true);
+      const g = kind === 'h' ? parts.hScrew.group : kind === 'l' ? parts.lScrew.group : kind === 'b' ? parts.bScrew.group : parts.barrel.group;
+      g.getWorldPosition(wp);
+      root.worldToLocal(wp);
+      buildArrow(kind === 'barrel' ? 0.045 : 0.033);
+      if (kind === 'barrel' && B.barrelAt === 'derailleur') {
+        arrow.position.set(wp.x, wp.y + 0.045, wp.z);
+        arrow.rotation.set(dir === 'cw' ? HP : -HP, 0, 0);
+      } else if (kind === 'b') {
+        arrow.position.set(wp.x + 0.045, wp.y, wp.z);
+        arrow.rotation.set(0, dir === 'ccw' ? HP : -HP, 0);
+      } else {
+        arrow.position.set(wp.x - 0.045, wp.y, wp.z);
+        arrow.rotation.set(0, dir === 'ccw' ? -HP : HP, 0);
+      }
+      arrow.visible = true;
+    }
+    hooks.arrow = (kind, dir) => placeArrow(kind, dir);
+
+    /* ---- camera (poses are written in bike space and converted to world) ---- */
+    const look = new T.Vector3(0, 0.9, 0.1);
+    camera.position.set(-1.6, 1.3, 5.2);
+    const cv = new T.Vector3();
+    const toWorld = (a) => { cv.set(a[0], a[1], a[2]); root.localToWorld(cv); return cv.clone(); };
+    let tw = null;
+    function goCam(pose, instant) {
+      scene.updateMatrixWorld(true);
+      const p1 = toWorld(pose.p), t1 = toWorld(pose.t);
+      if (instant || reduce) { camera.position.copy(p1); look.copy(t1); tw = null; return; }
+      tw = { p0: camera.position.clone(), t0: look.clone(), p1: p1, t1: t1, k: 0, dur: 1.5 };
+    }
+    const controls = new T.OrbitControls(camera, canvas);
+    controls.enableDamping = true; controls.dampingFactor = 0.08;
+    controls.minDistance = 0.35; controls.maxDistance = 9; controls.enabled = false;
+
+    /* ---- focus ---- */
+    let showAll = true, selected = null;
+    const GSTEP = { hot: [], ctx: 'all', tags: [], cycle: 10, cam: () => ({ p: [-1.5, 1.45, 5.6], t: [0.28, 0.85, 0] }), anim: () => ({ z: B.zs[Math.floor(B.n / 2)] }) };
+    function applyFocus() {
+      if (viewMode === 'garage') {
+        Object.keys(parts).forEach((id) => { parts[id].visT = 1; parts[id].hotT = selIds.indexOf(id) >= 0 ? 1 : 0; });
+        return;
+      }
+      const S = STEPS[Math.max(cur, 0)];
+      Object.keys(parts).forEach((id) => {
+        const p = parts[id];
+        const isHot = S.hot.indexOf(id) >= 0;
+        const isCtx = S.ctx === 'all' || S.ctx.indexOf(id) >= 0 || ((id === 'fork' || id === 'shock') && S.ctx.indexOf('frame') >= 0);
+        p.visT = (exploring && showAll) ? 1 : (isHot || isCtx ? 1 : 0.1);
+        p.hotT = isHot ? 1 : 0;
+        if (exploring && selected) { p.hotT = id === selected ? 1 : 0; p.visT = (showAll || id === selected || isHot || isCtx) ? 1 : 0.1; }
+      });
+    }
+
+    /* ---- labels: small, shown for a few seconds, tap the stage to bring them back ---- */
+    const tagsEl = $('#tags');
+    let tagList = [], tagTimer = 0, noteTimer = 0;
+    function revealTags() {
+      tagList.forEach((t) => t.el.classList.add('on'));
+      clearTimeout(tagTimer);
+      tagTimer = setTimeout(() => tagList.forEach((t) => t.el.classList.remove('on')), 4500);
+    }
+    function buildTags(S) {
+      tagsEl.innerHTML = '';
+      tagList = (S.tags || []).map((t) => {
+        const d = document.createElement('div');
+        d.className = 'tag'; d.textContent = t.text;
+        tagsEl.appendChild(d);
+        return { el: d, obj: anchors[t.a] };
+      }).filter((t) => t.obj);
+      clearTimeout(tagTimer);
+      tagTimer = setTimeout(revealTags, 700);
+    }
+
+    let t0 = nowS(), derZ = 0.16, camPhase = 'main';
+    hooks.onStep = (S, first) => {
+      camPhase = 'main';
+      if (!exploring) goCam(S.cam(), first);
+      applyFocus();
+      placeArrow(S.arrow ? S.arrow.kind : null, S.arrow ? S.arrow.dir : null);
+      buildTags(S);
+      t0 = nowS();
+    };
+    hooks.rebuild = () => { buildBike(); applyFocus(); };
+    hooks.garageOpen = (rec) => {
+      viewMode = 'garage'; selIds = [];
+      B = toBike(rec);
+      buildBike(); applyFocus();
+      const g = GSTEP.cam();
+      camera.position.set(g.p[0], g.p[1], g.p[2]); look.set(g.t[0], g.t[1], g.t[2]);
+      controls.target.copy(look); controls.maxPolarAngle = HP * 1.02; controls.maxDistance = 8;
+      controls.enabled = true; controls.update(); tw = null;
+      resize();
+    };
+    hooks.garageClose = () => {
+      if (viewMode !== 'garage') return;
+      viewMode = 'guide'; selIds = []; controls.enabled = false; controls.maxPolarAngle = Math.PI; controls.maxDistance = 9;
+    };
+    hooks.garageSelect = (ids) => { selIds = ids; applyFocus(); };
+    hooks.garageName = (n) => { B.name = n || 'Your bike'; };
+    $('#replay').addEventListener('click', () => { t0 = nowS(); resetDec(); renderDecision(); revealTags(); });
+
+    /* ---- explore mode ---- */
+    function showInfo(id) {
+      const m = id ? META[id] : null;
+      $('#pname').textContent = m ? m[0] : 'Tap a part';
+      $('#palias').textContent = m ? m[1] : 'Drag to rotate, pinch to zoom.';
+      $('#pdesc').textContent = m ? m[2] : '';
+    }
+    function enterExplore() {
+      exploring = true; selected = null; tw = null;
+      stage.classList.add('explore');
+      controls.target.copy(look); controls.enabled = true;
+      showInfo(null); applyFocus(); resize();
+    }
+    function exitExplore() {
+      exploring = false; selected = null;
+      stage.classList.remove('explore');
+      controls.enabled = false;
+      applyFocus(); resize();
+      if (STEPS[cur]) goCam(STEPS[cur].cam(), false);
+    }
+    hooks.exit = exitExplore;
+    $('#expand').addEventListener('click', enterExplore);
+    $('#xclose').addEventListener('click', exitExplore);
+    function setMode(all) {
+      showAll = all;
+      $('#xall').setAttribute('aria-pressed', all);
+      $('#xfocus').setAttribute('aria-pressed', !all);
+      applyFocus();
+    }
+    $('#xall').addEventListener('click', () => setMode(true));
+    $('#xfocus').addEventListener('click', () => setMode(false));
+
+    const ray = new T.Raycaster(), ndc = new T.Vector2();
+    let down = null;
+    canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+    canvas.addEventListener('pointerup', (e) => {
+      if (!down) return;
+      const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
+      down = null;
+      if (moved > 8) return;
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(bike.children, true).find((h) => h.object.userData.partId && parts[h.object.userData.partId] && parts[h.object.userData.partId].vis > 0.3);
+      const id = hit ? hit.object.userData.partId : null;
+      if (viewMode === 'garage') {
+        selIds = id ? [id] : []; applyFocus();
+        if (hooks.picked) hooks.picked(id);
+      } else if (exploring) {
+        selected = id; showInfo(id); applyFocus();
+      } else {
+        revealTags();
+        if (id) {
+          const n = $('#note');
+          n.classList.add('pick');
+          n.textContent = META[id][0];
+          clearTimeout(noteTimer);
+          noteTimer = setTimeout(updateNote, 3000);
+        }
+      }
+    });
+
+    /* ---- sizing ---- */
+    const BASE_TAN = Math.tan((17.5 * Math.PI) / 180);
+    function resize() {
+      const w = stage.clientWidth, h = stage.clientHeight;
+      if (!w || !h) return;
+      gl.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.fov = (2 * Math.atan(BASE_TAN * Math.max(1, 1.3 / camera.aspect)) * 180) / Math.PI;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    /* ---- animation per frame ---- */
+    function alignAnim(S, now) {
+      const D = S.decision;
+      const base = D.target === 'small' ? B.zs[0] : B.zs[B.n - 1];
+      const out = { z: base, cap: '', status: null };
+      if (!DEC.choice) {
+        const t = (((now - t0) % 6) + 6) % 6, o = D.opts[Math.floor(t / 2)];
+        out.z = base + o.off; out.cap = o.label;
+        return out;
+      }
+      const o = D.opts.find((x) => x.id === DEC.choice);
+      out.cap = o.label;
+      if (DEC.fix) {
+        const t = now - DEC.fixT0, p = ramp(t, 0.9, 2.6);
+        out.z = base + o.off * (1 - p);
+        const turn = 2 * ramp(t, 0.2, 2.6) * (o.dir === 'cw' ? 1 : -1);
+        if (D.screw === 'h') out.h = turn; else out.l = turn;
+        if (t > 3.0) finishFix();
+      } else out.z = base + o.off;
+      out.status = Math.abs(derZ - base) < 0.012 ? 'good' : 'bad';
+      return out;
+    }
+    function gapAnim(S, now) {
+      const D = S.decision, base = B.zs[B.n - 1];
+      const out = { z: base, cap: '', status: null, gap: GAP_OK, live: true };
+      if (!DEC.choice) {
+        const t = (((now - t0) % 6) + 6) % 6, o = D.opts[Math.floor(t / 2)];
+        out.gap = o.gap; out.cap = o.label; out.live = false;
+        return out;
+      }
+      const o = D.opts.find((x) => x.id === DEC.choice);
+      out.gap = o.gap;
+      if (DEC.fix) {
+        const t = now - DEC.fixT0, p = ramp(t, 0.9, 2.6);
+        out.gap = o.gap + (GAP_OK - o.gap) * p;
+        out.bs = 2 * ramp(t, 0.2, 2.6) * (o.dir === 'cw' ? 1 : -1);
+        if (t > 3.0) finishFix();
+      }
+      out.status = Math.abs(gapCur - GAP_OK) < 0.0025 ? 'good' : 'bad';
+      return out;
+    }
+    function shiftAnim(S, now) {
+      const D = S.decision, base = B.zs[D.m];
+      const out = { z: base, cap: '', status: null, phase: 'main' };
+      const loop = (o, t) => {
+        const stall = o.id === 'ok' ? 1 : 0.3;
+        return base + (B.zs[o.goal] - base) * stall * (ramp(t, 0.5, 1.1) - ramp(t, 2.2, 2.8));
+      };
+      if (!DEC.choice) {
+        const t = (((now - t0) % 9) + 9) % 9, k = Math.floor(t / 3), o = D.opts[k];
+        out.z = loop(o, t - k * 3); out.cap = o.cap;
+        return out;
+      }
+      const o = D.opts.find((x) => x.id === DEC.choice);
+      out.cap = o.cap;
+      if (DEC.fix) {
+        const far = B.barrelAt === 'shifter';
+        const T2 = far ? { a: 1.7, b: 3.1, s0: 5.0, s1: 5.8, back: 3.4, end: 6.6 } : { a: 0.3, b: 1.7, s0: 2.1, s1: 2.9, back: 0, end: 3.7 };
+        const t = now - DEC.fixT0;
+        out.phase = (far && t < T2.back) ? 'barrel' : 'main';
+        out.b = 2 * ramp(t, T2.a, T2.b) * (o.dir === 'ccw' ? 1 : -1);
+        out.z = base + (B.zs[o.goal] - base) * ramp(t, T2.s0, T2.s1);
+        out.status = t < T2.s1 ? 'bad' : 'good';
+        if (t > T2.end) finishFix();
+      } else {
+        out.z = loop(o, (((now - t0) % 3) + 3) % 3);
+        out.status = o.id === 'ok' ? 'good' : 'bad';
+      }
+      return out;
+    }
+    const capEl = $('#cap');
+    let lastCap = null;
+    const pv = new T.Vector3();
+    let last = nowS();
+    function tick() {
+      requestAnimationFrame(tick);
+      const now = nowS();
+      const dt = Math.min(0.05, now - last);
+      last = now;
+      if (!stage.offsetParent && !exploring) return;
+      const S = viewMode === 'garage' ? GSTEP : STEPS[Math.max(cur, 0)];
+      if (!S || !chainMesh) return;
+      syncCustom(); drawDecal();
+      if (decal) decal.mat.opacity = parts.frame ? parts.frame.vis : 1;
+
+      const kind = S.decision ? S.decision.kind : null;
+      const a = kind === 'shift' ? shiftAnim(S, now) : kind === 'gap' ? gapAnim(S, now) : kind === 'align' ? alignAnim(S, now) : S.anim((((now - t0) % S.cycle) + S.cycle) % S.cycle);
+      derZ += (a.z - derZ) * (1 - Math.exp(-dt * 7));
+      gapCur += ((a.gap == null ? GAP_OK : a.gap) - gapCur) * (1 - Math.exp(-dt * 7));
+      GAPN = gapCur;
+      updateDer(derZ);
+      parts.hScrew.group.rotation.x = Math.PI * (a.h || 0);
+      parts.lScrew.group.rotation.x = Math.PI * (a.l || 0);
+      parts.bScrew.group.rotation.x = Math.PI * (a.bs || 0);
+      const bv = Math.PI * (a.b || 0);
+      if (B.barrelAt === 'shifter') parts.barrel.group.rotation.x = -bv; else parts.barrel.group.rotation.y = bv;
+
+      if (S.decision && S.decision.cams) {
+        const ph = a.phase || 'main';
+        if (ph !== camPhase) { camPhase = ph; if (!exploring) goCam(S.decision.cams[ph](), false); }
+      }
+
+      ghost.visible = false;
+      if (S.decision && !exploring) {
+        if (kind === 'align') {
+          const base = S.decision.target === 'small' ? B.zs[0] : B.zs[B.n - 1];
+          const GN = GAPN; GAPN = GAP_OK;
+          const L = layout(base);
+          GAPN = GN;
+          ghost.visible = true; ghostRing.visible = true; plumb.visible = true; gapBar.visible = false;
+          ghostRing.position.set(L.gx, L.gy, base);
+          const len = HUBY - L.gy;
+          plumb.scale.set(1, len, 1);
+          plumb.position.set(RX, HUBY - len / 2, base);
+          ghostMat.color.copy(COL.accent);
+        } else if (kind === 'gap') {
+          const zc = B.zs[B.n - 1], top = HUBY - B.rs[B.n - 1];
+          ghost.visible = true; ghostRing.visible = false; plumb.visible = false; gapBar.visible = true;
+          gapBar.scale.set(1, Math.max(0.002, gapCur), 1);
+          gapBar.position.set(RX + 0.05, top - gapCur / 2, zc);
+          ghostMat.color.copy(COL.accent);
+        }
+      }
+      let capText = '';
+      if (S.decision && !exploring) capText = a.live ? ('Gap ' + (gapCur * 500).toFixed(1) + ' mm') : (a.cap || '');
+      if (capText !== lastCap) { capEl.textContent = capText; capEl.classList.toggle('on', !!capText); lastCap = capText; }
+
+      if (tw) {
+        tw.k += dt / tw.dur;
+        const e = ease(tw.k);
+        camera.position.lerpVectors(tw.p0, tw.p1, e);
+        camera.position.y += Math.sin(Math.PI * e) * 0.35;
+        look.lerpVectors(tw.t0, tw.t1, e);
+        if (tw.k >= 1) tw = null;
+      }
+      if (exploring || viewMode === 'garage') { controls.update(); look.copy(controls.target); }
+      else camera.lookAt(look);
+
+      const f = 1 - Math.exp(-dt * 6);
+      Object.keys(parts).forEach((id) => {
+        const p = parts[id];
+        let hotT = p.hotT, hotCol = COL.accent;
+        if (id === 'derailleur' && a.status) { hotT = 1; hotCol = a.status === 'good' ? COL.good : COL.bad; }
+        p.vis += (p.visT - p.vis) * f;
+        p.hot += (hotT - p.hot) * f;
+        p.group.visible = p.vis > 0.01;
+        p.mats.forEach((m) => {
+          m.opacity = p.vis;
+          m.depthWrite = p.vis > 0.98;
+          if (m.userData.dark) { m.color.copy(COL.part).multiplyScalar(0.22); return; }
+          tmpCol.copy((m.userData.tint && custom[m.userData.tint]) || COL.part).multiplyScalar(m.userData.k);
+          m.color.copy(tmpCol).lerp(hotCol, p.hot);
+          m.emissive.copy(hotCol).multiplyScalar(p.hot * 0.18);
+        });
+      });
+
+      if (arrow.visible) {
+        arrowMat.color.copy(COL.accent);
+        arrowMat.opacity = 0.7 + 0.3 * Math.sin(now * 4);
+      }
+
+      if (!exploring && viewMode !== 'garage') {
+        const w = stage.clientWidth, h = stage.clientHeight;
+        scene.updateMatrixWorld(true);
+        tagList.forEach((t) => {
+          t.obj.getWorldPosition(pv);
+          pv.project(camera);
+          const x = (pv.x * 0.5 + 0.5) * w, y = (-pv.y * 0.5 + 0.5) * h;
+          const off = pv.z > 1 || x < 12 || x > w - 12 || y < 24 || y > h - 12;
+          t.el.style.visibility = off ? 'hidden' : 'visible';
+          if (!off) t.el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px) translate(-50%,-150%)';
+        });
+      }
+      gl.render(scene, camera);
+    }
+    buildBike();
+    requestAnimationFrame(tick);
+  }
+
+  go('repair', true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+# Shared inspections, draft 1 (7 Nov 2026).
+#
+# An inspection observes the bike's condition and reports one named state. It never decides what
+# happens next: tutorials map states to outcomes (continue, block, stop, end); diagnosis and the
+# service check map them to findings and repairs.
+#
+# <pos> is the caller's brake position (front | rear). Tool ids refer to the shared tool catalog.
+# Labels and meanings are neutral on purpose: no instructions, no safety verdicts, no "Tap Next".
+
+inspections:
+  - id: disc-pad-wear
+    applies_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }
+    text: "Shine a light into the brake from above and find the pad material between each metal plate and the disc. Maker's wear limit: {brake.pad_wear_limit.<pos>|see the brake's manual}."
+    params:
+      - { key: brake.pad_wear_limit.<pos>, safety: true }
+    tools: { required: [], helpful: [torch] }
+    scene: "Disc brake from above, pad material and the metal backing plates highlighted on both sides of the disc"
+    states:
+      - id: ok
+        label: "Pad material clearly thicker than its metal plate"
+        meaning: "The pads have plenty of material left."
+      - id: worn
+        label: "Pad material as thin as its metal plate, or thinner"
+        meaning: "The pads are worn and close to their limit."
+      - id: very-worn
+        label: "No material visible, or metal scrapes on the disc"
+        meaning: "The pads are worn through. The disc may be damaged."
+
+  - id: rim-pad-wear
+    applies_when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever, rim_hydraulic] }
+    text: "Look at the rubber of each brake pad. Find the grooves or the line that shows wear."
+    tools: { required: [], helpful: [torch] }
+    scene: "Rim brake pad from the side, wear grooves highlighted"
+    states:
+      - id: ok
+        label: "Grooves clearly visible"
+        meaning: "The pads have material left."
+      - id: worn
+        label: "Grooves almost or fully gone"
+        meaning: "The pads are worn."
+      - id: very-worn
+        label: "Metal shows, or it scrapes on the rim"
+        meaning: "The pads are worn through. The rim may be damaged."
+
+  - id: rim-braking-surface
+    applies_when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever, rim_hydraulic] }
+    text: "Turn the wheel slowly, lifting it if needed. Look at the rim where the pads touch it, all the way round."
+    tools: { required: [], helpful: [torch] }
+    scene: "Rim braking surface, close-up, wheel turning slowly"
+    states:
+      - id: ok
+        label: "Smooth and even all round"
+        meaning: "The braking surface looks fine."
+      - id: worn
+        label: "Deep grooves, or the side looks hollow"
+        meaning: "The rim may be worn."
+
+  - id: rotor-condition
+    applies_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }
+    text: "Look at the round metal disc on the wheel, the brake rotor. Do not touch the surface where the pads grip."
+    tools: { required: [], helpful: [torch] }
+    scene: "Rotor close-up"
+    states:
+      - id: ok
+        label: "Smooth and even"
+        meaning: "The rotor looks fine."
+      - id: damaged
+        label: "Deep grooves, cracks, or bent"
+        meaning: "The rotor may need replacing."
+
+  - id: pad-contamination
+    applies_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical, rim_v, rim_caliper, rim_cantilever, rim_hydraulic] }
+    text: "Look at the brake pads and at the parts of the brake around them."
+    tools: { required: [], helpful: [torch] }
+    scene: "Brake pads and the brake around them, close-up"
+    states:
+      - id: dry
+        label: "Dry and dusty"
+        meaning: "There is no oil on the pads or the brake."
+      - id: oily
+        label: "Wet, oily or shiny dark"
+        meaning: "Oil is on the pads or the brake, from a leak or from outside."
+
+  - id: hydraulic-lever-feel
+    applies_when: { brake.type.<pos>: [disc_hydraulic, rim_hydraulic] }
+    text: "Squeeze the brake lever firmly five times."
+    tools: { required: [], helpful: [] }
+    scene: "Brake lever, side view"
+    states:
+      - id: firm
+        label: "Firm, stops well before the handlebar"
+        meaning: "The hydraulic system feels normal."
+      - id: soft
+        label: "Soft or spongy, but stops before the handlebar"
+        meaning: "There may be air in the hydraulic system."
+      - id: reaches-bar
+        label: "Reaches the handlebar"
+        meaning: "The brake builds too little pressure. Air, a leak or worn-through pads are possible."
+
+  - id: brake-stops-bike
+    applies_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical, rim_v, rim_caliper, rim_cantilever, rim_hydraulic, roller] }
+    text: "Push the bike at walking speed and squeeze only this brake."
+    tools: { required: [], helpful: [] }
+    scene: "Person pushing the bike, brake lever highlighted"
+    states:
+      - id: stops
+        label: "The bike stops firmly"
+        meaning: "The brake works at low speed."
+      - id: weak
+        label: "It brakes weakly or not at all"
+        meaning: "The brake has too little power."
+      - id: grinds
+        label: "It grinds or scrapes"
+        meaning: "Metal may touch, or a pad may sit wrong."
+
+  - id: brake-power-riding
+    applies_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical, rim_v, rim_caliper, rim_cantilever, rim_hydraulic, roller] }
+    text: "Ride slowly in a safe, empty place and brake firmly with this brake only."
+    tools: { required: [], helpful: [] }
+    scene: "Rider braking on an empty path"
+    states:
+      - id: strong
+        label: "Brakes strongly and quietly"
+        meaning: "The brake works well."
+      - id: squeals
+        label: "Brakes strongly, but squeals"
+        meaning: "The brake works but makes noise."
+      - id: weak
+        label: "Brakes weakly"
+        meaning: "The brake has less power than it should."

@@ -1,0 +1,1476 @@
+# Replace brake pads: tutorial content, draft 2 (7 Nov 2026).
+# Draft 1 was reviewed by the owner; this draft applies changes 1-6 of the revision prompt.
+#
+# Notation (accepted in review): <pos>; if_unknown + generic_text on steps; params with safety flags;
+# shop items inside procedures; tools with when; implementations and branch cases evaluated in order
+# on known facts, the first true one runs, and a fact question is asked only when no case can be
+# decided yet.
+#
+# New in draft 2 (listed in open_questions for confirmation):
+#   inspect: <id> / on:     a call into inspections.yaml with an outcome per state
+#   block / stop            two unsafe outcomes (change 3)
+#   pos in conditions       { pos: [rear] } tests the tutorial parameter
+#   default: true           the branch case that applies when no earlier case does
+#   branch id               lets fact_manifest name a branch as a fallback ask point
+#   text/name with by:      an enum mapped to full sentences per fact value (writing rules)
+#   needs_mechanic_review   on steps and on call sites of the draft wheel-in variant
+#   When bike.ebike is false, every condition on ebike.motor_position evaluates false.
+
+tools:
+  - id: bike-stand
+    name: "Bike stand"
+    kind: tool
+  - id: work-mat
+    name: "Soft mat or old blanket"
+    kind: tool
+    substitutes:
+      - { name: "Flattened cardboard box" }
+  - id: gloves
+    name: "Disposable gloves"
+    kind: consumable
+  - id: torch
+    name: "Torch or phone light"
+    kind: tool
+  - id: key-set
+    name: "Hex keys and Torx keys (star-shaped), small sizes"
+    kind: tool
+    substitutes:
+      - { name: "Bike multi-tool with hex and Torx bits" }
+    do_not_use:
+      - { name: "Pliers on the bolt heads", reason: "They slip and round off the bolt heads" }
+  - id: spanner-small
+    name: "Small spanner (often 10 mm)"
+    kind: tool
+    substitutes:
+      - { name: "Adjustable spanner that fits tightly" }
+    do_not_use:
+      - { name: "Pliers", reason: "They slip and round off the nut" }
+  - id: spanner-axle
+    name: "Spanner for the axle nuts (often 15 mm)"
+    kind: tool
+    substitutes:
+      - { name: "Adjustable spanner that fits tightly" }
+    do_not_use:
+      - { name: "Pliers", reason: "The nuts cannot be tightened enough and get rounded off" }
+  - id: pliers
+    name: "Small pointed pliers"
+    kind: tool
+  - id: screwdriver-small
+    name: "Small cross-head screwdriver"
+    kind: tool
+  - id: tyre-lever
+    name: "Plastic tyre lever"
+    kind: tool
+    substitutes:
+      - { name: "Clean, flat plastic spatula" }
+    do_not_use:
+      - { name: "Screwdriver, knife or other metal", reason: "Scratches the pistons and can damage their seals" }
+  - id: brake-pad-spacer
+    name: "Brake pad spacer (plastic block)"
+    kind: tool
+    substitutes:
+      - { name: "Clean, folded cardboard" }
+    do_not_use:
+      - { name: "Screwdriver or other metal", reason: "Can damage the pistons" }
+      - { name: "Anything greasy", reason: "Oil on the pads makes the brake fail" }
+  - id: alcohol
+    name: "Isopropyl alcohol (from a pharmacy)"
+    kind: consumable
+    substitutes:
+      - { name: "Disc brake cleaner" }
+    do_not_use:
+      - { name: "WD-40, degreaser or household cleaner", reason: "Leaves a film that makes the brake weak" }
+  - id: clean-cloth
+    name: "Clean, lint-free cloth"
+    kind: consumable
+    substitutes:
+      - { name: "New kitchen paper" }
+    do_not_use:
+      - { name: "Used workshop rag", reason: "May carry oil onto the disc" }
+  - id: torque-wrench
+    name: "Torque wrench"
+    kind: tool
+
+parts:
+  - id: disc-pads
+    name: "{brake.pad_shape.<pos>|Disc brake pads that match the code printed on your old pads}"
+    safety: true
+  - id: rim-pads
+    code: "{brake.pad_shape.<pos>|the code printed on your old pads}"
+    name:
+      by: wheel.rim_material.<pos>
+      values:
+        aluminium: "Rim brake pads for aluminium rims that match your old pads"
+        carbon: "Rim brake pads made for carbon rims that match your old pads"
+        steel: "Rim brake pads for steel rims that match your old pads"
+      if_unknown: "Rim brake pads that match your old pads and your rims"
+    safety: true
+  - id: rim-inserts
+    code: "{brake.pad_shape.<pos>|the code printed on your old inserts}"
+    name:
+      by: wheel.rim_material.<pos>
+      values:
+        aluminium: "Rubber inserts for aluminium rims that match your pad holders"
+        carbon: "Rubber inserts made for carbon rims that match your pad holders"
+        steel: "Rubber inserts for steel rims that match your pad holders"
+      if_unknown: "Rubber inserts that match your pad holders and your rims"
+    safety: true
+  - id: hydraulic-rim-pads
+    code: "{brake.pad_shape.<pos>|the code printed on your old pads}"
+    name:
+      by: wheel.rim_material.<pos>
+      values:
+        aluminium: "Pads for hydraulic rim brakes, for aluminium rims, that match your old pads"
+        carbon: "Pads for hydraulic rim brakes, made for carbon rims, that match your old pads"
+        steel: "Pads for hydraulic rim brakes, for steel rims, that match your old pads"
+      if_unknown: "Pads for hydraulic rim brakes that match your old pads and your rims"
+    safety: true
+  - id: split-pin
+    name: "New split pin for the pad pin (often in the pad pack)"
+    safety: false
+
+steps:
+  # ---------------------------------------------------------------- shared: e-bike, holding the bike, photo
+  - id: ebike-battery-out
+    kind: action
+    text: "Switch off the motor system. Take out the battery if that is easy."
+    when: { bike.ebike: [true] }
+    if_unknown: generic
+    generic_text: "If your bike has a motor, switch it off. Take out the battery if that is easy."
+    tools: { required: [], helpful: [] }
+    scene: "E-bike from the right side, display and battery highlighted"
+    animation: { target: battery, motion: remove, direction: "out of the frame", amount: "fully", view: "right side of the bike", caption: "Switch off, then take out the battery" }
+
+  - id: ebike-battery-in
+    kind: action
+    text: "Put the battery back in."
+    when: { bike.ebike: [true] }
+    if_unknown: generic
+    generic_text: "If you took out a battery, put it back in."
+    tools: { required: [], helpful: [] }
+    scene: "E-bike from the right side, battery highlighted"
+    animation: { target: battery, motion: insert, direction: "into the frame", amount: "until it clicks", view: "right side of the bike", caption: "Put the battery back in" }
+
+  - id: clamp-in-stand
+    kind: action
+    text: "Clamp the seat post in the stand at hip height. With a heavy e-bike, check the stand's maximum load first."
+    tools: { required: [], helpful: [bike-stand] }
+    scene: "Bike in stand, side view"
+    animation: { target: stand_clamp, motion: rotate, direction: tighten, amount: "until the bike sits firm", view: "left side of the bike", caption: "Close the clamp around the seat post" }
+
+  - id: lean-bike
+    kind: action
+    text: "Put the bike on its kickstand, or lean it against a wall."
+    tools: { required: [], helpful: [] }
+    scene: "Bike leaning against a wall, side view"
+    animation: { target: bike, motion: push, direction: "towards the wall", amount: "until it rests", view: "right side of the bike", caption: "Lean the bike against a wall" }
+
+  - id: turn-upside-down
+    kind: action
+    text: "Lay a soft mat on the floor. Turn the bike over so it rests on the saddle and handlebar."
+    tools: { required: [], helpful: [work-mat] }
+    scene: "Bike upside down on a mat, side view"
+    animation: { target: bike, motion: rotate, direction: "over, wheels up", amount: "half a turn", view: "right side of the bike", caption: "Turn the bike over onto the mat" }
+
+  - id: kickstand-fork-on-mat
+    kind: action
+    needs_mechanic_review: true
+    text: "Put the bike on its kickstand next to a wall, with a soft mat under the front wheel. When the wheel comes out, the fork rests on the mat."
+    tools: { required: [], helpful: [work-mat] }
+    scene: "E-bike on its kickstand by a wall, mat under the front wheel, side view"
+    animation: { target: bike, motion: push, direction: "towards the wall", amount: "until it rests on the kickstand", view: "right side of the bike", caption: "Park the bike on its kickstand by a wall" }
+
+  - id: unclamp-from-stand
+    kind: action
+    text: "Hold the bike, open the stand clamp and put the bike on the ground."
+    tools: { required: [], helpful: [bike-stand] }
+    scene: "Bike in stand, side view"
+    animation: { target: stand_clamp, motion: rotate, direction: loosen, amount: "until open", view: "left side of the bike", caption: "Open the clamp while holding the bike" }
+
+  - id: turn-bike-upright
+    kind: action
+    text: "Turn the bike back onto its wheels."
+    tools: { required: [], helpful: [] }
+    scene: "Bike upside down on a mat, side view"
+    animation: { target: bike, motion: rotate, direction: "over, wheels down", amount: "half a turn", view: "right side of the bike", caption: "Turn the bike back onto its wheels" }
+
+  - id: photo-before
+    kind: action
+    text: "Take a photo of the brake pads and the parts around them. You can compare with it later."
+    tools: { required: [], helpful: [] }
+    scene: "The brake being worked on, highlighted; camera frame overlay"
+
+  # ---------------------------------------------------------------- shared: wheel removal and refitting
+  - id: unplug-dynamo
+    kind: action
+    text: "Pull the cable plug off the hub in the middle of the wheel."
+    when: { wheel.dynamo_hub: [true] }
+    if_unknown: generic
+    generic_text: "If a thin cable runs to the middle of the wheel, pull its plug off the hub."
+    tools: { required: [], helpful: [] }
+    scene: "Front hub close-up, dynamo plug highlighted"
+    animation: { target: dynamo_plug, motion: pull, direction: "away from the hub", amount: "until free", view: "close-up of the front hub, right side of the bike", caption: "Pull the plug off the hub" }
+
+  - id: plug-in-dynamo
+    kind: action
+    text: "Push the cable plug back onto the hub."
+    when: { wheel.dynamo_hub: [true] }
+    if_unknown: generic
+    generic_text: "If you unplugged a cable from the hub, push the plug back on."
+    tools: { required: [], helpful: [] }
+    scene: "Front hub close-up, dynamo plug highlighted"
+    animation: { target: dynamo_plug, motion: push, direction: "onto the hub", amount: "until it sits fully", view: "close-up of the front hub, right side of the bike", caption: "Push the plug back on" }
+
+  - id: open-qr-lever
+    kind: action
+    text: "Flip the lever on the axle open. If the wheel does not come out, unscrew the nut on the other side a few turns."
+    tools: { required: [], helpful: [] }
+    scene: "Axle end with quick-release lever, close-up"
+    animation: { target: quick_release_lever, motion: rotate, direction: open, amount: "fully", view: "close-up of the axle end with the lever", caption: "Flip the lever open" }
+
+  - id: unscrew-thru-axle
+    kind: action
+    text: "Unscrew the axle with its lever or a hex key. Pull it out of the wheel."
+    tools: { required: [key-set], helpful: [] }
+    scene: "Thru-axle end, close-up"
+    animation: { target: thru_axle, motion: rotate, direction: "loosen (anticlockwise when you look at the axle end)", amount: "until free", view: "axle end, looking straight at it", caption: "Unscrew the axle" }
+
+  - id: loosen-axle-nuts
+    kind: action
+    text: "Loosen both axle nuts a few turns with the spanner."
+    tools: { required: [spanner-axle], helpful: [] }
+    scene: "Axle nut, close-up"
+    animation: { target: axle_nut, motion: rotate, direction: "loosen (anticlockwise when you look straight at the nut)", amount: "two to three turns", view: "close-up of the nut, looking straight at it", caption: "Loosen the nut on each side" }
+
+  - id: drop-front-wheel
+    kind: action
+    text: "Take the wheel out of the fork. Do not squeeze the brake lever while the wheel is out."
+    tools: { required: [], helpful: [] }
+    scene: "Front wheel and fork, side view"
+    animation: { target: front_wheel, motion: remove, direction: "out of the fork", amount: "fully", view: "left side of the bike", caption: "Take the wheel out of the fork" }
+
+  - id: shift-smallest-cog
+    kind: action
+    text: "Turn the pedals and shift to the smallest rear sprocket."
+    when: { drive.gear_type: [derailleur] }
+    if_unknown: ask
+    tools: { required: [], helpful: [] }
+    scene: "Rear sprockets and chain, chain moving to the smallest sprocket"
+    animation: { target: rear_shifter, motion: push, direction: "towards smaller sprockets", amount: "until the chain is on the smallest one", view: "handlebar from above", caption: "Shift to the smallest sprocket" }
+
+  - id: pull-derailleur-back
+    kind: action
+    text: "Pull the gear changer at the back, the rear derailleur, slightly backwards."
+    when: { drive.gear_type: [derailleur] }
+    if_unknown: ask
+    tools: { required: [], helpful: [] }
+    scene: "Rear derailleur, right side of the bike"
+    animation: { target: rear_derailleur, motion: pull, direction: "backwards", amount: "a few centimetres", view: "right side of the bike", caption: "Pull the derailleur back" }
+
+  - id: drop-rear-wheel
+    kind: action
+    text: "Take the wheel out of the frame and lift the chain off the sprocket. Do not squeeze the brake lever while the wheel is out."
+    tools: { required: [], helpful: [] }
+    scene: "Rear wheel and frame, right side"
+    animation: { target: rear_wheel, motion: remove, direction: "out of the frame", amount: "fully", view: "right side of the bike", caption: "Take the wheel out of the frame" }
+
+  - id: place-front-wheel
+    kind: action
+    text: "Put the wheel into the fork. If there is a brake disc, guide it between the brake pads."
+    tools: { required: [], helpful: [] }
+    scene: "Front wheel and fork, disc entering the brake slot"
+    animation: { target: front_wheel, motion: insert, direction: "into the fork", amount: "until the axle sits fully", view: "left side of the bike", caption: "Guide the disc between the pads" }
+
+  - id: place-rear-wheel
+    kind: action
+    text: "Lay the chain on the smallest sprocket and put the wheel into the frame. If there is a brake disc, guide it between the brake pads."
+    tools: { required: [], helpful: [] }
+    scene: "Rear wheel and frame, chain and disc highlighted"
+    animation: { target: rear_wheel, motion: insert, direction: "into the frame", amount: "until the axle sits fully", view: "right side of the bike", caption: "Put the wheel in with the chain on the smallest sprocket" }
+
+  - id: close-qr-lever
+    kind: action
+    text: "Tighten the nut opposite the lever until closing the lever takes firm pressure. Close the lever fully."
+    tools: { required: [], helpful: [] }
+    scene: "Axle end with quick-release lever, close-up"
+    animation: { target: quick_release_lever, motion: rotate, direction: close, amount: "fully, until it lies flat", view: "close-up of the axle end with the lever", caption: "Close the lever firmly" }
+
+  - id: screw-in-thru-axle
+    kind: action
+    text: "Push the axle through the frame and the wheel and screw it in. Tighten it to {wheel.axle_torque.<pos>|the torque printed on the axle}; without a torque wrench, tighten it firmly by hand."
+    params:
+      - { key: wheel.axle_torque.<pos>, safety: true }
+    tools: { required: [key-set], helpful: [torque-wrench] }
+    scene: "Thru-axle end, close-up"
+    animation: { target: thru_axle, motion: rotate, direction: "tighten (clockwise when you look at the axle end)", amount: "until firm", view: "axle end, looking straight at it", caption: "Screw the axle in and tighten it" }
+
+  - id: tighten-axle-nuts
+    kind: action
+    text: "Tighten both axle nuts to {wheel.axle_torque.<pos>|the torque printed on the hub or frame}. Without a torque wrench, tighten them very firmly."
+    params:
+      - { key: wheel.axle_torque.<pos>, safety: true }
+    tools: { required: [spanner-axle], helpful: [torque-wrench] }
+    scene: "Axle nut, close-up"
+    animation: { target: axle_nut, motion: rotate, direction: "tighten (clockwise when you look straight at the nut)", amount: "until firm", view: "close-up of the nut, looking straight at it", caption: "Tighten the nut on each side" }
+
+  - id: wheel-secure
+    kind: safety_check
+    text: "Hold the wheel at the top and try to move it from side to side."
+    tools: { required: [], helpful: [] }
+    scene: "Wheel in the frame, hands on the tyre"
+    buttons:
+      - label: "It does not move or knock"
+        text: "Good. Tap Next."
+      - label: "It moves, knocks, or the lever is loose"
+        block: "Do not ride like this. Open the axle, sit the wheel fully in the frame and tighten it again. Check again."
+        solution:
+          - { target: axle, motion: rotate, direction: tighten, amount: "until firm", view: "close-up of the axle end", caption: "Tighten the axle again" }
+
+  # ---------------------------------------------------------------- disc brakes, wheel out
+  - id: push-pistons-back
+    kind: action
+    text: "Push the plastic tyre lever between the two old pads. Twist it gently to push the pads apart as far as they go."
+    tools: { required: [tyre-lever], helpful: [gloves] }
+    scene: "Disc brake from above, wheel out, tyre lever between the pads"
+    animation: { target: tyre_lever, motion: rotate, direction: "twist to spread the pads", amount: "a quarter turn", view: "brake from above, where the disc was", caption: "Twist gently to push the pads apart" }
+
+  - id: pistons-back
+    kind: safety_check
+    text: "Look into the slot from above, where the disc was."
+    tools: { required: [tyre-lever], helpful: [] }
+    scene: "Disc brake from above, gap between the pads highlighted"
+    buttons:
+      - label: "Wide, even gap between the pads"
+        text: "Good. Tap Next."
+      - label: "One pad stays close to the middle"
+        text: "Push that pad back again with the tyre lever, slowly and straight. Look again."
+        solution:
+          - { target: brake_pad, motion: push, direction: "outwards, away from the middle", amount: "as far as it goes", view: "brake from above", caption: "Push the pad straight back" }
+      - label: "The pads do not move at all"
+        stop: "Do not force them. A piston may be stuck. Put the wheel back in and take the bike to a shop."
+
+  - id: back-off-pad-adjusters
+    kind: action
+    text: "Turn each pad adjusting knob until its pad moves away from the disc. Some brakes have only one knob."
+    tools: { required: [key-set], helpful: [] }
+    scene: "Mechanical disc brake from the side, adjusting knobs highlighted"
+    animation: { target: pad_adjust_knob, motion: rotate, direction: "the way that moves the pad away from the disc", amount: "until it stops", view: "brake from the side, knob facing the camera", caption: "Turn the knob to move the pad away" }
+
+  - id: straighten-split-pin
+    kind: action
+    text: "Bend the legs of the small split pin straight with the pliers. Pull the split pin out."
+    tools: { required: [pliers], helpful: [] }
+    scene: "Disc brake from above, split pin highlighted"
+    animation: { target: split_pin, motion: pull, direction: "out of the pad pin", amount: "fully", view: "brake from above", caption: "Pull out the split pin" }
+
+  - id: remove-pin-clip
+    kind: action
+    text: "Pull the small clip off the end of the pad pin with the pliers."
+    tools: { required: [pliers], helpful: [] }
+    scene: "Disc brake from above, clip on the pad pin highlighted"
+    animation: { target: pad_pin_clip, motion: pull, direction: "off the pin", amount: "fully", view: "brake from above", caption: "Pull the clip off the pin" }
+
+  - id: pull-out-pad-pin
+    kind: action
+    text: "Pull the pad pin out of the brake."
+    tools: { required: [], helpful: [] }
+    scene: "Disc brake from above, pad pin highlighted"
+    animation: { target: pad_pin, motion: pull, direction: "out of the brake", amount: "fully", view: "brake from above", caption: "Pull out the pad pin" }
+
+  - id: unscrew-pad-pin
+    kind: action
+    text: "If there is a small clip on the pad pin, pull it off. Unscrew the pad pin with the matching key."
+    tools: { required: [key-set], helpful: [pliers] }
+    scene: "Disc brake from above, threaded pad pin highlighted"
+    animation: { target: pad_pin, motion: rotate, direction: loosen, amount: "until free", view: "brake from above, pin head facing the camera", caption: "Unscrew the pad pin" }
+
+  - id: slide-out-pads
+    kind: action
+    text: "Pull both pads out of the brake, together with the spring between them."
+    tools: { required: [], helpful: [gloves] }
+    scene: "Disc brake, pads and spring sliding out"
+    animation: { target: brake_pads, motion: remove, direction: "out of the brake", amount: "fully", view: "brake from the side", caption: "Pull the pads out" }
+
+  - id: compare-pads
+    kind: safety_check
+    text: "Hold a new pad next to an old one and compare them."
+    tools: { required: [], helpful: [] }
+    scene: "Old and new pad side by side"
+    buttons:
+      - label: "Same shape and size"
+        text: "Good. Tap Next."
+      - label: "Different shape or size"
+        stop: "Do not fit these pads. Get pads that match the code on your old pads, or take the bike to a shop."
+
+  - id: clean-rotor
+    kind: action
+    text: "Wipe both sides of the disc with alcohol on a clean cloth."
+    when: { tool.alcohol: [true], tool.clean-cloth: [true] }
+    tools: { required: [], helpful: [alcohol, clean-cloth] }
+    scene: "Rotor close-up, cloth wiping"
+    animation: { target: cloth, motion: slide, direction: "around the disc", amount: "one full turn per side", view: "rotor from the side", caption: "Wipe both sides of the disc" }
+
+  - id: insert-new-pads
+    kind: action
+    text: "Put the spring between the new pads as on your photo. Slide them into the brake, holding them by the metal backs only."
+    tools: { required: [], helpful: [gloves] }
+    parts: [disc-pads]
+    scene: "Disc brake, new pads with spring sliding in"
+    animation: { target: brake_pads, motion: insert, direction: "into the brake", amount: "until the holes line up", view: "brake from the side", caption: "Slide the new pads in" }
+
+  - id: insert-pad-spacer
+    kind: action
+    text: "Push the pad spacer between the new pads. It protects the brake until the wheel is back in."
+    tools: { required: [brake-pad-spacer], helpful: [] }
+    scene: "Disc brake from above, spacer between the pads"
+    animation: { target: pad_spacer, motion: insert, direction: "into the slot between the pads", amount: "fully", view: "brake from above", caption: "Push the spacer between the pads" }
+
+  - id: push-in-pad-pin
+    kind: action
+    text: "Push the pad pin through the brake and through the holes in both pads."
+    tools: { required: [], helpful: [] }
+    scene: "Disc brake from above, pad pin highlighted"
+    animation: { target: pad_pin, motion: insert, direction: "through both pads", amount: "fully", view: "brake from above", caption: "Push the pin through both pads" }
+
+  - id: fit-split-pin
+    kind: action
+    text: "Push the new split pin through the hole in the pad pin. Bend its legs apart with the pliers."
+    tools: { required: [pliers], helpful: [] }
+    parts: [split-pin]
+    scene: "Disc brake from above, split pin highlighted"
+    animation: { target: split_pin, motion: insert, direction: "through the hole in the pad pin", amount: "fully", view: "brake from above", caption: "Push the split pin through" }
+
+  - id: fit-pin-clip
+    kind: action
+    text: "Push the small clip onto the end of the pad pin until it snaps in."
+    tools: { required: [], helpful: [pliers] }
+    scene: "Disc brake from above, clip highlighted"
+    animation: { target: pad_pin_clip, motion: push, direction: "onto the pin", amount: "until it snaps in", view: "brake from above", caption: "Push the clip onto the pin" }
+
+  - id: screw-in-pad-pin
+    kind: action
+    text: "Screw the pad pin in through both pads until it sits snug. Put the small clip back on, if there was one."
+    tools: { required: [key-set], helpful: [pliers] }
+    scene: "Disc brake from above, threaded pad pin highlighted"
+    animation: { target: pad_pin, motion: rotate, direction: tighten, amount: "until snug", view: "brake from above, pin head facing the camera", caption: "Screw the pad pin in" }
+
+  - id: pad-pin-secure
+    kind: safety_check
+    text: "Wiggle the new pads and the pad pin with your fingers."
+    tools: { required: [], helpful: [] }
+    scene: "Disc brake from above, pads and pin highlighted"
+    buttons:
+      - label: "Firm, and every clip or pin is in place"
+        text: "Good. Tap Next."
+      - label: "Something moves, or a clip is missing"
+        block: "Do not ride like this. Fit the pad pin and its clip again until everything sits firm. Wiggle again."
+        solution:
+          - { target: pad_pin, motion: insert, direction: "through both pads", amount: "fully", view: "brake from above", caption: "Push the pin fully through both pads" }
+
+  - id: remove-pad-spacer
+    kind: action
+    text: "Pull the pad spacer out."
+    tools: { required: [], helpful: [] }
+    scene: "Disc brake from above, spacer highlighted"
+    animation: { target: pad_spacer, motion: remove, direction: "out of the slot", amount: "fully", view: "brake from above", caption: "Pull the spacer out" }
+
+  - id: pump-lever
+    kind: action
+    text: "Squeeze the brake lever slowly several times, until the pads touch the disc."
+    tools: { required: [], helpful: [] }
+    scene: "Brake lever and caliper, pads moving onto the disc"
+    animation: { target: brake_lever, motion: squeeze, direction: "towards the handlebar", amount: "fully, several times", view: "handlebar from above", caption: "Squeeze the lever several times" }
+
+  - id: dial-in-pads
+    kind: action
+    text: "Turn each pad adjusting knob until its pad touches the disc. Then turn it back a little, until the wheel spins freely."
+    tools: { required: [key-set], helpful: [] }
+    scene: "Mechanical disc brake from the side, adjusting knobs highlighted"
+    animation: { target: pad_adjust_knob, motion: rotate, direction: "the way that moves the pad towards the disc", amount: "until the pad touches", view: "brake from the side, knob facing the camera", caption: "Turn the knob until the pad touches" }
+
+  - id: check-disc-rub
+    kind: check
+    text: "Spin the wheel by hand and listen."
+    params:
+      - { key: brake.caliper_mount_torque.<pos>, safety: true }
+    tools: { required: [key-set], helpful: [torque-wrench] }
+    scene: "Wheel spinning, caliper and disc highlighted"
+    buttons:
+      - label: "Spins freely"
+        text: "Good. Tap Next."
+      - label: "Rubs or scrapes"
+        when: { brake.type.<pos>: [disc_hydraulic] }
+        text: "The brake sits off-centre. Loosen its two mounting bolts, squeeze and hold the lever, then tighten the bolts to {brake.caliper_mount_torque.<pos>|the torque printed on the brake}. Spin the wheel again."
+        solution:
+          - { target: caliper_mount_bolt, motion: rotate, direction: loosen, amount: "half a turn", view: "left side of the bike, behind the caliper", caption: "Loosen both bolts half a turn" }
+          - { target: brake_lever, motion: squeeze, direction: "towards the handlebar", amount: "fully", view: "handlebar from above", caption: "Squeeze and hold the lever" }
+          - { target: caliper_mount_bolt, motion: rotate, direction: tighten, amount: "to the torque", view: "left side of the bike, behind the caliper", caption: "Tighten both bolts while holding" }
+      - label: "Rubs or scrapes"
+        when: { brake.type.<pos>: [disc_mechanical] }
+        text: "Turn the pad adjusting knob on the rubbing side back a little. Spin the wheel again."
+        solution:
+          - { target: pad_adjust_knob, motion: rotate, direction: "the way that moves the pad away from the disc", amount: "a small step", view: "brake from the side, knob facing the camera", caption: "Turn the knob back a little" }
+      - label: "Touches in one spot only"
+        text: "The disc may be slightly bent. A shop can straighten it. You can still finish the checks."
+
+  - id: lever-travel-cable
+    kind: safety_check
+    text: "Squeeze the brake lever hard."
+    tools: { required: [], helpful: [] }
+    scene: "Brake lever and cable, side view"
+    buttons:
+      - label: "Firm, stops well before the handlebar"
+        text: "Good. Tap Next."
+      - label: "Comes close to or touches the handlebar"
+        block: "Turn the small barrel on the brake cable a few turns out, then squeeze again. If the lever still comes close, take the bike to a shop."
+        solution:
+          - { target: cable_barrel_adjuster, motion: rotate, direction: "out, so it gets longer", amount: "two turns", view: "close-up where the cable enters the lever or the brake", caption: "Turn the cable barrel out" }
+
+  - id: bed-in-pads
+    kind: action
+    text: "In a safe, empty place, ride at moderate speed and brake firmly down to walking speed. Repeat until braking feels strong, or as the pad pack describes."
+    tools: { required: [], helpful: [] }
+    scene: "Rider braking on an empty path"
+    animation: { target: brake_lever, motion: squeeze, direction: "towards the handlebar", amount: "firmly, then release", view: "handlebar from above", caption: "Brake firmly, then release" }
+
+  # ---------------------------------------------------------------- disc brakes, wheel in (draft, top-loading calipers)
+  - id: push-pistons-rotor-in
+    kind: action
+    needs_mechanic_review: true
+    text: "Slide the plastic tyre lever between one old pad and the disc and lever the pad gently back. Do the same on the other side."
+    tools: { required: [tyre-lever], helpful: [gloves] }
+    scene: "Disc brake from above, wheel in place, tyre lever between pad and disc"
+    animation: { target: tyre_lever, motion: rotate, direction: "lever the pad away from the disc", amount: "a small turn", view: "brake from above, wheel in place", caption: "Lever the pad gently away from the disc" }
+
+  - id: pistons-back-rotor-in
+    kind: safety_check
+    needs_mechanic_review: true
+    text: "Look into the brake from above, on both sides of the disc."
+    tools: { required: [tyre-lever], helpful: [] }
+    scene: "Disc brake from above, wheel in place, gaps between pads and disc highlighted"
+    buttons:
+      - label: "A small gap on both sides of the disc"
+        text: "Good. Tap Next."
+      - label: "One pad still presses on the disc"
+        text: "Lever that pad back again with the tyre lever, gently. Look again."
+        solution:
+          - { target: tyre_lever, motion: rotate, direction: "lever the pad away from the disc", amount: "a small turn", view: "brake from above, wheel in place", caption: "Lever the pad back gently" }
+      - label: "The pads do not move at all"
+        stop: "Do not force them. A piston may be stuck. Take the bike to a shop."
+
+  - id: lift-out-pads-top
+    kind: action
+    needs_mechanic_review: true
+    text: "Pull both pads upwards out of the brake, together with the spring between them."
+    tools: { required: [], helpful: [gloves] }
+    scene: "Disc brake with wheel in place, pads and spring lifting out at the top"
+    animation: { target: brake_pads, motion: remove, direction: "upwards, out of the top of the brake", amount: "fully", view: "brake from the side, wheel in place", caption: "Lift the pads out at the top" }
+
+  - id: insert-pads-top
+    kind: action
+    needs_mechanic_review: true
+    text: "Put the spring between the new pads as on your photo, holding them by the metal backs. Slide them down into the brake, one on each side of the disc."
+    tools: { required: [], helpful: [gloves] }
+    parts: [disc-pads]
+    scene: "Disc brake with wheel in place, new pads sliding in from the top"
+    animation: { target: brake_pads, motion: insert, direction: "downwards, into the top of the brake", amount: "until the holes line up", view: "brake from the side, wheel in place", caption: "Slide the new pads in from the top" }
+
+  # ---------------------------------------------------------------- rim brakes
+  - id: pads-suit-rims
+    kind: safety_check
+    text:
+      by: wheel.rim_material.<pos>
+      values:
+        aluminium: "Your rims are aluminium. Read the new pads' pack and find which rims they are made for."
+        carbon: "Your rims are carbon. Read the new pads' pack and find which rims they are made for."
+        steel: "Your rims are steel. Read the new pads' pack and find which rims they are made for."
+    if_unknown: ask
+    tools: { required: [], helpful: [] }
+    scene: "New pad pack held next to the wheel, rim highlighted"
+    buttons:
+      - label: "Made for rims like mine"
+        text: "Good. Tap Next."
+      - label: "Made for a different rim material"
+        stop: "Do not fit these pads. Pads for the wrong rim material can make the brake fail. Get pads made for your rims."
+      - label: "The pack does not say"
+        when: { wheel.rim_material.<pos>: [carbon] }
+        stop: "Do not fit these pads. Carbon rims need pads made for carbon. Get pads that say so, or ask a shop."
+      - label: "The pack does not say"
+        when: { wheel.rim_material.<pos>: [aluminium, steel] }
+        text: "Pads without a note are usually made for aluminium rims. If you are unsure, ask the seller. Tap Next to go on."
+
+  - id: unhook-v-noodle
+    kind: action
+    text: "Squeeze the two brake arms together with one hand. With the other, pull the curved metal tube out of its holder."
+    tools: { required: [], helpful: [] }
+    scene: "V-brake from the front, curved tube highlighted"
+    animation: { target: v_brake_noodle, motion: pull, direction: "out of its holder", amount: "until free", view: "brake from the front of the bike", caption: "Pull the curved tube out" }
+
+  - id: open-caliper-release
+    kind: action
+    text: "Flip up the small lever on the side of the brake, so the brake opens. If there is no lever, go on."
+    tools: { required: [], helpful: [] }
+    scene: "Road caliper brake from the side, release lever highlighted"
+    animation: { target: caliper_release_lever, motion: rotate, direction: "up", amount: "fully", view: "right side of the bike", caption: "Flip the small lever up" }
+
+  - id: unhook-straddle-cable
+    kind: action
+    text: "Squeeze the two brake arms together. Unhook the end of the short cable that joins them."
+    tools: { required: [], helpful: [] }
+    scene: "Cantilever brake from the front, short cable highlighted"
+    animation: { target: straddle_cable_end, motion: pull, direction: "out of the brake arm", amount: "until free", view: "brake from the front of the bike", caption: "Unhook the short cable" }
+
+  - id: hook-v-noodle
+    kind: action
+    text: "Squeeze the brake arms together and push the curved metal tube back into its holder."
+    tools: { required: [], helpful: [] }
+    scene: "V-brake from the front, curved tube highlighted"
+    animation: { target: v_brake_noodle, motion: insert, direction: "into its holder", amount: "until it sits", view: "brake from the front of the bike", caption: "Push the curved tube back in" }
+
+  - id: close-caliper-release
+    kind: action
+    text: "Flip the small lever on the brake back down. If there is no lever, go on."
+    tools: { required: [], helpful: [] }
+    scene: "Road caliper brake from the side, release lever highlighted"
+    animation: { target: caliper_release_lever, motion: rotate, direction: "down", amount: "fully", view: "right side of the bike", caption: "Flip the small lever down" }
+
+  - id: hook-straddle-cable
+    kind: action
+    text: "Squeeze the brake arms together and hook the short cable back in."
+    tools: { required: [], helpful: [] }
+    scene: "Cantilever brake from the front, short cable highlighted"
+    animation: { target: straddle_cable_end, motion: insert, direction: "into the brake arm", amount: "until it sits", view: "brake from the front of the bike", caption: "Hook the short cable back in" }
+
+  - id: remove-rim-pads
+    kind: action
+    text: "Undo the nut on each pad and pull the pads out. Keep each pad's washers in the order they came off."
+    tools: { required: [spanner-small, key-set], helpful: [] }
+    scene: "Rim brake pad with nut and washers, exploded view"
+    animation: { target: rim_pad_nut, motion: rotate, direction: loosen, amount: "until free", view: "brake from the side, nut facing the camera", caption: "Undo the pad nut" }
+
+  - id: fit-rim-pads
+    kind: action
+    text: "Fit each new pad with its washers in the order on your photo, with any arrow pointing forward. Leave the nuts a little loose."
+    tools: { required: [spanner-small, key-set], helpful: [] }
+    parts: [rim-pads]
+    scene: "Rim brake pad with washers, exploded view, arrow on pad highlighted"
+    animation: { target: rim_pad, motion: insert, direction: "through the brake arm", amount: "fully", view: "brake from the side", caption: "Fit the new pad with its washers" }
+
+  - id: align-rim-pads
+    kind: action
+    text: "Press one pad flat onto the middle of the rim's braking surface and tighten its nut firmly. Do the same with the other pad."
+    tools: { required: [spanner-small, key-set], helpful: [] }
+    scene: "Rim brake pad on the rim, braking surface highlighted"
+    animation: { target: rim_pad, motion: push, direction: "onto the middle of the braking surface", amount: "until flat on the rim", view: "brake from the side", caption: "Press the pad flat onto the rim" }
+
+  - id: remove-cartridge-pins
+    kind: action
+    text: "Pull out the small pin, or undo the small screw, at the back of each pad holder."
+    tools: { required: [key-set], helpful: [pliers] }
+    scene: "Cartridge pad holder, retaining pin highlighted"
+    animation: { target: cartridge_pin, motion: pull, direction: "out of the holder", amount: "fully", view: "pad holder from the side", caption: "Take out the small pin" }
+
+  - id: slide-out-inserts
+    kind: action
+    text: "Slide each old rubber insert out of its holder towards the back of the bike."
+    tools: { required: [], helpful: [pliers] }
+    scene: "Cartridge pad holder from the side, insert sliding out"
+    animation: { target: rubber_insert, motion: slide, direction: "towards the back of the bike", amount: "fully", view: "pad holder from the side", caption: "Slide the old insert out backwards" }
+
+  - id: slide-in-inserts
+    kind: action
+    text: "Slide each new insert into its holder from the back, until it stops at the closed end."
+    tools: { required: [], helpful: [] }
+    parts: [rim-inserts]
+    scene: "Cartridge pad holder from the side, insert sliding in"
+    animation: { target: rubber_insert, motion: slide, direction: "forwards, into the holder", amount: "until it stops", view: "pad holder from the side", caption: "Slide the new insert in from the back" }
+
+  - id: refit-cartridge-pins
+    kind: action
+    text: "Put each small pin or screw back in, so the insert cannot slide out."
+    tools: { required: [key-set], helpful: [pliers] }
+    scene: "Cartridge pad holder, retaining pin highlighted"
+    animation: { target: cartridge_pin, motion: insert, direction: "into the holder", amount: "fully", view: "pad holder from the side", caption: "Put the small pin back in" }
+
+  - id: cartridge-holder-check
+    kind: safety_check
+    text: "Look at each pad holder from the side."
+    tools: { required: [], helpful: [] }
+    scene: "Cartridge pad holders from the side, closed end highlighted"
+    buttons:
+      - label: "Closed end forward, pin in place"
+        text: "Good. Tap Next."
+      - label: "Open end points forward"
+        stop: "Do not ride. The insert could slide out when you brake. A shop can turn the holders round."
+      - label: "A pin or screw is missing"
+        stop: "Do not ride. The insert could slide out. Get a new pin or screw, or take the bike to a shop."
+
+  - id: pad-on-rim
+    kind: safety_check
+    text: "Squeeze the brake lever and look where each pad touches the rim."
+    params:
+      - { key: brake.caliper_mount_torque.<pos>, safety: true }
+    tools:
+      required:
+        - key-set
+        - { id: spanner-small, when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever] } }
+      helpful:
+        - { id: torque-wrench, when: { brake.type.<pos>: [rim_hydraulic] } }
+    scene: "Rim and tyre close-up, both pads pressed on the rim"
+    buttons:
+      - label: "Both pads sit fully on the braking surface"
+        text: "Good. Tap Next."
+      - label: "A pad touches the tyre"
+        when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever] }
+        block: "Do not ride, because the pad can cut the tyre. Loosen its nut, move the pad down onto the rim and tighten it firmly. Look again."
+        solution:
+          - { target: rim_pad_nut, motion: rotate, direction: loosen, amount: "one turn", view: "brake from the side, nut facing the camera", caption: "Loosen the pad nut" }
+          - { target: rim_pad, motion: slide, direction: "down, away from the tyre", amount: "until fully on the braking surface", view: "brake from the side", caption: "Move the pad down onto the rim" }
+          - { target: rim_pad_nut, motion: rotate, direction: tighten, amount: "until firm", view: "brake from the side, nut facing the camera", caption: "Tighten the pad nut" }
+      - label: "A pad touches the tyre"
+        when: { brake.type.<pos>: [rim_hydraulic] }
+        block: "Do not ride, because the pad can cut the tyre. Loosen the bolt that holds this brake unit, move the unit down so the pad sits on the rim, and tighten the bolt to {brake.caliper_mount_torque.<pos>|the torque printed on the brake}. Look again."
+        solution:
+          - { target: brake_unit_mount_bolt, motion: rotate, direction: loosen, amount: "one turn", view: "brake unit from the side", caption: "Loosen the mounting bolt" }
+          - { target: hydraulic_rim_brake_unit, motion: slide, direction: "down, away from the tyre", amount: "until the pad is fully on the braking surface", view: "brake unit from the side", caption: "Move the brake unit down" }
+          - { target: brake_unit_mount_bolt, motion: rotate, direction: tighten, amount: "to the torque", view: "brake unit from the side", caption: "Tighten the mounting bolt" }
+      - label: "A pad sits partly below the rim"
+        when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever] }
+        block: "Do not ride like this. Loosen the pad's nut, move the pad up onto the braking surface and tighten it firmly. Look again."
+        solution:
+          - { target: rim_pad_nut, motion: rotate, direction: loosen, amount: "one turn", view: "brake from the side, nut facing the camera", caption: "Loosen the pad nut" }
+          - { target: rim_pad, motion: slide, direction: "up, towards the tyre", amount: "until fully on the braking surface", view: "brake from the side", caption: "Move the pad up onto the rim" }
+          - { target: rim_pad_nut, motion: rotate, direction: tighten, amount: "until firm", view: "brake from the side, nut facing the camera", caption: "Tighten the pad nut" }
+      - label: "A pad sits partly below the rim"
+        when: { brake.type.<pos>: [rim_hydraulic] }
+        block: "Do not ride like this. Loosen the bolt that holds this brake unit, move the unit up so the pad sits fully on the rim, and tighten the bolt to {brake.caliper_mount_torque.<pos>|the torque printed on the brake}. Look again."
+        solution:
+          - { target: brake_unit_mount_bolt, motion: rotate, direction: loosen, amount: "one turn", view: "brake unit from the side", caption: "Loosen the mounting bolt" }
+          - { target: hydraulic_rim_brake_unit, motion: slide, direction: "up, towards the tyre", amount: "until the pad is fully on the braking surface", view: "brake unit from the side", caption: "Move the brake unit up" }
+          - { target: brake_unit_mount_bolt, motion: rotate, direction: tighten, amount: "to the torque", view: "brake unit from the side", caption: "Tighten the mounting bolt" }
+
+  - id: check-rim-rub
+    kind: check
+    text: "Lift the wheel off the ground if needed. Spin it by hand and watch the pads."
+    tools:
+      required:
+        - { id: screwdriver-small, when: { brake.type.<pos>: [rim_v, rim_cantilever] } }
+        - { id: key-set, when: { brake.type.<pos>: [rim_caliper] } }
+      helpful: []
+    scene: "Wheel spinning, both rim pads highlighted"
+    buttons:
+      - label: "Spins freely"
+        text: "Good. Tap Next."
+      - label: "One pad rubs"
+        when: { brake.type.<pos>: [rim_v, rim_cantilever] }
+        text: "Turn the small screw on the side of the arm with the rubbing pad a quarter turn in. Spin the wheel again."
+        solution:
+          - { target: spring_tension_screw, motion: rotate, direction: "tighten (clockwise when you look at the screw head)", amount: "a quarter turn", view: "brake arm from the side, screw facing the camera", caption: "Turn the screw on the rubbing side a quarter turn in" }
+      - label: "One pad rubs"
+        when: { brake.type.<pos>: [rim_caliper] }
+        text: "Turn the small centring screw on the brake a little and watch which way the pads move. Spin the wheel again."
+        solution:
+          - { target: caliper_centring_screw, motion: rotate, direction: "a little either way, watching the pads", amount: "a quarter turn", view: "brake from the front of the bike", caption: "Turn the centring screw a little" }
+      - label: "One pad rubs"
+        when: { brake.type.<pos>: [rim_hydraulic] }
+        text: "Check that the wheel sits straight in the frame. If it does, a shop can set the brake."
+      - label: "Both pads rub"
+        when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever] }
+        text: "The new pads are thicker. Turn the small barrel on the brake cable a few turns in. Spin the wheel again."
+        solution:
+          - { target: cable_barrel_adjuster, motion: rotate, direction: "in, so it gets shorter", amount: "two turns", view: "close-up where the cable enters the lever or the brake", caption: "Turn the cable barrel in" }
+      - label: "Both pads rub"
+        when: { brake.type.<pos>: [rim_hydraulic] }
+        text: "If there is a small knob on the brake lever, turn it to move the pads back from the rim. Spin the wheel again. If there is no knob, a shop can set the brake."
+        solution:
+          - { target: pad_adjust_knob_lever, motion: rotate, direction: "the way that moves the pads away from the rim", amount: "a small step", view: "brake lever from above", caption: "Turn the knob on the lever" }
+
+  # ---------------------------------------------------------------- hydraulic rim brakes (e.g. Magura HS)
+  - id: hs-remove-pads
+    kind: action
+    text: "Pull both old pads out of their holders. Do not squeeze the brake lever while a pad is out."
+    tools: { required: [], helpful: [gloves] }
+    scene: "Hydraulic rim brake unit, pad sliding out of its holder"
+    animation: { target: hydraulic_rim_pad, motion: pull, direction: "out of the holder (direction to be confirmed in mechanic_review)", amount: "fully", view: "brake unit from the side", caption: "Pull the old pad out" }
+
+  - id: hs-insert-pads
+    kind: action
+    text: "Push the new pads into the holders until they sit fully home, with any arrow pointing forward."
+    tools: { required: [], helpful: [gloves] }
+    parts: [hydraulic-rim-pads]
+    scene: "Hydraulic rim brake unit, pad sliding into its holder"
+    animation: { target: hydraulic_rim_pad, motion: push, direction: "into the holder", amount: "until it sits fully", view: "brake unit from the side", caption: "Push the new pad in" }
+
+procedures:
+  # ---------------------------------------------------------------- holding the bike
+  - id: hold-bike-wheel-in
+    implementations:
+      - when: { tool.bike-stand: [true] }
+        steps: [clamp-in-stand]
+      - when: { tool.bike-stand: [false] }
+        steps: [lean-bike]
+    if_unknown: n/a   # tool choices are always known after the tool picker
+
+  - id: release-bike-wheel-in
+    implementations:
+      - when: { tool.bike-stand: [true] }
+        steps: [unclamp-from-stand]
+      - when: { tool.bike-stand: [false] }
+        steps: []
+    if_unknown: n/a
+
+  - id: hold-bike-front-wheel-out
+    implementations:
+      - when: { tool.bike-stand: [true] }
+        steps: [clamp-in-stand]
+      - when: { tool.bike-stand: [false], bike.ebike: [false] }
+        steps: [turn-upside-down]
+      - when: { tool.bike-stand: [false], bike.ebike: [true] }
+        steps: [kickstand-fork-on-mat]
+    if_unknown: ask   # fallback ask point for bike.ebike (motor question)
+
+  - id: release-bike-front-wheel-out
+    implementations:
+      - when: { tool.bike-stand: [true] }
+        steps: [unclamp-from-stand]
+      - when: { tool.bike-stand: [false], bike.ebike: [false] }
+        steps: [turn-bike-upright]
+      - when: { tool.bike-stand: [false], bike.ebike: [true] }
+        steps: []
+    if_unknown: ask   # never reached: hold-bike-front-wheel-out has settled bike.ebike
+
+  - id: hold-bike-rear-wheel-out
+    implementations:
+      - when: { tool.bike-stand: [true] }
+        steps: [clamp-in-stand]
+      - when: { tool.bike-stand: [false], bike.ebike: [false] }
+        steps: [turn-upside-down]
+      - when: { tool.bike-stand: [false], bike.ebike: [true] }
+        steps:
+          - { shop: "Without a bike stand, a heavy e-bike cannot stand safely while its rear wheel is out. Use a stand next time, or a shop can change these pads." }
+    if_unknown: ask   # fallback ask point for bike.ebike (motor question)
+
+  - id: release-bike-rear-wheel-out
+    implementations:
+      - when: { tool.bike-stand: [true] }
+        steps: [unclamp-from-stand]
+      - when: { tool.bike-stand: [false], bike.ebike: [false] }
+        steps: [turn-bike-upright]
+    if_unknown: ask   # never reached: hold-bike-rear-wheel-out has settled bike.ebike
+
+  # ---------------------------------------------------------------- wheels
+  - id: open-axle            # used with <pos>
+    implementations:
+      - when: { wheel.axle.<pos>: [quick_release] }
+        steps: [open-qr-lever]
+      - when: { wheel.axle.<pos>: [thru_axle] }
+        steps: [unscrew-thru-axle]
+      - when: { wheel.axle.<pos>: [nut] }
+        steps: [loosen-axle-nuts]
+    if_unknown: ask   # fallback ask point for wheel.axle.<pos>
+
+  - id: close-axle           # used with <pos>
+    implementations:
+      - when: { wheel.axle.<pos>: [quick_release] }
+        steps: [close-qr-lever]
+      - when: { wheel.axle.<pos>: [thru_axle] }
+        steps: [screw-in-thru-axle]
+      - when: { wheel.axle.<pos>: [nut] }
+        steps: [tighten-axle-nuts]
+    if_unknown: ask
+
+  - id: remove-front-wheel
+    implementations:
+      - when: { ebike.motor_position: [front_hub] }
+        steps:
+          - { shop: "This wheel has a motor in its hub, and taking it out needs a shop. A shop can change these pads for you." }
+      - when: { any_of: [ { bike.ebike: [false] }, { ebike.motor_position: [mid, rear_hub] } ] }
+        steps: [unplug-dynamo, { procedure: open-axle }, drop-front-wheel]
+    if_unknown: ask
+
+  - id: install-front-wheel
+    implementations:
+      - when: { any_of: [ { bike.ebike: [false] }, { ebike.motor_position: [mid, rear_hub] } ] }
+        steps: [place-front-wheel, { procedure: close-axle }, plug-in-dynamo]
+    if_unknown: ask   # never reached: remove-front-wheel has already settled these facts
+
+  - id: remove-rear-wheel
+    implementations:
+      - when: { ebike.motor_position: [rear_hub] }
+        steps:
+          - { shop: "This wheel has a motor in its hub, and taking it out needs a shop. A shop can change these pads for you." }
+      - when: { drive.gear_type: [hub_gear, gearbox] }
+        steps:
+          - { shop: "Taking out a rear wheel with gears inside the hub or a gearbox needs its own guide. For now, a shop can change these pads for you." }
+      - when: { drive.gear_type: [single_speed], wheel.axle.rear: [nut] }
+        steps:
+          - { shop: "Refitting this wheel means setting the chain tension. A shop can change these pads for you." }
+      - when: { drive.gear_type: [derailleur], any_of: [ { bike.ebike: [false] }, { ebike.motor_position: [mid, front_hub] } ] }
+        steps: [shift-smallest-cog, { procedure: open-axle }, pull-derailleur-back, drop-rear-wheel]
+      - when: { drive.gear_type: [single_speed], wheel.axle.rear: [quick_release, thru_axle], any_of: [ { bike.ebike: [false] }, { ebike.motor_position: [mid, front_hub] } ] }
+        steps: [{ procedure: open-axle }, drop-rear-wheel]
+    if_unknown: ask   # fallback ask point for drive.gear_type
+
+  - id: install-rear-wheel
+    implementations:
+      - when: { drive.gear_type: [derailleur, single_speed] }
+        steps: [place-rear-wheel, { procedure: close-axle }]
+    if_unknown: ask   # never reached: remove-rear-wheel has already settled these facts
+
+  # ---------------------------------------------------------------- pads
+  - id: remove-pad-retainer
+    implementations:
+      - when: { brake.pad_retainer.<pos>: [split_pin] }
+        steps: [straighten-split-pin, pull-out-pad-pin]
+      - when: { brake.pad_retainer.<pos>: [clip] }
+        steps: [remove-pin-clip, pull-out-pad-pin]
+      - when: { brake.pad_retainer.<pos>: [screw] }
+        steps: [unscrew-pad-pin]
+      - when: { brake.pad_retainer.<pos>: [none] }
+        steps: []
+    if_unknown: ask   # asked here (ask_at: step), with pictures, while the user looks at the brake
+
+  - id: install-pad-retainer
+    implementations:
+      - when: { brake.pad_retainer.<pos>: [split_pin] }
+        steps: [push-in-pad-pin, fit-split-pin]
+      - when: { brake.pad_retainer.<pos>: [clip] }
+        steps: [push-in-pad-pin, fit-pin-clip]
+      - when: { brake.pad_retainer.<pos>: [screw] }
+        steps: [screw-in-pad-pin]
+      - when: { brake.pad_retainer.<pos>: [none] }
+        steps: []
+    if_unknown: ask   # never reached: remove-pad-retainer has already asked
+
+  - id: check-pad-post
+    implementations:
+      - when: { brake.type.<pos>: [rim_cantilever], brake.cantilever_post.<pos>: [smooth] }
+        steps:
+          - { shop: "Pads on a smooth post are hard to set up safely. A shop can change these pads for you." }
+      - when: { any_of: [ { brake.type.<pos>: [rim_v, rim_caliper] }, { brake.cantilever_post.<pos>: [threaded] } ] }
+        steps: []
+    if_unknown: ask   # asked here (ask_at: step), only for cantilever brakes
+
+  - id: open-rim-brake
+    implementations:
+      - when: { brake.type.<pos>: [rim_v] }
+        steps: [unhook-v-noodle]
+      - when: { brake.type.<pos>: [rim_caliper] }
+        steps: [open-caliper-release]
+      - when: { brake.type.<pos>: [rim_cantilever] }
+        steps: [unhook-straddle-cable]
+    if_unknown: n/a   # only called after the brake-type branch has resolved the fact
+
+  - id: close-rim-brake
+    implementations:
+      - when: { brake.type.<pos>: [rim_v] }
+        steps: [hook-v-noodle]
+      - when: { brake.type.<pos>: [rim_caliper] }
+        steps: [close-caliper-release]
+      - when: { brake.type.<pos>: [rim_cantilever] }
+        steps: [hook-straddle-cable]
+    if_unknown: n/a
+
+tutorial:
+  id: brake-pads-replace
+  params:
+    pos: { values: [front, rear], from: entry }
+  meta:
+    duration_minutes: [20, 60]   # estimate: hydraulic rim about 20-30, cable rim 20-40, disc 40-60 including bed-in
+    difficulty: 2                # 1 easy, 2 medium, 3 hard
+  entry:
+    requires_finding:
+      - { when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }, inspection: disc-pad-wear, states: [worn, very-worn] }
+      - { when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever, rim_hydraulic] }, inspection: rim-pad-wear, states: [worn, very-worn] }
+    not_needed_message: "These pads do not need replacing yet. If braking still feels weak, the cause is somewhere else."
+    parts:
+      - { when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }, part: disc-pads }
+      - { when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical], brake.pad_retainer.<pos>: [split_pin] }, part: split-pin, optional: true }
+      - { when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever], brake.rim_pad_kind.<pos>: [one_piece] }, part: rim-pads }
+      - { when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever], brake.rim_pad_kind.<pos>: [cartridge] }, part: rim-inserts }
+      - { when: { brake.type.<pos>: [rim_hydraulic] }, part: hydraulic-rim-pads }
+  applies_when: {}
+  sequence:
+    - branch:
+        id: brake-type-branch
+        on: brake.type.<pos>
+        if_unknown: ask            # fallback ask point if the user deferred it; if still unknown: stop (shop)
+        cases:
+          # ----------------------------------------------------------- hydraulic disc
+          - when: { brake.type.<pos>: [disc_hydraulic] }
+            sequence:
+              - branch:
+                  id: disc-hydraulic-route
+                  on: [ebike.motor_position, drive.gear_type, wheel.axle.<pos>, brake.pad_loading.<pos>]
+                  if_unknown: ask
+                  cases:
+                    # Wheel cannot come out at home, pads load from the top: draft wheel-in variant.
+                    - when:
+                        brake.pad_loading.<pos>: [top]
+                        any_of:
+                          - { pos: [front], ebike.motor_position: [front_hub] }
+                          - { pos: [rear], ebike.motor_position: [rear_hub] }
+                          - { pos: [rear], drive.gear_type: [hub_gear, gearbox] }
+                          - { pos: [rear], drive.gear_type: [single_speed], wheel.axle.rear: [nut] }
+                      needs_mechanic_review: true
+                      sequence:
+                        - { step: ebike-battery-out, needs_mechanic_review: true }
+                        - { procedure: hold-bike-wheel-in, needs_mechanic_review: true }
+                        - { step: photo-before, needs_mechanic_review: true }
+                        - inspect: rotor-condition
+                          needs_mechanic_review: true
+                          on:
+                            ok: continue
+                            damaged: { stop: "Do not ride with this disc. Have a shop check it before you fit new pads." }
+                        - { step: push-pistons-rotor-in, needs_mechanic_review: true }
+                        - { step: pistons-back-rotor-in, needs_mechanic_review: true }
+                        - { procedure: remove-pad-retainer, needs_mechanic_review: true }
+                        - { step: lift-out-pads-top, needs_mechanic_review: true }
+                        - inspect: pad-contamination
+                          needs_mechanic_review: true
+                          on:
+                            dry: continue
+                            oily: { stop: "Do not ride. There is oil on the brake, from a leak or from outside. Take the bike to a shop." }
+                        - { step: compare-pads, needs_mechanic_review: true }
+                        - { step: clean-rotor, needs_mechanic_review: true }
+                        - { step: insert-pads-top, needs_mechanic_review: true }
+                        - { procedure: install-pad-retainer, needs_mechanic_review: true }
+                        - { step: pad-pin-secure, needs_mechanic_review: true }
+                        - { step: pump-lever, needs_mechanic_review: true }
+                        - { step: check-disc-rub, needs_mechanic_review: true }
+                        - { procedure: release-bike-wheel-in, needs_mechanic_review: true }
+                        - inspect: hydraulic-lever-feel
+                          needs_mechanic_review: true
+                          on:
+                            firm: continue
+                            soft: { stop: "Do not ride. The brake may have air in it. Take the bike to a shop." }
+                            reaches-bar: { stop: "Do not ride. The brake builds too little pressure. Take the bike to a shop." }
+                        - { step: ebike-battery-in, needs_mechanic_review: true }
+                        - inspect: brake-stops-bike
+                          needs_mechanic_review: true
+                          on:
+                            stops: continue
+                            weak: { stop: "Do not ride. The brake has too little power. Take the bike to a shop." }
+                            grinds: { stop: "Do not ride. A pad may sit wrong, or metal may touch. Take the bike to a shop." }
+                        - { step: bed-in-pads, needs_mechanic_review: true }
+                        - inspect: brake-power-riding
+                          needs_mechanic_review: true
+                          on:
+                            strong: continue
+                            squeals: continue
+                            weak: { stop: "Do not rely on this brake. The pads or the disc may be dirty. Take the bike to a shop." }
+
+                    # Wheel cannot come out at home and pads only come out with the wheel out: shop.
+                    - when:
+                        brake.pad_loading.<pos>: [wheel_out]
+                        any_of:
+                          - { pos: [front], ebike.motor_position: [front_hub] }
+                          - { pos: [rear], ebike.motor_position: [rear_hub] }
+                          - { pos: [rear], drive.gear_type: [hub_gear, gearbox] }
+                          - { pos: [rear], drive.gear_type: [single_speed], wheel.axle.rear: [nut] }
+                      sequence:
+                        - { shop: "Taking out this wheel needs a shop, because of the motor or the gears in its hub. A shop can change these pads for you." }
+
+                    # Every other bike: wheel out.
+                    - default: true
+                      sequence:
+                        - step: ebike-battery-out
+                        - procedure: hold-bike-<pos>-wheel-out
+                        - step: photo-before
+                        - procedure: remove-<pos>-wheel
+                        - inspect: rotor-condition
+                          on:
+                            ok: continue
+                            damaged: { stop: "Do not ride with this disc. Have a shop check it before you fit new pads." }
+                        - step: push-pistons-back
+                        - step: pistons-back
+                        - procedure: remove-pad-retainer
+                        - step: slide-out-pads
+                        - inspect: pad-contamination
+                          on:
+                            dry: continue
+                            oily: { stop: "Do not ride. There is oil on the brake, from a leak or from outside. Take the bike to a shop." }
+                        - step: compare-pads
+                        - step: clean-rotor
+                        - step: insert-new-pads
+                        - step: insert-pad-spacer
+                        - procedure: install-pad-retainer
+                        - step: pad-pin-secure
+                        - step: remove-pad-spacer
+                        - procedure: install-<pos>-wheel
+                        - step: wheel-secure
+                        - step: pump-lever
+                        - step: check-disc-rub
+                        - procedure: release-bike-<pos>-wheel-out
+                        - inspect: hydraulic-lever-feel
+                          on:
+                            firm: continue
+                            soft: { stop: "Do not ride. The brake may have air in it. Take the bike to a shop." }
+                            reaches-bar: { stop: "Do not ride. The brake builds too little pressure. Take the bike to a shop." }
+                        - step: ebike-battery-in
+                        - inspect: brake-stops-bike
+                          on:
+                            stops: continue
+                            weak: { stop: "Do not ride. The brake has too little power. Take the bike to a shop." }
+                            grinds: { stop: "Do not ride. A pad may sit wrong, or metal may touch. Take the bike to a shop." }
+                        - step: bed-in-pads
+                        - inspect: brake-power-riding
+                          on:
+                            strong: continue
+                            squeals: continue
+                            weak: { stop: "Do not rely on this brake. The pads or the disc may be dirty. Take the bike to a shop." }
+
+          # ----------------------------------------------------------- mechanical disc
+          - when: { brake.type.<pos>: [disc_mechanical] }
+            sequence:
+              - branch:
+                  id: disc-mechanical-route
+                  on: [ebike.motor_position, drive.gear_type, wheel.axle.<pos>]
+                  if_unknown: ask
+                  cases:
+                    - when:
+                        any_of:
+                          - { pos: [front], ebike.motor_position: [front_hub] }
+                          - { pos: [rear], ebike.motor_position: [rear_hub] }
+                          - { pos: [rear], drive.gear_type: [hub_gear, gearbox] }
+                          - { pos: [rear], drive.gear_type: [single_speed], wheel.axle.rear: [nut] }
+                      sequence:
+                        - { shop: "Taking out this wheel needs a shop, because of the motor or the gears in its hub. A shop can change these pads for you." }
+                    - default: true
+                      sequence:
+                        - step: ebike-battery-out
+                        - procedure: hold-bike-<pos>-wheel-out
+                        - step: photo-before
+                        - step: back-off-pad-adjusters
+                        - procedure: remove-<pos>-wheel
+                        - inspect: rotor-condition
+                          on:
+                            ok: continue
+                            damaged: { stop: "Do not ride with this disc. Have a shop check it before you fit new pads." }
+                        - procedure: remove-pad-retainer
+                        - step: slide-out-pads
+                        - inspect: pad-contamination
+                          on:
+                            dry: continue
+                            oily: { stop: "Do not ride. There is oil on the brake. Take the bike to a shop." }
+                        - step: compare-pads
+                        - step: clean-rotor
+                        - step: insert-new-pads
+                        - procedure: install-pad-retainer
+                        - step: pad-pin-secure
+                        - procedure: install-<pos>-wheel
+                        - step: wheel-secure
+                        - step: dial-in-pads
+                        - step: check-disc-rub
+                        - procedure: release-bike-<pos>-wheel-out
+                        - step: lever-travel-cable
+                        - step: ebike-battery-in
+                        - inspect: brake-stops-bike
+                          on:
+                            stops: continue
+                            weak: { stop: "Do not ride. The brake has too little power. Take the bike to a shop." }
+                            grinds: { stop: "Do not ride. A pad may sit wrong, or metal may touch. Take the bike to a shop." }
+                        - step: bed-in-pads
+                        - inspect: brake-power-riding
+                          on:
+                            strong: continue
+                            squeals: continue
+                            weak: { stop: "Do not rely on this brake. The pads or the disc may be dirty. Take the bike to a shop." }
+
+          # ----------------------------------------------------------- rim brakes with cable
+          - when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever] }
+            sequence:
+              - inspect: rim-braking-surface
+                on:
+                  ok: continue
+                  worn: { stop: "Do not ride. The rim may be worn and could break. Have a shop check the wheel." }
+              - step: pads-suit-rims
+              - step: ebike-battery-out
+              - procedure: hold-bike-wheel-in
+              - step: photo-before
+              - procedure: check-pad-post
+              - procedure: open-rim-brake
+              - branch:
+                  id: rim-pad-kind-branch
+                  on: brake.rim_pad_kind.<pos>
+                  if_unknown: ask          # fallback ask point if the user deferred it
+                  cases:
+                    - when: { brake.rim_pad_kind.<pos>: [one_piece] }
+                      sequence:
+                        - step: remove-rim-pads
+                        - step: compare-pads
+                        - step: fit-rim-pads
+                        - procedure: close-rim-brake
+                        - step: align-rim-pads
+                    - when: { brake.rim_pad_kind.<pos>: [cartridge] }
+                      sequence:
+                        - step: remove-cartridge-pins
+                        - step: slide-out-inserts
+                        - step: compare-pads
+                        - step: slide-in-inserts
+                        - step: refit-cartridge-pins
+                        - step: cartridge-holder-check
+                        - procedure: close-rim-brake
+              - step: pad-on-rim
+              - step: check-rim-rub
+              - step: lever-travel-cable
+              - procedure: release-bike-wheel-in
+              - step: ebike-battery-in
+              - inspect: brake-stops-bike
+                on:
+                  stops: continue
+                  weak: { stop: "Do not ride. The brake has too little power. Take the bike to a shop." }
+                  grinds: { stop: "Do not ride. A pad may sit wrong, or metal may touch. Take the bike to a shop." }
+
+          # ----------------------------------------------------------- hydraulic rim brakes
+          - when: { brake.type.<pos>: [rim_hydraulic] }
+            sequence:
+              - inspect: rim-braking-surface
+                on:
+                  ok: continue
+                  worn: { stop: "Do not ride. The rim may be worn and could break. Have a shop check the wheel." }
+              - step: pads-suit-rims
+              - step: ebike-battery-out
+              - procedure: hold-bike-wheel-in
+              - step: photo-before
+              - step: hs-remove-pads
+              - inspect: pad-contamination
+                on:
+                  dry: continue
+                  oily: { stop: "Do not ride. There is oil on the brake, from a leak or from outside. Take the bike to a shop." }
+              - step: compare-pads
+              - step: hs-insert-pads
+              - step: pad-on-rim
+              - step: check-rim-rub
+              - inspect: hydraulic-lever-feel
+                on:
+                  firm: continue
+                  soft: { stop: "Do not ride. The brake may have air in it. Take the bike to a shop." }
+                  reaches-bar: { stop: "Do not ride. The brake builds too little pressure. Take the bike to a shop." }
+              - procedure: release-bike-wheel-in
+              - step: ebike-battery-in
+              - inspect: brake-stops-bike
+                on:
+                  stops: continue
+                  weak: { stop: "Do not ride. The brake has too little power. Take the bike to a shop." }
+                  grinds: { stop: "Do not ride. A pad may sit wrong, or metal may touch. Take the bike to a shop." }
+
+          # ----------------------------------------------------------- roller and coaster
+          - when: { brake.type.<pos>: [roller, coaster] }
+            sequence:
+              - { shop: "Roller and coaster brakes have no pads you can replace yourself. A shop can check them." }
+
+fact_manifest:
+  # ask_at upfront: changes the route, the parts or the tool list; asked in pre-step 3 when relevant_when holds.
+  # fallback_ask_at: where the fact is asked if the user tapped "I'll check later".
+  - key: brake.type.<pos>
+    used_for: routing
+    ask_at: upfront
+    fallback_ask_at: [brake-type-branch]
+    if_unknown: ask            # if the user still cannot tell: stop (shop)
+  - key: brake.rim_pad_kind.<pos>      # proposed
+    used_for: routing
+    ask_at: upfront
+    relevant_when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever] }
+    fallback_ask_at: [rim-pad-kind-branch]
+    if_unknown: ask
+  - key: wheel.rim_material.<pos>      # proposed
+    used_for: safety           # part names; pads-suit-rims
+    ask_at: upfront
+    relevant_when: { brake.type.<pos>: [rim_v, rim_caliper, rim_cantilever, rim_hydraulic] }
+    fallback_ask_at: [pads-suit-rims]
+    if_unknown: ask
+  - key: wheel.axle.<pos>
+    used_for: routing          # disc brakes only; also decides the axle tools
+    ask_at: upfront
+    relevant_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }
+    fallback_ask_at: [open-axle]
+    if_unknown: ask
+  - key: ebike.motor_position
+    used_for: routing          # hub motor wheels; e-bikes without a stand
+    ask_at: upfront
+    relevant_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }
+    fallback_ask_at: [disc-hydraulic-route, disc-mechanical-route, hold-bike-front-wheel-out, hold-bike-rear-wheel-out, remove-front-wheel, remove-rear-wheel]
+    if_unknown: ask            # one picture question: no motor / at the pedals / in the rear wheel / in the front wheel
+  - key: bike.ebike
+    used_for: routing          # set by the same motor question ("No motor" sets false)
+    ask_at: upfront
+    relevant_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical] }
+    fallback_ask_at: [disc-hydraulic-route, disc-mechanical-route, hold-bike-front-wheel-out, hold-bike-rear-wheel-out]
+    if_unknown: ask            # battery steps alone use generic wording and never ask
+  - key: drive.gear_type
+    used_for: routing          # rear disc brakes only
+    ask_at: upfront
+    relevant_when: { brake.type.<pos>: [disc_hydraulic, disc_mechanical], pos: [rear] }
+    fallback_ask_at: [disc-hydraulic-route, disc-mechanical-route, remove-rear-wheel]
+    if_unknown: ask
+  - key: brake.pad_loading.<pos>       # proposed
+    used_for: routing          # only for wheels that cannot come out at home
+    ask_at: step               # easier to answer while looking at the caliper
+    asked_at: [disc-hydraulic-route]
+    if_unknown: ask
+  - key: brake.pad_retainer.<pos>      # proposed
+    used_for: routing
+    ask_at: step
+    asked_at: [remove-pad-retainer]
+    if_unknown: ask
+  - key: brake.cantilever_post.<pos>   # proposed
+    used_for: routing
+    ask_at: step
+    asked_at: [check-pad-post]
+    if_unknown: ask
+  - key: wheel.dynamo_hub
+    used_for: detail
+    ask_at: step
+    asked_at: []               # never asked: generic wording
+    if_unknown: generic
+  - key: brake.pad_shape.<pos>
+    used_for: safety           # part names only; never decides a step
+    ask_at: step
+    asked_at: []               # never asked: fallback wording plus the compare-pads safety check
+    if_unknown: generic
+  - key: brake.pad_wear_limit.<pos>    # proposed
+    used_for: safety           # disc-pad-wear inspection text
+    ask_at: step
+    asked_at: []
+    if_unknown: generic
+  - key: wheel.axle_torque.<pos>       # proposed
+    used_for: safety
+    ask_at: step
+    asked_at: []
+    if_unknown: generic
+  - key: brake.caliper_mount_torque.<pos>   # proposed
+    used_for: safety
+    ask_at: step
+    asked_at: []
+    if_unknown: generic
+
+proposed_facts:
+  - key: brake.pad_retainer.{front,rear}
+    type: enum
+    values: [split_pin, clip, screw, none]
+    question_en: "What holds the brake pads in the brake? Look at the brake from above and pick the closest picture."
+    question_de: "Was hält die Bremsbeläge in der Bremse? Schau von oben auf die Bremse und wähle das passende Bild."
+    reason: "Disc pads are held by a pin with a split pin, a pin with a clip, a screwed pin, or only a spring or magnet. Removal and refitting differ by one or two actions (swap, rule 3). Inherit from the brake series in the part tree once a mechanic has verified each series."
+  - key: brake.rim_pad_kind.{front,rear}
+    type: enum
+    values: [one_piece, cartridge]
+    question_en: "What do your brake pads look like? A rubber block with a bolt, or a rubber insert in a metal holder?"
+    question_de: "Wie sehen deine Bremsbeläge aus? Ein Gummiblock mit Schraube oder ein Gummieinsatz in einem Metallhalter?"
+    reason: "One-piece pads need alignment on the rim; cartridge inserts keep the holder in place but have a safety-critical direction. The order of actions differs (split, rule 4), and the answer decides which part to buy."
+  - key: brake.cantilever_post.{front,rear}
+    type: enum
+    values: [threaded, smooth]
+    question_en: "Look at the post that holds the brake pad. Does it have a thread like a screw, or is it smooth?"
+    question_de: "Schau dir den Stift an, der den Bremsbelag hält. Hat er ein Gewinde wie eine Schraube, oder ist er glatt?"
+    reason: "Smooth-post cantilever pads go to a shop (owner decision). Only asked for cantilever brakes, at the step, while the user looks at the pad."
+  - key: brake.pad_loading.{front,rear}
+    type: enum
+    values: [top, wheel_out]
+    question_en: "Look at the brake from above. Can you see the tops of the pads through an opening in the brake?"
+    question_de: "Schau von oben auf die Bremse. Siehst du durch eine Öffnung die Oberkanten der Beläge?"
+    reason: "Top-loading calipers may allow a pad change with the wheel in place. Only asked when the wheel cannot be taken out at home (hub gear, gearbox, hub motor). Inherit from the brake series once verified."
+  - key: brake.pad_wear_limit.{front,rear}
+    type: number (mm)
+    safety: true
+    question_en: "Not asked. Taken from the brake's catalog entry."
+    question_de: "Wird nicht gefragt. Kommt aus dem Katalogeintrag der Bremse."
+    reason: "The disc-pad-wear inspection must not invent a limit. With the value known it is shown; otherwise the text points to the manual."
+  - key: wheel.rim_material.{front,rear}
+    type: enum
+    values: [aluminium, carbon, steel]
+    question_en: "What are your rims made of? Silver metal with a shiny brake track, black carbon, or old chrome steel?"
+    question_de: "Woraus sind deine Felgen? Silbernes Metall mit glänzender Bremsflanke, schwarzes Carbon oder alter verchromter Stahl?"
+    reason: "Rim pads must suit the rim material; carbon rims need dedicated pads (owner decision). Used in part names and in the pads-suit-rims safety check."
+  - key: wheel.axle_torque.{front,rear}
+    type: number (Nm)
+    safety: true
+    question_en: "Is a torque value printed near the axle, for example a number followed by Nm? Type the number."
+    question_de: "Steht in der Nähe der Achse ein Drehmoment, also eine Zahl mit Nm dahinter? Gib die Zahl ein."
+    reason: "Axle nuts and thru-axles must be tightened to the maker's value. The catalog or the user's reading of the part supplies it; otherwise the text points to the printed value."
+  - key: brake.caliper_mount_torque.{front,rear}
+    type: number (Nm)
+    safety: true
+    question_en: "Is a torque value printed on the brake, for example a number followed by Nm? Type the number."
+    question_de: "Steht auf der Bremse ein Drehmoment, also eine Zahl mit Nm dahinter? Gib die Zahl ein."
+    reason: "Caliper and brake-unit mounting bolts hold the brake to the frame. Used where a fix loosens them (check-disc-rub, pad-on-rim for hydraulic rim brakes)."
+
+decision_log:
+  - "One run covers one brake. The entry context passes <pos>; if it does not, pre-step 2 asks. Front and rear use the same actions in the same order, so position is a parameter (rule 1)."
+  - "Step texts never name the position. 'This brake' plus the 3D highlight shows which one, so no adjective is inserted into a German sentence and no left/right lever convention is assumed."
+  - "Top-level split on brake.type.<pos> into five cases: hydraulic disc, mechanical disc, cable rim, hydraulic rim, roller/coaster (rule 4: different mental model, different success checks, different 3D scene)."
+  - "Hydraulic and mechanical disc stay separate although they share most steps (rule 4: hydraulic versus cable mental model; success is checked by lever feel versus lever travel). Sharing happens at step level."
+  - "Hydraulic rim brakes stay separate from cable rim brakes (rule 4: no cable to open or adjust; squeezing the lever with a pad out can push a piston out)."
+  - "Roller and coaster brakes go to a shop: they have no user-replaceable pads."
+  - "Nested branch on brake.rim_pad_kind.<pos> inside cable rim brakes (rule 4: order differs; cartridge has its own safety check and no alignment). Depth 2."
+  - "Nested route branch inside hydraulic disc: wheel-in draft, shop, or wheel out (rule 4: order, tools and scene differ). Depth 2. The same branch in mechanical disc has only shop or wheel out, because no wheel-in variant was drafted for mechanical calipers."
+  - "The route branches send hub-motor, hub-gear, gearbox and single-speed-nut wheels to the wheel-in draft or a shop before the bike is held or turned over, so nobody turns a bike upside down only to be sent to a shop."
+  - "Opening and closing a cable rim brake: swap by procedure (rule 3)."
+  - "Disc pad retainer: swap by procedure on brake.pad_retainer, asked at the step with pictures (rule 3)."
+  - "Smooth-post cantilever pads: shop, decided in check-pad-post before the brake is opened (owner decision; fact asked at the step)."
+  - "Wheel removal and refitting: procedures with implementations by axle (rule 3); front and rear are separate procedures because the rear needs gear handling in a different order (rule 4). Their shop implementations stay for other callers."
+  - "Holding the bike: swap by tool choice and bike.ebike (rule 3). Wheel in: stand or lean. Wheel out, no stand: non-e-bikes go upside down; e-bikes are not turned over. A front wheel can come out with the bike on its kickstand by a wall, fork resting on a mat; a rear wheel cannot, so that case goes to a shop (owner decision: choose the safer option; listed in mechanic_review)."
+  - "Dynamo plug, e-bike battery: skip by when with generic wording (rule 2), never asked."
+  - "Disc cleaning: skip on the helpful tools alcohol and cloth (rule 2)."
+  - "Rotor-condition now runs right after the wheel comes out, before the pistons are pushed back, so a damaged disc stops the work with as little taken apart as possible."
+  - "pads-suit-rims runs before the brake is opened, so wrong pads for carbon rims stop the work before anything is taken apart."
+  - "Lever checks run after the bike is back on its wheels, so air that moved while it was upside down is caught."
+  - "Inspection (change 1, rule: could lead to a different repair or none): disc-pad-wear and rim-pad-wear (none, or pad replacement). They now run as entry pre-step 4 or come from the entry context, not inside the tutorial."
+  - "Inspection: rim-braking-surface (rim replacement). Kept in the tutorial before any work, mapped to stop."
+  - "Inspection: rotor-condition (rotor replacement). Kept in the tutorial, mapped to stop."
+  - "Inspection: pad-contamination, renamed from old-pads-dry so diagnosis can run it with the pads in the bike (leak repair, cleaning). Kept in the tutorial after the pads come out; added to the hydraulic rim case too, because an HS leak shows there."
+  - "Inspection: hydraulic-lever-feel (bleed). Three states so diagnosis can tell 'soft' from 'reaches the handlebar'; the tutorial maps both to stop."
+  - "Inspection: brake-stops-bike (different repair if weak). Mapped to stop."
+  - "Inspection, beyond the expected list: brake-power-riding, formerly braking-after-bed-in. A weak result points to contamination or glazing, which is a different repair, so the rule makes it an inspection. 'Squeals' is a separate state for diagnosis; the tutorial maps it to continue."
+  - "Tutorial step (checks the quality of the work just done): compare-pads, pistons-back, pistons-back-rotor-in, pad-pin-secure, cartridge-holder-check, pad-on-rim, wheel-secure, pads-suit-rims, check-disc-rub, check-rim-rub, lever-travel-cable. No override of the expected list."
+  - "lever-travel-cable stays a step although a cable lever reaching the bar could hint at worn pads in diagnosis: inside this tutorial the pads are new, so the only outcomes are fix here or shop."
+  - "Block versus stop (change 3): block for pad on the tyre or below the rim, loose wheel, loose pad pin, cable lever near the bar; stop for stuck pistons, wrong pads, wrong pads for the rim, reversed cartridge holders, missing cartridge pins, and every unsafe inspection state."
+  - "pistons-back keeps 'One pad stays close' as text with a solution, not a block: a pad left close only causes rubbing, which check-disc-rub catches later."
+  - "Inspection calls with stop outcomes count as the closing safety check of a case. Every non-shop case ends with brake-stops-bike or brake-power-riding."
+  - "No skip_to remains: the 'is this repair needed?' checks moved to entry pre-step 4."
+  - "Pad compatibility is never assumed: part names use brake.pad_shape with fallback wording, and compare-pads stops before new pads go in."
+  - "brake.fluid is not read: pad replacement never opens the hydraulic system. Oil on the pads stops the tutorial whatever the fluid."
+  - "Torque: axle and brake-mounting bolts use placeholders with fallback to the printed value and the torque wrench as a helpful tool; rim pad nuts keep 'firmly' and pad pins 'until snug' (owner decision)."
+  - "One picture question sets both bike.ebike and ebike.motor_position, so it costs one screen."
+  - "The disc wear inspection no longer needs a new pad: it compares the pad material with the metal plate behind it, which a beginner can see in the bike. The maker's limit is shown through a placeholder when known."
+  - "Steps reused across cases: compare-pads, photo-before, battery steps, holding steps, pad retainer and wheel procedures, pad-on-rim, check-rim-rub, check-disc-rub, lever-travel-cable. Wheel procedures are written to be shared with the planned flat-tyre tutorial."
+
+mechanic_review:
+  - question: "Magura HS rim brakes: in which direction do the pads leave their holders, must the brake unit be opened or unclipped first, do the HS11, HS22 and HS33 levers have a pad adjustment knob, and which way does it turn? Do the pads have direction arrows?"
+    affects: [hs-remove-pads, hs-insert-pads, check-rim-rub, pad-on-rim]
+  - question: "Pushing pistons back with a plastic tyre lever between the old pads (wheel out): acceptable for Shimano, SRAM, Magura MT and Tektro calipers? Is reservoir overflow a risk when the system was not overfilled?"
+    affects: [push-pistons-back, pistons-back]
+  - question: "Wheel-in variant for top-loading calipers: is it safe to push the pistons back by levering between an old pad and the rotor without bending the rotor or damaging the pistons? Do the pads of common top-loading calipers come out and go in from the top with the rotor in place? Is the variant acceptable for e-trekking bikes with hub gears and rear hub motors? Is brake.pad_loading something a beginner can answer from the picture question?"
+    affects: [disc-hydraulic-route, push-pistons-rotor-in, pistons-back-rotor-in, lift-out-pads-top, insert-pads-top]
+  - question: "Pad retainer list (split pin, clip, screw, none): complete? Are some Shimano pad pins threaded? How do Avid BB5/BB7 and TRP mechanical calipers hold their pads, and does every mechanical caliper have adjusting knobs?"
+    affects: [remove-pad-retainer, install-pad-retainer, back-off-pad-adjusters, dial-in-pads]
+  - question: "V-brake and cantilever centring: does tightening the spring screw move that arm's pad away from the rim on all common brands? Road caliper centring screws differ in position and direction; is 'turn a little and watch which way the pads move' acceptable?"
+    affects: [check-rim-rub]
+  - question: "Split pins: may a straightened split pin be reused, or must it always be new?"
+    affects: [straighten-split-pin, fit-split-pin, split-pin]
+  - question: "Bed-in: is the generic text ('brake firmly from moderate speed until braking feels strong, or as the pad pack describes') safe enough, or should maker-specific instructions come from the catalog?"
+    affects: [bed-in-pads, brake-power-riding]
+  - question: "Wear cues: is 'pad material as thin as its metal plate, or thinner' a safe and visible cue for disc pads seen from above, always at or before the maker's limit? Is 'grooves almost gone' reliable for rim pads, including pads without grooves?"
+    affects: [disc-pad-wear, rim-pad-wear]
+  - question: "E-bikes without a stand: is the front wheel safely removable with the bike on its kickstand by a wall and the fork resting on a mat? Is sending rear wheels to a shop the right call, or is there a safe home method?"
+    affects: [kickstand-fork-on-mat, hold-bike-front-wheel-out, hold-bike-rear-wheel-out]
+  - question: "Turning non-e-bikes with hydraulic brakes upside down: is the lever-feel inspection after turning them upright enough to catch air that moved into the caliper?"
+    affects: [turn-upside-down, hydraulic-lever-feel]
+  - question: "Rim material: is 'pads without a note are usually made for aluminium rims' correct, and acceptable for steel rims? Which pads are right for steel rims?"
+    affects: [pads-suit-rims, rim-pads, rim-inserts, hydraulic-rim-pads]
+  - question: "Rim braking surface: are 'deep grooves, or the side looks hollow' good enough cues without the rim's wear indicator?"
+    affects: [rim-braking-surface]
+  - question: "Cable rim brakes without a quick-release lever (old calipers): do thicker new pads fit without first turning the barrel adjuster in?"
+    affects: [open-caliper-release, close-caliper-release, fit-rim-pads]
+
+open_questions:
+  - "Content-model additions in this draft need confirmation: inspect calls with on:, block, pos in conditions, default branch cases, branch ids, by-value text and part names, needs_mechanic_review at call sites, relevant_when and fallback_ask_at in fact_manifest, and 'bike.ebike false makes motor conditions false'."
+  - "YAML 1.1 parsers (for example PyYAML) read the key `on:` as the boolean true. The compiler must read these files as YAML 1.2, or the key must be renamed (for example `outcomes:`)."
+  - "Does an inspection call with stop outcomes count as the closing safety check of a tutorial? This draft assumes yes."
+  - "A block keeps Next disabled. Should the app still show 'Find a shop' with a block? lever-travel-cable tells the user to go to a shop if the fix does not work."
+  - "brake-power-riding maps 'squeals' to continue, so the user sees no message. Should continue allow a short message, for example that new pads often squeal at first?"
+  - "Pre-step 4 trusts 'Yes'. Should a very-worn finding from a diagnosis add a note that the rotor or rim will be checked?"
+  - "Pre-step 5 lists the split pin as optional when the pad retainer is still unknown. Is an 'optional' part shown as 'maybe needed', like tools?"
+  - "brake.pad_loading changes the route but is asked at the step, because it is easier to answer while looking at the caliper. Its tools are then shown as 'maybe needed' until it is answered. Acceptable?"
+  - "Pre-step 3 asks only upfront facts whose relevant_when holds, recomputed after each answer (brake type first). Is that how the app should order the questions?"
+  - "Duration estimate 20-60 minutes for the whole tutorial. Show one range, or a range per variant once the brake type is known?"
