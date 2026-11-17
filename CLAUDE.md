@@ -14,7 +14,9 @@ content/         facts.yaml, choices.yaml, states.yaml, tools.yaml, inspections.
 profiles/        test bikes (facts, answers, tools, journeys), one YAML each. Only for review.
 reviews/         ledger.yaml: sign-offs of review units (append only, via npm run review -- sign)
 tools/           build script: validate, expand, simulate, review files, bundle (tools/check.ts),
-                 walk.ts (paths on demand), review.ts (review status and sign-off)
+                 walk.ts (paths on demand), review.ts (review status and sign-off).
+                 tools/lib/conditions.ts and tools/lib/resolve.ts are shared with the player:
+                 dependency-free, they work on bundle data. Change them only with both in mind.
 build/           generated, never edited by hand: bundle.json, report.md,
                  review/ (index.md, cards.md, trees/, journeys/); paths/ is on demand and not committed
 player/          the web app (Vite, TypeScript, three.js)

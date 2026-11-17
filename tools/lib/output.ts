@@ -4,6 +4,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { bundleOf } from './bundle.js';
 import type { Content } from './content.js';
 import type { Flows } from './flows.js';
 import { formatIssue, type Issues } from './issues.js';
@@ -103,34 +104,7 @@ export function renderReport(c: Content, flows: Flows, profiles: Map<string, { r
 }
 
 export function buildBundle(c: Content): string {
-  const defs = (m: Map<string, { def: any }>) => [...m.values()].map((e) => e.def);
-  const tutorials = [...c.tutorials.values()].map((t) => {
-    const resolve = (cs: any): any => {
-      const out: any = { ...cs };
-      if (cs.include) {
-        const cf = t.cases.get(cs.include);
-        delete out.include;
-        out.case = { name: cs.include.replace(/^cases\//, '').replace(/\.yaml$/, ''), sequence: cf?.data.sequence ?? [], finish: cf?.data.finish ?? [] };
-      }
-      if (cs.cases) out.cases = cs.cases.map(resolve);
-      return out;
-    };
-    return { ...t.def, cases: t.def.cases.map(resolve) };
-  });
-  const payload = {
-    facts: defs(c.facts),
-    choices: defs(c.choices),
-    states: defs(c.states),
-    tools: defs(c.tools),
-    parts: defs(c.parts),
-    inspections: defs(c.inspections),
-    jobs: defs(c.jobs),
-    steps: defs(c.steps),
-    procedures: defs(c.procedures),
-    tutorials,
-    diagnoses: defs(c.diagnoses),
-    checks: defs(c.checks),
-  };
+  const payload = bundleOf(c).data;
   const hash = createHash('sha256').update(JSON.stringify(payload)).digest('hex').slice(0, 16);
   return JSON.stringify({ format: 1, content_hash: hash, notice: NOTICE, unverified: true, ...payload }, null, 2) + '\n';
 }
