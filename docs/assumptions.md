@@ -17,6 +17,6 @@ Mechanics doubts are not listed here. They live in `content/review/<job>.md`.
 | A-09 | 2026-11-17 | The routine check may include a short test ride. | `shift-test-ride` is in the routine check; it is hands-off (AC-04). | `checks/routine.yaml` |
 | A-10 | 2026-11-17 | Readable button labels are stable enough to identify a button in a profile. | `tutorial_sees` names the tapped button by its label; the check fails if no button has that label. | `profiles/*.yaml` |
 | A-11 | 2026-11-17 | Reviewers want to see changes in generated output. | `build/` is committed to git and is deterministic. | `.gitignore`, AC-16 |
+| A-12 | 2026-11-17 | Hanging a bike from a hook or rope needs a tool entry so the tool picker can show it. | Tool `hook-or-rope`, required by the option `hang`. | `tools.yaml`, `choices.yaml` |
 | A-13 | 2026-11-17 | Most bikes with an unknown derailleur type have a standard derailleur. | `drive.rear_derailleur_type` unknown runs the normal guide; only `low_normal` from the bike's data ends at "not supported". | `tutorial.yaml`, `gears-shift-badly.yaml` |
 | A-14 | 2026-11-17 | "Same session" means one sitting: a diagnosis and the tutorial opened from it. | Findings from earlier days do not skip a check yet (approach.md lists this as open). | AC-20 |
-| A-12 | 2026-11-17 | Hanging a bike from a hook or rope needs a tool entry so the tool picker can show it. | Tool `hook-or-rope`, required by the option `hang`. | `tools.yaml`, `choices.yaml` |
