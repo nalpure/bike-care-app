@@ -1,0 +1,339 @@
+// Every screen of a journey: questions, run choices, tools, cards, exits, job, shop summary, done.
+// One card component serves inspections, steps and checks.
+
+import { UNKNOWN } from '../../../tools/lib/conditions.js';
+import type { Card, Journey, Screen, ShopSummary } from '../engine/journey.js';
+import type { App } from './app.js';
+import { h, icon, ICON } from './dom.js';
+
+const EXIT_TITLE: Record<string, string> = {
+  unsafe: 'Do not ride',
+  not_covered: 'Not supported yet',
+  not_needed: 'Not needed',
+  shop_only: 'A shop has to do this',
+};
+
+const POSITION_LABEL: Record<string, string> = { front: 'Front', rear: 'Rear' };
+
+function top(app: App, title: string, small: string, opts: { close?: boolean } = {}): HTMLElement {
+  return h('div.wh',
+    h('button.ib', { 'aria-label': opts.close ? 'Close' : 'Back', 'data-test': opts.close ? 'close' : 'back', onclick: () => (opts.close ? app.closeJourney() : app.back()) }, icon(opts.close ? ICON.close : ICON.back)),
+    h('div.t', h('small', small), h('b', title)),
+  );
+}
+
+function screenWith(app: App, head: HTMLElement, body: (HTMLElement | null)[], cta?: (HTMLElement | null)[]): HTMLElement {
+  return h('section.screen', head, h('div.scroll', body), cta ? h('div.cta', cta) : null);
+}
+
+export function renderJourney(app: App, j: Journey): HTMLElement {
+  const s = j.screen();
+  switch (s.kind) {
+    case 'position':
+      return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+        h('h1.h2q', 'Which one?'),
+        h('div.qopts', s.values.map((v) => h('button.opt', { 'data-test': `pos-${v}`, onclick: () => app.act((x) => x.answerPosition(s.param, v), 'next') }, h('span.ol', POSITION_LABEL[v] ?? v)))),
+      ]);
+    case 'question':
+      return renderQuestion(app, j, s);
+    case 'tool-question':
+      return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+        h('h1.h2q', `Do you have this? ${app.c.toolName(s.tool)}`),
+        h('div.qopts',
+          h('button.opt', { onclick: () => app.act((x) => x.answerTool(s.tool, true), 'next') }, h('span.ol', 'Yes')),
+          h('button.opt', { onclick: () => app.act((x) => x.answerTool(s.tool, false), 'next') }, h('span.ol', 'No')),
+        ),
+      ]);
+    case 'choice':
+      return renderChoice(app, s);
+    case 'parts':
+      return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+        h('h1.h2q', 'Parts you need'),
+        h('ul.list', s.parts.map((p) => h('li', h('div.li', h('span.tx', h('b', p.name ?? p.id), p.note ? h('span', p.note) : null))))),
+      ], [h('button.btn.primary.wide', { onclick: () => app.act((x) => x.partsOk(), 'next') }, 'I have them')]);
+    case 'tools':
+      return renderTools(app, j, s);
+    case 'card':
+      return renderCard(app, j, s.card);
+    case 'exit':
+      return renderExit(app, s);
+    case 'not-covered':
+      return screenWith(app, top(app, app.bike.name, 'End of this guide'), [
+        h('h1.h2q', 'Not covered yet'),
+        h('p', s.message),
+        h('p.lead', 'We do not show a guess. A shop can help, or ask the assistant.'),
+      ], [
+        h('button.btn.primary.wide', { 'data-test': 'find-shop', onclick: () => app.act((x) => x.exitFindShop()) }, 'Find a shop'),
+        h('button.btn.wide', { 'data-test': 'ask', onclick: () => app.openOverlay({ k: 'assistant' }) }, 'Ask the assistant'),
+      ]);
+    case 'job':
+      return renderJob(app, s);
+    case 'shop':
+      return renderShop(app, s.summary);
+    case 'done':
+      return screenWith(app, top(app, s.title, 'Done', { close: true }), [
+        h('h1.h1', 'Done'),
+        h('p.lead', `Nothing is left apart.${s.minutes ? ` That took about ${s.minutes} minutes of work.` : ''}`),
+        s.askFixed ? h('h2.h2', 'Did it fix it?') : null,
+      ], s.askFixed
+        ? [
+          h('button.btn.primary.wide', { 'data-test': 'fixed-yes', onclick: () => {
+            app.closeJourney();
+            app.toast('Nice work. Happy riding.');
+          } }, 'Yes, it works'),
+          h('button.btn.wide', { 'data-test': 'fixed-no', onclick: () => app.act((x) => x.notFixed(), 'next') }, 'No, still not right'),
+        ]
+        : [h('button.btn.primary.wide', { 'data-test': 'done', onclick: () => {
+          app.closeJourney();
+          app.toast('Nice work. Happy riding.');
+        } }, 'Back to the start')]);
+    case 'todo':
+      return screenWith(app, top(app, s.title, 'Result', { close: true }), [
+        h('h1.h1', s.items.length ? 'To do on this bike' : 'All looks fine'),
+        s.items.length ? h('p.lead', 'Each item opens what you can do about it.') : h('p.lead', 'The check found nothing to do.'),
+        h('ul.list', s.items.map((f) => {
+          const st = app.c.inspection(f.inspection)?.states.find((x: any) => x.id === f.state);
+          return h('li', h('button.li', { 'data-test': `todo-${f.job}`, onclick: () => app.act((x) => x.openTodo(f), 'next') },
+            h('span.tx', h('b', app.c.jobTitle(f.job!)), h('span', st?.label ?? '')),
+            f.urgency === 'do_not_ride' ? h('span.badge.warn', 'Do not ride') : h('span.badge', 'Soon'),
+          ));
+        })),
+      ], [h('button.btn.primary.wide', { 'data-test': 'done', onclick: () => app.closeJourney() }, 'Done')]);
+    case 'closed':
+      return h('section.screen');
+  }
+}
+
+// ---------------------------------------------------------------- questions and pre-steps
+
+function renderQuestion(app: App, j: Journey, s: Extract<Screen, { kind: 'question' }>): HTMLElement {
+  const c = app.c;
+  const f = s.fact;
+  const q = f?.question;
+  const values = c.factValues(s.key);
+  const answer = (v: any) => app.act((x) => x.answerFact(s.key, v), 'next');
+  const pic = q?.picture;
+  const body: (HTMLElement | null)[] = [h('h1.h2q', q ? c.t(q) : s.key)];
+  if (values.length) {
+    body.push(h('div.qopts', values.map((v) =>
+      h('button.opt', { 'data-test': `answer-${v}`, onclick: () => answer(v) },
+        pic ? h('span.pic', { 'aria-hidden': 'true' }, 'Picture') : null,
+        h('span.ol', c.valueText(s.key, v)),
+      ),
+    )));
+  } else {
+    const inp = h('input.text', { type: f?.type === 'number' ? 'number' : 'text', 'aria-label': 'Your answer' }) as HTMLInputElement;
+    body.push(inp, h('button.btn.primary.wide', { onclick: () => inp.value.trim() && answer(f?.type === 'number' ? Number(inp.value) : inp.value.trim()) }, 'Continue'));
+  }
+  body.push(h('button.link', { 'data-test': 'answer-unknown', onclick: () => answer(UNKNOWN) }, 'I\'ll check later'));
+  return screenWith(app, top(app, app.bike.name, 'Before you start · one question'), body);
+}
+
+function renderChoice(app: App, s: Extract<Screen, { kind: 'choice' }>): HTMLElement {
+  const c = app.c;
+  const ch = s.choice;
+  return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+    h('h1.h2q', ch.question),
+    h('div.qopts', ch.options.map((o: any) =>
+      h('button.opt', { 'data-test': `choice-${o.id}`, onclick: () => app.act((x) => x.choose(ch.id, o.id), 'next') },
+        h('span.ol',
+          h('span', o.label, o.recommended ? h('span.badge.ready', { style: 'margin-left:8px;vertical-align:2px' }, 'Recommended') : null),
+          o.note ? h('small', o.note) : null,
+          o.requires_tools?.length ? h('small', `Needs: ${o.requires_tools.map((t: string) => c.toolName(t)).join(', ')}`) : null,
+          o.warning ? h('span.warn', o.warning) : null,
+        ),
+      ),
+    )),
+  ]);
+}
+
+function renderTools(app: App, j: Journey, s: Extract<Screen, { kind: 'tools' }>): HTMLElement {
+  const c = app.c;
+  const tick = (id: string) => {
+    const t = c.tool(id);
+    const on = s.ticked.includes(id);
+    const extra: string[] = [];
+    if (t?.substitutes?.length) extra.push(`Or: ${t.substitutes.map((x: any) => x.name).join('; ')}`);
+    if (t?.do_not_use?.length) extra.push(`Do not use: ${t.do_not_use.map((x: any) => `${x.name} (${x.reason})`).join('; ')}`);
+    return h('button.tick', { role: 'checkbox', 'aria-checked': String(on), 'data-test': `tool-${id}`, onclick: () => app.act((x) => x.toggleTool(id)) },
+      h('span.box', icon(ICON.check)),
+      h('span.tx', h('b', c.toolName(id)), extra.map((e) => h('span', e))),
+    );
+  };
+  const missing = s.required.filter((x) => !s.ticked.includes(x));
+  return screenWith(app, top(app, 'Your tools', 'Before you start'), [
+    h('p.lead', 'Tick what you have. The guide uses this to pick its steps.'),
+    s.required.length ? h('div.field', h('span.eyebrow', 'You need'), h('div.group', s.required.map(tick))) : null,
+    s.helpful.length ? h('div.field', h('span.eyebrow', 'Helpful'), h('div.group', s.helpful.map(tick))) : null,
+    missing.length ? h('div.note', h('span', 'Not ticked yet: '), h('strong', missing.map((x) => c.toolName(x)).join('; ')), h('span', '. Some steps need it. You can still start and read along, or take the bike to a shop.')) : null,
+  ], [h('button.btn.primary.wide', { 'data-test': 'start', onclick: () => app.act((x) => x.startTutorial(), 'next') }, 'Start the guide')]);
+}
+
+// ---------------------------------------------------------------- card
+
+function renderCard(app: App, j: Journey, card: Card): HTMLElement {
+  const textOnly = app.store.data.textOnly;
+  app.stage.show({ focus: card.stage.focus, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, facts: app.bike.facts });
+
+  const chosenBtn = card.buttons.find((b) => b.id === card.chosen);
+  const verdict = card.chosen !== undefined
+    ? h(`div.verdict.${card.chosenTone === 'bad' ? 'bad' : card.chosenTone === 'good' ? 'good' : 'info'}`, { 'data-test': 'verdict' },
+      h('b', card.chosenTone === 'bad' ? (card.nextEnabled ? 'Take note' : 'Fix this first') : 'Your answer'),
+      h('strong', chosenBtn?.label ?? ''),
+      card.chosenText ? h('p', card.chosenText) : null,
+      h('div.actions',
+        card.solution?.length ? h('button.btn.primary', { 'data-test': 'solution', onclick: () => app.stage.playSolution(card.solution!) }, 'Show solution') : null,
+        h('button.link', { 'data-test': 'again', onclick: () => app.act((x) => x.untap()) }, 'Choose again'),
+      ),
+      card.solution?.length && textOnly ? h('div.solution', card.solution.map((a: any) => h('span', `▶ ${a.caption ?? ''}`))) : null,
+    )
+    : null;
+
+  const step = h(`article.step${app.moved === 'next' ? '.in-next' : app.moved === 'back' ? '.in-back' : ''}`, { 'data-test': `card-${card.id}`, 'data-flow': card.flowKind },
+    h('div.kicker',
+      h('span', `${card.kindLabel}${card.position ? ` · ${card.position.n} of ${card.position.of}` : ''}`),
+      h('span.sp'),
+      h('button.notebtn', { 'data-test': 'note', onclick: () => app.openOverlay({ k: 'feedback' }) }, 'Note'),
+    ),
+    card.jumped ? h('p.jumpnote', 'You jumped ahead in this guide to put the bike back.') : null,
+    card.warnings.map((w) => h('div.standing', w)),
+    h('h2', card.title),
+    card.needs.length ? h('div.needs', `Needs: ${card.needs.join(', ')}`) : null,
+    h('p', card.text),
+    card.details.map((d) => h('p.detail', d)),
+    card.buttons.length && card.chosen === undefined
+      ? h('div.q', h('div.kicker', card.question ?? 'What do you see?'), card.buttons.map((b) => h('button.opt', { 'data-test': `btn-${b.id}`, onclick: () => app.act((x) => x.tap(b.id)) }, b.label)))
+      : null,
+    verdict,
+  );
+
+  const guide = h('div.guide', step);
+  attachSwipe(guide, () => card.nextEnabled && app.act((x) => x.next(), 'next'), () => app.back());
+
+  const appEl = h(`main.app${textOnly ? '.textonly' : ''}`,
+    textOnly ? null : app.stage.el,
+    h('section.side',
+      h('div.progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(card.progress * 100) }, h('i', { style: `width:${Math.round(card.progress * 100)}%` })),
+      guide,
+      h('div.pager',
+        h('button.btn', { 'data-test': 'back', onclick: () => app.back() }, 'Back'),
+        h('button.btn.primary', { 'data-test': 'next', disabled: !card.nextEnabled, onclick: () => app.act((x) => x.next(), 'next') }, card.nextLabel),
+      ),
+    ),
+  );
+  const flowTitle = card.flowKind === 'tutorial' ? app.c.jobTitle(app.c.ix.tutorials.get(card.flow)?.job ?? card.flow) : card.flowKind === 'diagnosis' ? app.c.ix.diagnoses.get(card.flow)?.symptom ?? card.flow : app.c.ix.checks.get(card.flow)?.title ?? card.flow;
+  return h('section.screen',
+    h('div.gtop',
+      h('button.ib', { 'aria-label': 'Close', 'data-test': 'close', onclick: () => app.closeJourney() }, icon(ICON.close)),
+      h('div.t', `${app.bike.name} · ${flowTitle}`),
+      h('button.toggle', { 'aria-pressed': String(textOnly), 'data-test': 'text-only', onclick: () => app.setTextOnly(!textOnly) }, textOnly ? '3D view' : 'Text only'),
+    ),
+    appEl,
+  );
+}
+
+/** Horizontal swipe: left goes on, right goes back. Vertical scrolling is left alone. */
+function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): void {
+  let x0 = 0;
+  let y0 = 0;
+  let t0 = 0;
+  let active = false;
+  el.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse') return;
+    active = true;
+    x0 = e.clientX;
+    y0 = e.clientY;
+    t0 = performance.now();
+  });
+  el.addEventListener('pointerup', (e) => {
+    if (!active) return;
+    active = false;
+    const dx = e.clientX - x0;
+    const dy = e.clientY - y0;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || performance.now() - t0 > 800) return;
+    if (dx < 0) onNext();
+    else onBack();
+  });
+  el.addEventListener('pointercancel', () => (active = false));
+}
+
+// ---------------------------------------------------------------- exits, job, shop
+
+function renderExit(app: App, s: Extract<Screen, { kind: 'exit' }>): HTMLElement {
+  const buttons: (HTMLElement | null)[] = [];
+  if (s.canJump) buttons.push(h('button.btn.primary.wide', { 'data-test': 'show-how', onclick: () => app.act((x) => x.exitShowHow(), 'next') }, 'Show me how to put it back'));
+  if (s.exitKind === 'not_needed') {
+    buttons.push(h(`button.btn${s.canJump ? '' : '.primary'}.wide`, { 'data-test': 'done', onclick: () => app.closeJourney() }, 'Done'));
+  } else {
+    buttons.push(h(`button.btn${s.canJump ? '' : '.primary'}.wide`, { 'data-test': 'find-shop', onclick: () => app.act((x) => x.exitFindShop()) }, 'Find a shop'));
+  }
+  if (s.exitKind === 'not_covered') buttons.push(h('button.btn.wide', { 'data-test': 'ask', onclick: () => app.openOverlay({ k: 'assistant' }) }, 'Ask the assistant'));
+  return screenWith(app, top(app, app.bike.name, s.exitKind === 'unsafe' ? 'Stop' : 'End of this guide'), [
+    h('h1.h2q', EXIT_TITLE[s.exitKind]),
+    h(`p${s.exitKind === 'unsafe' ? '.note.bad' : ''}`, s.message),
+    s.putBack.length ? h('div.section', h('span.eyebrow', 'Still to put back'), h('ul.bul', s.putBack.map((p) => h('li', p)))) : null,
+    s.canBack ? h('button.link', { 'data-test': 'back-to-step', onclick: () => app.back() }, 'Back to the step') : null,
+  ], buttons);
+}
+
+function renderJob(app: App, s: Extract<Screen, { kind: 'job' }>): HTMLElement {
+  return screenWith(app, top(app, app.bike.name, 'What now?'), [
+    h('h1.h2q', s.job.title),
+    s.urgency === 'do_not_ride' ? h('div.note.bad', 'Do not ride the bike until this is fixed.') : null,
+    s.findings.length ? h('div.section', h('span.eyebrow', 'What was found'), h('ul.bul', s.findings.map((f) => h('li', f)))) : null,
+    s.diy
+      ? h('button.card', { 'data-test': 'diy', onclick: () => app.act((x) => x.jobDiy(), 'next') },
+        h('div.top', h('b.t', 'Do it myself'), h('span.badge.ready', 'Guide')),
+        h('span.s', `${s.diy.minutes ? `About ${s.diy.minutes} for this bike` : 'Time depends on your bike'}${s.diy.difficulty ? ` · difficulty ${s.diy.difficulty} of 3` : ''}`),
+      )
+      : h('div.note', 'There is no guide for this yet. A shop can do it.'),
+    h('button.card', { 'data-test': 'shop', onclick: () => app.act((x) => x.jobShop(), 'next') },
+      h('div.top', h('b.t', 'Take it to a shop'), h('span.badge', s.price === 'no estimate yet' ? 'Price: no estimate yet' : s.price)),
+      h('span.s', 'Tell the mechanic:'),
+      h('span', `"${s.tell}"`),
+    ),
+  ]);
+}
+
+export function summaryText(s: ShopSummary): string {
+  return [
+    `Bike: ${s.bike}`,
+    ...s.facts.map((f) => `  ${f}`),
+    `Job: ${s.title}`,
+    s.tell ? `Tell the mechanic: ${s.tell}` : '',
+    ...s.findings.map((f) => `Found: ${f}`),
+    ...s.extra,
+    ...s.stillSet.map((x) => `Still to do before riding: ${x}`),
+    s.price ? `Price: ${s.price}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+function renderShop(app: App, s: ShopSummary): HTMLElement {
+  const text = summaryText(s);
+  return screenWith(app, top(app, app.bike.name, 'For the shop'), [
+    h('h1.h2q', 'Show this to the mechanic'),
+    h('div.card.summary', { 'data-test': 'shop-summary' },
+      h('dl',
+        h('dt', 'Bike'), h('dd', s.bike),
+        h('dt', 'Job'), h('dd', s.title),
+        s.tell ? [h('dt', 'Tell them'), h('dd', s.tell)] : null,
+        s.price ? [h('dt', 'Price'), h('dd', s.price)] : null,
+      ),
+      s.findings.length ? h('ul.bul', s.findings.map((f) => h('li', `Found: ${f}`))) : null,
+      s.extra.length ? h('ul.bul', s.extra.map((f) => h('li', f))) : null,
+      s.facts.length ? h('details', h('summary.s', 'What we know about the bike'), h('ul.bul', s.facts.map((f) => h('li', f)))) : null,
+    ),
+    s.stillSet.length ? h('div.note.bad', `Before you ride: ${s.stillSet.join(' ')}`) : null,
+    h('div.note', 'Finding a shop near you is not built yet in this test build.'),
+  ], [
+    h('button.btn.wide', { onclick: async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        app.toast('Copied');
+      } catch {
+        app.toast('Copy is not available here');
+      }
+    } }, 'Copy summary'),
+    h('button.btn.primary.wide', { 'data-test': 'done', onclick: () => app.closeJourney() }, 'Done'),
+  ]);
+}

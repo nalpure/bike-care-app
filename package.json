@@ -13,7 +13,7 @@
     "dev": "vite --config player/vite.config.ts",
     "build": "vite build --config player/vite.config.ts",
     "preview": "vite preview --config player/vite.config.ts",
-    "test:e2e": "node player/e2e/run.mjs"
+    "test:e2e": "tsx player/e2e/run.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",
