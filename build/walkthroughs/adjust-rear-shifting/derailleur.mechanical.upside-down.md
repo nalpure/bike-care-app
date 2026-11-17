@@ -58,92 +58,98 @@ Tools: Soft mat or old blanket (helpful)
 
 <sub>State: +bike_upside_down → now: bike_upside_down</sub>
 
-### 3. `shift-to-smallest-sprocket` · action · 1 min
+### 3. `check-low-limit-by-hand` · safety check · 3 min
 
-Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket.
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?
+
+<sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
+
+Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the spokes, as far as it goes)
+
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+
+- [ ] **In line with the largest sprocket** → The L screw is set. Let go of the derailleur.
+- [ ] **Past the largest sprocket, towards the spokes** → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.
+  - Show solution: "Screw in the L screw a quarter turn" (l_screw rotate, screw in, a quarter turn)
+- [ ] **It stops before the largest sprocket** → The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.
+  - Show solution: "Unscrew the L screw a quarter turn" (l_screw rotate, unscrew, a quarter turn)
+
+### 4. `shift-to-smallest-sprocket` · action · 1 min
+
+Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.
 
 <sub>3D: focus shifter_rear, smallest_sprocket, chain · view drive_side</sub>
 
 Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
-### 4. `check-high-limit` · check · 3 min
+### 5. `check-high-limit` · safety check · 3 min
 
-Look from directly behind the bike. Where is the upper pulley wheel of the derailleur, compared with the smallest sprocket?
+Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?
 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
 Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
 
-- [ ] **Straight below the sprocket** → The H screw is set. Nothing to change.
-- [ ] **Further in, towards the spokes** → Unscrew the screw marked H a quarter turn at a time, until the pulley sits straight below the sprocket.
+- [ ] **In line with the smallest sprocket** → The H screw is set. Nothing to change.
+- [ ] **Further in, towards the spokes** → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
   - Show solution: "Unscrew the H screw a quarter turn" (clip limit-screw-align)
-- [ ] **Further out, away from the spokes** → The chain could fall off the outside. Screw in the screw marked H a quarter turn at a time, until the pulley sits straight below the sprocket.
+- [ ] **Further out, away from the spokes** → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
   - Show solution: "Screw in the H screw a quarter turn" (clip limit-screw-align)
 
-### 5. `shift-to-largest-sprocket` · action · 1 min
+### 6. `shift-to-largest-sprocket` · action · 1 min
 
-Turn the pedals by hand and shift one gear at a time until the chain sits on the largest sprocket. Stop shifting if the chain moves past it towards the spokes.
+Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear.
 
 <sub>3D: focus shifter_rear, largest_sprocket, chain · view drive_side</sub>
 
 Animation: "Shift one gear at a time" (clip shift-to-largest)
 
-### 6. `check-low-limit` · safety check · 3 min
-
-Look from directly behind the bike again. Where is the upper pulley wheel, compared with the largest sprocket?
-
-<sub>3D: focus upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
-
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
-
-- [ ] **Straight below the sprocket** → The L screw is set. Nothing to change.
-- [ ] **Further in, towards the spokes** → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn at a time, until the pulley sits straight below the sprocket.
-  - Show solution: "Screw in the L screw a quarter turn" (clip limit-screw-align)
-- [ ] **Further out, it does not reach** → The chain cannot reach the largest sprocket. Unscrew the screw marked L a quarter turn at a time, until the pulley sits straight below the sprocket.
-  - Show solution: "Unscrew the L screw a quarter turn" (clip limit-screw-align)
-
 ### 7. `check-b-gap` · check · 3 min
 
-Keep the chain on the largest sprocket. Look from the side at the gap between the upper pulley wheel and the sprocket.
+Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
 
 <sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
 
 Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
 
 - [ ] **A small gap, the teeth do not touch** → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
-- [ ] **The pulley touches the sprocket, or almost** → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
+- [ ] **The wheel touches the sprocket, or almost** → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
   - Show solution: "Screw in the B screw a little" (clip b-gap-adjust)
 - [ ] **A big gap, and shifting here was slow** → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
   - Show solution: "Unscrew the B screw a little" (clip b-gap-adjust)
 
-### 8. `find-barrel-adjuster` · action · 1 min
+### 8. `find-barrel-adjuster` · check · 1 min
 
-Find the barrel adjuster: a small ribbed knob where the gear cable enters the derailleur, or where it leaves the right shifter.
+Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
 
 <sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
 
+- [ ] **It is at the derailleur** → Good. You turn this knob in the next step.
+- [ ] **It is at the shifter, or on the cable** → Good. You turn this knob in the next step. It works the same way.
+- [ ] **I cannot find one** → Some bikes have none. Skip the next step. If the gears still shift slowly at the end, a shop can set the cable.
+
 ### 9. `check-cable-tension` · check · 5 min
 
-Turn the pedals by hand and shift one gear at a time, up through all gears and back. Watch the chain.
+Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain.
 
 <sub>3D: focus barrel_adjuster, chain, cassette · view drive_side</sub>
 
-- [ ] **Slow or noisy going to bigger sprockets** → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again.
+- [ ] **Slow or noisy shifting to easier gears** → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.
   - Show solution: "Unscrew the barrel adjuster a quarter turn" (clip cable-tension-shift)
-- [ ] **Slow or noisy going to smaller sprockets** → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again.
+- [ ] **Slow or noisy shifting to harder gears** → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
   - Show solution: "Screw in the barrel adjuster a quarter turn" (clip cable-tension-shift)
 - [ ] **Every shift is quick and quiet** → The cable tension is right.
 
 ### 10. `check-all-gears` · safety check · 2 min
 
-Turn the pedals and shift through every gear, from the smallest sprocket to the largest and back. Watch and listen.
+Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen.
 
 > _Only when drive.rear_speeds is known:_ Your bike has {drive.rear_speeds} gears at the rear.
 
 <sub>3D: focus cassette, chain, rear_derailleur · view drive_side</sub>
 
 - [ ] **Every gear runs quietly** → Your rear gears are set.
-- [ ] **It rattles or jumps in some gears** → Turn the barrel adjuster a quarter turn, as in the earlier step, and shift through again. If it does not get better, a shop can check the cable.
+- [ ] **It rattles or jumps in some gears** → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
 - [ ] **The chain falls off, or touches the spokes** → **STOP**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike`
 
 ### 11. `turn-bike-upright` · action · 1 min · from procedure `release-bike`
@@ -164,8 +170,8 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 <sub>3D: focus shifter_rear, cassette · view drive_side</sub>
 
-- [ ] **Slow or rattling when pedalling gets lighter** — The chain is slow to climb to the bigger sprockets. → **STOP**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
-- [ ] **Slow or rattling when pedalling gets harder** — The chain is slow to drop to the smaller sprockets. → **STOP**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
+- [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → **STOP**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
+- [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → **STOP**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
 - [ ] **Every gear changes quickly and runs quietly** — The rear gears shift well. → continue
 
 ## End

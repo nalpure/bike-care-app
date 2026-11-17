@@ -34,8 +34,8 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 <sub>3D: focus chain · view chain_close</sub>
 
 - [ ] **Clean, with a thin film of oil** — The chain looks cared for. → next check ◀ **this path**
-- [ ] **Dry, rusty, or it squeaks** — The chain needs cleaning and oil. → result: **Clean and oil the chain** (soon)
-- [ ] **Black and gritty** — The chain needs cleaning and oil. → result: **Clean and oil the chain** (soon)
+- [ ] **Dry, rusty, or it squeaks** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → result: **Clean and oil the chain** (soon)
+- [ ] **Black and gritty** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → result: **Clean and oil the chain** (soon)
 
 ### 3. `shift-test-ride` · inspection · 3 min
 
@@ -43,8 +43,8 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 <sub>3D: focus shifter_rear, cassette · view drive_side</sub>
 
-- [ ] **Slow or rattling when pedalling gets lighter** — The chain is slow to climb to the bigger sprockets. → result: **Adjust the rear gears** (soon) ◀ **this path**
-- [ ] **Slow or rattling when pedalling gets harder** — The chain is slow to drop to the smaller sprockets. → result: **Adjust the rear gears** (soon)
+- [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → result: **Adjust the rear gears** (soon) ◀ **this path**
+- [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → result: **Adjust the rear gears** (soon)
 - [ ] **Every gear changes quickly and runs quietly** — The rear gears shift well. → next check
 
 ## Job screen: Adjust the rear gears · soon

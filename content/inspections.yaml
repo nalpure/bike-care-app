@@ -40,11 +40,11 @@ inspections:
         meaning: "The chain looks cared for."
       - id: dry-or-rusty
         label: "Dry, rusty, or it squeaks"
-        meaning: "The chain needs cleaning and oil."
+        meaning: "The chain needs cleaning and oil. If the gears still shift badly afterwards, check again."
         leads_to: { job: chain-care, urgency: soon }
       - id: dirty
         label: "Black and gritty"
-        meaning: "The chain needs cleaning and oil."
+        meaning: "The chain needs cleaning and oil. If the gears still shift badly afterwards, check again."
         leads_to: { job: chain-care, urgency: soon }
 
   - id: shift-test-ride
@@ -56,12 +56,12 @@ inspections:
     view: drive_side
     states:
       - id: slow-to-bigger
-        label: "Slow or rattling when pedalling gets lighter"
-        meaning: "The chain is slow to climb to the bigger sprockets."
+        label: "Slow or rattling when shifting to easier gears"
+        meaning: "The chain is slow to climb to the bigger sprockets, the easier gears."
         leads_to: { job: adjust-rear-shifting, urgency: soon }
       - id: slow-to-smaller
-        label: "Slow or rattling when pedalling gets harder"
-        meaning: "The chain is slow to drop to the smaller sprockets."
+        label: "Slow or rattling when shifting to harder gears"
+        meaning: "The chain is slow to drop to the smaller sprockets, the harder gears."
         leads_to: { job: adjust-rear-shifting, urgency: soon }
       - id: fine
         label: "Every gear changes quickly and runs quietly"

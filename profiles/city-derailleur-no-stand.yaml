@@ -23,7 +23,8 @@ profile:
       choices: { hold_bike: upside_down }
       tutorial_sees:
         derailleur-alignment: straight
-        check-low-limit: "Further in, towards the spokes"
+        check-low-limit-by-hand: "Past the largest sprocket, towards the spokes"
+        check-high-limit: "In line with the smallest sprocket"
         check-all-gears: "Every gear runs quietly"
         shift-test-ride: fine
 

@@ -204,7 +204,7 @@ describe('rules broken on purpose', () => {
 
   it('a profile journey that reaches a safety check without saying what the owner taps', () => {
     const r = sandbox()
-      .edit('profiles/city-derailleur-no-stand.yaml', (d) => delete d.profile.journeys[0].tutorial_sees['check-low-limit'])
+      .edit('profiles/city-derailleur-no-stand.yaml', (d) => delete d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'])
       .run();
     expect(errorsOf(r, 'profile-missing-sees'), show(r)).toHaveLength(1);
   });

@@ -34,8 +34,8 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 <sub>3D: focus chain · view chain_close</sub>
 
 - [ ] **Clean, with a thin film of oil** — The chain looks cared for. → next check
-- [ ] **Dry, rusty, or it squeaks** — The chain needs cleaning and oil. → result: **Clean and oil the chain** (soon) ◀ **this path**
-- [ ] **Black and gritty** — The chain needs cleaning and oil. → result: **Clean and oil the chain** (soon)
+- [ ] **Dry, rusty, or it squeaks** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → result: **Clean and oil the chain** (soon) ◀ **this path**
+- [ ] **Black and gritty** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → result: **Clean and oil the chain** (soon)
 
 ## Job screen: Clean and oil the chain · soon
 

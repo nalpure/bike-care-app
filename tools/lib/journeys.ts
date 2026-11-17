@@ -209,6 +209,8 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
   r.L.push(`Time shown for this bike: ${time ?? '?'} (depends on how the bike is held).`, '');
 
   r.L.push('#### Steps', '');
+  const startMinutes = r.minutes;
+  let stopFound = '';
   const state = new Set<string>();
   const sees = r.j.tutorial_sees ?? {};
   let jumped = false;
@@ -289,16 +291,18 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
         return 'broken jump';
       }
       r.L.push(`The owner taps "Show me how to put it back". **Jumped ahead** in the same tutorial to \`${all[j].id}\`; ${j - i - 1} step(s) skipped. The progress bar moves forward once.`, '');
+      stopFound = `- Found during the tutorial: "${chosen}" (\`${it.id}\`)`;
       jumped = true;
       i = j - 1;
       continue;
     }
   }
+  const tutorialTime = `Tutorial time: ${r.minutes - startMinutes} min.`;
   if (jumped) {
-    r.L.push('#### End', '', ...shopSummary(c, r, def.job, ['- Already done: the steps above; the bike is back on its wheels']));
+    r.L.push('#### End', '', ...shopSummary(c, r, def.job, [stopFound, `- Already done: tutorial \`${def.id}\` up to the stop; the bike is back on its wheels`]), tutorialTime, '');
     return state.size ? `jump ahead, but ${[...state].join(', ')} still set` : 'stop, jump ahead, bike put back, shop';
   }
-  r.L.push('#### End', '', `Done. Nothing is left apart.${state.size ? ` **Still set: ${[...state].join(', ')}**` : ''}`, '');
+  r.L.push('#### End', '', `Done. Nothing is left apart.${state.size ? ` **Still set: ${[...state].join(', ')}**` : ''} ${tutorialTime}`, '');
   return 'tutorial complete';
 }
 
@@ -376,6 +380,9 @@ export function runProfile(c: Content, p: Entry, issues: Issues): { markdown: st
         if (choice === 'shop' || !t) {
           r.L.push(...shopSummary(c, r, res.job));
           ending = `shop: ${job?.title ?? res.job}`;
+          if (res.remaining.length && res.urgency !== 'do_not_ride') {
+            r.L.push(`Afterwards, "Did it fix it?" If not, the diagnosis continues with ${res.remaining.map((x) => `\`${x.id}\``).join(', ')}.`, '');
+          }
         } else {
           ending = runTutorial(c, r, t, true);
           if (ending === 'tutorial complete' && res.remaining.length) {

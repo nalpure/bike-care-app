@@ -25,7 +25,8 @@ profile:
       choices: { hold_bike: stand }
       tutorial_sees:
         derailleur-alignment: straight
-        check-low-limit: "Straight below the sprocket"
+        check-low-limit-by-hand: "In line with the largest sprocket"
+        check-high-limit: "Further out, away from the spokes"
         check-all-gears: "The chain falls off, or touches the spokes"
       after_stop: show_how
 
