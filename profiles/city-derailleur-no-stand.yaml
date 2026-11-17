@@ -23,9 +23,9 @@ profile:
       choices: { hold_bike: upside_down }
       tutorial_sees:
         barrel-adjuster-present: at-shifter-or-cable
-        check-low-limit-by-hand: "Past the largest sprocket, towards the spokes"
-        check-high-limit: "In line with the smallest sprocket"
-        check-all-gears: "Every gear runs quietly"
+        check-low-limit-by-hand: too-far-in
+        check-high-limit: in-line
+        check-all-gears: quiet
         shift-test-ride: fine
 
     - id: bent-derailleur

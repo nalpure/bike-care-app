@@ -44,7 +44,7 @@ describe('the real content', () => {
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
       'mtb-rapid-rise/rapid-rise-not-supported': 'not covered (gears-shift-badly)',
       'road-bike-stand/chain-touches-spokes': 'stop, jump ahead, bike put back, shop',
-      'road-bike-stand/no-barrel-adjuster': 'stop at barrel-adjuster-present',
+      'road-bike-stand/no-barrel-adjuster': 'exit (not_covered) at barrel-adjuster-present',
       'road-bike-stand/routine-check-dirty-chain': '1 to-do item(s)',
       'unknown-bike/test-rides': 'tutorial complete',
     });
@@ -65,7 +65,7 @@ describe('the real content', () => {
     const md = r.profiles.get('city-derailleur-no-stand')!.markdown;
     expect(md).toContain('`derailleur-alignment` · not shown again');
     // The finish test ride comes after the work, so it is shown again although the diagnosis asked it.
-    expect(md).toMatch(/##### \d+\. `shift-test-ride`/);
+    expect(md).toMatch(/##### \d+\. Test ride the gears · `shift-test-ride`/);
   });
 
   it('writes the bundle, the report and the walkthroughs', () => {
@@ -98,7 +98,7 @@ describe('the real content', () => {
 describe('rules broken on purpose', () => {
   it('a fourth button', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-cable-tension').buttons.push({ label: 'It makes a strange noise', text: 'Listen again.' }))
+      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-cable-tension').buttons.push({ id: 'noise', label: 'It makes a strange noise', text: 'Listen again.' }))
       .run();
     const e = errorsOf(r, 'max-buttons');
     expect(e, show(r)).toHaveLength(1);
@@ -107,14 +107,14 @@ describe('rules broken on purpose', () => {
     expect(e[0].message).toContain('at most 3');
   });
 
-  it('a stop reached with the bike held, without show_how_from', () => {
+  it('an exit reached with the bike held, without show_how_from', () => {
     const r = sandbox()
       .edit('content/steps/rear-shifting.yaml', (d) => {
-        const b = step(d, 'check-all-gears').buttons.find((x: any) => x.stop);
-        delete b.show_how_from;
+        const b = step(d, 'check-all-gears').buttons.find((x: any) => x.exit);
+        delete b.exit.show_how_from;
       })
       .run();
-    const e = errorsOf(r, 'stop-needs-show-how-from');
+    const e = errorsOf(r, 'exit-needs-show-how-from');
     expect(e.length, show(r)).toBe(3); // stand, hang, upside down
     expect(e[0].file).toBe('content/steps/rear-shifting.yaml');
     expect(e[0].id).toContain('check-all-gears');
@@ -133,7 +133,7 @@ describe('rules broken on purpose', () => {
 
   it('a show_how_from that does not lie ahead', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-all-gears').buttons.find((x: any) => x.stop).show_how_from = 'shift-to-smallest-sprocket'))
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-all-gears').buttons.find((x: any) => x.exit).exit.show_how_from = 'shift-to-smallest-sprocket'))
       .run();
     expect(errorsOf(r, 'show-how-from-not-ahead').length, show(r)).toBeGreaterThan(0);
   });
@@ -170,16 +170,51 @@ describe('rules broken on purpose', () => {
     expect(e[0].file).toBe('content/tutorials/adjust-rear-shifting/tutorial.yaml');
   });
 
-  it('a stop in a step that is not a safety check', () => {
+  it('an unsafe exit in a step that is not a safety check', () => {
     const r = sandbox()
       .edit('content/steps/rear-shifting.yaml', (d) => {
         const b = step(d, 'check-cable-tension').buttons[0];
         delete b.text;
         delete b.solution;
-        b.stop = 'Take it to a shop.';
+        b.exit = { kind: 'unsafe', text: 'Do not ride. Take it to a shop.' };
       })
       .run();
-    expect(errorsOf(r, 'block-stop-only-in-safety-checks'), show(r)).toHaveLength(1);
+    expect(errorsOf(r, 'unsafe-only-in-safety-checks'), show(r)).toHaveLength(1);
+  });
+
+  it('a not-needed exit on a plain check is allowed and adds a path', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => {
+        const b = step(d, 'check-cable-tension').buttons.find((x: any) => x.id === 'smooth');
+        b.exit = { kind: 'not_needed', text: 'Your gears are fine. Put the bike back on its wheels.', show_how_from: 'release-bike' };
+        delete b.text;
+      })
+      // The step now decides the path, so profiles that reach it must say what the owner taps.
+      .edit('profiles/city-derailleur-no-stand.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-cable-tension'] = 'slow-easier'))
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-cable-tension'] = 'slow-harder'))
+      .run();
+    expect(show(r)).toBe('');
+    const ids = r.flows!.tutorials[0].paths.map((p) => p.id);
+    expect(ids).toContain('derailleur.mechanical.stand--not-needed-check-cable-tension-smooth--jump');
+  });
+
+  it('a step without a title, and a button without an id', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => {
+        delete step(d, 'check-b-gap').title;
+        delete step(d, 'check-b-gap').buttons[1].id;
+      })
+      .run();
+    const msgs = errorsOf(r, 'missing-key').map((e) => e.message).join('\n');
+    expect(msgs).toContain('"title"');
+    expect(msgs).toContain('"id"');
+  });
+
+  it('two buttons with the same id', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[1].id = 'small-gap'))
+      .run();
+    expect(errorsOf(r, 'duplicate-id'), show(r)).toHaveLength(1);
   });
 
   it('a diagnosis that uses an inspection that is not hands-off', () => {
@@ -218,7 +253,7 @@ describe('rules broken on purpose', () => {
       .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))
       .run();
     expect(show(r)).toBe('');
-    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-small-gap-teeth-do');
+    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-small-gap');
     expect(skip, r.flows!.tutorials[0].paths.map((p) => p.id).join('\n')).toBeDefined();
     expect(skip!.variant.items.map((i) => i.id)).not.toContain('check-cable-tension');
   });
@@ -266,7 +301,7 @@ describe('rules broken on purpose', () => {
   it('prints every error on one line with file, id and rule', () => {
     const r = sandbox()
       .edit('content/steps/rear-shifting.yaml', (d) => {
-        step(d, 'check-cable-tension').buttons.push({ label: 'Fourth', text: 'x' });
+        step(d, 'check-cable-tension').buttons.push({ id: 'fourth', label: 'Fourth', text: 'x' });
         step(d, 'check-high-limit').tools.required = ['sonic-screwdriver'];
       })
       .run();

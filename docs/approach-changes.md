@@ -104,12 +104,40 @@ No changes.
 - **Now:** When a bike turns out to be unsupported only once the user looks at it (no barrel adjuster), the tutorial calls a hands-off inspection **before anything is opened or the bike is lifted**, with a `stop` outcome whose message says "not supported yet" and offers a shop. Because nothing is set yet, no jump is needed. This keeps `stop` within inspection calls (hard rule 5).
 - **Where:** inspection `barrel-adjuster-present`, both cases of `adjust-rear-shifting`.
 
+### AC-23 One exit construct with a kind (changes)
+
+- **Date:** 2026-11-17 · **Decided by:** owner
+- **approach.md:** Inspection outcomes are continue, block, stop or end; buttons may stop; cases and procedures may say `shop` or `not_covered`.
+- **Now:** Everything that ends a flow is `exit: { kind, text, show_how_from? }`, on a button, an inspection outcome, a tutorial case or a procedure implementation. `block` stays as it was. The kinds and what the player shows:
+
+| Kind | Meaning | Screen buttons | Allowed in |
+| --- | --- | --- | --- |
+| `unsafe` | Do not ride | Find a shop | Safety checks and inspection calls only |
+| `not_covered` | This bike or part is not supported yet | Find a shop, Ask the assistant | Any check, inspection call, case, procedure |
+| `not_needed` | The repair is not needed | Done | Any check, inspection call, case, procedure |
+| `shop_only` | A shop has to do this | Find a shop | Any check, inspection call, case, procedure |
+
+  Whatever the kind, an exit reached while something is apart names what to put back and has `show_how_from`; the screen then also offers "Show me how to put it back". Exits on cases and in procedures run before the first step and never jump.
+- **Why:** "Not supported" and "not needed" are not safety stops, and should look different to the user.
+- **Replaces:** `stop` and `end` (AC-22 now uses `exit: { kind: not_covered }`), and the case and procedure keys `shop` and `not_covered`. The diagnosis keeps its own `not_covered` list.
+- **Where:** `schema/common.schema.json` (`exit`), rules `unsafe-only-in-safety-checks`, `exit-needs-show-how-from`, `exit-jump-outside`.
+
 ### AC-10 Heavy-bike warnings (extends)
 
 - **Date:** 2026-11-17 · **Decided by:** owner
 - **Now:** Bike weight is not a fact. Every option and step that lifts, hangs or turns the bike carries a short warning for heavy bikes, both in the run choice and in the step text.
 
 ## File layout and YAML structure
+
+### AC-24 Titles on steps and inspections (extends)
+
+- **Date:** 2026-11-17 · **Decided by:** owner
+- **Now:** Every step and inspection has a required `title`: the short heading of its card, a few words in the imperative ("Check the inner limit (L screw)"). The prototype had one; the player needs it, and walkthroughs show it next to the id.
+
+### AC-25 Button ids (extends)
+
+- **Date:** 2026-11-17 · **Decided by:** owner
+- **Now:** Every button has a required `id`, unique within its step. Profiles name the tapped button by id, and path ids use it (`--unsafe-check-all-gears-chain-off`), so changing a label's wording breaks nothing. Replaces assumption A-10.
 
 ### AC-11 New files (extends)
 

@@ -9,6 +9,7 @@
 
 inspections:
   - id: derailleur-alignment
+    title: "Look at the rear derailleur"
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 1
@@ -26,6 +27,7 @@ inspections:
         leads_to: { job: derailleur-check-at-shop, urgency: do_not_ride }
 
   - id: barrel-adjuster-present
+    title: "Find the barrel adjuster"
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 1
@@ -45,6 +47,7 @@ inspections:
         meaning: "This bike may have no barrel adjuster."
 
   - id: chain-condition
+    title: "Look at the chain"
     applies_when: { drive.gear_type: [derailleur, hub_gear, gearbox, single_speed] }
     hands_off: true
     minutes: 1
@@ -67,6 +70,7 @@ inspections:
         leads_to: { job: chain-care, urgency: soon }
 
   - id: shift-test-ride
+    title: "Test ride the gears"
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 3

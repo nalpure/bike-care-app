@@ -16,21 +16,21 @@ tutorial:
     - when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
       cases:
         - when: { drive.rear_derailleur_type: [low_normal] }
-          not_covered: "Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you."
+          exit: { kind: not_covered, text: "Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you." }
         - when: { choice.hold_bike: [stand, hang, upside_down] }
           include: cases/wheel-free.yaml
         - when: { choice.hold_bike: [ground] }
           include: cases/test-rides.yaml
     - when: { drive.gear_type: [derailleur], drive.shifting: [electronic] }
-      not_covered: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+      exit: { kind: not_covered, text: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable." }
     - when: { drive.gear_type: [derailleur], drive.shifting: [unknown] }
-      not_covered: "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop."
+      exit: { kind: not_covered, text: "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop." }
     - when: { drive.gear_type: [hub_gear] }
-      not_covered: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+      exit: { kind: not_covered, text: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur." }
     - when: { drive.gear_type: [gearbox] }
-      not_covered: "Gearboxes at the pedals are not covered yet."
+      exit: { kind: not_covered, text: "Gearboxes at the pedals are not covered yet." }
     - when: { drive.gear_type: [single_speed] }
-      not_covered: "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help."
+      exit: { kind: not_covered, text: "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help." }
     - when: { drive.gear_type: [unknown] }
-      not_covered: "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop."
+      exit: { kind: not_covered, text: "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop." }
   if_unknown: ask

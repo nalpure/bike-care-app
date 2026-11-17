@@ -11,6 +11,10 @@
         "properties": {
           "id": { "$ref": "common.schema.json#/$defs/id" },
           "applies_when": { "$ref": "common.schema.json#/$defs/condition" },
+          "title": {
+            "description": "Short heading of the card, a few words, for example 'Look at the chain'.",
+            "$ref": "common.schema.json#/$defs/text"
+          },
           "hands_off": { "type": "boolean" },
           "minutes": { "$ref": "common.schema.json#/$defs/minutes" },
           "text": { "$ref": "common.schema.json#/$defs/text" },
@@ -36,7 +40,7 @@
             }
           }
         },
-        "required": ["id", "hands_off", "minutes", "text", "states"],
+        "required": ["id", "title", "hands_off", "minutes", "text", "states"],
         "additionalProperties": false
       }
     }

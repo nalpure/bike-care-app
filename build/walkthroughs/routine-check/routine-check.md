@@ -4,7 +4,7 @@
 
 Every state that leads to a job becomes a to-do item on the bike. Inspections that do not apply to the bike are skipped.
 
-### 1. `derailleur-alignment` · 1 min
+### 1. Look at the rear derailleur · `derailleur-alignment` · 1 min
 
 <sub>Only when: drive.gear_type is derailleur</sub>
 
@@ -13,7 +13,7 @@ Stand behind the bike and look at the rear derailleur, the part below the sprock
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → ok
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → to-do: **Have the rear gears checked** (do_not_ride)
 
-### 2. `chain-condition` · 1 min
+### 2. Look at the chain · `chain-condition` · 1 min
 
 <sub>Only when: drive.gear_type is derailleur or hub_gear or gearbox or single_speed</sub>
 
@@ -23,7 +23,7 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 - [ ] **Dry, rusty, or it squeaks** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → to-do: **Clean and oil the chain** (soon)
 - [ ] **Black and gritty** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → to-do: **Clean and oil the chain** (soon)
 
-### 3. `shift-test-ride` · 3 min
+### 3. Test ride the gears · `shift-test-ride` · 3 min
 
 <sub>Only when: drive.gear_type is derailleur</sub>
 

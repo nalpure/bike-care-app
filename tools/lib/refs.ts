@@ -184,14 +184,14 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
   }
   buttons.forEach((b, i) => {
     const bl = sub(loc, 'buttons', i);
-    if ((b.block || b.stop) && step.kind !== 'safety_check') {
-      err(x, bl, 'block-stop-only-in-safety-checks', `Button "${b.label}" has ${b.block ? 'block' : 'stop'}, but this step is a ${step.kind}. Only safety checks and inspection calls may block or stop.`);
+    if ((b.block || b.exit?.kind === 'unsafe') && step.kind !== 'safety_check') {
+      err(x, bl, 'unsafe-only-in-safety-checks', `Button "${b.label}" has ${b.block ? 'block' : 'an unsafe exit'}, but this step is a ${step.kind}. Only safety checks and inspection calls may block or exit as unsafe.`);
     }
-    if (b.block && b.stop) err(x, bl, 'button-kind', `Button "${b.label}" has both block and stop. Choose one.`);
-    if (b.stop && b.solution) err(x, bl, 'no-solution-on-stop', `Button "${b.label}" stops the tutorial, so it cannot offer a solution.`);
-    if (!b.text && !b.block && !b.stop) err(x, bl, 'button-needs-text', `Button "${b.label}" needs text, block or stop.`);
+    if (b.block && b.exit) err(x, bl, 'button-kind', `Button "${b.label}" has both block and exit. Choose one.`);
+    if (b.exit && b.solution) err(x, bl, 'no-solution-on-exit', `Button "${b.label}" ends the tutorial, so it cannot offer a solution.`);
+    if (!b.text && !b.block && !b.exit) err(x, bl, 'button-needs-text', `Button "${b.label}" needs text, block or exit.`);
     if (b.skips) {
-      if (b.block || b.stop) err(x, bl, 'button-kind', `Button "${b.label}" cannot both skip steps and ${b.block ? 'block' : 'stop'}.`);
+      if (b.block || b.exit) err(x, bl, 'button-kind', `Button "${b.label}" cannot both skip steps and ${b.block ? 'block' : 'exit'}.`);
       if (step.kind === 'action') err(x, bl, 'skip-unsafe', 'Only check steps can skip later steps.');
       for (const target of b.skips) {
         const t = x.c.steps.get(target);
@@ -204,19 +204,22 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
         }
       }
     }
-    if (b.show_how_from && !stepOrProcedureExists(x.c, b.show_how_from)) {
-      err(x, bl, 'unknown-show-how-from', `show_how_from "${b.show_how_from}" is neither a step nor a procedure.`);
+    if (b.exit?.show_how_from && !stepOrProcedureExists(x.c, b.exit.show_how_from)) {
+      err(x, bl, 'unknown-show-how-from', `show_how_from "${b.exit.show_how_from}" is neither a step nor a procedure.`);
     }
     checkCondition(x, b.when, bl);
-    for (const k of ['label', 'text', 'block', 'stop'] as const) checkText(x, b[k], bl);
+    for (const k of ['label', 'text', 'block'] as const) checkText(x, b[k], bl);
+    checkText(x, b.exit?.text, bl);
     (b.solution ?? []).forEach((a: any, j: number) => checkAnimation(x, a, sub(bl, 'solution', j)));
     if (b.label && b.label.split(/\s+/).length > 10) warn(x, bl, 'label-too-long', `Button label has more than 10 words: "${b.label}".`);
   });
-  if (buttons.some((b) => b.block) && !buttons.some((b) => !b.block && !b.stop)) {
+  if (buttons.some((b) => b.block) && !buttons.some((b) => !b.block && !b.exit)) {
     err(x, sub(loc, 'buttons'), 'block-needs-fix', 'A step with a block button needs a good state the user can tap once it is fixed.');
   }
   const labels = buttons.map((b) => b.label);
   if (new Set(labels).size !== labels.length) err(x, sub(loc, 'buttons'), 'duplicate-label', 'Two buttons have the same label.');
+  const ids = buttons.map((b) => b.id);
+  if (new Set(ids).size !== ids.length) err(x, sub(loc, 'buttons'), 'duplicate-id', 'Two buttons have the same id.');
 }
 
 function checkStep(x: Ctx, e: Entry): void {
@@ -272,7 +275,8 @@ function checkProcedure(x: Ctx, e: Entry): void {
         if (!procedureExists(x.c, it.procedure)) err(x, jl, 'unknown-procedure', `Procedure "${it.procedure}" is not in content/procedures.yaml.`);
         if (it.procedure === e.def.id) err(x, jl, 'procedure-recursion', 'A procedure cannot call itself.');
       } else {
-        checkText(x, it.shop ?? it.not_covered, jl);
+        checkText(x, it.exit?.text, jl);
+        if (it.exit?.show_how_from) err(x, jl, 'exit-jump-outside', 'An exit in a procedure runs before anything is opened, so it cannot jump.');
       }
     });
   });
@@ -312,12 +316,12 @@ function checkFlowItems(x: Ctx, items: any[], file: YamlFile, list: 'sequence' |
         const ol = sub(loc, 'outcomes', s);
         if (!states.includes(s)) err(x, ol, 'outcomes-match-states', `Inspection ${it.inspect} has no state "${s}". States: ${states.join(', ')}.`);
         if (typeof o === 'object') {
-          const k = ['block', 'stop', 'end'].filter((key) => o[key] !== undefined);
-          if (k.length !== 1) err(x, ol, 'outcome-kind', 'An outcome is continue, or has exactly one of block, stop, end.');
-          if (o.show_how_from && o.block) err(x, ol, 'outcome-kind', 'show_how_from belongs to stop or end, not block.');
-          if (o.show_how_from && list === 'finish') err(x, ol, 'jump-in-finish', 'finish runs only on the good path, so its stops cannot jump ahead.');
-          if (o.show_how_from && !stepOrProcedureExists(x.c, o.show_how_from)) err(x, ol, 'unknown-show-how-from', `show_how_from "${o.show_how_from}" is neither a step nor a procedure.`);
-          checkText(x, o.block ?? o.stop ?? o.end, ol);
+          const k = ['block', 'exit'].filter((key) => o[key] !== undefined);
+          if (k.length !== 1) err(x, ol, 'outcome-kind', 'An outcome is continue, or has exactly one of block, exit.');
+          const sh = o.exit?.show_how_from;
+          if (sh && list === 'finish') err(x, ol, 'jump-in-finish', 'finish runs only on the good path, so its exits cannot jump ahead.');
+          if (sh && !stepOrProcedureExists(x.c, sh)) err(x, ol, 'unknown-show-how-from', `show_how_from "${sh}" is neither a step nor a procedure.`);
+          checkText(x, o.block ?? o.exit?.text, ol);
         }
       }
       if (Object.values(it.outcomes).some((o: any) => o?.block) && !Object.values(it.outcomes).includes('continue')) {
@@ -343,10 +347,12 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
   }
   for (const p of t.entry?.parts ?? []) if (!x.c.parts.has(p)) err(x, sub(loc, 'entry'), 'unknown-part', `Part "${p}" does not exist.`);
   const checkCase = (cs: any, l: Loc, nested: boolean) => {
-    const targets = ['include', 'shop', 'not_covered', 'cases'].filter((k) => cs[k] !== undefined);
-    if (targets.length !== 1) err(x, l, 'case-target', `A case has exactly one of include, shop, not_covered${nested ? '' : ', cases'}; this one has ${targets.join(', ') || 'none'}.`);
+    const targets = ['include', 'exit', 'cases'].filter((k) => cs[k] !== undefined);
+    if (targets.length !== 1) err(x, l, 'case-target', `A case has exactly one of include, exit${nested ? '' : ', cases'}; this one has ${targets.join(', ') || 'none'}.`);
     checkCondition(x, cs.when, sub(l, 'when'));
-    checkText(x, cs.shop ?? cs.not_covered, l);
+    checkText(x, cs.exit?.text, l);
+    if (cs.exit?.show_how_from) err(x, l, 'exit-jump-outside', 'An exit on a case runs before the first step, so it cannot jump.');
+    if (cs.exit?.kind === 'unsafe') err(x, l, 'unsafe-only-in-safety-checks', 'A case cannot exit as unsafe; nothing has been checked yet. Use not_covered or shop_only.');
   };
   t.cases.forEach((cs: any, i: number) => {
     const l = sub(loc, 'cases', i);
@@ -443,7 +449,7 @@ function checkProfile(x: Ctx, e: Entry): void {
       if (insp) {
         if (!insp.def.states.some((st: any) => st.id === v)) err(x, sub(jl, 'tutorial_sees', k), 'unknown-state', `Inspection ${k} has no state "${v}".`);
       } else if (step) {
-        if (!(step.def.buttons ?? []).some((b: any) => b.label === v)) err(x, sub(jl, 'tutorial_sees', k), 'unknown-button', `Step ${k} has no button labelled "${v}".`);
+        if (!(step.def.buttons ?? []).some((b: any) => b.id === v)) err(x, sub(jl, 'tutorial_sees', k), 'unknown-button', `Step ${k} has no button with id "${v}".`);
       } else err(x, sub(jl, 'tutorial_sees', k), 'unknown-ref', `"${k}" is neither an inspection nor a step.`);
     }
   });

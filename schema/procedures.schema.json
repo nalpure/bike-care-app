@@ -20,13 +20,12 @@
                 "steps": {
                   "type": "array",
                   "items": {
-                    "description": "A step id, or an object with exactly one of procedure, shop, not_covered.",
+                    "description": "A step id, or an object with exactly one of procedure, exit.",
                     "type": ["string", "object"],
                     "pattern": "^[a-z0-9<>]+(-[a-z0-9<>]+)*$",
                     "properties": {
                       "procedure": { "$ref": "common.schema.json#/$defs/id" },
-                      "shop": { "$ref": "common.schema.json#/$defs/text" },
-                      "not_covered": { "$ref": "common.schema.json#/$defs/text" }
+                      "exit": { "$ref": "common.schema.json#/$defs/exit" }
                     },
                     "minProperties": 1,
                     "maxProperties": 1,

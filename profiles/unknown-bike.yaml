@@ -21,6 +21,6 @@ profile:
       choices: { hold_bike: ground }
       tutorial_sees:
         barrel-adjuster-present: at-derailleur
-        check-low-limit-by-hand: "In line with the largest sprocket"
-        check-high-limit: "In line with the smallest sprocket"
-        check-all-gears-riding: "Every gear runs quietly"
+        check-low-limit-by-hand: in-line
+        check-high-limit: in-line
+        check-all-gears-riding: quiet

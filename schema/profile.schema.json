@@ -62,12 +62,12 @@
                 "additionalProperties": { "type": "string" }
               },
               "tutorial_sees": {
-                "description": "Tutorial: inspection id to state id, and safety-check step id to the label of the button the owner taps.",
+                "description": "Tutorial: inspection id to state id, and step id to the id of the button the owner taps (required for every step with a block or an exit).",
                 "type": "object",
                 "additionalProperties": { "type": "string" }
               },
               "after_stop": {
-                "description": "At a stop with a jump button: show_how follows the jump ahead, find_shop leaves the tutorial.",
+                "description": "At an exit with a jump button: show_how follows the jump ahead, find_shop leaves the tutorial.",
                 "enum": ["show_how", "find_shop"]
               }
             },

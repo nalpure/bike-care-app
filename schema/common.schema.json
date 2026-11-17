@@ -86,9 +86,25 @@
       "required": ["caption"],
       "additionalProperties": false
     },
+    "exit": {
+      "description": "Ends the flow at this point. unsafe: do not ride, find a shop (only in safety checks and inspection calls). not_covered: this bike or part is not supported yet; shop and assistant. not_needed: the repair is not needed. shop_only: a shop has to do this. show_how_from names the later step or procedure that shows how to put back what is apart; required whenever something is apart.",
+      "type": "object",
+      "properties": {
+        "kind": { "enum": ["unsafe", "not_covered", "not_needed", "shop_only"] },
+        "text": { "$ref": "#/$defs/text" },
+        "show_how_from": { "$ref": "#/$defs/id" }
+      },
+      "required": ["kind", "text"],
+      "additionalProperties": false
+    },
     "button": {
       "type": "object",
       "properties": {
+        "id": {
+          "description": "Unique within the step. Profiles and path ids refer to it.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
         "label": { "$ref": "#/$defs/text" },
         "text": { "$ref": "#/$defs/text" },
         "solution": {
@@ -98,8 +114,7 @@
           "items": { "$ref": "#/$defs/animation" }
         },
         "block": { "$ref": "#/$defs/text" },
-        "stop": { "$ref": "#/$defs/text" },
-        "show_how_from": { "$ref": "#/$defs/id" },
+        "exit": { "$ref": "#/$defs/exit" },
         "skips": {
           "description": "Later steps in the same sequence that this answer makes unnecessary. Only check steps; never safety checks, inspection calls or steps that set or clear a state label.",
           "type": "array",
@@ -108,9 +123,8 @@
         },
         "when": { "$ref": "#/$defs/condition" }
       },
-      "required": ["label"],
-      "additionalProperties": false,
-      "dependentRequired": { "show_how_from": ["stop"] }
+      "required": ["id", "label"],
+      "additionalProperties": false
     },
     "details": {
       "description": "Extra lines shown only when every fact in needs is known. Facts used only here are never asked.",
@@ -149,18 +163,17 @@
       }
     },
     "outcome": {
-      "description": "continue, or an object with exactly one of block, stop, end.",
+      "description": "continue, or an object with exactly one of block, exit.",
       "anyOf": [
         { "const": "continue" },
         {
           "type": "object",
           "properties": {
             "block": { "$ref": "#/$defs/text" },
-            "stop": { "$ref": "#/$defs/text" },
-            "end": { "$ref": "#/$defs/text" },
-            "show_how_from": { "$ref": "#/$defs/id" }
+            "exit": { "$ref": "#/$defs/exit" }
           },
           "minProperties": 1,
+          "maxProperties": 1,
           "additionalProperties": false
         }
       ]

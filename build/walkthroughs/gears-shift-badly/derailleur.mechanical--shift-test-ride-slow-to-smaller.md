@@ -18,7 +18,7 @@
 
 The first state that leads to a job ends the diagnosis.
 
-### 1. `derailleur-alignment` · inspection · 1 min
+### 1. Look at the rear derailleur · `derailleur-alignment` · inspection · 1 min
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
@@ -27,7 +27,7 @@ Stand behind the bike and look at the rear derailleur, the part below the sprock
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → next check ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → result: **Have the rear gears checked** (do_not_ride)
 
-### 2. `chain-condition` · inspection · 1 min
+### 2. Look at the chain · `chain-condition` · inspection · 1 min
 
 Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it.
 
@@ -37,7 +37,7 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 - [ ] **Dry, rusty, or it squeaks** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → result: **Clean and oil the chain** (soon)
 - [ ] **Black and gritty** — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → result: **Clean and oil the chain** (soon)
 
-### 3. `shift-test-ride` · inspection · 3 min
+### 3. Test ride the gears · `shift-test-ride` · inspection · 3 min
 
 Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.
 

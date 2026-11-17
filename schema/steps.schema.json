@@ -11,6 +11,10 @@
         "properties": {
           "id": { "$ref": "common.schema.json#/$defs/id" },
           "kind": { "enum": ["action", "check", "safety_check"] },
+          "title": {
+            "description": "Short heading of the card, a few words, for example 'Check the inner limit'.",
+            "$ref": "common.schema.json#/$defs/text"
+          },
           "minutes": { "$ref": "common.schema.json#/$defs/minutes" },
           "text": { "$ref": "common.schema.json#/$defs/text" },
           "when": { "$ref": "common.schema.json#/$defs/condition" },
@@ -35,7 +39,7 @@
             "items": { "$ref": "common.schema.json#/$defs/button" }
           }
         },
-        "required": ["id", "kind", "minutes", "text"],
+        "required": ["id", "kind", "title", "minutes", "text"],
         "additionalProperties": false,
         "dependentRequired": { "when": ["if_unknown"], "if_unknown": ["when"] }
       }

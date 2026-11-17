@@ -11,7 +11,7 @@ import { tutorialTimeRange } from './flows.js';
 import { neverAsked } from './refs.js';
 import type { Issues } from './issues.js';
 import {
-  choiceBlock, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
+  choiceBlock, exitScreen, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
   toolSummary, type Known,
 } from './render.js';
 import { lineAt } from './yamlfile.js';
@@ -197,12 +197,13 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
     r.L.push(fromFinding ? '"Is this needed?" is skipped: the diagnosis already found it.' : `"Is this needed?" runs ${def.entry.requires_finding.map((x: any) => `\`${x.inspection}\``).join(', ')}.`, '');
   }
   if (run.exit) {
-    if (run.exit.kind === 'shop') {
-      r.L.push(`**Shop:** ${run.exit.message}`, '', ...shopSummary(c, r, def.job));
-      return 'shop before the first step';
+    if (run.exit.kind === 'not_covered' || run.exit.kind === 'uncovered') {
+      r.L.push(...notCovered(run.exit.message));
+      return 'not covered';
     }
-    r.L.push(...notCovered(run.exit.message));
-    return 'not covered';
+    r.L.push(...exitScreen(run.exit.kind, run.exit.message, false));
+    if (run.exit.kind === 'shop_only') r.L.push(...shopSummary(c, r, def.job));
+    return `${run.exit.kind} before the first step`;
   }
   for (const ch of def.choices ?? []) r.L.push(...choiceBlock(c, ch, r.j.choices?.[ch]));
   const all = combined(run);
@@ -233,7 +234,7 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
       finishShown = true;
     }
     if (skipIds.has(it.id)) {
-      r.L.push(`##### – \`${it.id}\` · skipped: the owner answered "${skipIds.get(it.id)}" earlier`, '');
+      r.L.push(`##### – ${it.def.title} · \`${it.id}\` · skipped: the owner answered "${skipIds.get(it.id)}" earlier`, '');
       continue;
     }
     const before = new Set(state);
@@ -245,7 +246,7 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
     // What does the owner tap here?
     let chosen: string | undefined;
     let repeat = false;
-    let outcome: { kind: 'continue' | 'block' | 'stop' | 'end'; message?: string; showHowFrom?: string; good?: string } = { kind: 'continue' };
+    let outcome: { kind: 'continue' | 'block' | 'exit'; exitKind?: string; message?: string; showHowFrom?: string; good?: string } = { kind: 'continue' };
     if (it.kind === 'inspect') {
       repeat = !workStarted && r.session.has(it.id);
       chosen = repeat ? r.session.get(it.id) : sees[it.id];
@@ -257,29 +258,28 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
       const o = it.outcomes?.[chosen];
       if (o && typeof o === 'object') {
         if (o.block) outcome = { kind: 'block', message: o.block, good: it.def.states.find((s: any) => it.outcomes?.[s.id] === 'continue')?.label };
-        if (o.stop) outcome = { kind: 'stop', message: o.stop, showHowFrom: o.show_how_from };
-        if (o.end) outcome = { kind: 'end', message: o.end, showHowFrom: o.show_how_from };
+        if (o.exit) outcome = { kind: 'exit', exitKind: o.exit.kind, message: o.exit.text, showHowFrom: o.exit.show_how_from };
       }
     } else if (it.buttons.length) {
-      const decisive = it.buttons.some((b: any) => b.block || b.stop);
+      const decisive = it.buttons.some((b: any) => b.block || b.exit);
       chosen = sees[it.id];
       if (chosen !== undefined) r.usedTutorialSees.add(it.id);
       if (decisive && chosen === undefined) {
-        r.error('profile-missing-sees', `The tutorial reaches safety check "${it.id}", but the journey has no tutorial_sees.${it.id} (the label of the button the owner taps).`, 'tutorial_sees');
+        r.error('profile-missing-sees', `The tutorial reaches step "${it.id}", which can block or exit, but the journey has no tutorial_sees.${it.id} (the id of the button the owner taps).`, 'tutorial_sees');
         return 'incomplete profile';
       }
-      const b = it.buttons.find((x: any) => x.label === chosen);
+      const b = it.buttons.find((x: any) => x.id === chosen);
       if (chosen !== undefined && !b) {
-        r.error('unknown-button', `Step ${it.id} shows no button "${chosen}" on this path.`, 'tutorial_sees', it.id);
+        r.error('unknown-button', `Step ${it.id} shows no button with id "${chosen}" on this path.`, 'tutorial_sees', it.id);
         return 'incomplete profile';
       }
-      if (b?.block) outcome = { kind: 'block', message: b.block, good: it.buttons.find((x: any) => !x.block && !x.stop)?.label };
-      if (b?.stop) outcome = { kind: 'stop', message: b.stop, showHowFrom: b.show_how_from };
+      if (b?.block) outcome = { kind: 'block', message: b.block, good: it.buttons.find((x: any) => !x.block && !x.exit)?.label };
+      if (b?.exit) outcome = { kind: 'exit', exitKind: b.exit.kind, message: b.exit.text, showHowFrom: b.exit.show_how_from };
       for (const s of b?.skips ?? []) skipIds.set(s, b.label);
     }
     if (repeat) {
       const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
-      r.L.push(`##### – \`${it.id}\` · not shown again: answered earlier in this session ("${label}")`, '');
+      r.L.push(`##### – ${it.def.title} · \`${it.id}\` · not shown again: answered earlier in this session ("${label}")`, '');
     } else {
       r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5 }));
       r.minutes += it.def.minutes;
@@ -290,14 +290,18 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
       r.L.push(`Next stays disabled. After the fix, the owner taps "${outcome.good}" and goes on.`, '');
       continue;
     }
-    if (outcome.kind === 'stop' || outcome.kind === 'end') {
+    if (outcome.kind === 'exit') {
       const apart = [...state];
       const canJump = apart.length > 0 && !!outcome.showHowFrom;
-      r.L.push(`**${outcome.kind === 'stop' ? 'Stop' : 'End'} screen:** "${outcome.message}"`, '');
-      r.L.push(canJump ? 'Buttons: [Show me how to put it back] [Find a shop]' : 'Buttons: [Find a shop]', '');
+      const label = it.kind === 'inspect' ? it.def.states.find((s: any) => s.id === chosen)?.label : it.buttons.find((x: any) => x.id === chosen)?.label;
+      r.L.push(...exitScreen(outcome.exitKind!, outcome.message!, canJump));
+      if (!canJump && outcome.exitKind === 'not_needed' && !apart.length) {
+        r.L.push('The repair is not needed. Nothing is left apart.', '');
+        return `not needed at ${it.id}`;
+      }
       if (!canJump) {
         r.L.push(...shopSummary(c, r, def.job, [`- Stopped at: \`${it.id}\`, "${chosen}"`, ...(apart.length ? [`- **Still set: ${apart.join(', ')}**`] : [])]));
-        return `${outcome.kind} at ${it.id}`;
+        return `exit (${outcome.exitKind}) at ${it.id}`;
       }
       const choice = r.j.after_stop;
       if (!choice) {
@@ -314,7 +318,7 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
         return 'broken jump';
       }
       r.L.push(`The owner taps "Show me how to put it back". **Jumped ahead** in the same tutorial to \`${all[j].id}\`; ${j - i - 1} step(s) skipped. The progress bar moves forward once.`, '');
-      stopFound = `- Found during the tutorial: "${chosen}" (\`${it.id}\`)`;
+      stopFound = `- Found during the tutorial: "${label}" (\`${it.id}\`)`;
       jumped = true;
       i = j - 1;
       continue;

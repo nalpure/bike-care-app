@@ -18,7 +18,7 @@
 
 The first state that leads to a job ends the diagnosis.
 
-### 1. `derailleur-alignment` · inspection · 1 min
+### 1. Look at the rear derailleur · `derailleur-alignment` · inspection · 1 min
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 

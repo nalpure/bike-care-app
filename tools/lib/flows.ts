@@ -101,12 +101,12 @@ export const SIM_RULES: Record<string, string> = {
   'forbidden-while': 'No step runs while a state it forbids holds.',
   'sets-twice': 'A step does not set a label that is already set.',
   'clears-unset': 'A step does not clear a label that is not set.',
-  'stop-needs-show-how-from': 'Every stop reached with something apart has show_how_from.',
+  'exit-needs-show-how-from': 'Every exit reached with something apart has show_how_from.',
   'show-how-from-not-ahead': 'show_how_from names a step or procedure later in the same sequence.',
   'jump-leaves-state': 'The steps from show_how_from put back everything that is apart.',
   'missing-safety-check': 'Every path, including jump-ahead paths, passes the safety checks for what was opened.',
   'early-stop-misplaced': 'A stop that needs nothing apart sits before the first step that opens something.',
-  'stop-in-finish-with-state': 'finish runs only after everything is put back.',
+  'exit-in-finish-with-state': 'finish runs only after everything is put back.',
   'check-needs-buttons': 'Every check and safety check on a path shows 2 or 3 buttons.',
   'too-many-buttons': 'At most three buttons or states per screen.',
   'choice-not-declared': 'A tutorial declares every run choice its conditions read.',
@@ -256,7 +256,7 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
     // hands-off inspections with a stop must come before anything is opened
     v.items.forEach((it, i) => {
       if (it.kind !== 'inspect' || !it.def.hands_off) return;
-      const stops = Object.values(it.outcomes ?? {}).some((o: any) => o && typeof o === 'object' && (o.stop || o.end));
+      const stops = Object.values(it.outcomes ?? {}).some((o: any) => o && typeof o === 'object' && o.exit);
       if (stops && p.before[i].size) {
         agg.add('early-stop-misplaced', it.src, `${tid} / ${itemName(it)}`, `This check needs nothing apart and can stop, but it runs while "${fmt(p.before[i])}" is set. Move it before the first step that opens something.`, v.id);
       }
@@ -270,10 +270,10 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
     const src = it.kind === 'inspect' ? sub(it.src, 'outcomes', sp.key) : sub(it.defSrc, 'buttons', sp.buttonIndex ?? 0);
     const id = `${tid} / ${itemName(it)}`;
     if (it.list === 'finish' && state.size) {
-      agg.add('stop-in-finish-with-state', src, id, `A stop in finish is reached with "${fmt(state)}" set. finish must run after everything is put back.`, v.id);
+      agg.add('exit-in-finish-with-state', src, id, `An exit in finish is reached with "${fmt(state)}" set. finish must run after everything is put back.`, v.id);
     }
     if (state.size && !sp.showHowFrom) {
-      agg.add('stop-needs-show-how-from', src, id, `This ${sp.kind} ("${sp.label}") is reached with "${fmt(state)}" set. Add show_how_from naming the step that starts putting it back, and name what to put back in the message.`, v.id);
+      agg.add('exit-needs-show-how-from', src, id, `This exit (${sp.kind}, "${sp.label}") is reached with "${fmt(state)}" set. Add show_how_from naming the step that starts putting it back, and name what to put back in the message.`, v.id);
     }
     if (v.ending === 'stop' && state.size && sp.showHowFrom) {
       // the jump variant exists only when the target was found; detect a missing target here
@@ -286,7 +286,7 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
       if (!found) agg.add('show-how-from-not-ahead', src, id, `show_how_from "${sp.showHowFrom}" is not a step or procedure later in this sequence (finish does not count).`, v.id);
       if (!/\b(back|put|take)\b/i.test(sp.message)) {
         // A cheap reminder only; the author knows what is apart.
-        agg.add('stop-names-put-back', src, id, `The message does not say what to put back. It is reached with "${fmt(state)}" set.`, v.id, 'warning');
+        agg.add('exit-names-put-back', src, id, `The message does not say what to put back. It is reached with "${fmt(state)}" set.`, v.id, 'warning');
       }
     }
     if (v.ending === 'jump' && p.final.size) {
@@ -345,7 +345,7 @@ function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlo
           const fixed: Record<string, Value> = {};
           for (const [k, v] of Object.entries(res.assign)) if (!k.startsWith('choice.') && !k.startsWith('tool.')) fixed[k] = v;
           const tres = enumerate(c, (r) => resolveTutorial(c, t, r, params), fixed);
-          if (tres.some((x) => x.result.exit && x.result.exit.kind !== 'shop' && x.result.exit.kind !== 'uncovered')) {
+          if (tres.some((x) => x.result.exit && x.result.exit.kind === 'not_covered')) {
             agg.add('diagnosis-tutorial-coverage', run.checks[Math.max(dp.hitIndex, 0)].src, `diagnosis ${d.def.id}`,
               `This hit leads to job ${dp.job}, but tutorial ${t.def.id} says not covered for the same bike. Narrow applies_when or cover the bike in the tutorial.`, dp.id);
           }

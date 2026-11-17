@@ -8,13 +8,17 @@ sequence:
     outcomes:
       straight: continue
       crooked:
-        stop: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+        exit:
+          kind: unsafe
+          text: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
   - inspect: barrel-adjuster-present
     outcomes:
       at-derailleur: continue
       at-shifter-or-cable: continue
       none:
-        stop: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+        exit:
+          kind: not_covered
+          text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
 
   # The work
   - procedure: hold-bike                 # sets bike_in_stand, bike_hung or bike_upside_down
@@ -24,7 +28,7 @@ sequence:
   - step: shift-to-largest-sprocket
   - step: check-b-gap
   - step: check-cable-tension
-  - step: check-all-gears                # its stop: show_how_from release-bike
+  - step: check-all-gears                # its unsafe exit: show_how_from release-bike
   - procedure: release-bike              # clears the holding label
 
 finish:
@@ -32,6 +36,10 @@ finish:
     outcomes:
       fine: continue
       slow-to-bigger:
-        stop: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+        exit:
+          kind: shop_only
+          text: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
       slow-to-smaller:
-        stop: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+        exit:
+          kind: shop_only
+          text: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."

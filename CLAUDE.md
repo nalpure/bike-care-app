@@ -41,7 +41,7 @@ Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fi
 2. Do not invent schema constructs. If the schema cannot express something, add an entry to `docs/schema-requests.md` and use the closest allowed form.
 3. Never invent safety values (torque, fluid, wear limits, part compatibility). Use a placeholder with wording that sends the user to the part.
 4. At most three state buttons per screen. Labels describe what the user sees, never a technical judgement.
-5. `block` and `stop` only in safety checks and inspection calls. A stop reached with something apart (or the bike not ready to ride) names what to put back and has `show_how_from`.
+5. `block` and `exit: { kind: unsafe }` only in safety checks and inspection calls. Any exit (unsafe, not_covered, not_needed, shop_only) reached with something apart (or the bike not ready to ride) names what to put back and has `show_how_from`.
 6. Diagnoses and the routine check use only `hands_off` inspections.
 7. Not everything is covered. Any bike, part or symptom outside the content ends on a clear "not covered yet" screen that offers a shop and the assistant. Never show a guess.
 8. Do not stop to ask the owner. Write the assumption with a cautious default to `docs/assumptions.md` and continue.

@@ -25,9 +25,9 @@ profile:
       choices: { hold_bike: stand }
       tutorial_sees:
         barrel-adjuster-present: at-derailleur
-        check-low-limit-by-hand: "In line with the largest sprocket"
-        check-high-limit: "Further out, away from the spokes"
-        check-all-gears: "The chain falls off, or touches the spokes"
+        check-low-limit-by-hand: in-line
+        check-high-limit: too-far-out
+        check-all-gears: chain-off
       after_stop: show_how
 
     - id: no-barrel-adjuster

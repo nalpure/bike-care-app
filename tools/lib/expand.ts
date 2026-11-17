@@ -98,8 +98,11 @@ export interface Src {
   path: YPath;
 }
 
+/** unsafe: do not ride. not_covered: not supported yet. not_needed: repair not needed. shop_only: a shop must do it. */
+export type ExitKind = 'unsafe' | 'not_covered' | 'not_needed' | 'shop_only';
+
 export interface Exit {
-  kind: 'shop' | 'not_covered' | 'uncovered';
+  kind: ExitKind | 'uncovered';
   message: string;
   src: Src;
 }
@@ -198,12 +201,8 @@ export function resolveTutorial(c: Content, t: TutorialEntry, r: Reader, params:
     }
     target = leaf;
   }
-  if (target.cs.shop !== undefined) {
-    run.exit = { kind: 'shop', message: target.cs.shop, src: { file: tf, path: target.path } };
-    return run;
-  }
-  if (target.cs.not_covered !== undefined) {
-    run.exit = { kind: 'not_covered', message: target.cs.not_covered, src: { file: tf, path: target.path } };
+  if (target.cs.exit) {
+    run.exit = { kind: target.cs.exit.kind, message: target.cs.exit.text, src: { file: tf, path: target.path } };
     return run;
   }
   const cf = t.cases.get(target.cs.include);
@@ -286,8 +285,7 @@ function expandProcedure(
     else if (it.procedure) {
       const exit = expandProcedure(c, substParams(it.procedure, params), list, src, r, params, run, tid, via, depth + 1);
       if (exit) return exit;
-    } else if (it.shop !== undefined) return { kind: 'shop', message: it.shop, src: implSrc };
-    else if (it.not_covered !== undefined) return { kind: 'not_covered', message: it.not_covered, src: implSrc };
+    } else if (it.exit) return { kind: it.exit.kind, message: it.exit.text, src: implSrc };
   }
   return;
 }
@@ -302,7 +300,7 @@ export interface StopPoint {
   /** for a button stop: its index in the step's buttons */
   buttonIndex?: number;
   label: string;
-  kind: 'stop' | 'end';
+  kind: ExitKind;
   message: string;
   showHowFrom?: string;
 }
@@ -318,7 +316,7 @@ export interface Variant {
   /** for each executed item, whether it was reached by the jump */
   afterJump: boolean[];
   /** a complete path where a button skipped later steps */
-  skip?: { index: number; label: string; ids: string[] };
+  skip?: { index: number; buttonId: string; label: string; ids: string[] };
 }
 
 /** "The chain falls off, or touches the spokes" -> "chain-falls-off-or" */
@@ -342,14 +340,14 @@ export function stopPoints(run: TutorialRun): StopPoint[] {
     if (item.kind === 'inspect') {
       for (const st of item.def.states) {
         const o = item.outcomes?.[st.id];
-        if (o && typeof o === 'object' && (o.stop || o.end)) {
-          out.push({ index, key: st.id, label: st.label, kind: o.stop ? 'stop' : 'end', message: o.stop ?? o.end, showHowFrom: o.show_how_from });
+        if (o && typeof o === 'object' && o.exit) {
+          out.push({ index, key: st.id, label: st.label, kind: o.exit.kind, message: o.exit.text, showHowFrom: o.exit.show_how_from });
         }
       }
     } else {
       item.buttons.forEach((b) => {
         const buttonIndex = (item.def.buttons ?? []).indexOf(b);
-        if (b.stop) out.push({ index, key: slug(b.label), buttonIndex, label: b.label, kind: 'stop', message: b.stop, showHowFrom: b.show_how_from });
+        if (b.exit) out.push({ index, key: b.id, buttonIndex, label: b.label, kind: b.exit.kind, message: b.exit.text, showHowFrom: b.exit.show_how_from });
       });
     }
   });
@@ -376,11 +374,11 @@ export function variantsOf(run: TutorialRun, baseId: string, stateAt: (v: Varian
       const items = all.filter((x, i) => !(i > index && x.list === item.list && b.skips.includes(x.id)));
       // A shared step may name targets that this case does not have; then the skip changes nothing here.
       if (items.length === all.length) continue;
-      out.push({ id: `${baseId}--skip-${item.id}-${slug(b.label)}`, ending: 'complete', items, afterJump: items.map(() => false), skip: { index, label: b.label, ids: b.skips } });
+      out.push({ id: `${baseId}--skip-${item.id}-${b.id}`, ending: 'complete', items, afterJump: items.map(() => false), skip: { index, buttonId: b.id, label: b.label, ids: b.skips } });
     }
   });
   for (const sp of stopPoints(run)) {
-    const sid = `${baseId}--${sp.kind}-${all[sp.index].id}-${sp.key}`;
+    const sid = `${baseId}--${sp.kind.replace(/_/g, '-')}-${all[sp.index].id}-${sp.key}`;
     const upTo = all.slice(0, sp.index + 1);
     const stopV: Variant = { id: sid, ending: 'stop', stop: sp, items: upTo, afterJump: upTo.map(() => false) };
     out.push(stopV);

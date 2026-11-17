@@ -59,11 +59,11 @@ Use this list to decide what to cover next.
 | [e-trekking-hub-gear](walkthroughs/profiles/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
 | [mtb-rapid-rise](walkthroughs/profiles/mtb-rapid-rise.md) | Gears do not shift cleanly on a rapid-rise derailleur | not covered (gears-shift-badly) | 0 min | 0 |
 | [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 27 min | 0 |
-| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | stop at barrel-adjuster-present | 2 min | 0 |
+| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-present | 2 min | 0 |
 | [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
 | [unknown-bike](walkthroughs/profiles/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 33 min | 2 |
 
-Journeys that end at a shop, a stop or not covered: 5 of 8.
+Journeys that end at a shop, a stop or not covered: 4 of 8.
 
 ## Rules
 
@@ -101,36 +101,37 @@ Journeys that end at a shop, a stop or not covered: 5 of 8.
 | `details-needs` | pass | A details line uses only facts listed in its needs. |
 | `action-has-buttons` | pass | Action steps have no state buttons. |
 | `check-needs-buttons` | pass | Every check and safety check on a path shows 2 or 3 buttons. |
-| `block-stop-only-in-safety-checks` | pass | block and stop only in safety checks and inspection calls. |
-| `no-solution-on-stop` | pass | A stop button offers no solution. |
+| `unsafe-only-in-safety-checks` | pass | block and unsafe exits only in safety checks and inspection calls. |
+| `no-solution-on-exit` | pass | An exit button offers no solution. |
+| `exit-jump-outside` | pass | Exits on cases and in procedures run before anything is opened and never jump. |
 | `block-needs-fix` | pass | Every block has a good state to tap once fixed. |
-| `button-needs-text` | pass | Every button has text, block or stop. |
+| `button-needs-text` | pass | Every button has text, block or exit. |
 | `generic-needs-text` | pass | if_unknown: generic comes with generic_text. |
 | `animation-kind` | pass | An animation is a generic motion or a named clip. |
 | `item-kind` | pass | Each case item is exactly one of step, procedure, inspect. |
 | `inspect-needs-outcomes` | pass | Each inspection call in a tutorial maps its states to outcomes. |
 | `outcomes-match-states` | pass | Outcomes name exactly the states of the inspection. |
-| `outcome-kind` | pass | An outcome is continue, block, stop or end. |
+| `outcome-kind` | pass | An outcome is continue, block or exit. |
 | `jump-in-finish` | pass | No jump-ahead from finish. |
-| `case-target` | pass | A case has exactly one of include, shop, not_covered, cases. |
+| `case-target` | pass | A case has exactly one of include, exit, cases. |
 | `hands-off-only` | pass | Diagnoses and the routine check use only hands-off inspections. |
 | `profile-missing-answer` | pass | Every question a profile journey reaches is answered. |
 | `profile-missing-sees` | pass | Every inspection and safety check a profile journey reaches has an answer. |
 | `profile-missing-choice` | pass | Every run choice a profile journey reaches is chosen. |
 | `profile-missing-job-choice` | pass | Every job screen a profile journey reaches has a choice. |
-| `profile-missing-after-stop` | pass | Every stop with a jump button a profile reaches says what the owner taps. |
+| `profile-missing-after-stop` | pass | Every exit with a jump button a profile reaches says what the owner taps. |
 | `profile-missing-tool` | pass | A profile has the tools its chosen options need. |
 | `coverage` | pass | Every combination of the facts a flow reads ends in a path, a shop exit or not_covered. |
 | `end-with-state` | pass | Every path that reaches the end has nothing left apart. |
 | `forbidden-while` | pass | No step runs while a state it forbids holds. |
 | `sets-twice` | pass | A step does not set a label that is already set. |
 | `clears-unset` | pass | A step does not clear a label that is not set. |
-| `stop-needs-show-how-from` | pass | Every stop reached with something apart has show_how_from. |
+| `exit-needs-show-how-from` | pass | Every exit reached with something apart has show_how_from. |
 | `show-how-from-not-ahead` | pass | show_how_from names a step or procedure later in the same sequence. |
 | `jump-leaves-state` | pass | The steps from show_how_from put back everything that is apart. |
 | `missing-safety-check` | pass | Every path, including jump-ahead paths, passes the safety checks for what was opened. |
 | `early-stop-misplaced` | pass | A stop that needs nothing apart sits before the first step that opens something. |
-| `stop-in-finish-with-state` | pass | finish runs only after everything is put back. |
+| `exit-in-finish-with-state` | pass | finish runs only after everything is put back. |
 | `too-many-buttons` | pass | At most three buttons or states per screen. |
 | `choice-not-declared` | pass | A tutorial declares every run choice its conditions read. |
 | `skip-not-ahead` | pass | A button skips only steps that come later in the same sequence. |

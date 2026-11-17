@@ -88,7 +88,7 @@ export interface CardOptions {
 export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
   const L: string[] = [];
   const via = it.via ? ` · from procedure \`${it.via}\`` : '';
-  L.push(`${'#'.repeat(o.level ?? 3)} ${o.number}. \`${it.id}\` · ${humanKind(it)} · ${it.def.minutes} min${via}`);
+  L.push(`${'#'.repeat(o.level ?? 3)} ${o.number}. ${it.def.title} · \`${it.id}\` · ${humanKind(it)} · ${it.def.minutes} min${via}`);
   L.push('');
   if (o.note) L.push(o.note, '');
   const text = it.generic ? it.def.generic_text : it.def.text;
@@ -108,8 +108,7 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
       let res = '→ continue';
       if (outc && typeof outc === 'object') {
         if (outc.block) res = `→ **BLOCK**: ${fill(outc.block, o.known)}`;
-        if (outc.stop) res = `→ **STOP**: ${fill(outc.stop, o.known)}${outc.show_how_from ? ` · jump: \`${outc.show_how_from}\`` : ''}`;
-        if (outc.end) res = `→ **END**: ${fill(outc.end, o.known)}${outc.show_how_from ? ` · jump: \`${outc.show_how_from}\`` : ''}`;
+        if (outc.exit) res = `→ ${exitTag(outc.exit.kind)}: ${fill(outc.exit.text, o.known)}${outc.exit.show_how_from ? ` · jump: \`${outc.exit.show_how_from}\`` : ''}`;
       }
       const mark = o.chosen === st.id ? ' ◀ **this path**' : '';
       L.push(`- [ ] **${fill(st.label, o.known)}** — ${fill(st.meaning, o.known)} ${res}${mark}`);
@@ -117,12 +116,12 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
   } else if (it.buttons.length) {
     L.push('');
     for (const b of it.buttons) {
-      const mark = o.chosen === b.label ? ' ◀ **this path**' : '';
+      const mark = o.chosen === b.id ? ' ◀ **this path**' : '';
       let res = b.text ? fill(b.text, o.known) : '';
       if (b.block) res = `**BLOCK** (Next stays disabled): ${fill(b.block, o.known)}`;
-      if (b.stop) res = `**STOP**: ${fill(b.stop, o.known)}${b.show_how_from ? ` · jump: \`${b.show_how_from}\`` : ''}`;
-      if (b.text && (b.block || b.stop)) res = `${fill(b.text, o.known)} ${res}`;
-      L.push(`- [ ] **${fill(b.label, o.known)}** → ${res}${mark}`);
+      if (b.exit) res = `${exitTag(b.exit.kind)}: ${fill(b.exit.text, o.known)}${b.exit.show_how_from ? ` · jump: \`${b.exit.show_how_from}\`` : ''}`;
+      if (b.text && (b.block || b.exit)) res = `${fill(b.text, o.known)} ${res}`;
+      L.push(`- [ ] **${fill(b.label, o.known)}** <sub>\`${b.id}\`</sub> → ${res}${mark}`);
       for (const a of b.solution ?? []) L.push(`  - Show solution: ${animLine(a)}`);
       if (b.skips?.length) L.push(`  - Skips: ${b.skips.map((s: string) => `\`${s}\``).join(', ')}`);
     }
@@ -188,14 +187,43 @@ function choicesCell(c: Content, combo: Combo): string {
 
 // ---------------------------------------------------------------- tutorial paths
 
+const EXIT_TAGS: Record<string, string> = {
+  unsafe: '**EXIT, unsafe**',
+  not_covered: '**EXIT, not covered**',
+  not_needed: '**EXIT, not needed**',
+  shop_only: '**EXIT, shop only**',
+};
+
+export function exitTag(kind: string): string {
+  return EXIT_TAGS[kind] ?? `**EXIT, ${kind}**`;
+}
+
+/** The exit screen the player shows: title, message and buttons, by kind. */
+export function exitScreen(kind: string, message: string, canJump: boolean): string[] {
+  const titles: Record<string, string> = {
+    unsafe: 'Stop screen (unsafe)',
+    not_covered: 'Not covered yet',
+    not_needed: 'Not needed',
+    shop_only: 'Shop only',
+  };
+  const buttons: Record<string, string[]> = {
+    unsafe: ['Find a shop'],
+    not_covered: ['Find a shop', 'Ask the assistant'],
+    not_needed: ['Done'],
+    shop_only: ['Find a shop'],
+  };
+  const b = [...(canJump ? ['Show me how to put it back'] : []), ...(buttons[kind] ?? ['Find a shop'])];
+  return [`**${titles[kind] ?? kind}** (the progress bar does not move): "${message}"`, '', `Buttons: ${b.map((x) => `[${x}]`).join(' ')}`, ''];
+}
+
 export function endingText(p: TutorialPath, all: PathItem[]): string {
   const v = p.variant;
   if (v.ending === 'complete' && v.skip) return `Complete; "${v.skip.label}" at \`${all[v.skip.index].id}\` skips ${v.skip.ids.map((s) => `\`${s}\``).join(', ')}`;
   if (v.ending === 'complete') return 'Complete: all steps and the finish';
   const sp = v.stop!;
   const n = sp.index + 1;
-  const at = `${sp.kind} at step ${n} (\`${all[sp.index].id}\`: "${sp.label}")`;
-  if (v.ending === 'stop') return p.before[sp.index].size ? `${at}; user taps "Find a shop" with "${[...p.before[sp.index]].join(', ')}" still set` : `${at}; nothing apart, ends with "Find a shop"`;
+  const at = `exit (${sp.kind}) at step ${n} (\`${all[sp.index].id}\`: "${sp.label}")`;
+  if (v.ending === 'stop') return p.before[sp.index].size ? `${at}; user leaves with "${[...p.before[sp.index]].join(', ')}" still set` : `${at}; nothing apart`;
   return `${at}; user taps "Show me how to put it back", jumps ahead to \`${all[v.jumpIndex ?? 0].id}\` (step ${sp.index + 2} below) and ends with the shop summary`;
 }
 
@@ -206,7 +234,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
   const all = combined(p.run);
   const tools = toolSummary(c, v.items);
   const L: string[] = [];
-  L.push(`# ${job?.title ?? t.id}: ${p.combo.baseId}${v.ending === 'complete' ? '' : ` (${v.ending === 'jump' ? 'stop, then jump ahead' : 'stop'})`}`, '');
+  L.push(`# ${job?.title ?? t.id}: ${p.combo.baseId}${v.ending === 'complete' ? '' : ` (${v.ending === 'jump' ? 'exit, then jump ahead' : 'exit'})`}`, '');
   L.push(`> ${NOTICE}`, '');
   L.push(
     ...header([
@@ -244,7 +272,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
       L.push(`> **Jumped ahead** in the same tutorial: the user tapped "Show me how to put it back". ${skipped > 0 ? `${skipped} step(s) skipped.` : 'No steps skipped.'} The progress bar moves forward once.`, '');
       jumpShown = true;
     }
-    const chosen = v.stop && i === v.stop.index ? (it.kind === 'inspect' ? v.stop.key : v.stop.label) : v.skip && i === v.skip.index ? v.skip.label : undefined;
+    const chosen = v.stop && i === v.stop.index ? v.stop.key : v.skip && i === v.skip.index ? v.skip.buttonId : undefined;
     const after = i + 1 < p.before.length ? p.before[i + 1] : p.final;
     const beforeWork = !v.items.slice(0, i).some((x) => x.kind === 'step');
     const note = it.kind === 'inspect' && beforeWork ? '<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>' : undefined;
@@ -252,14 +280,15 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
     if (v.stop && i === v.stop.index) {
       const sp = v.stop;
       const apart = p.before[i];
-      L.push(`**Stop screen** (the progress bar does not move): "${sp.message}"`, '');
-      L.push(apart.size && sp.showHowFrom ? `Buttons: [Show me how to put it back] [Find a shop]` : 'Buttons: [Find a shop]', '');
+      L.push(...exitScreen(sp.kind, sp.message, apart.size > 0 && !!sp.showHowFrom));
     }
   });
 
   L.push('## End', '');
   if (v.ending === 'complete') {
     L.push(`The tutorial is done. Nothing is left apart. Total: ${p.minutes} min.`);
+  } else if (v.stop!.kind === 'not_needed') {
+    L.push(`The repair is not needed.${p.final.size ? ` **Still set: ${[...p.final].join(', ')}**` : ' Nothing is left apart.'}`);
   } else {
     L.push(`Shop summary, shown to hand over at the shop:`, '');
     L.push(`- Job: ${job?.title ?? t.job}`);
@@ -339,7 +368,7 @@ export function renderDiagnosisCheck(
   c: Content, ch: DiagnosisCheck, n: number, chosen: string | undefined, known: Known, markOk: boolean,
   mode: 'diagnosis' | 'check' = 'diagnosis', level = 3,
 ): string[] {
-  const L = [`${'#'.repeat(level)} ${n}. \`${ch.id}\` · inspection · ${ch.def.minutes} min`, '', fill(ch.def.text, known), ''];
+  const L = [`${'#'.repeat(level)} ${n}. ${ch.def.title} · \`${ch.id}\` · inspection · ${ch.def.minutes} min`, '', fill(ch.def.text, known), ''];
   const scene = sceneLine(ch.def);
   if (scene) L.push(scene, '');
   for (const st of ch.def.states) {
@@ -387,7 +416,7 @@ export function renderRoutineCheck(c: Content, id: string): string {
   for (const it of ch.inspections) {
     const insp = c.inspections.get(it.inspect)!.def;
     for (const pos of it.pos ?? [null]) {
-      L.push(`### ${n++}. \`${it.inspect}\`${pos ? ` (${pos})` : ''} · ${insp.minutes} min`, '');
+      L.push(`### ${n++}. ${insp.title} · \`${it.inspect}\`${pos ? ` (${pos})` : ''} · ${insp.minutes} min`, '');
       if (insp.applies_when) L.push(`<sub>Only when: ${Object.entries(insp.applies_when).map(([k, v]) => `${k} is ${(v as any[]).join(' or ')}`).join(' and ')}</sub>`, '');
       L.push(insp.text, '');
       for (const st of insp.states) {

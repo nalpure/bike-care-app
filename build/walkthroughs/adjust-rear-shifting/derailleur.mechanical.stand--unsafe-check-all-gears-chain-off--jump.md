@@ -1,16 +1,16 @@
-# Adjust the rear gears: derailleur.mechanical.upside-down (stop, then jump ahead)
+# Adjust the rear gears: derailleur.mechanical.stand (exit, then jump ahead)
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
 | | |
 | --- | --- |
-| Path | `derailleur.mechanical.upside-down--stop-check-all-gears-chain-falls-off-or--jump` |
+| Path | `derailleur.mechanical.stand--unsafe-check-all-gears-chain-off--jump` |
 | Tutorial | `adjust-rear-shifting` · case `wheel-free` · difficulty 2 |
 | Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) |
-| Run choices | How will you hold the bike while you work? → Upside down, on saddle and handlebar |
-| Ends | stop at step 10 (`check-all-gears`: "The chain falls off, or touches the spokes"); user taps "Show me how to put it back", jumps ahead to `turn-bike-upright` (step 11 below) and ends with the shop summary |
+| Run choices | How will you hold the bike while you work? → In a work stand |
+| Ends | exit (unsafe) at step 10 (`check-all-gears`: "The chain falls off, or touches the spokes"); user taps "Show me how to put it back", jumps ahead to `unclamp-from-stand` (step 11 below) and ends with the shop summary |
 | Time | 23 min |
-| Tools | Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur<br>Helpful: Torch or phone light; Soft mat or old blanket |
+| Tools | Needed: Bike work stand; Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur<br>Helpful: Torch or phone light |
 
 ## Before you start
 
@@ -19,23 +19,23 @@
 
 **How will you hold the bike while you work?**
 
-- In a work stand (recommended; needs: Bike work stand)
+- In a work stand (recommended; needs: Bike work stand) ◀ **chosen**
   - The easiest way. The rear wheel turns freely and the bike cannot fall.
   - ⚠ Heavy bikes, such as e-bikes, can be too heavy for a small stand. Check the stand's maximum load.
 - Hanging from a hook or a rope (needs: Strong hook or rope that can carry the bike)
   - The rear wheel hangs free, so you can turn the pedals by hand.
   - ⚠ The hook or rope must carry the whole bike. A heavy bike can fall and hurt you.
-- Upside down, on saddle and handlebar ◀ **chosen**
+- Upside down, on saddle and handlebar
   - Needs no tools. The rear wheel turns freely.
   - ⚠ Turning a heavy bike over can hurt you. Ask someone to help.
 - On its wheels, and test with short rides
   - Needs no tools, but takes longer. You adjust while the bike stands and test by riding.
 
-Tools picker. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light; Soft mat or old blanket.
+Tools picker. Needed: Bike work stand; Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light.
 
 ## Steps
 
-### 1. `derailleur-alignment` · inspection · 1 min
+### 1. Look at the rear derailleur · `derailleur-alignment` · inspection · 1 min
 
 <sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>
 
@@ -46,9 +46,9 @@ Stand behind the bike and look at the rear derailleur, the part below the sprock
 Tools: Torch or phone light (helpful)
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → continue
-- [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **STOP**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
+- [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **EXIT, unsafe**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
 
-### 2. `barrel-adjuster-present` · inspection · 1 min
+### 2. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
 
 <sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>
 
@@ -60,21 +60,21 @@ Tools: Torch or phone light (helpful)
 
 - [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue
 - [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
-- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **STOP**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
+- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
 
-### 3. `turn-upside-down` · action · 2 min · from procedure `hold-bike`
+### 3. Clamp the bike in the stand · `clamp-in-stand` · action · 2 min · from procedure `hold-bike`
 
-Lay a soft mat on the floor and turn the bike over onto its saddle and handlebar. With a heavy bike, ask someone to help.
+Clamp the seat post in the stand so the rear wheel hangs free. With a heavy bike, ask someone to help you lift it.
 
-<sub>3D: focus saddle, handlebar · view whole_bike</sub>
+<sub>3D: focus stand_clamp, seat_post · view whole_bike</sub>
 
-Animation: "Turn the bike over onto the mat" (bike rotate, over, wheels up, half a turn)
+Animation: "Close the clamp around the seat post" (stand_clamp rotate, tighten, until the bike sits firm)
 
-Tools: Soft mat or old blanket (helpful)
+Tools: Bike work stand
 
-<sub>State: +bike_upside_down → now: bike_upside_down</sub>
+<sub>State: +bike_in_stand → now: bike_in_stand</sub>
 
-### 4. `check-low-limit-by-hand` · safety check · 3 min
+### 4. Check the inner limit (L screw) · `check-low-limit-by-hand` · safety check · 3 min
 
 Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?
 
@@ -84,13 +84,13 @@ Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the s
 
 Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
 
-- [ ] **In line with the largest sprocket** → The L screw is set. Let go of the derailleur.
-- [ ] **Past the largest sprocket, towards the spokes** → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.
+- [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The L screw is set. Let go of the derailleur.
+- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.
   - Show solution: "Screw in the L screw a quarter turn" (l_screw rotate, screw in, a quarter turn)
-- [ ] **It stops before the largest sprocket** → The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.
+- [ ] **It stops before the largest sprocket** <sub>`short`</sub> → The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.
   - Show solution: "Unscrew the L screw a quarter turn" (l_screw rotate, unscrew, a quarter turn)
 
-### 5. `shift-to-smallest-sprocket` · action · 1 min
+### 5. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
 
 Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.
 
@@ -98,7 +98,7 @@ Turn the pedals forward by hand and use the right shifter until the chain sits o
 
 Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
-### 6. `check-high-limit` · safety check · 3 min
+### 6. Check the outer limit (H screw) · `check-high-limit` · safety check · 3 min
 
 Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?
 
@@ -106,13 +106,13 @@ Look from directly behind the bike at the upper of the two small toothed wheels 
 
 Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
 
-- [ ] **In line with the smallest sprocket** → The H screw is set. Nothing to change.
-- [ ] **Further in, towards the spokes** → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
+- [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
+- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
   - Show solution: "Unscrew the H screw a quarter turn" (clip limit-screw-align)
-- [ ] **Further out, away from the spokes** → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
+- [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
   - Show solution: "Screw in the H screw a quarter turn" (clip limit-screw-align)
 
-### 7. `shift-to-largest-sprocket` · action · 1 min
+### 7. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
 
 Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear.
 
@@ -120,7 +120,7 @@ Turn the pedals slowly by hand and shift one gear at a time until the chain sits
 
 Animation: "Shift one gear at a time" (clip shift-to-largest)
 
-### 8. `check-b-gap` · check · 3 min
+### 8. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
 Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
 
@@ -128,25 +128,25 @@ Keep the chain on the largest sprocket. Look from the side at the gap between th
 
 Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
 
-- [ ] **A small gap, the teeth do not touch** → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
-- [ ] **The wheel touches the sprocket, or almost** → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
+- [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
+- [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
   - Show solution: "Screw in the B screw a little" (clip b-gap-adjust)
-- [ ] **A big gap, and shifting here was slow** → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
+- [ ] **A big gap, and shifting here was slow** <sub>`wide-gap`</sub> → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
   - Show solution: "Unscrew the B screw a little" (clip b-gap-adjust)
 
-### 9. `check-cable-tension` · check · 5 min
+### 9. Set the cable tension · `check-cable-tension` · check · 5 min
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain.
 
 <sub>3D: focus barrel_adjuster, chain, cassette · view drive_side</sub>
 
-- [ ] **Slow or noisy shifting to easier gears** → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.
+- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.
   - Show solution: "Unscrew the barrel adjuster a quarter turn" (clip cable-tension-shift)
-- [ ] **Slow or noisy shifting to harder gears** → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
+- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
   - Show solution: "Screw in the barrel adjuster a quarter turn" (clip cable-tension-shift)
-- [ ] **Every shift is quick and quiet** → The cable tension is right.
+- [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
 
-### 10. `check-all-gears` · safety check · 2 min
+### 10. Test every gear · `check-all-gears` · safety check · 2 min
 
 Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen.
 
@@ -154,25 +154,27 @@ Turn the pedals and shift through every gear, from the hardest to the easiest an
 
 <sub>3D: focus cassette, chain, rear_derailleur · view drive_side</sub>
 
-- [ ] **Every gear runs quietly** → Your rear gears are set.
-- [ ] **It rattles or jumps in some gears** → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
-- [ ] **The chain falls off, or touches the spokes** → **STOP**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike` ◀ **this path**
+- [ ] **Every gear runs quietly** <sub>`quiet`</sub> → Your rear gears are set.
+- [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
+- [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike` ◀ **this path**
 
-**Stop screen** (the progress bar does not move): "Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop."
+**Stop screen (unsafe)** (the progress bar does not move): "Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop."
 
 Buttons: [Show me how to put it back] [Find a shop]
 
 > **Jumped ahead** in the same tutorial: the user tapped "Show me how to put it back". No steps skipped. The progress bar moves forward once.
 
-### 11. `turn-bike-upright` · action · 1 min · from procedure `release-bike`
+### 11. Take the bike out of the stand · `unclamp-from-stand` · action · 1 min · from procedure `release-bike`
 
-Turn the bike back onto its wheels. With a heavy bike, ask someone to help.
+Hold the bike, open the stand clamp and put the bike on its wheels. With a heavy bike, ask someone to help.
 
-<sub>3D: focus bike · view whole_bike</sub>
+<sub>3D: focus stand_clamp · view whole_bike</sub>
 
-Animation: "Turn the bike back onto its wheels" (bike rotate, over, wheels down, half a turn)
+Animation: "Open the clamp while you hold the bike" (stand_clamp rotate, loosen, until open)
 
-<sub>State: −bike_upside_down → now: nothing apart</sub>
+Tools: Bike work stand
+
+<sub>State: −bike_in_stand → now: nothing apart</sub>
 
 ## End
 
