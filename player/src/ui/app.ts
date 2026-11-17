@@ -69,7 +69,16 @@ export class App {
       this.closeJourney();
       return;
     }
-    this.act((j) => j.back(), 'back');
+    // On a card, Back goes to the previous card, not just to the same card before its tap.
+    const cardId = (j: Journey) => {
+      const s = j.screen();
+      return s.kind === 'card' ? s.card.id : null;
+    };
+    this.act((j) => {
+      const from = cardId(j);
+      j.back();
+      while (from !== null && j.canBack && cardId(j) === from) j.back();
+    }, 'back');
   }
 
   closeJourney(): void {

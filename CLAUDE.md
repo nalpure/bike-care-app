@@ -32,7 +32,8 @@ The golden example is the symptom "My gears don't shift cleanly": `content/diagn
 - `npm run walk -- --list` / `npm run walk -- <path-id>`   render paths on demand.
 - `npm run review -- status` / `npm run review -- sign <unit> --role <role> --by <name>`   review units and sign-offs.
 - `npm run dev`    start the player locally.
-- `npm run build`  static build of the player for sharing.
+- `npm run build`  static build of the player for sharing (`dist/`).
+- `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `player/e2e/shots/`.
 
 Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fix them from the message; you should not need to read the build tool.
 
