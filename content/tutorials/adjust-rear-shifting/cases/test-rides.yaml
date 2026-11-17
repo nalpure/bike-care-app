@@ -9,12 +9,17 @@ sequence:
       straight: continue
       crooked:
         stop: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+  - inspect: barrel-adjuster-present
+    outcomes:
+      at-derailleur: continue
+      at-shifter-or-cable: continue
+      none:
+        stop: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
   - step: park-bike
   - step: check-low-limit-by-hand        # block while the pulley goes past the largest sprocket
   - step: ride-to-smallest-sprocket
   - step: check-high-limit
   - step: ride-to-largest-sprocket
   - step: check-b-gap
-  - step: find-barrel-adjuster
   - step: check-cable-tension-riding
   - step: check-all-gears-riding

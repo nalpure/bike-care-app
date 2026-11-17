@@ -36,6 +36,10 @@
               "additionalProperties": false
             }
           },
+          "ask": {
+            "description": "when_needed (default): asked when a condition reads it. never: conditions may read it, but the app never asks; it is unknown unless the bike's data (parts list, partner, lookup) provides it. Use never for facts a beginner cannot tell.",
+            "enum": ["when_needed", "never"]
+          },
           "safety": { "type": "boolean" },
           "note": { "type": "string", "description": "For authors. Never shown." }
         },

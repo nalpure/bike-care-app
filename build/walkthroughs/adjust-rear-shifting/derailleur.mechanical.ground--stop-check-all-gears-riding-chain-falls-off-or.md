@@ -6,7 +6,7 @@
 | --- | --- |
 | Path | `derailleur.mechanical.ground--stop-check-all-gears-riding-chain-falls-off-or` |
 | Tutorial | `adjust-rear-shifting` · case `test-rides` · difficulty 2 |
-| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing") |
+| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) |
 | Run choices | How will you hold the bike while you work? → On its wheels, and test with short rides |
 | Ends | stop at step 10 (`check-all-gears-riding`: "The chain falls off, or touches the spokes"); nothing apart, ends with "Find a shop" |
 | Time | 29 min |
@@ -37,6 +37,8 @@ Tools picker. Needed: Small cross-head screwdriver or small hex key, whichever f
 
 ### 1. `derailleur-alignment` · inspection · 1 min
 
+<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>
+
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
 <sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
@@ -46,13 +48,27 @@ Tools: Torch or phone light (helpful)
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → continue
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **STOP**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
 
-### 2. `park-bike` · action · 1 min
+### 2. `barrel-adjuster-present` · inspection · 1 min
+
+<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>
+
+Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
+
+<sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
+
+Tools: Torch or phone light (helpful)
+
+- [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue
+- [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
+- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **STOP**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
+
+### 3. `park-bike` · action · 1 min
 
 Put the bike on its kickstand, or lean it against a wall at the saddle and rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls.
 
 <sub>3D: focus kickstand, rear_wheel · view whole_bike</sub>
 
-### 3. `check-low-limit-by-hand` · safety check · 3 min
+### 4. `check-low-limit-by-hand` · safety check · 3 min
 
 Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?
 
@@ -68,13 +84,13 @@ Tools: Small cross-head screwdriver or small hex key, whichever fits the small s
 - [ ] **It stops before the largest sprocket** → The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.
   - Show solution: "Unscrew the L screw a quarter turn" (l_screw rotate, unscrew, a quarter turn)
 
-### 4. `ride-to-smallest-sprocket` · action · 2 min
+### 5. `ride-to-smallest-sprocket` · action · 2 min
 
 Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Stop, and park the bike as before.
 
 <sub>3D: focus shifter_rear, smallest_sprocket · view drive_side</sub>
 
-### 5. `check-high-limit` · safety check · 3 min
+### 6. `check-high-limit` · safety check · 3 min
 
 Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?
 
@@ -88,13 +104,13 @@ Tools: Small cross-head screwdriver or small hex key, whichever fits the small s
 - [ ] **Further out, away from the spokes** → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
   - Show solution: "Screw in the H screw a quarter turn" (clip limit-screw-align)
 
-### 6. `ride-to-largest-sprocket` · action · 2 min
+### 7. `ride-to-largest-sprocket` · action · 2 min
 
 Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket. Stop, and park the bike as before.
 
 <sub>3D: focus shifter_rear, largest_sprocket · view drive_side</sub>
 
-### 7. `check-b-gap` · check · 3 min
+### 8. `check-b-gap` · check · 3 min
 
 Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
 
@@ -107,16 +123,6 @@ Tools: Small cross-head screwdriver or small hex key, whichever fits the small s
   - Show solution: "Screw in the B screw a little" (clip b-gap-adjust)
 - [ ] **A big gap, and shifting here was slow** → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
   - Show solution: "Unscrew the B screw a little" (clip b-gap-adjust)
-
-### 8. `find-barrel-adjuster` · check · 1 min
-
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
-
-<sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
-
-- [ ] **It is at the derailleur** → Good. You turn this knob in the next step.
-- [ ] **It is at the shifter, or on the cable** → Good. You turn this knob in the next step. It works the same way.
-- [ ] **I cannot find one** → Some bikes have none. Skip the next step. If the gears still shift slowly at the end, a shop can set the cable.
 
 ### 9. `check-cable-tension-riding` · check · 10 min
 

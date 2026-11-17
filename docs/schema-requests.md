@@ -15,7 +15,11 @@ Entry format:
 
 ## Open requests
 
-## SR-01 A button that skips the next step
+None.
+
+## Accepted
+
+## SR-01 A button that skips the next step (accepted 2026-11-17, see AC-21)
 - 2026-11-17, requested by the agent writing the golden example (after a cold review)
 - Needed for: `content/steps/rear-shifting.yaml`, step `find-barrel-adjuster`, button "I cannot find one"
 - What cannot be expressed: a forward skip over one optional step. The legacy draft had `skip_to`; approach.md replaced it with stops and the jump-ahead, which only exist in safety checks.

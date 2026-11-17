@@ -124,6 +124,7 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
       if (b.text && (b.block || b.stop)) res = `${fill(b.text, o.known)} ${res}`;
       L.push(`- [ ] **${fill(b.label, o.known)}** → ${res}${mark}`);
       for (const a of b.solution ?? []) L.push(`  - Show solution: ${animLine(a)}`);
+      if (b.skips?.length) L.push(`  - Skips: ${b.skips.map((s: string) => `\`${s}\``).join(', ')}`);
     }
   }
   if (o.before && o.after) {
@@ -170,10 +171,14 @@ function header(rows: Array<[string, string]>): string[] {
   return ['| | |', '| --- | --- |', ...rows.map(([k, v]) => `| ${k} | ${v.replace(/\|/g, '\\|')} |`), ''];
 }
 
-function factsCell(c: Content, combo: Combo): string {
+export function factsCell(c: Content, combo: Combo): string {
   const facts = combo.asked.filter((k) => !k.startsWith('choice.') && !k.startsWith('tool.'));
   const params = Object.entries(combo.params).map(([k, v]) => `${k} = ${v}`);
-  return [...params, ...facts.map((k) => factLine(c, k, combo.assign[k]))].join('<br>') || 'any bike';
+  const silent = (combo.silent ?? []).map((k) => {
+    const vals = combo.alt?.[k] ?? [combo.assign[k]];
+    return `\`${k}\` = ${vals.join(' or ')} (never asked; from the bike's data)`;
+  });
+  return [...params, ...facts.map((k) => factLine(c, k, combo.assign[k])), ...silent].join('<br>') || 'any bike';
 }
 
 function choicesCell(c: Content, combo: Combo): string {
@@ -185,6 +190,7 @@ function choicesCell(c: Content, combo: Combo): string {
 
 export function endingText(p: TutorialPath, all: PathItem[]): string {
   const v = p.variant;
+  if (v.ending === 'complete' && v.skip) return `Complete; "${v.skip.label}" at \`${all[v.skip.index].id}\` skips ${v.skip.ids.map((s) => `\`${s}\``).join(', ')}`;
   if (v.ending === 'complete') return 'Complete: all steps and the finish';
   const sp = v.stop!;
   const n = sp.index + 1;
@@ -238,9 +244,11 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
       L.push(`> **Jumped ahead** in the same tutorial: the user tapped "Show me how to put it back". ${skipped > 0 ? `${skipped} step(s) skipped.` : 'No steps skipped.'} The progress bar moves forward once.`, '');
       jumpShown = true;
     }
-    const chosen = v.stop && i === v.stop.index ? (it.kind === 'inspect' ? v.stop.key : v.stop.label) : undefined;
+    const chosen = v.stop && i === v.stop.index ? (it.kind === 'inspect' ? v.stop.key : v.stop.label) : v.skip && i === v.skip.index ? v.skip.label : undefined;
     const after = i + 1 < p.before.length ? p.before[i + 1] : p.final;
-    L.push(...renderCard(c, it, { number: i + 1, known: nothingKnown, showAllDetails: true, chosen, before: p.before[i], after }));
+    const beforeWork = !v.items.slice(0, i).some((x) => x.kind === 'step');
+    const note = it.kind === 'inspect' && beforeWork ? '<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>' : undefined;
+    L.push(...renderCard(c, it, { number: i + 1, known: nothingKnown, showAllDetails: true, chosen, before: p.before[i], after, note }));
     if (v.stop && i === v.stop.index) {
       const sp = v.stop;
       const apart = p.before[i];

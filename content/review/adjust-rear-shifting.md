@@ -21,7 +21,7 @@ Each item names the step or inspection ids it affects, so a change can be traced
 | R-11 | `shift-test-ride` | Labels map "pedalling gets lighter" to bigger sprockets (cable too loose) and "harder" to smaller sprockets (cable too tight). Correct for standard derailleurs, reversed for rapid-rise. | As R-03 (b). |
 | R-12 | `ride-to-smallest-sprocket`, `ride-to-largest-sprocket`, `check-cable-tension-riding` | Test rides with a misadjusted derailleur. Is riding into the largest sprocket safe after only the hand check of the low limit? | Hand check first, then rides. Every riding step is forbidden while the bike is held. |
 | R-13 | all shifting steps | Bikes with front gears: should the user pick a certain chainring before checking the limits and the B gap? `drive.front_count` exists in the fact list but is not used. | Not handled. Steps talk only about the rear sprockets. |
-| R-15 | `find-barrel-adjuster` | Where to look for an inline adjuster, and what to do without any adjuster. | A check with "I cannot find one": the text tells the user to skip the next step. A real skip needs a schema change (SR-01). |
+| R-15 | `barrel-adjuster-present` | Where to look for an inline adjuster on the frame; bikes without any adjuster. | An inspection before the bike is lifted; "I cannot find one" ends with "not supported yet" and a shop (owner decision, IC-04). |
 | R-16 | `check-all-gears`, `check-all-gears-riding` | "Go back to the cable step" relies on the user going back by hand, because the app never jumps back. | Text tells the user to go back. |
 | R-14 | `shift-test-ride` in `finish` | After adjusting in a stand, shifting under load on the road can differ. Is a "still not clean" result a shop case, or should it send the user back to the cable step? | Stop with a calm text: you can ride carefully; a shop can check the cable. |
 
@@ -29,6 +29,6 @@ Each item names the step or inspection ids it affects, so a change can be traced
 
 | Id | Question | Default in use |
 | --- | --- | --- |
-| RO-01 | Should rapid-rise derailleurs and bikes without a barrel adjuster get their own fact and exits? | Not handled (R-03). |
-| RO-03 | A tutorial opened right after the diagnosis repeats `derailleur-alignment`, which the user answered a minute earlier. Should the player show an inspection pre-answered when a finding for it was stored in the same session? This is player behaviour, not content. | Repeated (approach-changes AC-05). |
+| RO-01 | Should rapid-rise derailleurs and bikes without a barrel adjuster get their own fact and exits? | **Decided 2026-11-17:** too niche to ask; caught as "not supported" (IC-04). Rapid-rise only when the bike's data says so. |
+| RO-03 | A tutorial opened right after the diagnosis repeated `derailleur-alignment`. | **Decided 2026-11-17:** never the same check twice in a session (IC-03, AC-20). |
 | RO-02 | Is the test-ride path acceptable for a beginner at all, given R-05 and R-12? | Offered as the fourth option, not recommended. |

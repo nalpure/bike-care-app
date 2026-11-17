@@ -7,7 +7,7 @@
 ## Summary
 
 - Result: **passed**, 0 warning(s)
-- Files validated: 19
+- Files validated: 20
 - 3D names checked against: `schema/3d-catalog.yaml`
 - Bundle: `build/bundle.json`
 
@@ -15,8 +15,8 @@
 
 | Flow | Kind | Paths | Complete paths | Time of complete paths | Stop paths | Exits before the first step |
 | --- | --- | --- | --- | --- | --- | --- |
-| [adjust-rear-shifting](walkthroughs/adjust-rear-shifting/index.md) | tutorial | 21 | 4 | 26 to 29 min | 17 | 6 |
-| [gears-shift-badly](walkthroughs/gears-shift-badly/index.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 6 |
+| [adjust-rear-shifting](walkthroughs/adjust-rear-shifting/index.md) | tutorial | 25 | 4 | 26 to 29 min | 21 | 7 |
+| [gears-shift-badly](walkthroughs/gears-shift-badly/index.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 8 |
 | [routine-check](walkthroughs/routine-check/routine-check.md) | routine check | - | - | - | - | - |
 
 ## Time per bike and choice (complete paths)
@@ -34,14 +34,17 @@ Use this list to decide what to cover next.
 
 | Flow | Bike | Exit | Message |
 | --- | --- | --- | --- |
+| adjust-rear-shifting | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = low_normal (never asked; from the bike's data) | not_covered | Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you. |
 | adjust-rear-shifting | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = electronic ("A wire with a plug, or no wire at all") | not_covered | Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable. |
 | adjust-rear-shifting | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = unknown ("I'll check later") | not_covered | We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop. |
 | adjust-rear-shifting | `drive.gear_type` = hub_gear ("One sprocket, and a thick hub in the middle of the wheel") | not_covered | Hub gears are not covered yet. They are adjusted differently from gears with a derailleur. |
 | adjust-rear-shifting | `drive.gear_type` = gearbox ("One sprocket, and a box at the pedals") | not_covered | Gearboxes at the pedals are not covered yet. |
 | adjust-rear-shifting | `drive.gear_type` = single_speed ("One sprocket, and no way to change gear") | not_covered | Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help. |
 | adjust-rear-shifting | `drive.gear_type` = unknown ("I'll check later") | not_covered | We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop. |
+| gears-shift-badly | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = low_normal (never asked; from the bike's data) | not_covered | Rapid-rise rear derailleurs are not supported yet. A shop can check them. You can also ask the assistant. |
 | gears-shift-badly | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = electronic ("A wire with a plug, or no wire at all") | not_covered | Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant. |
-| gears-shift-badly | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = unknown ("I'll check later") | not_covered | We need to know whether your gears use a cable. Look at the right shifter and come back. You can also find a shop or ask the assistant. |
+| gears-shift-badly | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = unknown ("I'll check later")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) | not_covered | We need to know whether your gears use a cable. Look at the right shifter and come back. You can also find a shop or ask the assistant. |
+| gears-shift-badly | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = unknown ("I'll check later")<br>`drive.rear_derailleur_type` = low_normal (never asked; from the bike's data) | not_covered | Rapid-rise rear derailleurs are not supported yet. A shop can check them. You can also ask the assistant. |
 | gears-shift-badly | `drive.gear_type` = hub_gear ("One sprocket, and a thick hub in the middle of the wheel") | not_covered | Hub gears are not covered yet. A shop can check them. You can also ask the assistant. |
 | gears-shift-badly | `drive.gear_type` = gearbox ("One sprocket, and a box at the pedals") | not_covered | Gearboxes at the pedals are not covered yet. A shop can check it. You can also ask the assistant. |
 | gears-shift-badly | `drive.gear_type` = single_speed ("One sprocket, and no way to change gear") | not_covered | Your bike has only one gear, so this check does not fit it. If the chain skips or clunks, a shop can help. You can also ask the assistant. |
@@ -51,14 +54,16 @@ Use this list to decide what to cover next.
 
 | Profile | Journey | Ends | Time | Questions asked |
 | --- | --- | --- | --- | --- |
-| [city-derailleur-no-stand](walkthroughs/profiles/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 31 min | 1 |
+| [city-derailleur-no-stand](walkthroughs/profiles/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 30 min | 1 |
 | [city-derailleur-no-stand](walkthroughs/profiles/city-derailleur-no-stand.md) | The derailleur looks bent, so the owner goes to a shop | shop: Have the rear gears checked | 1 min | 1 |
 | [e-trekking-hub-gear](walkthroughs/profiles/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
-| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 28 min | 0 |
+| [mtb-rapid-rise](walkthroughs/profiles/mtb-rapid-rise.md) | Gears do not shift cleanly on a rapid-rise derailleur | not covered (gears-shift-badly) | 0 min | 0 |
+| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 27 min | 0 |
+| [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | stop at barrel-adjuster-present | 2 min | 0 |
 | [road-bike-stand](walkthroughs/profiles/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
-| [unknown-bike](walkthroughs/profiles/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 34 min | 2 |
+| [unknown-bike](walkthroughs/profiles/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 33 min | 2 |
 
-Journeys that end at a shop, a stop or not covered: 3 of 6.
+Journeys that end at a shop, a stop or not covered: 5 of 8.
 
 ## Rules
 
@@ -82,6 +87,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 6.
 | `unknown-job` | pass | Every leads_to, override and no_hit names an existing job. |
 | `unknown-tutorial` | pass | Every job's tutorial exists. |
 | `unknown-state-label` | pass | Every state label in sets, clears and forbidden_while exists in states.yaml. |
+| `skip-unsafe` | pass | Buttons skip only later plain steps: never safety checks, inspection calls or steps that change state labels. |
 | `unknown-show-how-from` | pass | Every show_how_from names an existing step or procedure. |
 | `unknown-node` | pass | Every focus node and animation target exists in the 3D catalog. |
 | `unknown-view` | pass | Every view exists in the 3D catalog. |
@@ -127,6 +133,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 6.
 | `stop-in-finish-with-state` | pass | finish runs only after everything is put back. |
 | `too-many-buttons` | pass | At most three buttons or states per screen. |
 | `choice-not-declared` | pass | A tutorial declares every run choice its conditions read. |
+| `skip-not-ahead` | pass | A button skips only steps that come later in the same sequence. |
 | `inspection-not-applicable` | pass | An inspection called on a path applies to that bike. |
 | `diagnosis-tutorial-coverage` | pass | A diagnosis that leads to a job with a tutorial is covered by that tutorial for the same bike. |
 

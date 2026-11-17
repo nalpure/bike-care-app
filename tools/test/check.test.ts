@@ -24,7 +24,7 @@ describe('the real content', () => {
     const r = runCheck(REPO, { write: false });
     expect(show(r)).toBe('');
     const t = r.flows!.tutorials.find((f) => f.id === 'adjust-rear-shifting')!;
-    expect(t.paths).toHaveLength(21);
+    expect(t.paths).toHaveLength(25);
     expect(t.paths.filter((p) => p.variant.ending === 'complete').map((p) => p.id)).toEqual([
       'derailleur.mechanical.stand',
       'derailleur.mechanical.hang',
@@ -32,19 +32,40 @@ describe('the real content', () => {
       'derailleur.mechanical.ground',
     ]);
     expect(t.paths.filter((p) => p.variant.ending === 'jump')).toHaveLength(3);
-    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(6).fill('not_covered'));
+    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(7).fill('not_covered'));
     const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
     expect(d.paths).toHaveLength(6);
+    expect(d.exits).toHaveLength(8);
 
     const endings = Object.fromEntries([...r.profiles.values()].flatMap((p) => p.results.map((x) => [`${x.profile}/${x.journey}`, x.ending])));
     expect(endings).toEqual({
       'city-derailleur-no-stand/slow-shifting-upside-down': 'tutorial complete',
       'city-derailleur-no-stand/bent-derailleur': 'shop: Have the rear gears checked',
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
+      'mtb-rapid-rise/rapid-rise-not-supported': 'not covered (gears-shift-badly)',
       'road-bike-stand/chain-touches-spokes': 'stop, jump ahead, bike put back, shop',
+      'road-bike-stand/no-barrel-adjuster': 'stop at barrel-adjuster-present',
       'road-bike-stand/routine-check-dirty-chain': '1 to-do item(s)',
       'unknown-bike/test-rides': 'tutorial complete',
     });
+  });
+
+  it('never asks a fact marked ask: never, and does not double the paths for it', () => {
+    const r = runCheck(REPO, { write: false });
+    const unknown = r.profiles.get('unknown-bike')!;
+    expect(unknown.markdown).not.toContain('rear_derailleur_type');
+    expect(unknown.results[0].questions).toBe(2);
+    const t = r.flows!.tutorials[0];
+    const stand = t.paths.find((p) => p.id === 'derailleur.mechanical.stand')!;
+    expect(stand.combo.alt['drive.rear_derailleur_type']).toEqual(['standard', 'unknown']);
+  });
+
+  it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {
+    const r = runCheck(REPO, { write: false });
+    const md = r.profiles.get('city-derailleur-no-stand')!.markdown;
+    expect(md).toContain('`derailleur-alignment` · not shown again');
+    // The finish test ride comes after the work, so it is shown again although the diagnosis asked it.
+    expect(md).toMatch(/##### \d+\. `shift-test-ride`/);
   });
 
   it('writes the bundle, the report and the walkthroughs', () => {
@@ -63,7 +84,7 @@ describe('the real content', () => {
     }
     const bundle = JSON.parse(r.bundle!);
     expect(bundle.unverified).toBe(true);
-    expect(bundle.tutorials[0].cases[0].cases[0].case.sequence.length).toBeGreaterThan(5);
+    expect(bundle.tutorials[0].cases[0].cases[1].case.sequence.length).toBeGreaterThan(5);
   });
 
   it('is deterministic', () => {
@@ -112,7 +133,7 @@ describe('rules broken on purpose', () => {
 
   it('a show_how_from that does not lie ahead', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-all-gears').buttons.find((x: any) => x.stop).show_how_from = 'find-barrel-adjuster'))
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-all-gears').buttons.find((x: any) => x.stop).show_how_from = 'shift-to-smallest-sprocket'))
       .run();
     expect(errorsOf(r, 'show-how-from-not-ahead').length, show(r)).toBeGreaterThan(0);
   });
@@ -190,6 +211,32 @@ describe('rules broken on purpose', () => {
     const e = errorsOf(r, 'unknown-key');
     expect(e.length, show(r)).toBeGreaterThan(0);
     expect(e[0].message).toContain('unknown key "on"');
+  });
+
+  it('a valid skip adds a path without the skipped step', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))
+      .run();
+    expect(show(r)).toBe('');
+    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-small-gap-teeth-do');
+    expect(skip, r.flows!.tutorials[0].paths.map((p) => p.id).join('\n')).toBeDefined();
+    expect(skip!.variant.items.map((i) => i.id)).not.toContain('check-cable-tension');
+  });
+
+  it('a skip over a safety check', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-all-gears']))
+      .run();
+    const e = errorsOf(r, 'skip-unsafe');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].id).toBe('step check-b-gap');
+  });
+
+  it('a skip of a step that is not ahead', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['shift-to-smallest-sprocket']))
+      .run();
+    expect(errorsOf(r, 'skip-not-ahead').length, show(r)).toBeGreaterThan(0);
   });
 
   it('a profile journey that reaches an unanswered question', () => {

@@ -25,6 +25,19 @@ No changes.
 - **Now:** Before a tutorial that needs the rear wheel free, the user picks how to hold the bike: a work stand (recommended), hanging from a hook or rope, upside down, or on its wheels with short test rides. The app recommends and warns (heavy bikes can hurt when lifted or turned over) but never decides for the user. There are heavy normal bikes and light e-bikes, so the app does not judge by bike type. Without any way to lift the bike, the user adjusts while the bike stands and tests by riding, changing settings only when stopped.
 - **See:** AC-01, AC-07, AC-10 in [approach-changes.md](approach-changes.md).
 
+### IC-03 Never the same check twice (clarifies)
+
+- **Date:** 2026-11-17 · **Decided by:** owner
+- **idea.md:** "Each [way in] passes on what it already knows so nothing is asked twice."
+- **Now:** This also holds for checks the user does with their hands and eyes: a look the user just did in the diagnosis is not repeated at the start of the tutorial. A check after the repair, to see whether it worked, is not a repeat.
+- **See:** AC-20.
+
+### IC-04 Niche bikes end at "not supported", not at a question (clarifies)
+
+- **Date:** 2026-11-17 · **Decided by:** owner
+- **Now:** Rare variants that a beginner cannot recognise (rapid-rise derailleurs) are not asked about. When the bike's data reveals them, the user sees "not supported yet" with a shop and the assistant. Rare variants the user can see (no barrel adjuster) are found by a look before any work starts, and end the same way.
+- **See:** AC-19, AC-22.
+
 ## Garage and bike data
 
 ### IC-02 Ask only what changes the steps; use the rest when known (clarifies)

@@ -22,7 +22,7 @@ profile:
       job_choice: diy
       choices: { hold_bike: upside_down }
       tutorial_sees:
-        derailleur-alignment: straight
+        barrel-adjuster-present: at-shifter-or-cable
         check-low-limit-by-hand: "Past the largest sprocket, towards the spokes"
         check-high-limit: "In line with the smallest sprocket"
         check-all-gears: "Every gear runs quietly"

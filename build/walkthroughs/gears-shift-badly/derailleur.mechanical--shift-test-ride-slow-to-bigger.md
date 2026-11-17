@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | Path | `derailleur.mechanical--shift-test-ride-slow-to-bigger` |
-| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing") |
+| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) |
 | Ends | Job `adjust-rear-shifting` (soon) |
 | Time | 5 min |
 

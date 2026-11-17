@@ -6,7 +6,7 @@
 diagnosis:
   id: gears-shift-badly
   symptom: "My gears don't shift cleanly"
-  applies_when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
+  applies_when: { drive.gear_type: [derailleur], drive.shifting: [mechanical], drive.rear_derailleur_type: [standard, unknown] }
   if_unknown: ask
   checks:
     - inspect: derailleur-alignment
@@ -24,5 +24,7 @@ diagnosis:
       message: "We need to know what kind of gears your bike has. Look at the rear wheel and come back. You can also find a shop or ask the assistant."
     - when: { drive.shifting: [electronic] }
       message: "Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant."
+    - when: { drive.rear_derailleur_type: [low_normal] }
+      message: "Rapid-rise rear derailleurs are not supported yet. A shop can check them. You can also ask the assistant."
     - when: { drive.shifting: [unknown] }
       message: "We need to know whether your gears use a cable. Look at the right shifter and come back. You can also find a shop or ask the assistant."

@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | Path | `derailleur.mechanical--chain-condition-dirty` |
-| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing") |
+| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) |
 | Ends | Job `chain-care` (soon) |
 | Time | 2 min |
 

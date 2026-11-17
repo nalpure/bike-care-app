@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "0e6e9a2049aa4135",
+  "content_hash": "fab75489d6666aff",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -113,6 +113,27 @@
         "electronic": {
           "en": "A wire with a plug, or no wire at all",
           "de": "Ein Kabel mit Stecker, oder gar kein Kabel"
+        }
+      }
+    },
+    {
+      "key": "drive.rear_derailleur_type",
+      "type": "enum",
+      "values": [
+        "standard",
+        "low_normal"
+      ],
+      "ask": "never",
+      "safety": false,
+      "note": "Low-normal is also sold as rapid rise. Never asked, because a beginner cannot tell. Known from the bike's parts list, a partner, or the derailleur model. Unknown is treated as standard.",
+      "answers": {
+        "standard": {
+          "en": "Standard (high-normal) rear derailleur",
+          "de": "Standard-Schaltwerk (High-Normal)"
+        },
+        "low_normal": {
+          "en": "Rapid-rise (low-normal) rear derailleur",
+          "de": "Rapid-Rise-Schaltwerk (Low-Normal)"
         }
       }
     },
@@ -281,6 +302,45 @@
             "job": "derailleur-check-at-shop",
             "urgency": "do_not_ride"
           }
+        }
+      ]
+    },
+    {
+      "id": "barrel-adjuster-present",
+      "applies_when": {
+        "drive.gear_type": [
+          "derailleur"
+        ]
+      },
+      "hands_off": true,
+      "minutes": 1,
+      "text": "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.",
+      "tools": {
+        "required": [],
+        "helpful": [
+          "torch"
+        ]
+      },
+      "focus": [
+        "barrel_adjuster",
+        "shift_cable"
+      ],
+      "view": "barrel_adjuster_close",
+      "states": [
+        {
+          "id": "at-derailleur",
+          "label": "It is at the derailleur",
+          "meaning": "The cable tension can be set at the derailleur."
+        },
+        {
+          "id": "at-shifter-or-cable",
+          "label": "It is at the shifter, or on the cable",
+          "meaning": "The cable tension can be set there. It works the same way."
+        },
+        {
+          "id": "none",
+          "label": "I cannot find one",
+          "meaning": "This bike may have no barrel adjuster."
         }
       ]
     },
@@ -959,31 +1019,6 @@
           ]
         }
       ]
-    },
-    {
-      "id": "find-barrel-adjuster",
-      "kind": "check",
-      "minutes": 1,
-      "text": "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.",
-      "focus": [
-        "barrel_adjuster",
-        "shift_cable"
-      ],
-      "view": "barrel_adjuster_close",
-      "buttons": [
-        {
-          "label": "It is at the derailleur",
-          "text": "Good. You turn this knob in the next step."
-        },
-        {
-          "label": "It is at the shifter, or on the cable",
-          "text": "Good. You turn this knob in the next step. It works the same way."
-        },
-        {
-          "label": "I cannot find one",
-          "text": "Some bikes have none. Skip the next step. If the gears still shift slowly at the end, a shop can set the cable."
-        }
-      ]
     }
   ],
   "procedures": [
@@ -1079,6 +1114,14 @@
           "cases": [
             {
               "when": {
+                "drive.rear_derailleur_type": [
+                  "low_normal"
+                ]
+              },
+              "not_covered": "Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you."
+            },
+            {
+              "when": {
                 "choice.hold_bike": [
                   "stand",
                   "hang",
@@ -1094,6 +1137,16 @@
                       "straight": "continue",
                       "crooked": {
                         "stop": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+                      }
+                    }
+                  },
+                  {
+                    "inspect": "barrel-adjuster-present",
+                    "outcomes": {
+                      "at-derailleur": "continue",
+                      "at-shifter-or-cable": "continue",
+                      "none": {
+                        "stop": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
                       }
                     }
                   },
@@ -1114,9 +1167,6 @@
                   },
                   {
                     "step": "check-b-gap"
-                  },
-                  {
-                    "step": "find-barrel-adjuster"
                   },
                   {
                     "step": "check-cable-tension"
@@ -1163,6 +1213,16 @@
                     }
                   },
                   {
+                    "inspect": "barrel-adjuster-present",
+                    "outcomes": {
+                      "at-derailleur": "continue",
+                      "at-shifter-or-cable": "continue",
+                      "none": {
+                        "stop": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+                      }
+                    }
+                  },
+                  {
                     "step": "park-bike"
                   },
                   {
@@ -1179,9 +1239,6 @@
                   },
                   {
                     "step": "check-b-gap"
-                  },
-                  {
-                    "step": "find-barrel-adjuster"
                   },
                   {
                     "step": "check-cable-tension-riding"
@@ -1263,6 +1320,10 @@
         ],
         "drive.shifting": [
           "mechanical"
+        ],
+        "drive.rear_derailleur_type": [
+          "standard",
+          "unknown"
         ]
       },
       "if_unknown": "ask",
@@ -1320,6 +1381,14 @@
             ]
           },
           "message": "Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant."
+        },
+        {
+          "when": {
+            "drive.rear_derailleur_type": [
+              "low_normal"
+            ]
+          },
+          "message": "Rapid-rise rear derailleurs are not supported yet. A shop can check them. You can also ask the assistant."
         },
         {
           "when": {

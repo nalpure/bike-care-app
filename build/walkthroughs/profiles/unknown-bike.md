@@ -87,16 +87,19 @@ Time shown for this bike: 26 to 29 min (depends on how the bike is held).
 
 #### Steps
 
-##### 1. `derailleur-alignment` · inspection · 1 min
+##### – `derailleur-alignment` · not shown again: answered earlier in this session ("It hangs straight down, in line with the sprockets")
 
-Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
+##### 1. `barrel-adjuster-present` · inspection · 1 min
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
+
+<sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
 
 Tools: Torch or phone light (helpful)
 
-- [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → continue ◀ **this path**
-- [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **STOP**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
+- [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue ◀ **this path**
+- [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
+- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **STOP**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
 
 ##### 2. `park-bike` · action · 1 min
 
@@ -160,17 +163,7 @@ Tools: Small cross-head screwdriver or small hex key, whichever fits the small s
 - [ ] **A big gap, and shifting here was slow** → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
   - Show solution: "Unscrew the B screw a little" (clip b-gap-adjust)
 
-##### 8. `find-barrel-adjuster` · check · 1 min
-
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
-
-<sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
-
-- [ ] **It is at the derailleur** → Good. You turn this knob in the next step.
-- [ ] **It is at the shifter, or on the cable** → Good. You turn this knob in the next step. It works the same way.
-- [ ] **I cannot find one** → Some bikes have none. Skip the next step. If the gears still shift slowly at the end, a shop can set the cable.
-
-##### 9. `check-cable-tension-riding` · check · 10 min
+##### 8. `check-cable-tension-riding` · check · 10 min
 
 Ride slowly and shift one gear at a time, through all gears and back. Stop and park the bike before you turn anything.
 
@@ -182,7 +175,7 @@ Ride slowly and shift one gear at a time, through all gears and back. Stop and p
   - Show solution: "Screw in the barrel adjuster a quarter turn" (clip cable-tension-shift)
 - [ ] **Every shift is quick and quiet** → The cable tension is right.
 
-##### 10. `check-all-gears-riding` · safety check · 3 min
+##### 9. `check-all-gears-riding` · safety check · 3 min
 
 Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen.
 
@@ -194,8 +187,8 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 #### End
 
-Done. Nothing is left apart. Tutorial time: 29 min.
+Done. Nothing is left apart. Tutorial time: 28 min.
 
-**Journey ends:** tutorial complete. **Time:** 34 min. **Questions asked:** 2.
+**Journey ends:** tutorial complete. **Time:** 33 min. **Questions asked:** 2.
 
 ---

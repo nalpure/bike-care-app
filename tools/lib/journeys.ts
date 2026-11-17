@@ -8,6 +8,7 @@ import {
   combined, findJumpTarget, resolveDiagnosis, resolveTutorial, type DiagnosisCheck, type Reader,
 } from './expand.js';
 import { tutorialTimeRange } from './flows.js';
+import { neverAsked } from './refs.js';
 import type { Issues } from './issues.js';
 import {
   choiceBlock, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
@@ -39,6 +40,8 @@ class Run {
   usedSees = new Set<string>();
   usedTutorialSees = new Set<string>();
   findings: Finding[] = [];
+  /** every inspection answered in this session (inspection id -> state), so no check is done twice */
+  session = new Map<string, string>();
   failed = false;
 
   constructor(
@@ -87,6 +90,7 @@ class Run {
       if (key.startsWith('choice.')) return this.choiceValue(key);
       if (key.startsWith('tool.')) return this.toolValue(key);
       if (this.known.has(key)) return this.known.get(key)!;
+      if (neverAsked(this.c, key)) return UNKNOWN;
       const answers = this.p.def.answers ?? {};
       if (key in answers) {
         this.known.set(key, answers[key]);
@@ -165,6 +169,7 @@ function runDiagnosis(c: Content, r: Run, d: Entry): { job?: string; urgency?: s
     }
     r.L.push(...renderDiagnosisCheck(c, ch, n++, state, r.knownFn, false, 'diagnosis', 5));
     r.minutes += ch.def.minutes;
+    r.session.set(ch.id, state);
     const hit = ch.hits[state];
     if (hit) {
       const st = ch.def.states.find((s: any) => s.id === state);
@@ -216,6 +221,10 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
   let jumped = false;
   let finishShown = false;
   let n = 1;
+  const skipIds = new Map<string, string>();
+  // Before the first step, an inspection answered earlier in this session is not shown again.
+  // After work has started it is a re-check of the result and is always shown.
+  let workStarted = false;
   for (let i = 0; i < all.length; i++) {
     const it = all[i];
     if (it.list === 'finish') {
@@ -223,17 +232,24 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
       if (!finishShown) r.L.push('##### Finish', '');
       finishShown = true;
     }
+    if (skipIds.has(it.id)) {
+      r.L.push(`##### – \`${it.id}\` · skipped: the owner answered "${skipIds.get(it.id)}" earlier`, '');
+      continue;
+    }
     const before = new Set(state);
     if (it.kind === 'step') {
+      workStarted = true;
       for (const l of it.def.clears ?? []) state.delete(substParams(l, params));
       for (const l of it.def.sets ?? []) state.add(substParams(l, params));
     }
     // What does the owner tap here?
     let chosen: string | undefined;
+    let repeat = false;
     let outcome: { kind: 'continue' | 'block' | 'stop' | 'end'; message?: string; showHowFrom?: string; good?: string } = { kind: 'continue' };
     if (it.kind === 'inspect') {
-      chosen = sees[it.id];
-      r.usedTutorialSees.add(it.id);
+      repeat = !workStarted && r.session.has(it.id);
+      chosen = repeat ? r.session.get(it.id) : sees[it.id];
+      if (!repeat) r.usedTutorialSees.add(it.id);
       if (chosen === undefined) {
         r.error('profile-missing-sees', `The tutorial reaches inspection "${it.id}", but the journey has no tutorial_sees.${it.id}.`, 'tutorial_sees');
         return 'incomplete profile';
@@ -259,9 +275,16 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
       }
       if (b?.block) outcome = { kind: 'block', message: b.block, good: it.buttons.find((x: any) => !x.block && !x.stop)?.label };
       if (b?.stop) outcome = { kind: 'stop', message: b.stop, showHowFrom: b.show_how_from };
+      for (const s of b?.skips ?? []) skipIds.set(s, b.label);
     }
-    r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5 }));
-    r.minutes += it.def.minutes;
+    if (repeat) {
+      const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
+      r.L.push(`##### – \`${it.id}\` · not shown again: answered earlier in this session ("${label}")`, '');
+    } else {
+      r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5 }));
+      r.minutes += it.def.minutes;
+      if (it.kind === 'inspect' && chosen !== undefined) r.session.set(it.id, chosen);
+    }
 
     if (outcome.kind === 'block') {
       r.L.push(`Next stays disabled. After the fix, the owner taps "${outcome.good}" and goes on.`, '');
@@ -335,6 +358,7 @@ function runRoutine(c: Content, r: Run, id: string): string {
       for (const st of insp.def.states) hits[st.id] = st.leads_to ?? null;
       r.L.push(...renderDiagnosisCheck(c, { id: key, def: insp.def, hits, skipped: false, src: { file: insp.file, path: insp.path } }, n++, state, r.knownFn, false, 'check', 5));
       r.minutes += insp.def.minutes;
+      if (!pos) r.session.set(key, state);
       const st = insp.def.states.find((s: any) => s.id === state);
       if (st?.leads_to) {
         const job = c.jobs.get(st.leads_to.job)?.def;

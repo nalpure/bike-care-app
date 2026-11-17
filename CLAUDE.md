@@ -47,4 +47,5 @@ Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fi
 8. Do not stop to ask the owner. Write the assumption with a cautious default to `docs/assumptions.md` and continue.
 9. Mechanics in this repo are unverified drafts. The test build shows a notice saying so.
 10. Texts are written in English, short, one action per step, easy to translate into German.
-11. Ask only what changes the steps. A fact read by a condition must have a question; any other fact is only used in text when it is known (`{fact.key|fallback}` or `details`).
+11. Ask only what changes the steps. A fact read by a condition must have a question, unless it is `ask: never` (a beginner cannot tell; it comes only from the bike's data). Any other fact is only used in text when it is known (`{fact.key|fallback}` or `details`).
+12. Never the same check twice in a session. An inspection the user already answered is not shown again before the work starts; after the work, a check is a re-check and is shown.

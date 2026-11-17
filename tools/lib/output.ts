@@ -7,7 +7,7 @@ import type { Content } from './content.js';
 import type { Flows } from './flows.js';
 import { formatIssue, type Issues } from './issues.js';
 import type { JourneyResult } from './journeys.js';
-import { factLine, NOTICE, renderDiagnosisIndex, renderDiagnosisPath, renderRoutineCheck, renderTutorialIndex, renderTutorialPath } from './render.js';
+import { factsCell, NOTICE, renderDiagnosisIndex, renderDiagnosisPath, renderRoutineCheck, renderTutorialIndex, renderTutorialPath } from './render.js';
 import { ALL_RULES } from './rules.js';
 
 export interface Outputs {
@@ -60,8 +60,7 @@ export function renderReport(c: Content, flows: Flows, profiles: Map<string, { r
   L.push('## Where bikes end at a shop or not covered', '', 'Use this list to decide what to cover next.', '', '| Flow | Bike | Exit | Message |', '| --- | --- | --- | --- |');
   for (const f of [...flows.tutorials, ...flows.diagnoses]) {
     for (const e of f.exits) {
-      const facts = e.combo.asked.map((k) => factLine(c, k, e.combo.assign[k])).join('<br>') || 'any bike';
-      L.push(`| ${f.id} | ${facts} | ${e.exit.kind} | ${e.exit.message} |`);
+      L.push(`| ${f.id} | ${factsCell(c, e.combo)} | ${e.exit.kind} | ${e.exit.message} |`);
     }
   }
   L.push('');

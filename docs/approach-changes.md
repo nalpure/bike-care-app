@@ -26,6 +26,12 @@ No changes.
 - **Why:** The owner does not want questions whose answer does not change the steps (such as the number of gears).
 - **Where:** `facts.yaml` (`question` is required only for facts that conditions read; the build checks it), `details` on steps and inspections, `tools/lib/conditions.ts` (`fillText`).
 
+### AC-19 Facts the app never asks (extends)
+
+- **Date:** 2026-11-17 · **Decided by:** owner ("too niche, but catch them with a not-supported message")
+- **Now:** A fact can be marked `ask: never`. Conditions may read it, but the app never asks; it is unknown unless the bike's data provides it (a parts list, a partner's QR code, a lookup). Use it for facts a beginner cannot tell, so that niche bikes end at "not supported" when the data is there, and everyone else gets the normal guide. Example: `drive.rear_derailleur_type` (rapid-rise derailleurs). In walkthroughs such a fact shows as "never asked; from the bike's data", and combinations that differ only in it but give the same result are one path.
+- **Where:** `schema/facts.schema.json` (`ask`), `tools/lib/expand.ts`, `tools/lib/flows.ts` (`ComboIds`).
+
 ### AC-03 Session state also covers "not ready to ride" (clarifies)
 
 - **Date:** 2026-11-17 · **Decided by:** owner (confirmed in conversation)
@@ -45,7 +51,14 @@ No changes.
 ### AC-05 A tutorial may repeat a diagnosis inspection at its start (clarifies)
 
 - **Date:** 2026-11-17 · **Decided by:** agent, owner informed
-- **Now:** `adjust-rear-shifting` starts with `derailleur-alignment`, which the diagnosis also runs. Users who open the tutorial directly skip the diagnosis, and a stop there costs nothing because nothing is apart yet.
+- **Now:** `adjust-rear-shifting` starts with `derailleur-alignment`, which the diagnosis also runs. Users who open the tutorial directly skip the diagnosis, and a stop there costs nothing because nothing is apart yet. See AC-20 for what happens when the user just answered it.
+
+### AC-20 No inspection twice in one session (changes)
+
+- **Date:** 2026-11-17 · **Decided by:** owner ("a user shouldn't need to do the same step twice")
+- **Now:** Every inspection state the user reports in a session (diagnosis, routine check, tutorial) is kept for that session. In a tutorial, an inspection call **before the first step** whose inspection was already answered in this session is not shown again; the earlier answer decides its outcome. After the first step it is a re-check of the result (for example the test ride in `finish`) and is always shown. The player must implement this rule; the profile journeys apply it.
+- **Open:** whether a finding from an earlier day also counts (see "How long findings are kept" in approach.md).
+- **Where:** `tools/lib/journeys.ts` (`session`, `workStarted`), note in each tutorial walkthrough.
 
 ## Findings, jobs and the to-do list
 
@@ -77,6 +90,19 @@ No changes.
 
 - **Date:** 2026-11-17 · **Decided by:** agent
 - **Now:** `show_how_from` names a step or a procedure called later in the same sequence. The jump lands on that procedure's first step for the user's choice (for example `release-bike` lands on "take the bike out of the stand" or "turn it back onto its wheels").
+
+### AC-21 Buttons may skip later steps (extends)
+
+- **Date:** 2026-11-17 · **Decided by:** owner (accepted SR-01)
+- **approach.md:** No skip construct; the legacy `skip_to` was replaced by stops and the jump-ahead.
+- **Now:** A button on a check step may carry `skips: [step-id, ...]`: later steps in the same sequence that this answer makes unnecessary. Never a safety check, an inspection call, or a step that sets or clears a state label. A target that a case does not contain is ignored; a target before the button is an error. Expansion adds one path per skipping button.
+- **Where:** `schema/common.schema.json` (button `skips`), rules `skip-unsafe` and `skip-not-ahead`.
+
+### AC-22 "Not supported" during a tutorial is an inspection call before the work (clarifies)
+
+- **Date:** 2026-11-17 · **Decided by:** agent, following the owner's request to catch niche bikes
+- **Now:** When a bike turns out to be unsupported only once the user looks at it (no barrel adjuster), the tutorial calls a hands-off inspection **before anything is opened or the bike is lifted**, with a `stop` outcome whose message says "not supported yet" and offers a shop. Because nothing is set yet, no jump is needed. This keeps `stop` within inspection calls (hard rule 5).
+- **Where:** inspection `barrel-adjuster-present`, both cases of `adjust-rear-shifting`.
 
 ### AC-10 Heavy-bike warnings (extends)
 

@@ -57,6 +57,16 @@ facts:
       mechanical: { en: "A thin cable in a housing", de: "Ein dünner Zug in einer Hülle" }
       electronic: { en: "A wire with a plug, or no wire at all", de: "Ein Kabel mit Stecker, oder gar kein Kabel" }
 
+  - key: drive.rear_derailleur_type
+    type: enum
+    values: [standard, low_normal]
+    ask: never
+    safety: false
+    note: "Low-normal is also sold as rapid rise. Never asked, because a beginner cannot tell. Known from the bike's parts list, a partner, or the derailleur model. Unknown is treated as standard."
+    answers:
+      standard: { en: "Standard (high-normal) rear derailleur", de: "Standard-Schaltwerk (High-Normal)" }
+      low_normal: { en: "Rapid-rise (low-normal) rear derailleur", de: "Rapid-Rise-Schaltwerk (Low-Normal)" }
+
   - key: drive.rear_speeds
     type: number
     safety: false

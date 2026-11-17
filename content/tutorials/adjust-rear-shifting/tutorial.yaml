@@ -15,6 +15,8 @@ tutorial:
   cases:
     - when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
       cases:
+        - when: { drive.rear_derailleur_type: [low_normal] }
+          not_covered: "Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you."
         - when: { choice.hold_bike: [stand, hang, upside_down] }
           include: cases/wheel-free.yaml
         - when: { choice.hold_bike: [ground] }

@@ -15,6 +15,38 @@ export interface Combo {
   assign: Record<string, Value>;
   asked: string[];
   baseId: string;
+  /** facts read but never asked (ask: never), with every value that gave this same result */
+  silent: string[];
+  alt: Record<string, Value[]>;
+}
+
+/**
+ * Combinations that differ only in facts the app never asks, and give the same result,
+ * are one path. Different results get the silent values appended to their id.
+ */
+class ComboIds {
+  private seen = new Map<string, Array<{ sig: string; combo: Combo }>>();
+
+  claim(res: { assign: Record<string, Value>; asked: string[]; read: string[] }, params: Record<string, string>, sig: string, c: Content): Combo | null {
+    const prefix = Object.values(params).join('.');
+    const key = [prefix, comboId(c, res.asked, res.assign)].filter(Boolean).join('.');
+    const silent = res.read.filter((k) => !res.asked.includes(k) && !k.startsWith('choice.') && !k.startsWith('tool.'));
+    const list = this.seen.get(key) ?? [];
+    const same = list.find((e) => e.sig === sig);
+    if (same) {
+      for (const k of silent) {
+        const vals = (same.combo.alt[k] ??= []);
+        if (!vals.includes(res.assign[k])) vals.push(res.assign[k]);
+      }
+      return null;
+    }
+    const suffix = silent.map((k) => `${k.split('.').pop()}-${res.assign[k]}`.replace(/_/g, '-')).join('.');
+    const baseId = list.length && suffix ? `${key}.${suffix}` : key;
+    const combo: Combo = { params, assign: res.assign, asked: res.asked, baseId, silent, alt: Object.fromEntries(silent.map((k) => [k, [res.assign[k]]])) };
+    list.push({ sig, combo });
+    this.seen.set(key, list);
+    return combo;
+  }
 }
 
 export interface TutorialPath {
@@ -78,6 +110,7 @@ export const SIM_RULES: Record<string, string> = {
   'check-needs-buttons': 'Every check and safety check on a path shows 2 or 3 buttons.',
   'too-many-buttons': 'At most three buttons or states per screen.',
   'choice-not-declared': 'A tutorial declares every run choice its conditions read.',
+  'skip-not-ahead': 'A button skips only steps that come later in the same sequence.',
   'inspection-not-applicable': 'An inspection called on a path applies to that bike.',
   'diagnosis-tutorial-coverage': 'A diagnosis that leads to a job with a tutorial is covered by that tutorial for the same bike.',
 };
@@ -150,13 +183,15 @@ export function simulateVariant(v: Variant, params: Record<string, string>, onPr
 
 function buildTutorialFlow(c: Content, t: TutorialEntry, agg: Aggregator): TutorialFlow {
   const flow: TutorialFlow = { id: t.def.id, entry: t, paths: [], exits: [] };
+  const ids = new ComboIds();
   for (const params of paramCombos(t.def.params)) {
     const results = enumerate(c, (r) => resolveTutorial(c, t, r, params));
     for (const res of results) {
-      const prefix = Object.values(params).join('.');
-      const baseId = [prefix, comboId(c, res.asked, res.assign)].filter(Boolean).join('.');
-      const combo: Combo = { params, assign: res.assign, asked: res.asked, baseId };
       const run = res.result;
+      const sig = run.exit ? `exit|${run.exit.kind}|${run.exit.message}` : combined(run).map((i) => `${i.id}${i.generic ? '*' : ''}:${i.buttons.length}`).join(',');
+      const combo = ids.claim(res, params, sig, c);
+      if (!combo) continue;
+      const baseId = combo.baseId;
 
       for (const k of res.read) {
         if (k.startsWith('choice.') && !(t.def.choices ?? []).includes(k.slice(7))) {
@@ -168,7 +203,7 @@ function buildTutorialFlow(c: Content, t: TutorialEntry, agg: Aggregator): Tutor
       if (run.exit) {
         flow.exits.push({ combo, exit: run.exit });
         if (run.exit.kind === 'uncovered') {
-          const facts = res.asked.map((k) => `${k}=${res.assign[k]}`).join(', ') || 'any bike';
+          const facts = [...res.asked, ...combo.silent].map((k) => `${k}=${res.assign[k]}`).join(', ') || 'any bike';
           agg.add('coverage', run.exit.src, `tutorial ${t.def.id}`, `${run.exit.message} No path, shop exit or not_covered for ${facts}. Add a case, or a not_covered entry for it.`, baseId);
         }
         continue;
@@ -200,6 +235,19 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
       if (it.buttons.length > 3) agg.add('too-many-buttons', it.defSrc, `${tid} / ${itemName(it)}`, `On this path the step shows ${it.buttons.length} buttons; at most 3.`, v.id);
     }
   });
+
+  if (v.ending === 'complete' && !v.skip) {
+    // A skip may only reach forward. A target missing from this case is fine; one behind the button is not.
+    v.items.forEach((from, index) => {
+      for (const b of from.buttons) {
+        for (const id of b.skips ?? []) {
+          const behind = v.items.some((x, i) => i <= index && x.id === id);
+          const elsewhere = v.items.some((x) => x.id === id && x.list !== from.list);
+          if (behind || elsewhere) agg.add('skip-not-ahead', from.defSrc, `${tid} / ${itemName(from)}`, `Button "${b.label}" skips ${id}, which comes before it or outside its ${from.list} on this path. Skips only reach forward.`, v.id);
+        }
+      }
+    });
+  }
 
   if (v.ending === 'complete') {
     if (p.final.size) {
@@ -269,17 +317,19 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
 
 function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlow {
   const flow: DiagnosisFlow = { id: d.def.id, entry: d, paths: [], exits: [] };
+  const ids = new ComboIds();
   for (const params of paramCombos(d.def.params)) {
     const results = enumerate(c, (r) => resolveDiagnosis(c, d, r, params));
     for (const res of results) {
-      const prefix = Object.values(params).join('.');
-      const baseId = [prefix, comboId(c, res.asked, res.assign)].filter(Boolean).join('.');
-      const combo: Combo = { params, assign: res.assign, asked: res.asked, baseId };
       const run = res.result;
+      const sig = run.exit ? `exit|${run.exit.kind}|${run.exit.message}` : run.checks.map((x) => `${x.id}${x.skipped ? '-' : ''}`).join(',');
+      const combo = ids.claim(res, params, sig, c);
+      if (!combo) continue;
+      const baseId = combo.baseId;
       if (run.exit) {
         flow.exits.push({ combo, exit: run.exit });
         if (run.exit.kind === 'uncovered') {
-          const facts = res.asked.map((k) => `${k}=${res.assign[k]}`).join(', ') || 'any bike';
+          const facts = [...res.asked, ...combo.silent].map((k) => `${k}=${res.assign[k]}`).join(', ') || 'any bike';
           agg.add('coverage', run.exit.src, `diagnosis ${d.def.id}`, `No path or not_covered entry for ${facts}. Add a not_covered entry for it.`, baseId);
         }
         continue;

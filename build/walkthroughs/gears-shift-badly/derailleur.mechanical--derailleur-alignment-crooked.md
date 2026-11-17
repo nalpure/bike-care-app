@@ -5,7 +5,7 @@
 | | |
 | --- | --- |
 | Path | `derailleur.mechanical--derailleur-alignment-crooked` |
-| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing") |
+| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) |
 | Ends | Job `derailleur-check-at-shop` (do_not_ride) |
 | Time | 1 min |
 

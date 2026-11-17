@@ -100,6 +100,12 @@
         "block": { "$ref": "#/$defs/text" },
         "stop": { "$ref": "#/$defs/text" },
         "show_how_from": { "$ref": "#/$defs/id" },
+        "skips": {
+          "description": "Later steps in the same sequence that this answer makes unnecessary. Only check steps; never safety checks, inspection calls or steps that set or clear a state label.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/id" }
+        },
         "when": { "$ref": "#/$defs/condition" }
       },
       "required": ["label"],

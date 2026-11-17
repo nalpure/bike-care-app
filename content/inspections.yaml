@@ -25,6 +25,25 @@ inspections:
         meaning: "The derailleur or the part that holds it may be bent."
         leads_to: { job: derailleur-check-at-shop, urgency: do_not_ride }
 
+  - id: barrel-adjuster-present
+    applies_when: { drive.gear_type: [derailleur] }
+    hands_off: true
+    minutes: 1
+    text: "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter."
+    tools: { required: [], helpful: [torch] }
+    focus: [barrel_adjuster, shift_cable]
+    view: barrel_adjuster_close
+    states:
+      - id: at-derailleur
+        label: "It is at the derailleur"
+        meaning: "The cable tension can be set at the derailleur."
+      - id: at-shifter-or-cable
+        label: "It is at the shifter, or on the cable"
+        meaning: "The cable tension can be set there. It works the same way."
+      - id: none
+        label: "I cannot find one"
+        meaning: "This bike may have no barrel adjuster."
+
   - id: chain-condition
     applies_when: { drive.gear_type: [derailleur, hub_gear, gearbox, single_speed] }
     hands_off: true

@@ -6,7 +6,7 @@
 | --- | --- |
 | Path | `derailleur.mechanical.ground--stop-derailleur-alignment-crooked` |
 | Tutorial | `adjust-rear-shifting` · case `test-rides` · difficulty 2 |
-| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing") |
+| Bike | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = standard or unknown (never asked; from the bike's data) |
 | Run choices | How will you hold the bike while you work? → On its wheels, and test with short rides |
 | Ends | stop at step 1 (`derailleur-alignment`: "It leans towards the spokes, or looks twisted"); nothing apart, ends with "Find a shop" |
 | Time | 1 min |
@@ -36,6 +36,8 @@ Tools picker. Needed: none. Helpful: Torch or phone light.
 ## Steps
 
 ### 1. `derailleur-alignment` · inspection · 1 min
+
+<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 

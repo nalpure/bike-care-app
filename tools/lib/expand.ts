@@ -6,7 +6,7 @@
 
 import type { Content, Entry, TutorialEntry } from './content.js';
 import { evaluate, substCondition, substParams, UNKNOWN, type Condition, type Value } from './conditions.js';
-import { factDef, posify } from './refs.js';
+import { factDef, neverAsked, posify } from './refs.js';
 import type { YamlFile, YPath } from './yamlfile.js';
 
 // ---------------------------------------------------------------- readers
@@ -71,7 +71,7 @@ export function enumerate<T>(c: Content, resolve: (r: Reader) => T, fixed: Recor
       else if (impliedTool(c, assign, key)) v = true;
       else throw new NeedKey(key);
       if (!read.includes(key)) read.push(key);
-      if (isAsk && !asked.includes(key)) asked.push(key);
+      if (isAsk && !asked.includes(key) && !neverAsked(c, key)) asked.push(key);
       return v;
     };
     const reader: Reader = {
@@ -317,6 +317,8 @@ export interface Variant {
   items: PathItem[];
   /** for each executed item, whether it was reached by the jump */
   afterJump: boolean[];
+  /** a complete path where a button skipped later steps */
+  skip?: { index: number; label: string; ids: string[] };
 }
 
 /** "The chain falls off, or touches the spokes" -> "chain-falls-off-or" */
@@ -368,6 +370,15 @@ export function variantsOf(run: TutorialRun, baseId: string, stateAt: (v: Varian
   const all = combined(run);
   const complete: Variant = { id: baseId, ending: 'complete', items: all, afterJump: all.map(() => false) };
   const out: Variant[] = [complete];
+  all.forEach((item, index) => {
+    for (const b of item.buttons) {
+      if (!b.skips?.length) continue;
+      const items = all.filter((x, i) => !(i > index && x.list === item.list && b.skips.includes(x.id)));
+      // A shared step may name targets that this case does not have; then the skip changes nothing here.
+      if (items.length === all.length) continue;
+      out.push({ id: `${baseId}--skip-${item.id}-${slug(b.label)}`, ending: 'complete', items, afterJump: items.map(() => false), skip: { index, label: b.label, ids: b.skips } });
+    }
+  });
   for (const sp of stopPoints(run)) {
     const sid = `${baseId}--${sp.kind}-${all[sp.index].id}-${sp.key}`;
     const upTo = all.slice(0, sp.index + 1);

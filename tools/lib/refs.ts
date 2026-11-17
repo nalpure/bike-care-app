@@ -31,6 +31,11 @@ export function factDef(c: Content, key: string): Entry | undefined {
   return c.facts.get(generic);
 }
 
+/** A fact the app never asks (ask: never): conditions read it, but it stays unknown unless the bike's data has it. */
+export function neverAsked(c: Content, key: string): boolean {
+  return factDef(c, key)?.def.ask === 'never';
+}
+
 export function stateLabelExists(c: Content, label: string): boolean {
   if (c.states.has(label)) return true;
   return c.states.has(label.replace(/\.(front|rear)$/, '.<pos>'));
@@ -62,7 +67,7 @@ export function checkCondition(x: Ctx, cond: Condition | undefined, loc: Loc): v
       err(x, loc, 'unknown-fact', `Condition reads fact "${key}", which is not in content/facts.yaml.`);
       continue;
     }
-    if (!f.def.question) {
+    if (!f.def.question && f.def.ask !== 'never') {
       err(x, loc, 'fact-needs-question', `Condition reads fact "${key}", so the app may need to ask it, but the fact has no question in content/facts.yaml.`);
     }
     const v = String(value);
@@ -185,6 +190,20 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
     if (b.block && b.stop) err(x, bl, 'button-kind', `Button "${b.label}" has both block and stop. Choose one.`);
     if (b.stop && b.solution) err(x, bl, 'no-solution-on-stop', `Button "${b.label}" stops the tutorial, so it cannot offer a solution.`);
     if (!b.text && !b.block && !b.stop) err(x, bl, 'button-needs-text', `Button "${b.label}" needs text, block or stop.`);
+    if (b.skips) {
+      if (b.block || b.stop) err(x, bl, 'button-kind', `Button "${b.label}" cannot both skip steps and ${b.block ? 'block' : 'stop'}.`);
+      if (step.kind === 'action') err(x, bl, 'skip-unsafe', 'Only check steps can skip later steps.');
+      for (const target of b.skips) {
+        const t = x.c.steps.get(target);
+        if (!t) {
+          err(x, bl, 'unknown-step', `skips names step "${target}", which is not defined in content/steps/.`);
+          continue;
+        }
+        if (t.def.kind === 'safety_check' || t.def.sets?.length || t.def.clears?.length) {
+          err(x, bl, 'skip-unsafe', `Button "${b.label}" skips ${target}, but a safety check or a step that sets or clears a state label must never be skipped.`);
+        }
+      }
+    }
     if (b.show_how_from && !stepOrProcedureExists(x.c, b.show_how_from)) {
       err(x, bl, 'unknown-show-how-from', `show_how_from "${b.show_how_from}" is neither a step nor a procedure.`);
     }

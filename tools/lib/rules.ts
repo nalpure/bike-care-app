@@ -21,6 +21,7 @@ export const STATIC_RULES: Record<string, string> = {
   'unknown-job': 'Every leads_to, override and no_hit names an existing job.',
   'unknown-tutorial': "Every job's tutorial exists.",
   'unknown-state-label': 'Every state label in sets, clears and forbidden_while exists in states.yaml.',
+  'skip-unsafe': 'Buttons skip only later plain steps: never safety checks, inspection calls or steps that change state labels.',
   'unknown-show-how-from': 'Every show_how_from names an existing step or procedure.',
   'unknown-node': 'Every focus node and animation target exists in the 3D catalog.',
   'unknown-view': 'Every view exists in the 3D catalog.',
