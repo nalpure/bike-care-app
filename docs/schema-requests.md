@@ -15,7 +15,26 @@ Entry format:
 
 ## Open requests
 
-None.
+## SR-02 A short label for every fact
+- 2026-11-17, requested by the agent building the player (prompt 2)
+- Needed for: the bike sheet in the garage, the shop summary
+- What cannot be expressed: a fact has a beginner `question` (long, written for asking) but no short name for a list ("Gears", "Rear derailleur model"). Detail facts have neither.
+- Closest allowed form used meanwhile: the player shows the question, or the fact key made readable (`drive.rear_speeds` -> "Rear speeds").
+- Proposal: optional `label: { en, de }` on every fact; required for facts without a question.
+
+## SR-03 Pictures for question answers
+- 2026-11-17, requested by the agent building the player (prompt 2)
+- Needed for: `facts.yaml` questions with `picture` (bike-categories, rear-gear-types, shifting-types)
+- What cannot be expressed: `picture` names a picture set, but nothing says where the images are or which image belongs to which answer.
+- Closest allowed form used meanwhile: the player shows a grey "Picture" tile next to each answer.
+- Proposal: a folder `content/pictures/<set>/<value>.webp`, copied into the bundle build; the check fails when an answer of a set has no image.
+
+## SR-04 Wording for the position question and exit headings
+- 2026-11-17, requested by the agent building the player (prompt 2)
+- Needed for: tutorials and diagnoses with `params: { pos: ... }`, and the four exit kinds
+- What cannot be expressed: the question "front or rear brake / wheel?" depends on the flow (brake or wheel) and has no text in the bundle; the exit kinds have no heading text either.
+- Closest allowed form used meanwhile: player wording "Which one?" with "Front" / "Rear", and fixed headings per exit kind (assumption A-24).
+- Proposal: `params.<name>.question: { en, de }` and `answers` per value; exit headings in a small `ui.yaml` with translations.
 
 ## Accepted
 
