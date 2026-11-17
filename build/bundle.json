@@ -1,0 +1,1382 @@
+{
+  "format": 1,
+  "content_hash": "b68653eca21808f4",
+  "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
+  "unverified": true,
+  "facts": [
+    {
+      "key": "bike.category",
+      "type": "enum",
+      "values": [
+        "mtb",
+        "road_gravel",
+        "trekking_city",
+        "cargo"
+      ],
+      "safety": false,
+      "question": {
+        "en": "What kind of bike is it?",
+        "de": "Was für ein Fahrrad ist es?",
+        "picture": "bike-categories"
+      },
+      "answers": {
+        "mtb": {
+          "en": "Mountain bike",
+          "de": "Mountainbike"
+        },
+        "road_gravel": {
+          "en": "Road or gravel bike",
+          "de": "Rennrad oder Gravelbike"
+        },
+        "trekking_city": {
+          "en": "Trekking or city bike",
+          "de": "Trekking- oder Stadtrad"
+        },
+        "cargo": {
+          "en": "Cargo bike",
+          "de": "Lastenrad"
+        }
+      }
+    },
+    {
+      "key": "bike.ebike",
+      "type": "boolean",
+      "safety": false,
+      "question": {
+        "en": "Does your bike have a motor?",
+        "de": "Hat dein Fahrrad einen Motor?"
+      },
+      "answers": {
+        "true": {
+          "en": "Yes, it is an e-bike",
+          "de": "Ja, es ist ein E-Bike"
+        },
+        "false": {
+          "en": "No motor",
+          "de": "Kein Motor"
+        }
+      }
+    },
+    {
+      "key": "drive.gear_type",
+      "type": "enum",
+      "values": [
+        "derailleur",
+        "hub_gear",
+        "gearbox",
+        "single_speed"
+      ],
+      "safety": false,
+      "question": {
+        "en": "Look at the rear wheel. Which picture looks like your bike?",
+        "de": "Schau dir das Hinterrad an. Welches Bild sieht aus wie dein Fahrrad?",
+        "picture": "rear-gear-types"
+      },
+      "answers": {
+        "derailleur": {
+          "en": "Several sprockets, and a part below them that guides the chain",
+          "de": "Mehrere Ritzel und darunter ein Teil, das die Kette führt"
+        },
+        "hub_gear": {
+          "en": "One sprocket, and a thick hub in the middle of the wheel",
+          "de": "Ein Ritzel und eine dicke Nabe in der Mitte des Rads"
+        },
+        "gearbox": {
+          "en": "One sprocket, and a box at the pedals",
+          "de": "Ein Ritzel und ein Kasten an den Pedalen"
+        },
+        "single_speed": {
+          "en": "One sprocket, and no way to change gear",
+          "de": "Ein Ritzel und keine Schaltung"
+        }
+      }
+    },
+    {
+      "key": "drive.shifting",
+      "type": "enum",
+      "values": [
+        "mechanical",
+        "electronic"
+      ],
+      "safety": false,
+      "note": "Only asked when drive.gear_type is derailleur, because conditions test it after the gear type.",
+      "question": {
+        "en": "Follow the shifter on the right of the handlebar. What connects it to the rear gears?",
+        "de": "Folge dem Schalthebel rechts am Lenker. Was verbindet ihn mit der hinteren Schaltung?",
+        "picture": "shifting-types"
+      },
+      "answers": {
+        "mechanical": {
+          "en": "A thin cable in a housing",
+          "de": "Ein dünner Zug in einer Hülle"
+        },
+        "electronic": {
+          "en": "A wire with a plug, or no wire at all",
+          "de": "Ein Kabel mit Stecker, oder gar kein Kabel"
+        }
+      }
+    },
+    {
+      "key": "drive.rear_speeds",
+      "type": "number",
+      "safety": false,
+      "note": "Detail fact. Never asked. Used in text when known."
+    },
+    {
+      "key": "drive.rear_derailleur_model",
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact, for example the model printed on the derailleur. Never asked. Used in text when known."
+    }
+  ],
+  "choices": [
+    {
+      "id": "hold_bike",
+      "question": "How will you hold the bike while you work?",
+      "options": [
+        {
+          "id": "stand",
+          "label": "In a work stand",
+          "recommended": true,
+          "requires_tools": [
+            "bike-stand"
+          ],
+          "note": "The easiest way. The rear wheel turns freely and the bike cannot fall.",
+          "warning": "Heavy bikes, such as e-bikes, can be too heavy for a small stand. Check the stand's maximum load."
+        },
+        {
+          "id": "hang",
+          "label": "Hanging from a hook or a rope",
+          "requires_tools": [
+            "hook-or-rope"
+          ],
+          "note": "The rear wheel hangs free, so you can turn the pedals by hand.",
+          "warning": "The hook or rope must carry the whole bike. A heavy bike can fall and hurt you."
+        },
+        {
+          "id": "upside_down",
+          "label": "Upside down, on saddle and handlebar",
+          "note": "Needs no tools. The rear wheel turns freely.",
+          "warning": "Turning a heavy bike over can hurt you. Ask someone to help."
+        },
+        {
+          "id": "ground",
+          "label": "On its wheels, and test with short rides",
+          "note": "Needs no tools, but takes longer. You adjust while the bike stands and test by riding."
+        }
+      ]
+    }
+  ],
+  "states": [
+    {
+      "id": "bike_in_stand",
+      "description": "The bike is clamped in a work stand.",
+      "put_back": "Take the bike out of the stand."
+    },
+    {
+      "id": "bike_hung",
+      "description": "The bike hangs from a hook or a rope.",
+      "put_back": "Take the bike down."
+    },
+    {
+      "id": "bike_upside_down",
+      "description": "The bike stands upside down on its saddle and handlebar.",
+      "put_back": "Turn the bike back onto its wheels."
+    }
+  ],
+  "tools": [
+    {
+      "id": "bike-stand",
+      "name": "Bike work stand",
+      "kind": "tool"
+    },
+    {
+      "id": "hook-or-rope",
+      "name": "Strong hook or rope that can carry the bike",
+      "kind": "tool",
+      "do_not_use": [
+        {
+          "name": "Thin string or a coat hook",
+          "reason": "It can break, and the bike falls"
+        }
+      ]
+    },
+    {
+      "id": "work-mat",
+      "name": "Soft mat or old blanket",
+      "kind": "tool",
+      "substitutes": [
+        {
+          "name": "Flattened cardboard box"
+        }
+      ]
+    },
+    {
+      "id": "torch",
+      "name": "Torch or phone light",
+      "kind": "tool"
+    },
+    {
+      "id": "derailleur-screw-tool",
+      "name": "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur",
+      "kind": "tool",
+      "substitutes": [
+        {
+          "name": "Bike multi-tool with a small cross-head bit and small hex keys"
+        }
+      ],
+      "do_not_use": [
+        {
+          "name": "A screwdriver that is too big or too small",
+          "reason": "It slips and damages the screw head"
+        }
+      ]
+    },
+    {
+      "id": "clean-cloth",
+      "name": "Clean cloth",
+      "kind": "consumable",
+      "substitutes": [
+        {
+          "name": "Kitchen paper"
+        }
+      ]
+    }
+  ],
+  "parts": [],
+  "inspections": [
+    {
+      "id": "derailleur-alignment",
+      "applies_when": {
+        "drive.gear_type": [
+          "derailleur"
+        ]
+      },
+      "hands_off": true,
+      "minutes": 1,
+      "text": "Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.",
+      "tools": {
+        "required": [],
+        "helpful": [
+          "torch"
+        ]
+      },
+      "focus": [
+        "rear_derailleur",
+        "derailleur_hanger",
+        "cassette"
+      ],
+      "view": "derailleur_from_behind",
+      "states": [
+        {
+          "id": "straight",
+          "label": "It hangs straight down, in line with the sprockets",
+          "meaning": "The derailleur does not look bent."
+        },
+        {
+          "id": "crooked",
+          "label": "It leans towards the spokes, or looks twisted",
+          "meaning": "The derailleur or the part that holds it may be bent.",
+          "leads_to": {
+            "job": "derailleur-check-at-shop",
+            "urgency": "do_not_ride"
+          }
+        }
+      ]
+    },
+    {
+      "id": "chain-condition",
+      "applies_when": {
+        "drive.gear_type": [
+          "derailleur",
+          "hub_gear",
+          "gearbox",
+          "single_speed"
+        ]
+      },
+      "hands_off": true,
+      "minutes": 1,
+      "text": "Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it.",
+      "tools": {
+        "required": [],
+        "helpful": [
+          "torch"
+        ]
+      },
+      "focus": [
+        "chain"
+      ],
+      "view": "chain_close",
+      "animation": {
+        "target": "crank",
+        "motion": "rotate",
+        "direction": "backwards",
+        "amount": "slowly, two full turns",
+        "caption": "Turn the pedals backwards"
+      },
+      "states": [
+        {
+          "id": "clean",
+          "label": "Clean, with a thin film of oil",
+          "meaning": "The chain looks cared for."
+        },
+        {
+          "id": "dry-or-rusty",
+          "label": "Dry, rusty, or it squeaks",
+          "meaning": "The chain needs cleaning and oil.",
+          "leads_to": {
+            "job": "chain-care",
+            "urgency": "soon"
+          }
+        },
+        {
+          "id": "dirty",
+          "label": "Black and gritty",
+          "meaning": "The chain needs cleaning and oil.",
+          "leads_to": {
+            "job": "chain-care",
+            "urgency": "soon"
+          }
+        }
+      ]
+    },
+    {
+      "id": "shift-test-ride",
+      "applies_when": {
+        "drive.gear_type": [
+          "derailleur"
+        ]
+      },
+      "hands_off": true,
+      "minutes": 3,
+      "text": "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.",
+      "focus": [
+        "shifter_rear",
+        "cassette"
+      ],
+      "view": "drive_side",
+      "states": [
+        {
+          "id": "slow-to-bigger",
+          "label": "Slow or rattling when pedalling gets lighter",
+          "meaning": "The chain is slow to climb to the bigger sprockets.",
+          "leads_to": {
+            "job": "adjust-rear-shifting",
+            "urgency": "soon"
+          }
+        },
+        {
+          "id": "slow-to-smaller",
+          "label": "Slow or rattling when pedalling gets harder",
+          "meaning": "The chain is slow to drop to the smaller sprockets.",
+          "leads_to": {
+            "job": "adjust-rear-shifting",
+            "urgency": "soon"
+          }
+        },
+        {
+          "id": "fine",
+          "label": "Every gear changes quickly and runs quietly",
+          "meaning": "The rear gears shift well."
+        }
+      ]
+    }
+  ],
+  "jobs": [
+    {
+      "id": "adjust-rear-shifting",
+      "title": "Adjust the rear gears",
+      "tutorial": "adjust-rear-shifting",
+      "shop": {
+        "tell": "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable.",
+        "price_eur": "<range>",
+        "price_source": "<source, date>"
+      }
+    },
+    {
+      "id": "chain-care",
+      "title": "Clean and oil the chain",
+      "shop": {
+        "tell": "The chain is dry, dirty or rusty. Please clean and oil it, and check it for wear.",
+        "price_eur": "<range>",
+        "price_source": "<source, date>"
+      }
+    },
+    {
+      "id": "derailleur-check-at-shop",
+      "title": "Have the rear gears checked",
+      "shop": {
+        "tell": "The rear gears do not work as they should. Please check the rear derailleur, the part that holds it, and the gear cable.",
+        "price_eur": "<range>",
+        "price_source": "<source, date>"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "clamp-in-stand",
+      "kind": "action",
+      "minutes": 2,
+      "text": "Clamp the seat post in the stand so the rear wheel hangs free. With a heavy bike, ask someone to help you lift it.",
+      "tools": {
+        "required": [
+          "bike-stand"
+        ],
+        "helpful": []
+      },
+      "sets": [
+        "bike_in_stand"
+      ],
+      "focus": [
+        "stand_clamp",
+        "seat_post"
+      ],
+      "view": "whole_bike",
+      "animation": {
+        "target": "stand_clamp",
+        "motion": "rotate",
+        "direction": "tighten",
+        "amount": "until the bike sits firm",
+        "caption": "Close the clamp around the seat post"
+      }
+    },
+    {
+      "id": "hang-bike",
+      "kind": "action",
+      "minutes": 3,
+      "text": "Hang the bike by the front of its saddle from the hook or rope, so the rear wheel is off the ground. Check that it hangs firmly before you let go.",
+      "tools": {
+        "required": [
+          "hook-or-rope"
+        ],
+        "helpful": []
+      },
+      "sets": [
+        "bike_hung"
+      ],
+      "focus": [
+        "saddle",
+        "rear_wheel"
+      ],
+      "view": "whole_bike",
+      "animation": {
+        "target": "bike",
+        "motion": "pull",
+        "direction": "up at the saddle",
+        "amount": "until the rear wheel is off the ground",
+        "caption": "Lift the rear of the bike onto the hook"
+      }
+    },
+    {
+      "id": "turn-upside-down",
+      "kind": "action",
+      "minutes": 2,
+      "text": "Lay a soft mat on the floor and turn the bike over onto its saddle and handlebar. With a heavy bike, ask someone to help.",
+      "tools": {
+        "required": [],
+        "helpful": [
+          "work-mat"
+        ]
+      },
+      "sets": [
+        "bike_upside_down"
+      ],
+      "focus": [
+        "saddle",
+        "handlebar"
+      ],
+      "view": "whole_bike",
+      "animation": {
+        "target": "bike",
+        "motion": "rotate",
+        "direction": "over, wheels up",
+        "amount": "half a turn",
+        "caption": "Turn the bike over onto the mat"
+      }
+    },
+    {
+      "id": "unclamp-from-stand",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Hold the bike, open the stand clamp and put the bike on its wheels. With a heavy bike, ask someone to help.",
+      "tools": {
+        "required": [
+          "bike-stand"
+        ],
+        "helpful": []
+      },
+      "clears": [
+        "bike_in_stand"
+      ],
+      "focus": [
+        "stand_clamp"
+      ],
+      "view": "whole_bike",
+      "animation": {
+        "target": "stand_clamp",
+        "motion": "rotate",
+        "direction": "loosen",
+        "amount": "until open",
+        "caption": "Open the clamp while you hold the bike"
+      }
+    },
+    {
+      "id": "take-bike-down",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Hold the bike, lift it off the hook or rope and put the rear wheel on the ground.",
+      "tools": {
+        "required": [
+          "hook-or-rope"
+        ],
+        "helpful": []
+      },
+      "clears": [
+        "bike_hung"
+      ],
+      "focus": [
+        "saddle",
+        "rear_wheel"
+      ],
+      "view": "whole_bike",
+      "animation": {
+        "target": "bike",
+        "motion": "push",
+        "direction": "down",
+        "amount": "until the rear wheel is on the ground",
+        "caption": "Lift the bike off and set it down"
+      }
+    },
+    {
+      "id": "turn-bike-upright",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Turn the bike back onto its wheels. With a heavy bike, ask someone to help.",
+      "clears": [
+        "bike_upside_down"
+      ],
+      "focus": [
+        "bike"
+      ],
+      "view": "whole_bike",
+      "animation": {
+        "target": "bike",
+        "motion": "rotate",
+        "direction": "over, wheels down",
+        "amount": "half a turn",
+        "caption": "Turn the bike back onto its wheels"
+      }
+    },
+    {
+      "id": "park-bike",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Put the bike on its kickstand, or lean it against a wall at the saddle and rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls.",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "focus": [
+        "kickstand",
+        "rear_wheel"
+      ],
+      "view": "whole_bike"
+    },
+    {
+      "id": "shift-to-smallest-sprocket",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket.",
+      "focus": [
+        "shifter_rear",
+        "smallest_sprocket",
+        "chain"
+      ],
+      "view": "drive_side",
+      "animation": {
+        "clip": "shift-to-smallest",
+        "caption": "Shift while the pedals turn"
+      }
+    },
+    {
+      "id": "shift-to-largest-sprocket",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Turn the pedals by hand and shift one gear at a time until the chain sits on the largest sprocket. Stop shifting if the chain moves past it towards the spokes.",
+      "focus": [
+        "shifter_rear",
+        "largest_sprocket",
+        "chain"
+      ],
+      "view": "drive_side",
+      "animation": {
+        "clip": "shift-to-largest",
+        "caption": "Shift one gear at a time"
+      }
+    },
+    {
+      "id": "check-cable-tension",
+      "kind": "check",
+      "minutes": 5,
+      "text": "Turn the pedals by hand and shift one gear at a time, up through all gears and back. Watch the chain.",
+      "focus": [
+        "barrel_adjuster",
+        "chain",
+        "cassette"
+      ],
+      "view": "drive_side",
+      "buttons": [
+        {
+          "label": "Slow or noisy going to bigger sprockets",
+          "text": "The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again.",
+          "solution": [
+            {
+              "clip": "cable-tension-shift",
+              "view": "barrel_adjuster_close",
+              "caption": "Unscrew the barrel adjuster a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "Slow or noisy going to smaller sprockets",
+          "text": "The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again.",
+          "solution": [
+            {
+              "clip": "cable-tension-shift",
+              "view": "barrel_adjuster_close",
+              "caption": "Screw in the barrel adjuster a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "Every shift is quick and quiet",
+          "text": "The cable tension is right."
+        }
+      ]
+    },
+    {
+      "id": "check-all-gears",
+      "kind": "safety_check",
+      "minutes": 2,
+      "text": "Turn the pedals and shift through every gear, from the smallest sprocket to the largest and back. Watch and listen.",
+      "details": [
+        {
+          "needs": [
+            "drive.rear_speeds"
+          ],
+          "text": "Your bike has {drive.rear_speeds} gears at the rear."
+        }
+      ],
+      "focus": [
+        "cassette",
+        "chain",
+        "rear_derailleur"
+      ],
+      "view": "drive_side",
+      "buttons": [
+        {
+          "label": "Every gear runs quietly",
+          "text": "Your rear gears are set."
+        },
+        {
+          "label": "It rattles or jumps in some gears",
+          "text": "Turn the barrel adjuster a quarter turn, as in the earlier step, and shift through again. If it does not get better, a shop can check the cable."
+        },
+        {
+          "label": "The chain falls off, or touches the spokes",
+          "stop": "Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop.",
+          "show_how_from": "release-bike"
+        }
+      ]
+    },
+    {
+      "id": "check-low-limit-by-hand",
+      "kind": "safety_check",
+      "minutes": 3,
+      "text": "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper pulley wheel stop?",
+      "tools": {
+        "required": [
+          "derailleur-screw-tool"
+        ],
+        "helpful": []
+      },
+      "focus": [
+        "rear_derailleur",
+        "upper_pulley",
+        "largest_sprocket",
+        "l_screw"
+      ],
+      "view": "derailleur_from_behind",
+      "animation": {
+        "target": "rear_derailleur",
+        "motion": "push",
+        "direction": "towards the spokes",
+        "amount": "as far as it goes",
+        "caption": "Push the derailleur in by hand"
+      },
+      "buttons": [
+        {
+          "label": "Straight below the largest sprocket",
+          "text": "The L screw is set. Let go of the derailleur."
+        },
+        {
+          "label": "Past the largest sprocket, towards the spokes",
+          "block": "Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.",
+          "solution": [
+            {
+              "target": "l_screw",
+              "motion": "rotate",
+              "direction": "screw in",
+              "amount": "a quarter turn",
+              "view": "derailleur_from_behind",
+              "caption": "Screw in the L screw a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "It stops before the largest sprocket",
+          "text": "The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.",
+          "solution": [
+            {
+              "target": "l_screw",
+              "motion": "rotate",
+              "direction": "unscrew",
+              "amount": "a quarter turn",
+              "view": "derailleur_from_behind",
+              "caption": "Unscrew the L screw a quarter turn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ride-to-smallest-sprocket",
+      "kind": "action",
+      "minutes": 2,
+      "text": "Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Stop, and park the bike as before.",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "focus": [
+        "shifter_rear",
+        "smallest_sprocket"
+      ],
+      "view": "drive_side"
+    },
+    {
+      "id": "ride-to-largest-sprocket",
+      "kind": "action",
+      "minutes": 2,
+      "text": "Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket. Stop, and park the bike as before.",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "focus": [
+        "shifter_rear",
+        "largest_sprocket"
+      ],
+      "view": "drive_side"
+    },
+    {
+      "id": "check-cable-tension-riding",
+      "kind": "check",
+      "minutes": 10,
+      "text": "Ride slowly and shift one gear at a time, up through all gears and back. Stop before you change anything.",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "focus": [
+        "barrel_adjuster",
+        "chain",
+        "cassette"
+      ],
+      "view": "drive_side",
+      "buttons": [
+        {
+          "label": "Slow or noisy going to easier gears",
+          "text": "The cable is too loose. Park the bike, unscrew the barrel adjuster a quarter turn, then ride and shift again.",
+          "solution": [
+            {
+              "clip": "cable-tension-shift",
+              "view": "barrel_adjuster_close",
+              "caption": "Unscrew the barrel adjuster a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "Slow or noisy going to harder gears",
+          "text": "The cable is too tight. Park the bike, screw in the barrel adjuster a quarter turn, then ride and shift again.",
+          "solution": [
+            {
+              "clip": "cable-tension-shift",
+              "view": "barrel_adjuster_close",
+              "caption": "Screw in the barrel adjuster a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "Every shift is quick and quiet",
+          "text": "The cable tension is right."
+        }
+      ]
+    },
+    {
+      "id": "check-all-gears-riding",
+      "kind": "safety_check",
+      "minutes": 3,
+      "text": "Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen.",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "details": [
+        {
+          "needs": [
+            "drive.rear_speeds"
+          ],
+          "text": "Your bike has {drive.rear_speeds} gears at the rear."
+        }
+      ],
+      "focus": [
+        "cassette",
+        "chain",
+        "rear_derailleur"
+      ],
+      "view": "drive_side",
+      "buttons": [
+        {
+          "label": "Every gear runs quietly",
+          "text": "Your rear gears are set."
+        },
+        {
+          "label": "It rattles or jumps in some gears",
+          "text": "Park the bike, turn the barrel adjuster a quarter turn as in the earlier step, and ride again. If it does not get better, a shop can check the cable."
+        },
+        {
+          "label": "The chain falls off, or touches the spokes",
+          "stop": "Stop riding: the chain can catch in the spokes and lock the wheel. Push the bike to a shop."
+        }
+      ]
+    },
+    {
+      "id": "check-high-limit",
+      "kind": "check",
+      "minutes": 3,
+      "text": "Look from directly behind the bike. Where is the upper pulley wheel of the derailleur, compared with the smallest sprocket?",
+      "tools": {
+        "required": [
+          "derailleur-screw-tool"
+        ],
+        "helpful": [
+          "torch"
+        ]
+      },
+      "focus": [
+        "upper_pulley",
+        "smallest_sprocket",
+        "h_screw"
+      ],
+      "view": "derailleur_from_behind",
+      "buttons": [
+        {
+          "label": "Straight below the sprocket",
+          "text": "The H screw is set. Nothing to change."
+        },
+        {
+          "label": "Further in, towards the spokes",
+          "text": "Unscrew the screw marked H a quarter turn at a time, until the pulley sits straight below the sprocket.",
+          "solution": [
+            {
+              "clip": "limit-screw-align",
+              "caption": "Unscrew the H screw a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "Further out, away from the spokes",
+          "text": "The chain could fall off the outside. Screw in the screw marked H a quarter turn at a time, until the pulley sits straight below the sprocket.",
+          "solution": [
+            {
+              "clip": "limit-screw-align",
+              "caption": "Screw in the H screw a quarter turn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check-low-limit",
+      "kind": "safety_check",
+      "minutes": 3,
+      "text": "Look from directly behind the bike again. Where is the upper pulley wheel, compared with the largest sprocket?",
+      "tools": {
+        "required": [
+          "derailleur-screw-tool"
+        ],
+        "helpful": [
+          "torch"
+        ]
+      },
+      "focus": [
+        "upper_pulley",
+        "largest_sprocket",
+        "l_screw"
+      ],
+      "view": "derailleur_from_behind",
+      "buttons": [
+        {
+          "label": "Straight below the sprocket",
+          "text": "The L screw is set. Nothing to change."
+        },
+        {
+          "label": "Further in, towards the spokes",
+          "block": "Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn at a time, until the pulley sits straight below the sprocket.",
+          "solution": [
+            {
+              "clip": "limit-screw-align",
+              "caption": "Screw in the L screw a quarter turn"
+            }
+          ]
+        },
+        {
+          "label": "Further out, it does not reach",
+          "text": "The chain cannot reach the largest sprocket. Unscrew the screw marked L a quarter turn at a time, until the pulley sits straight below the sprocket.",
+          "solution": [
+            {
+              "clip": "limit-screw-align",
+              "caption": "Unscrew the L screw a quarter turn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check-b-gap",
+      "kind": "check",
+      "minutes": 3,
+      "text": "Keep the chain on the largest sprocket. Look from the side at the gap between the upper pulley wheel and the sprocket.",
+      "tools": {
+        "required": [
+          "derailleur-screw-tool"
+        ],
+        "helpful": [
+          "torch"
+        ]
+      },
+      "focus": [
+        "upper_pulley",
+        "largest_sprocket",
+        "b_screw"
+      ],
+      "view": "derailleur_side_close",
+      "buttons": [
+        {
+          "label": "A small gap, the teeth do not touch",
+          "text": "The gap is fine. The manual for {drive.rear_derailleur_model|your derailleur} gives the exact gap, if you want to check it."
+        },
+        {
+          "label": "The pulley touches the sprocket, or almost",
+          "text": "Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.",
+          "solution": [
+            {
+              "clip": "b-gap-adjust",
+              "caption": "Screw in the B screw a little"
+            }
+          ]
+        },
+        {
+          "label": "A big gap, and shifting here was slow",
+          "text": "Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.",
+          "solution": [
+            {
+              "clip": "b-gap-adjust",
+              "caption": "Unscrew the B screw a little"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "find-barrel-adjuster",
+      "kind": "action",
+      "minutes": 1,
+      "text": "Find the barrel adjuster: a small ribbed knob where the gear cable enters the derailleur, or where it leaves the right shifter.",
+      "focus": [
+        "barrel_adjuster",
+        "shift_cable"
+      ],
+      "view": "barrel_adjuster_close"
+    }
+  ],
+  "procedures": [
+    {
+      "id": "hold-bike",
+      "implementations": [
+        {
+          "when": {
+            "choice.hold_bike": [
+              "stand"
+            ]
+          },
+          "steps": [
+            "clamp-in-stand"
+          ]
+        },
+        {
+          "when": {
+            "choice.hold_bike": [
+              "hang"
+            ]
+          },
+          "steps": [
+            "hang-bike"
+          ]
+        },
+        {
+          "when": {
+            "choice.hold_bike": [
+              "upside_down"
+            ]
+          },
+          "steps": [
+            "turn-upside-down"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "release-bike",
+      "implementations": [
+        {
+          "when": {
+            "choice.hold_bike": [
+              "stand"
+            ]
+          },
+          "steps": [
+            "unclamp-from-stand"
+          ]
+        },
+        {
+          "when": {
+            "choice.hold_bike": [
+              "hang"
+            ]
+          },
+          "steps": [
+            "take-bike-down"
+          ]
+        },
+        {
+          "when": {
+            "choice.hold_bike": [
+              "upside_down"
+            ]
+          },
+          "steps": [
+            "turn-bike-upright"
+          ]
+        }
+      ]
+    }
+  ],
+  "tutorials": [
+    {
+      "id": "adjust-rear-shifting",
+      "job": "adjust-rear-shifting",
+      "difficulty": 2,
+      "choices": [
+        "hold_bike"
+      ],
+      "cases": [
+        {
+          "when": {
+            "drive.gear_type": [
+              "derailleur"
+            ],
+            "drive.shifting": [
+              "mechanical"
+            ]
+          },
+          "cases": [
+            {
+              "when": {
+                "choice.hold_bike": [
+                  "stand",
+                  "hang",
+                  "upside_down"
+                ]
+              },
+              "case": {
+                "name": "wheel-free",
+                "sequence": [
+                  {
+                    "inspect": "derailleur-alignment",
+                    "outcomes": {
+                      "straight": "continue",
+                      "crooked": {
+                        "stop": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+                      }
+                    }
+                  },
+                  {
+                    "procedure": "hold-bike"
+                  },
+                  {
+                    "step": "shift-to-smallest-sprocket"
+                  },
+                  {
+                    "step": "check-high-limit"
+                  },
+                  {
+                    "step": "shift-to-largest-sprocket"
+                  },
+                  {
+                    "step": "check-low-limit"
+                  },
+                  {
+                    "step": "check-b-gap"
+                  },
+                  {
+                    "step": "find-barrel-adjuster"
+                  },
+                  {
+                    "step": "check-cable-tension"
+                  },
+                  {
+                    "step": "check-all-gears"
+                  },
+                  {
+                    "procedure": "release-bike"
+                  }
+                ],
+                "finish": [
+                  {
+                    "inspect": "shift-test-ride",
+                    "outcomes": {
+                      "fine": "continue",
+                      "slow-to-bigger": {
+                        "stop": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+                      },
+                      "slow-to-smaller": {
+                        "stop": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "when": {
+                "choice.hold_bike": [
+                  "ground"
+                ]
+              },
+              "case": {
+                "name": "test-rides",
+                "sequence": [
+                  {
+                    "inspect": "derailleur-alignment",
+                    "outcomes": {
+                      "straight": "continue",
+                      "crooked": {
+                        "stop": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+                      }
+                    }
+                  },
+                  {
+                    "step": "park-bike"
+                  },
+                  {
+                    "step": "check-low-limit-by-hand"
+                  },
+                  {
+                    "step": "ride-to-smallest-sprocket"
+                  },
+                  {
+                    "step": "check-high-limit"
+                  },
+                  {
+                    "step": "ride-to-largest-sprocket"
+                  },
+                  {
+                    "step": "check-b-gap"
+                  },
+                  {
+                    "step": "find-barrel-adjuster"
+                  },
+                  {
+                    "step": "check-cable-tension-riding"
+                  },
+                  {
+                    "step": "check-all-gears-riding"
+                  }
+                ],
+                "finish": []
+              }
+            }
+          ]
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "derailleur"
+            ],
+            "drive.shifting": [
+              "electronic"
+            ]
+          },
+          "not_covered": "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "derailleur"
+            ],
+            "drive.shifting": [
+              "unknown"
+            ]
+          },
+          "not_covered": "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "hub_gear"
+            ]
+          },
+          "not_covered": "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "gearbox"
+            ]
+          },
+          "not_covered": "Gearboxes at the pedals are not covered yet."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "single_speed"
+            ]
+          },
+          "not_covered": "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "unknown"
+            ]
+          },
+          "not_covered": "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop."
+        }
+      ],
+      "if_unknown": "ask"
+    }
+  ],
+  "diagnoses": [
+    {
+      "id": "gears-shift-badly",
+      "symptom": "My gears don't shift cleanly",
+      "applies_when": {
+        "drive.gear_type": [
+          "derailleur"
+        ],
+        "drive.shifting": [
+          "mechanical"
+        ]
+      },
+      "if_unknown": "ask",
+      "checks": [
+        {
+          "inspect": "derailleur-alignment"
+        },
+        {
+          "inspect": "chain-condition"
+        },
+        {
+          "inspect": "shift-test-ride"
+        }
+      ],
+      "no_hit": {
+        "job": "derailleur-check-at-shop"
+      },
+      "not_covered": [
+        {
+          "when": {
+            "drive.gear_type": [
+              "hub_gear"
+            ]
+          },
+          "message": "Hub gears are not covered yet. A shop can check them, or ask the assistant."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "gearbox"
+            ]
+          },
+          "message": "Gearboxes at the pedals are not covered yet. A shop can check yours, or ask the assistant."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "single_speed"
+            ]
+          },
+          "message": "Your bike has only one gear, so this check does not fit it. If the chain skips or clunks, a shop can help, or ask the assistant."
+        },
+        {
+          "when": {
+            "drive.gear_type": [
+              "unknown"
+            ]
+          },
+          "message": "We need to know what kind of gears your bike has. Look at the rear wheel and come back, find a shop, or ask the assistant."
+        },
+        {
+          "when": {
+            "drive.shifting": [
+              "electronic"
+            ]
+          },
+          "message": "Electronic shifting is not covered yet. A shop can check it, or ask the assistant."
+        },
+        {
+          "when": {
+            "drive.shifting": [
+              "unknown"
+            ]
+          },
+          "message": "We need to know whether your gears use a cable. Look at the right shifter and come back, find a shop, or ask the assistant."
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "routine-check",
+      "title": "Routine check",
+      "inspections": [
+        {
+          "inspect": "derailleur-alignment"
+        },
+        {
+          "inspect": "chain-condition"
+        },
+        {
+          "inspect": "shift-test-ride"
+        }
+      ]
+    }
+  ]
+}

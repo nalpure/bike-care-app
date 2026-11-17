@@ -1,0 +1,398 @@
+// Profile journeys: what one test bike's owner sees from the first tap to the end.
+// Strict: every question, inspection and safety check the journey reaches must be answered
+// in the profile, or the check fails. Profiles are for reviewers only; the app never reads them.
+
+import type { Content, Entry, TutorialEntry } from './content.js';
+import { evaluate, substCondition, substParams, UNKNOWN, type Value } from './conditions.js';
+import {
+  combined, findJumpTarget, resolveDiagnosis, resolveTutorial, type DiagnosisCheck, type Reader,
+} from './expand.js';
+import { tutorialTimeRange } from './flows.js';
+import type { Issues } from './issues.js';
+import {
+  choiceBlock, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
+  toolSummary, type Known,
+} from './render.js';
+import { lineAt } from './yamlfile.js';
+
+export interface JourneyResult {
+  profile: string;
+  journey: string;
+  title: string;
+  ending: string;
+  minutes: number;
+  questions: number;
+}
+
+interface Finding {
+  inspection: string;
+  state: string;
+  label: string;
+  meaning: string;
+}
+
+class Run {
+  known = new Map<string, Value>();
+  asked: Array<{ stage: string; key: string; value: Value }> = [];
+  minutes = 0;
+  L: string[] = [];
+  usedSees = new Set<string>();
+  usedTutorialSees = new Set<string>();
+  findings: Finding[] = [];
+  failed = false;
+
+  constructor(
+    private c: Content,
+    public p: Entry,
+    public j: any,
+    public ji: number,
+    private issues: Issues,
+  ) {
+    for (const [k, v] of Object.entries<Value>(p.def.facts ?? {})) this.known.set(k, v);
+  }
+
+  error(rule: string, msg: string, ...path: (string | number)[]) {
+    this.failed = true;
+    const full = [...this.p.path, 'journeys', this.ji, ...path];
+    this.issues.error(this.p.file.rel, `profile ${this.p.def.id} / journey ${this.j.id}`, rule, msg, lineAt(this.p.file, full));
+  }
+
+  knownFn: Known = (k) => {
+    const v = this.known.get(k);
+    return v === undefined || v === UNKNOWN ? undefined : v;
+  };
+
+  private choiceValue(key: string): Value {
+    const id = key.slice(7);
+    const v = this.j.choices?.[id];
+    if (v === undefined) {
+      this.error('profile-missing-choice', `The journey reaches the run choice "${id}", but the journey has no choices.${id}.`, 'choices');
+      return this.c.choices.get(id)?.def.options[0]?.id ?? UNKNOWN;
+    }
+    return v;
+  }
+
+  private toolValue(key: string): Value {
+    const tool = key.slice(5);
+    if ((this.p.def.tools ?? []).includes(tool)) return true;
+    for (const [ch, opt] of Object.entries<any>(this.j.choices ?? {})) {
+      const o = this.c.choices.get(ch)?.def.options.find((x: any) => x.id === opt);
+      if (o?.requires_tools?.includes(tool)) return true;
+    }
+    return false;
+  }
+
+  reader(stage: string): Reader {
+    const ask = (key: string): Value => {
+      if (key.startsWith('choice.')) return this.choiceValue(key);
+      if (key.startsWith('tool.')) return this.toolValue(key);
+      if (this.known.has(key)) return this.known.get(key)!;
+      const answers = this.p.def.answers ?? {};
+      if (key in answers) {
+        this.known.set(key, answers[key]);
+        this.asked.push({ stage, key, value: answers[key] });
+        return answers[key];
+      }
+      this.error('profile-missing-answer', `The journey asks "${key}", but the profile has neither a fact nor an answer for it. Add it to answers (use unknown for "I'll check later").`, 'start');
+      this.known.set(key, UNKNOWN);
+      this.asked.push({ stage, key, value: UNKNOWN });
+      return UNKNOWN;
+    };
+    const look = (key: string): Value => {
+      if (key.startsWith('choice.')) return this.choiceValue(key);
+      if (key.startsWith('tool.')) return this.toolValue(key);
+      return this.known.get(key) ?? UNKNOWN;
+    };
+    return { ask, branch: look, peek: look };
+  }
+
+  questions(stage: string): string[] {
+    const qs = this.asked.filter((a) => a.stage === stage);
+    if (!qs.length) return [];
+    return [...qs.map((a, i) => `${i + 1}. ${questionLine(this.c, a.key, a.value)}`), ''];
+  }
+}
+
+function bikeTable(c: Content, p: any): string[] {
+  const facts = Object.entries<Value>(p.facts ?? {}).map(([k, v]) => factLine(c, k, v)).join('<br>') || 'nothing known';
+  const answers = Object.entries<Value>(p.answers ?? {}).map(([k, v]) => factLine(c, k, v)).join('<br>') || 'none';
+  const tools = (p.tools ?? []).map((t: string) => toolName(c, t)).join('<br>') || 'none';
+  return ['| | |', '| --- | --- |', `| Known before the first flow | ${facts} |`, `| Answers when asked | ${answers} |`, `| Tools with them | ${tools} |`, ''];
+}
+
+function shopSummary(c: Content, r: Run, jobId: string, extra: string[] = []): string[] {
+  const job = c.jobs.get(jobId)?.def;
+  const bike = [...r.known.entries()].filter(([, v]) => v !== UNKNOWN).map(([k, v]) => factLine(c, k, v)).join('; ') || 'nothing known';
+  return [
+    '**Shop summary** (to show or tell the mechanic):',
+    '',
+    `- Bike: ${r.p.def.name}. ${bike}`,
+    `- Job: ${job?.title ?? jobId}`,
+    `- Tell the mechanic: "${job?.shop.tell ?? ''}"`,
+    ...r.findings.map((f) => `- Found: ${f.label} (\`${f.inspection}\`: ${f.state})`),
+    ...extra,
+    `- Price: ${priceText(job)}`,
+    '',
+  ];
+}
+
+function notCovered(message: string): string[] {
+  return [`**Not covered yet:** ${message}`, '', 'Buttons: [Find a shop] [Ask the assistant]', ''];
+}
+
+// ---------------------------------------------------------------- diagnosis
+
+function runDiagnosis(c: Content, r: Run, d: Entry): { job?: string; urgency?: string; ending?: string; remaining: DiagnosisCheck[] } {
+  const reader = r.reader('diagnosis');
+  const run = resolveDiagnosis(c, d, reader, r.j.params ?? {});
+  r.L.push(`### Symptom: "${d.def.symptom}"`, '');
+  const qs = r.questions('diagnosis');
+  r.L.push(qs.length ? 'Questions the app asks first:' : 'No questions: the app already knows what it needs.', '', ...qs);
+  if (run.exit) {
+    r.L.push(...notCovered(run.exit.message));
+    return { ending: `not covered (${d.def.id})`, remaining: [] };
+  }
+  r.L.push('#### Checks', '');
+  let n = 1;
+  for (let i = 0; i < run.checks.length; i++) {
+    const ch = run.checks[i];
+    if (ch.skipped) continue;
+    const state = r.j.sees?.[ch.id];
+    r.usedSees.add(ch.id);
+    if (state === undefined) {
+      r.error('profile-missing-sees', `The diagnosis reaches inspection "${ch.id}", but the journey has no sees.${ch.id}.`, 'sees');
+      return { ending: 'incomplete profile', remaining: [] };
+    }
+    r.L.push(...renderDiagnosisCheck(c, ch, n++, state, r.knownFn, false, 'diagnosis', 5));
+    r.minutes += ch.def.minutes;
+    const hit = ch.hits[state];
+    if (hit) {
+      const st = ch.def.states.find((s: any) => s.id === state);
+      r.findings.push({ inspection: ch.id, state, label: st.label, meaning: st.meaning });
+      r.L.push(`Finding stored on the bike: \`${ch.id}\` = ${state}.`, '');
+      return { job: hit.job, urgency: hit.urgency, remaining: run.checks.slice(i + 1).filter((x) => !x.skipped) };
+    }
+  }
+  r.L.push('No check found a cause.', '');
+  return { job: d.def.no_hit.job, remaining: [] };
+}
+
+// ---------------------------------------------------------------- tutorial
+
+function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean): string {
+  const reader = r.reader('tutorial');
+  const params = r.j.params ?? {};
+  const run = resolveTutorial(c, t, reader, params);
+  const def = t.def;
+  r.L.push(`### Tutorial: ${c.jobs.get(def.job)?.def.title ?? def.id}`, '');
+  r.L.push('#### Before you start', '');
+  const qs = r.questions('tutorial');
+  r.L.push(qs.length ? 'Questions:' : 'No questions: everything needed is already known.', '', ...qs);
+  if (def.entry?.requires_finding?.length) {
+    r.L.push(fromFinding ? '"Is this needed?" is skipped: the diagnosis already found it.' : `"Is this needed?" runs ${def.entry.requires_finding.map((x: any) => `\`${x.inspection}\``).join(', ')}.`, '');
+  }
+  if (run.exit) {
+    if (run.exit.kind === 'shop') {
+      r.L.push(`**Shop:** ${run.exit.message}`, '', ...shopSummary(c, r, def.job));
+      return 'shop before the first step';
+    }
+    r.L.push(...notCovered(run.exit.message));
+    return 'not covered';
+  }
+  for (const ch of def.choices ?? []) r.L.push(...choiceBlock(c, ch, r.j.choices?.[ch]));
+  const all = combined(run);
+  const tools = toolSummary(c, all);
+  const has = (t: string) => (r.p.def.tools ?? []).includes(t);
+  const tl = (ids: string[]) => ids.map((x) => `${toolName(c, x)}${has(x) ? ' ✓' : ''}`).join('; ') || 'none';
+  r.L.push(`Tools picker. Needed: ${tl(tools.required)}. Helpful: ${tl(tools.helpful)}. (✓ = the owner has it)`, '');
+  const time = tutorialTimeRange(c, t, Object.fromEntries(r.known), params);
+  r.L.push(`Time shown for this bike: ${time ?? '?'} (depends on how the bike is held).`, '');
+
+  r.L.push('#### Steps', '');
+  const state = new Set<string>();
+  const sees = r.j.tutorial_sees ?? {};
+  let jumped = false;
+  let finishShown = false;
+  let n = 1;
+  for (let i = 0; i < all.length; i++) {
+    const it = all[i];
+    if (it.list === 'finish') {
+      if (jumped) break;
+      if (!finishShown) r.L.push('##### Finish', '');
+      finishShown = true;
+    }
+    const before = new Set(state);
+    if (it.kind === 'step') {
+      for (const l of it.def.clears ?? []) state.delete(substParams(l, params));
+      for (const l of it.def.sets ?? []) state.add(substParams(l, params));
+    }
+    // What does the owner tap here?
+    let chosen: string | undefined;
+    let outcome: { kind: 'continue' | 'block' | 'stop' | 'end'; message?: string; showHowFrom?: string; good?: string } = { kind: 'continue' };
+    if (it.kind === 'inspect') {
+      chosen = sees[it.id];
+      r.usedTutorialSees.add(it.id);
+      if (chosen === undefined) {
+        r.error('profile-missing-sees', `The tutorial reaches inspection "${it.id}", but the journey has no tutorial_sees.${it.id}.`, 'tutorial_sees');
+        return 'incomplete profile';
+      }
+      const o = it.outcomes?.[chosen];
+      if (o && typeof o === 'object') {
+        if (o.block) outcome = { kind: 'block', message: o.block, good: it.def.states.find((s: any) => it.outcomes?.[s.id] === 'continue')?.label };
+        if (o.stop) outcome = { kind: 'stop', message: o.stop, showHowFrom: o.show_how_from };
+        if (o.end) outcome = { kind: 'end', message: o.end, showHowFrom: o.show_how_from };
+      }
+    } else if (it.buttons.length) {
+      const decisive = it.buttons.some((b: any) => b.block || b.stop);
+      chosen = sees[it.id];
+      if (chosen !== undefined) r.usedTutorialSees.add(it.id);
+      if (decisive && chosen === undefined) {
+        r.error('profile-missing-sees', `The tutorial reaches safety check "${it.id}", but the journey has no tutorial_sees.${it.id} (the label of the button the owner taps).`, 'tutorial_sees');
+        return 'incomplete profile';
+      }
+      const b = it.buttons.find((x: any) => x.label === chosen);
+      if (chosen !== undefined && !b) {
+        r.error('unknown-button', `Step ${it.id} shows no button "${chosen}" on this path.`, 'tutorial_sees', it.id);
+        return 'incomplete profile';
+      }
+      if (b?.block) outcome = { kind: 'block', message: b.block, good: it.buttons.find((x: any) => !x.block && !x.stop)?.label };
+      if (b?.stop) outcome = { kind: 'stop', message: b.stop, showHowFrom: b.show_how_from };
+    }
+    r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5 }));
+    r.minutes += it.def.minutes;
+
+    if (outcome.kind === 'block') {
+      r.L.push(`Next stays disabled. After the fix, the owner taps "${outcome.good}" and goes on.`, '');
+      continue;
+    }
+    if (outcome.kind === 'stop' || outcome.kind === 'end') {
+      const apart = [...state];
+      const canJump = apart.length > 0 && !!outcome.showHowFrom;
+      r.L.push(`**${outcome.kind === 'stop' ? 'Stop' : 'End'} screen:** "${outcome.message}"`, '');
+      r.L.push(canJump ? 'Buttons: [Show me how to put it back] [Find a shop]' : 'Buttons: [Find a shop]', '');
+      if (!canJump) {
+        r.L.push(...shopSummary(c, r, def.job, [`- Stopped at: \`${it.id}\`, "${chosen}"`, ...(apart.length ? [`- **Still set: ${apart.join(', ')}**`] : [])]));
+        return `${outcome.kind} at ${it.id}`;
+      }
+      const choice = r.j.after_stop;
+      if (!choice) {
+        r.error('profile-missing-after-stop', `The journey reaches a stop with a jump button at "${it.id}", but has no after_stop (show_how or find_shop).`, 'after_stop');
+        return 'incomplete profile';
+      }
+      if (choice === 'find_shop') {
+        r.L.push('The owner taps "Find a shop".', '', ...shopSummary(c, r, def.job, [`- Stopped at: \`${it.id}\`, "${chosen}"`, `- **Still set: ${apart.join(', ')}**`]));
+        return `stop at ${it.id}, left with ${apart.join(', ')}`;
+      }
+      const j = findJumpTarget(run, i, outcome.showHowFrom!);
+      if (j === undefined) {
+        r.L.push('**The jump target is missing.** (The check reports this as an error.)', '');
+        return 'broken jump';
+      }
+      r.L.push(`The owner taps "Show me how to put it back". **Jumped ahead** in the same tutorial to \`${all[j].id}\`; ${j - i - 1} step(s) skipped. The progress bar moves forward once.`, '');
+      jumped = true;
+      i = j - 1;
+      continue;
+    }
+  }
+  if (jumped) {
+    r.L.push('#### End', '', ...shopSummary(c, r, def.job, ['- Already done: the steps above; the bike is back on its wheels']));
+    return state.size ? `jump ahead, but ${[...state].join(', ')} still set` : 'stop, jump ahead, bike put back, shop';
+  }
+  r.L.push('#### End', '', `Done. Nothing is left apart.${state.size ? ` **Still set: ${[...state].join(', ')}**` : ''}`, '');
+  return 'tutorial complete';
+}
+
+// ---------------------------------------------------------------- routine check
+
+function runRoutine(c: Content, r: Run, id: string): string {
+  const ch = c.checks.get(id)!.def;
+  const reader = r.reader('check');
+  r.L.push(`### ${ch.title}`, '');
+  const todo: string[] = [];
+  let n = 1;
+  for (const item of ch.inspections) {
+    const insp = c.inspections.get(item.inspect)!;
+    for (const pos of item.pos ?? [null]) {
+      const key = pos ? `${item.inspect}.${pos}` : item.inspect;
+      const params: Record<string, string> = pos ? { pos } : {};
+      if (insp.def.applies_when) {
+        if (!evaluate(substCondition(insp.def.applies_when, params), reader.ask)) {
+          r.L.push(`### – \`${key}\` · skipped (does not apply to this bike)`, '');
+          continue;
+        }
+      }
+      const state = r.j.sees?.[key];
+      r.usedSees.add(key);
+      if (state === undefined) {
+        r.error('profile-missing-sees', `The routine check reaches "${key}", but the journey has no sees.${key}.`, 'sees');
+        return 'incomplete profile';
+      }
+      const hits: DiagnosisCheck['hits'] = {};
+      for (const st of insp.def.states) hits[st.id] = st.leads_to ?? null;
+      r.L.push(...renderDiagnosisCheck(c, { id: key, def: insp.def, hits, skipped: false, src: { file: insp.file, path: insp.path } }, n++, state, r.knownFn, false, 'check', 5));
+      r.minutes += insp.def.minutes;
+      const st = insp.def.states.find((s: any) => s.id === state);
+      if (st?.leads_to) {
+        const job = c.jobs.get(st.leads_to.job)?.def;
+        todo.push(`- [ ] ${job?.title ?? st.leads_to.job} (${st.leads_to.urgency}) · from \`${key}\` = ${state} · opens ${job?.tutorial ? `tutorial \`${job.tutorial}\`` : 'the job screen (shop only, no guide yet)'}`);
+      }
+    }
+  }
+  const qs = r.questions('check');
+  if (qs.length) r.L.push('Questions asked during the check:', '', ...qs);
+  r.L.push('#### To-do list on the bike', '', ...(todo.length ? todo : ['Nothing to do.']), '');
+  return todo.length ? `${todo.length} to-do item(s)` : 'no to-do items';
+}
+
+// ---------------------------------------------------------------- entry
+
+export function runProfile(c: Content, p: Entry, issues: Issues): { markdown: string; results: JourneyResult[] } {
+  const prof = p.def;
+  const L: string[] = [`# Profile: ${prof.name}`, '', `> ${NOTICE}`, ''];
+  if (prof.description) L.push(prof.description, '');
+  L.push(...bikeTable(c, prof));
+  const results: JourneyResult[] = [];
+  prof.journeys.forEach((j: any, ji: number) => {
+    const r = new Run(c, p, j, ji, issues);
+    r.L.push(`## Journey ${ji + 1}: ${j.title}`, '', `<sub>journey id \`${j.id}\`</sub>`, '');
+    let ending = '';
+    if (j.start.diagnosis) {
+      const d = c.diagnoses.get(j.start.diagnosis)!;
+      const res = runDiagnosis(c, r, d);
+      if (res.ending) ending = res.ending;
+      else if (res.job) {
+        const job = c.jobs.get(res.job)?.def;
+        const t = job?.tutorial ? c.tutorials.get(job.tutorial) : undefined;
+        r.L.push(...renderJobScreen(c, res.job, res.urgency, t ? tutorialTimeRange(c, t, Object.fromEntries(r.known), j.params ?? {}) : null, 3));
+        let choice = j.job_choice;
+        if (!t) {
+          if (choice === 'diy') r.error('profile-job-choice', `Job ${res.job} has no tutorial, so the owner can only choose the shop.`, 'job_choice');
+          choice = 'shop';
+        } else if (!choice) {
+          r.error('profile-missing-job-choice', `The journey reaches the job screen for ${res.job}, but has no job_choice (diy or shop).`, 'job_choice');
+          choice = 'shop';
+        }
+        r.L.push(`The owner chooses: **${choice === 'diy' ? 'Do it myself' : 'Take it to a shop'}**.`, '');
+        if (choice === 'shop' || !t) {
+          r.L.push(...shopSummary(c, r, res.job));
+          ending = `shop: ${job?.title ?? res.job}`;
+        } else {
+          ending = runTutorial(c, r, t, true);
+          if (ending === 'tutorial complete' && res.remaining.length) {
+            r.L.push(`"Did it fix it?" If not, the diagnosis continues with ${res.remaining.map((x) => `\`${x.id}\``).join(', ')}.`, '');
+          }
+        }
+      }
+    } else if (j.start.tutorial) {
+      ending = runTutorial(c, r, c.tutorials.get(j.start.tutorial)!, false);
+    } else if (j.start.check) {
+      ending = runRoutine(c, r, j.start.check);
+    }
+    for (const k of Object.keys(j.sees ?? {})) if (!r.usedSees.has(k)) issues.warn(p.file.rel, `profile ${prof.id} / journey ${j.id}`, 'profile-unused-entry', `sees.${k} is never reached on this journey.`, lineAt(p.file, [...p.path, 'journeys', ji, 'sees', k]));
+    for (const k of Object.keys(j.tutorial_sees ?? {})) if (!r.usedTutorialSees.has(k)) issues.warn(p.file.rel, `profile ${prof.id} / journey ${j.id}`, 'profile-unused-entry', `tutorial_sees.${k} is never reached on this journey.`, lineAt(p.file, [...p.path, 'journeys', ji, 'tutorial_sees', k]));
+    r.L.push(`**Journey ends:** ${ending}. **Time:** ${r.minutes} min. **Questions asked:** ${r.asked.length}.`, '', '---', '');
+    L.push(...r.L);
+    results.push({ profile: prof.id, journey: j.id, title: j.title, ending, minutes: r.minutes, questions: r.asked.length });
+  });
+  return { markdown: L.join('\n'), results };
+}

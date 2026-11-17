@@ -306,6 +306,19 @@ function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlo
   return flow;
 }
 
+/** Time range of the complete paths of a tutorial for a bike whose facts are fixed (choices stay open). */
+export function tutorialTimeRange(c: Content, t: TutorialEntry, facts: Record<string, Value>, params: Record<string, string> = {}): string | null {
+  const fixed: Record<string, Value> = {};
+  for (const [k, v] of Object.entries(facts)) if (!k.startsWith('choice.') && !k.startsWith('tool.')) fixed[k] = v;
+  const mins = enumerate(c, (r) => resolveTutorial(c, t, r, params), fixed)
+    .filter((x) => !x.result.exit)
+    .map((x) => minutesOf(combined(x.result)));
+  if (!mins.length) return null;
+  const lo = Math.min(...mins);
+  const hi = Math.max(...mins);
+  return lo === hi ? `${lo} min` : `${lo} to ${hi} min`;
+}
+
 export function buildFlows(c: Content, issues: Issues): Flows {
   const rules = new Map<string, number>(Object.keys(SIM_RULES).map((r) => [r, 0]));
   const agg = new Aggregator(rules);
