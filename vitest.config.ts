@@ -2,6 +2,6 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['tools/test/**/*.test.ts'],
+    include: ['tools/test/**/*.test.ts', 'player/test/**/*.test.ts'],
   },
 });
