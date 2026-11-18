@@ -62,7 +62,8 @@ export interface Card {
   position?: { n: number; of: number };
   warnings: string[];
   jumped: boolean;
-  stage: { focus: string[]; view?: string; animation?: any; labels: string[] };
+  /** what the 3D stage shows; labels are the state after this card, labelsBefore the state before it */
+  stage: { focus: string[]; view?: string; animation?: any; labels: string[]; labelsBefore: string[] };
 }
 
 export interface ShopSummary {
@@ -392,7 +393,7 @@ export class Journey {
       progress: 0,
       warnings: [],
       jumped: false,
-      stage: { focus: insp.focus ?? [], view: insp.view, animation: insp.animation, labels: [] },
+      stage: { focus: insp.focus ?? [], view: insp.view, animation: insp.animation, labels: [], labelsBefore: [] },
       ...extra,
     };
   }
@@ -804,7 +805,7 @@ export class Journey {
       position: { n, of: n + remaining },
       warnings: [...labels].map((l) => this.c.stateLabel(l)?.warning).filter(Boolean),
       jumped: t.jumped,
-      stage: { focus: it.def.focus ?? [], view: it.def.view, animation: it.def.animation, labels: [...labels] },
+      stage: { focus: it.def.focus ?? [], view: it.def.view, animation: it.def.animation, labels: [...labels], labelsBefore: [...this.labelsAt(t, all, p - 1)] },
     };
     return { kind: 'card', card };
   }

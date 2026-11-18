@@ -1,19 +1,27 @@
 // The stage above each card: what the 3D view shows for the current step.
 // The element is kept across renders, so the view stays pinned while the text changes.
-// Part 1 of the build has a placeholder that names the parts in focus; the three.js stage
-// replaces it with the same interface.
+// The three.js stage is in player/src/stage/; the placeholder here names the parts in focus and
+// is used by tests and when the 3D view is switched off.
 
 import { h } from './dom.js';
 
 export interface StageView {
+  /** the card this view belongs to; a new id restarts camera, focus and animation */
+  id?: string;
+  /** the button tapped on the card; a change stops a solution that is playing */
+  chosen?: string;
+  /** the bike's name, written on its frame */
+  bike?: string;
   /** named 3D nodes to highlight */
   focus: string[];
   /** named camera position */
   view?: string;
   /** a generic motion on a node, or a named clip */
   animation?: any;
-  /** session state labels (what is apart or not ready to ride) */
+  /** session state labels (what is apart or not ready to ride) after this card */
   labels: string[];
+  /** the labels before this card; a step that sets or clears one shows the change */
+  labelsBefore?: string[];
   /** facts of the bike, so the scene can pick parts */
   facts: Record<string, unknown>;
 }

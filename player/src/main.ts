@@ -4,14 +4,22 @@ import { loadBundle } from './engine/content.js';
 import { browserKV, Store } from './engine/store.js';
 import { App } from './ui/app.js';
 import { h } from './ui/dom.js';
-import { PlaceholderStage } from './ui/stage.js';
+import { ThreeStage } from './stage/three-stage.js';
+import { PlaceholderStage, type Stage } from './ui/stage.js';
 
 async function boot(): Promise<void> {
   const root = document.getElementById('root')!;
   try {
     const content = await loadBundle();
     const store = new Store(browserKV());
-    const app = new App(content, store, root, new PlaceholderStage());
+    let stage: Stage;
+    try {
+      stage = new ThreeStage();
+    } catch (e) {
+      console.warn('[stage] The 3D view could not start; using the text stage.', e);
+      stage = new PlaceholderStage();
+    }
+    const app = new App(content, store, root, stage);
     (window as any).__app = app;
     app.render();
   } catch (e) {

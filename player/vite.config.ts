@@ -32,5 +32,6 @@ export default defineConfig({
   base: './',
   plugins: [contentBundle()],
   server: { fs: { allow: [repo] }, host: true },
-  build: { outDir: resolve(repo, 'dist'), emptyOutDir: true, target: 'es2022' },
+  // three.js alone is about 600 kB minified (150 kB gzipped); one chunk is fine for a test build.
+  build: { outDir: resolve(repo, 'dist'), emptyOutDir: true, target: 'es2022', chunkSizeWarningLimit: 900 },
 });

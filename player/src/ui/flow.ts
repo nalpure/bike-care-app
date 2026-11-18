@@ -173,7 +173,12 @@ function renderTools(app: App, j: Journey, s: Extract<Screen, { kind: 'tools' }>
 
 function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   const textOnly = app.store.data.textOnly;
-  app.stage.show({ focus: card.stage.focus, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, facts: app.bike.facts });
+  if (!textOnly) {
+    app.stage.show({
+      id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bike.name,
+      focus: card.stage.focus, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: app.bike.facts,
+    });
+  }
 
   const chosenBtn = card.buttons.find((b) => b.id === card.chosen);
   const verdict = card.chosen !== undefined

@@ -209,7 +209,8 @@ async function main(): Promise<void> {
     if (b.status) process.exit(b.status);
   }
   const server = spawn(process.execPath, [join(REPO, 'node_modules/vite/bin/vite.js'), 'preview', '--config', 'player/vite.config.ts', '--port', String(PORT), '--strictPort'], { cwd: REPO, stdio: 'ignore' });
-  const browser = await chromium.launch();
+  // Software WebGL, so the 3D stage renders in headless Chromium on any machine.
+  const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'] });
   const expected = expectedEndings();
   const results: Result[] = [];
   rmSync(SHOTS, { recursive: true, force: true });

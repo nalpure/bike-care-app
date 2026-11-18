@@ -148,7 +148,7 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 
 .app { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
 .stage {
-  position: relative; flex: 0 0 clamp(150px, 32%, 330px); min-height: 0; border-radius: 14px; overflow: hidden;
+  position: relative; flex: 0 0 clamp(170px, 40%, 380px); min-height: 0; border-radius: 14px; overflow: hidden;
   background: radial-gradient(ellipse at 50% 35%, var(--stage2), var(--stage));
   border: 1px solid var(--line);
 }
@@ -156,6 +156,33 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .stage .ph .tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .tag { background: var(--accent); color: var(--accent-ink); font: 500 10px/1 var(--f-mono); letter-spacing: .03em; padding: 4px 6px; border-radius: 5px; white-space: nowrap; }
 .tag.off { background: var(--stage2); color: var(--ink2); text-decoration: line-through; }
+/* 3D stage (three.js), from the prototype */
+.stage3d .gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.stage3d .nogl { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; color: var(--ink2); }
+.stage3d .nogl .tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.stage3d.no3d .fabs, .stage3d.no3d .cap, .stage3d.no3d .stnote { display: none; }
+.stage3d .cap, .stage3d .stnote { position: absolute; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; pointer-events: none; }
+.stage3d .cap { left: 50%; top: 10px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line); padding: 6px 9px; border-radius: 8px; max-width: calc(100% - 20px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transition: opacity .25s; font-size: 11px; }
+.stage3d .cap.on { opacity: 1; }
+.stage3d .stnote { left: 12px; bottom: 14px; color: var(--ink2); max-width: calc(100% - 120px); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stage3d .stnote.pick { color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; left: 10px; bottom: 12px; }
+.stage3d .fabs { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; }
+.stage3d .tags3d { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.stage3d .tags3d .tag { position: absolute; left: 0; top: 0; padding: 3px 5px; will-change: transform; opacity: 0; transition: opacity .5s; }
+.stage3d .tags3d .tag.on { opacity: .95; }
+.stage3d .xui { display: none; position: absolute; left: 0; right: 0; pointer-events: none; gap: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.stage3d .xui > * { pointer-events: auto; }
+.stage3d .xtop { top: 0; padding-top: calc(12px + env(safe-area-inset-top, 0px)); justify-content: space-between; align-items: center; }
+.stage3d .xbottom { bottom: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.stage3d .seg { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--panel); min-width: 0; }
+.stage3d .seg button { border: 0; background: none; min-height: 44px; padding: 0 14px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+.stage3d .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.stage3d .pcard { flex: 1; max-width: 520px; margin-inline: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; font-size: 14.5px; line-height: 1.35; }
+.stage3d .pcard strong { font-family: var(--f-display); font-size: 22px; line-height: 1.1; }
+.stage3d .pcard span { color: var(--ink2); }
+.stage3d.explore { position: fixed; inset: 0; z-index: 75; border-radius: 0; border: 0; flex: none; }
+.stage3d.explore .fabs, .stage3d.explore .tags3d, .stage3d.explore .cap, .stage3d.explore .stnote { display: none; }
+.stage3d.explore .xui { display: flex; }
 .chip { position: absolute; left: 10px; top: 10px; background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
 .side { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 .guide { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
@@ -210,7 +237,7 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 @media (max-height: 740px) {
   .step h2 { font-size: clamp(22px, 6vw, 28px); }
   .step p { font-size: 15px; }
-  .stage { flex-basis: clamp(120px, 26%, 280px); }
+  .stage { flex-basis: clamp(140px, 32%, 300px); }
 }
 /* Landscape phones and wide screens: stage left, text right. */
 @media (min-width: 700px) and (orientation: landscape), (min-width: 860px) {
