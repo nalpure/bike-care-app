@@ -6,7 +6,7 @@ Read `docs/idea.md` (what the app is) and `docs/approach.md` (how content and pl
 
 ```
 docs/            idea.md, approach.md, idea-changes.md, approach-changes.md,
-                 assumptions.md, schema-requests.md
+                 assumptions.md, schema-requests.md, sharing.md (publishing test builds)
 legacy/          old prototype HTML and the brake pad YAML drafts. Reference only, never imported.
 schema/          JSON Schema for every content file (*.schema.json), 3d-catalog.yaml
 content/         facts.yaml, choices.yaml, states.yaml, tools.yaml, inspections.yaml, jobs.yaml,
@@ -19,7 +19,7 @@ tools/           build script: validate, expand, simulate, review files, bundle 
                  dependency-free, they work on bundle data. Change them only with both in mind.
 build/           generated, never edited by hand: bundle.json, report.md, 3d-manifest.json,
                  review/ (index.md, cards.md, trees/, journeys/); paths/ is on demand and not committed
-player/          the web app (Vite, TypeScript, three.js); src/stage/registry.ts lists the 3D names
+player/          the web app (Vite, TypeScript, three.js). Read player/README.md before changing it.
 .claude/         subagent definitions, commands, hooks for the content workflow
 ```
 
@@ -28,7 +28,7 @@ The golden example is the symptom "My gears don't shift cleanly": `content/diagn
 ## Commands
 
 - `npm run check`  validate, expand, simulate, write `build/`. Must pass before any task is done.
-- `npm test`       automated tests of the build tool (`tools/test/`).
+- `npm test`       automated tests of the build tool (`tools/test/`) and the player (`player/test/`).
 - `npm run walk -- --list` / `npm run walk -- <path-id>`   render paths on demand.
 - `npm run review -- status` / `npm run review -- sign <unit> --role <role> --by <name>`   review units and sign-offs.
 - `npm run dev`    start the player locally.
@@ -47,6 +47,10 @@ Review units, not paths: cards (`build/review/cards.md`), flow trees (`build/rev
 - A decision that changes, extends or clarifies `idea.md` or `approach.md` goes into `docs/idea-changes.md` or `docs/approach-changes.md`, under the same section heading as in the original, with the next free id, the date, who decided, what the original says, what holds now, and why. Owner decisions about intent and user experience go to `idea-changes.md`; how it is built goes to `approach-changes.md`.
 - An assumption you make without the owner goes to `docs/assumptions.md` (hard rule 8).
 - A doubt about mechanics goes to `content/review/<job>.md`, never into the content as a fact.
+
+## Git
+
+Commit in logical steps and push every commit to `origin` (`git push`) right away.
 
 ## Hard rules
 
