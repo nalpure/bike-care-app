@@ -7,7 +7,7 @@ import * as T from 'three';
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
 import { dirSign, makeAnim, type AnimCtx } from '../src/stage/anim.js';
-import { BikeModel, bikeSpec, GAP_OK } from '../src/stage/bike.js';
+import { BBY, BikeModel, bikeSpec, GAP_OK, HUBY, RT, RX } from '../src/stage/bike.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
 import { CLIPS, LABEL_SCENES, manifest, MOTIONS, NODES, partsOf, VIEWS } from '../src/stage/registry.js';
 import { viewPose } from '../src/stage/views.js';
@@ -83,6 +83,28 @@ describe('bike builder', () => {
         m.setDer(m.zOf(m.spec.n - 1), 0.03);
         m.dispose();
       }
+    }
+  });
+
+  it('keeps the tyres clear of the frame, fork and battery on every kind of bike', () => {
+    // distance from point p to segment ab, in the bike's side plane
+    const seg = (p: number[], a: number[], b: number[]) => {
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy)));
+      return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy);
+    };
+    for (const cat of ['mtb', 'road_gravel', 'trekking_city', 'cargo', 'unknown']) {
+      const B = bikeSpec({ 'bike.category': cat, 'bike.ebike': true });
+      const front = [B.FX, HUBY];
+      const rear = [RX, HUBY];
+      const dl = Math.hypot(B.HT[0] - B.HB[0], B.HT[1] - B.HB[1]);
+      const crown = [B.HB[0] - ((B.HT[0] - B.HB[0]) / dl) * 0.04, B.HB[1] - ((B.HT[1] - B.HB[1]) / dl) * 0.04];
+      // tube radii as built, plus a visible gap
+      expect(seg(front, [0, BBY], B.HB) - 0.034, `${cat}: down tube`).toBeGreaterThan(RT + 0.01);
+      expect(seg(front, [B.HB[0] - 0.12, B.HB[1] - 0.06], [0.12, 0.5]) - 0.05, `${cat}: battery`).toBeGreaterThan(RT + 0.005);
+      expect(Math.hypot(front[0] - crown[0], front[1] - crown[1]) - 0.022, `${cat}: fork crown`).toBeGreaterThan(RT + 0.01);
+      expect(seg(rear, [0, BBY], B.ST) - 0.034, `${cat}: seat tube`).toBeGreaterThan(RT + 0.01);
     }
   });
 

@@ -15,8 +15,8 @@ export interface ViewPose {
 type ViewName = (typeof VIEWS)[number];
 
 export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
-  whole_bike: () => ({ p: [-1.6, 1.6, 5.5], t: [0.05, 1.08, 0.05], space: 'world' }),
-  drive_side: () => ({ p: [-0.65, 1.35, 3.35], t: [-0.22, 0.85, 0.12], space: 'bike' }),
+  whole_bike: () => ({ p: [-1.45, 1.65, 5.7], t: [0.2, 1.1, 0.05], space: 'world' }),
+  drive_side: () => ({ p: [-0.5, 1.45, 3.6], t: [-0.1, 0.92, 0.12], space: 'bike' }),
   derailleur_from_behind: () => ({ p: [RX - 1.85, 0.82, 0.78], t: [RX, 0.55, 0.2], space: 'bike' }),
   derailleur_side_close: () => ({ p: [RX - 0.85, 0.62, 0.95], t: [RX, 0.52, 0.14], space: 'bike' }),
   barrel_adjuster_close: (B) => {

@@ -24,7 +24,10 @@ export const GAP_SMALL = 0.004;
 export const RP = 0.04;
 export const LC = 0.13;
 /** bottom bracket height */
-const BBY = 0.35;
+export const BBY = 0.35;
+/** steering axis: 72° head angle */
+const HEAD_COS = Math.cos((72 * Math.PI) / 180);
+const HEAD_SIN = Math.sin((72 * Math.PI) / 180);
 
 type V2 = [number, number];
 type V3 = [number, number, number];
@@ -88,8 +91,13 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   const n = cassette.length;
   const sp = n > 1 ? 0.16 / (n - 1) : 0.03;
   const ST: V2 = road ? [-0.2, 1.5] : [-0.22, 1.5];
-  const HT: V2 = road ? [0.84, 1.42] : [0.78, 1.5];
-  const HB: V2 = road ? [0.9, 1.17] : [0.86, 1.15];
+  // Front end: the fork follows a 72° steering axis and is long enough for the wheel, and the
+  // front wheel sits far enough forward that the tyre clears the down tube and the fork crown.
+  // (The prototype's shorter front end let the wheel cut through both.) Road bikes get a shorter
+  // head tube, so their bars sit lower. player/test/stage.test.ts checks the clearances.
+  const HB: V2 = [1.05, 1.56];
+  const headLen = road ? 0.15 : 0.22;
+  const HT: V2 = [HB[0] - headLen * HEAD_COS, HB[1] + headLen * HEAD_SIN];
   const bar: BikeSpec['bar'] = road ? 'drop' : mtb ? 'riser' : 'flat';
   const [hx, hy] = HT;
   const C: V2 = [hx + 0.14, hy + 0.03];
@@ -101,7 +109,7 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
     barrelAt: road ? 'derailleur' : 'shifter',
     motor: ebike === true || ebike === 'true',
     kickstand: kind === 'city',
-    FX: 1.0,
+    FX: 1.33,
     cassette,
     chainring: road ? 50 : mtb ? 32 : 44,
     tt: road ? 0.028 : mtb ? 0.07 : 0.045,
@@ -354,7 +362,7 @@ export class BikeModel {
     ft([ST[0], sy, -0.05], [RX, HUBY, -0.1], 0.012);
     this.add('frame', new T.CylinderGeometry(0.045, 0.045, 0.2, 18), [0, BBY, 0], [HP, 0, 0], { tint: 'frame' });
     this.makeDecal([0, BBY], HB, dtR);
-    this.anchor('frame', this.bike, [0.45, (BBY + HB[1]) / 2 + 0.02, 0.03]);
+    this.anchor('frame', this.bike, [HB[0] / 2, (BBY + HB[1]) / 2, 0.03]);
 
     if (B.motor) {
       this.part('motor');
@@ -509,12 +517,14 @@ export class BikeModel {
       const end: V3 = B.gears === 'derailleur'
         ? (B.barrelAt === 'shifter' ? [RX - 0.03, 0.705, 0.1] : [RX - 0.03, 0.75, 0.1])
         : B.gears === 'hub' ? [RX + 0.06, HUBY + 0.02, 0.1] : [0.05, BBY + 0.1, 0.09];
+      // along the down tube (u from the bottom bracket) or just above the top tube (at x)
       const dt = (u: number): V3 => [HB[0] * (1 - u), BBY + (HB[1] - BBY) * u, 0.06];
+      const tt = (x: number, z: number): V3 => [x, ST[1] + ((x - ST[0]) / (HT[0] - ST[0])) * (HT[1] - ST[1]) + 0.04, z];
       const path: V3[] = B.bar === 'drop'
         ? [[S[0] - 0.02, S[1] - 0.03, S[2]], [C[0] - 0.02, C[1] - 0.1, 0.17], [HB[0] - 0.03, HB[1] + 0.0, 0.08], [HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, 0.42, 0.06], [-0.4, 0.52, 0.12], [RX + 0.12, 0.62, 0.12], end]
         : B.gears === 'gearbox'
-          ? [[S[0] - 0.1, S[1], S[2]], [0.5, 1.56, 0.12], [0.62, 1.0, 0.07], dt(0.4), end]
-          : [[S[0] - 0.1, S[1], S[2]], [0.5, 1.56, 0.12], [0.3, 1.54, 0.05], [-0.1, 1.54, 0.05], [-0.22, 1.54, 0.06], [-0.56, 1.12, 0.1], [RX + 0.03, 0.82, 0.12], end];
+          ? [[S[0] - 0.1, S[1], S[2]], tt(HT[0] - 0.25, 0.12), [HB[0] - 0.08, HB[1] - 0.05, 0.07], dt(0.4), end]
+          : [[S[0] - 0.1, S[1], S[2]], tt(HT[0] - 0.25, 0.12), tt(HT[0] - 0.45, 0.05), tt(-0.1, 0.05), tt(-0.22, 0.06), [-0.56, 1.12, 0.1], [RX + 0.03, 0.82, 0.12], end];
       this.add('shift_cable', curveGeo(path, 0.006), null, null, { k: 0.6 });
       this.anchor('shift_cable', this.bike, B.bar === 'drop' ? [-0.4, 0.55, 0.12] : [-0.4, 1.36, 0.08]);
     }
