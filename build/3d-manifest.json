@@ -1,0 +1,55 @@
+{
+  "nodes": [
+    "bike",
+    "frame",
+    "fork",
+    "front_wheel",
+    "rear_wheel",
+    "saddle",
+    "seat_post",
+    "handlebar",
+    "kickstand",
+    "stand_clamp",
+    "motor",
+    "chainring",
+    "crank",
+    "chain",
+    "cassette",
+    "smallest_sprocket",
+    "largest_sprocket",
+    "rear_derailleur",
+    "derailleur_hanger",
+    "upper_pulley",
+    "h_screw",
+    "l_screw",
+    "b_screw",
+    "barrel_adjuster",
+    "shift_cable",
+    "shifter_rear"
+  ],
+  "views": [
+    "whole_bike",
+    "drive_side",
+    "derailleur_from_behind",
+    "derailleur_side_close",
+    "barrel_adjuster_close",
+    "handlebar_from_above",
+    "chain_close"
+  ],
+  "clips": [
+    "shift-to-smallest",
+    "shift-to-largest",
+    "limit-screw-align",
+    "b-gap-adjust",
+    "cable-tension-shift"
+  ],
+  "motions": [
+    "rotate",
+    "push",
+    "pull",
+    "slide",
+    "squeeze",
+    "remove",
+    "insert"
+  ]
+}

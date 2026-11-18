@@ -7,8 +7,8 @@
 ## Summary
 
 - Result: **passed**, 0 warning(s)
-- Files validated: 20
-- 3D names checked against: `schema/3d-catalog.yaml`
+- Files validated: 19
+- 3D names checked against: `build/3d-manifest.json`
 - Bundle: `build/bundle.json`
 
 ## Flows

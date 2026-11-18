@@ -39,12 +39,12 @@ steps:
         label: "Slow or noisy shifting to easier gears"
         text: "The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out."
         solution:
-          - { clip: cable-tension-shift, view: barrel_adjuster_close, caption: "Unscrew the barrel adjuster a quarter turn" }
+          - { target: barrel_adjuster, motion: rotate, direction: "unscrew", amount: "a quarter turn", view: barrel_adjuster_close, caption: "Unscrew the barrel adjuster a quarter turn" }
       - id: slow-harder
         label: "Slow or noisy shifting to harder gears"
         text: "The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable."
         solution:
-          - { clip: cable-tension-shift, view: barrel_adjuster_close, caption: "Screw in the barrel adjuster a quarter turn" }
+          - { target: barrel_adjuster, motion: rotate, direction: "screw in", amount: "a quarter turn", view: barrel_adjuster_close, caption: "Screw in the barrel adjuster a quarter turn" }
       - id: smooth
         label: "Every shift is quick and quiet"
         text: "The cable tension is right."
@@ -105,12 +105,12 @@ steps:
         label: "Slow or noisy shifting to easier gears"
         text: "The cable is too loose. Park the bike, unscrew the barrel adjuster a quarter turn, then ride and shift again. Never unscrew it all the way out."
         solution:
-          - { clip: cable-tension-shift, view: barrel_adjuster_close, caption: "Unscrew the barrel adjuster a quarter turn" }
+          - { target: barrel_adjuster, motion: rotate, direction: "unscrew", amount: "a quarter turn", view: barrel_adjuster_close, caption: "Unscrew the barrel adjuster a quarter turn" }
       - id: slow-harder
         label: "Slow or noisy shifting to harder gears"
         text: "The cable is too tight. Park the bike, screw in the barrel adjuster a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable."
         solution:
-          - { clip: cable-tension-shift, view: barrel_adjuster_close, caption: "Screw in the barrel adjuster a quarter turn" }
+          - { target: barrel_adjuster, motion: rotate, direction: "screw in", amount: "a quarter turn", view: barrel_adjuster_close, caption: "Screw in the barrel adjuster a quarter turn" }
       - id: smooth
         label: "Every shift is quick and quiet"
         text: "The cable tension is right."
@@ -180,12 +180,12 @@ steps:
         label: "Further in, towards the spokes"
         text: "Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
         solution:
-          - { clip: limit-screw-align, caption: "Unscrew the H screw a quarter turn" }
+          - { target: h_screw, motion: rotate, direction: "unscrew", amount: "a quarter turn", view: derailleur_from_behind, caption: "Unscrew the H screw a quarter turn" }
       - id: too-far-out
         label: "Further out, away from the spokes"
         block: "The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket."
         solution:
-          - { clip: limit-screw-align, caption: "Screw in the H screw a quarter turn" }
+          - { target: h_screw, motion: rotate, direction: "screw in", amount: "a quarter turn", view: derailleur_from_behind, caption: "Screw in the H screw a quarter turn" }
 
   - id: check-b-gap
     kind: check
@@ -203,9 +203,9 @@ steps:
         label: "The wheel touches the sprocket, or almost"
         text: "Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap."
         solution:
-          - { clip: b-gap-adjust, caption: "Screw in the B screw a little" }
+          - { target: b_screw, motion: rotate, direction: "screw in", amount: "a little", view: derailleur_side_close, caption: "Screw in the B screw a little" }
       - id: wide-gap
         label: "A big gap, and shifting here was slow"
         text: "Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch."
         solution:
-          - { clip: b-gap-adjust, caption: "Unscrew the B screw a little" }
+          - { target: b_screw, motion: rotate, direction: "unscrew", amount: "a little", view: derailleur_side_close, caption: "Unscrew the B screw a little" }

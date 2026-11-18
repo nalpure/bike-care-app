@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "2cfa2d0d9522dd5c",
+  "content_hash": "a2cbe173ec26db44",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -697,7 +697,10 @@
           "text": "The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.",
           "solution": [
             {
-              "clip": "cable-tension-shift",
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "unscrew",
+              "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Unscrew the barrel adjuster a quarter turn"
             }
@@ -709,7 +712,10 @@
           "text": "The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.",
           "solution": [
             {
-              "clip": "cable-tension-shift",
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "screw in",
+              "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Screw in the barrel adjuster a quarter turn"
             }
@@ -822,7 +828,10 @@
           "text": "The cable is too loose. Park the bike, unscrew the barrel adjuster a quarter turn, then ride and shift again. Never unscrew it all the way out.",
           "solution": [
             {
-              "clip": "cable-tension-shift",
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "unscrew",
+              "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Unscrew the barrel adjuster a quarter turn"
             }
@@ -834,7 +843,10 @@
           "text": "The cable is too tight. Park the bike, screw in the barrel adjuster a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.",
           "solution": [
             {
-              "clip": "cable-tension-shift",
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "screw in",
+              "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Screw in the barrel adjuster a quarter turn"
             }
@@ -991,7 +1003,11 @@
           "text": "Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.",
           "solution": [
             {
-              "clip": "limit-screw-align",
+              "target": "h_screw",
+              "motion": "rotate",
+              "direction": "unscrew",
+              "amount": "a quarter turn",
+              "view": "derailleur_from_behind",
               "caption": "Unscrew the H screw a quarter turn"
             }
           ]
@@ -1002,7 +1018,11 @@
           "block": "The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.",
           "solution": [
             {
-              "clip": "limit-screw-align",
+              "target": "h_screw",
+              "motion": "rotate",
+              "direction": "screw in",
+              "amount": "a quarter turn",
+              "view": "derailleur_from_behind",
               "caption": "Screw in the H screw a quarter turn"
             }
           ]
@@ -1041,7 +1061,11 @@
           "text": "Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.",
           "solution": [
             {
-              "clip": "b-gap-adjust",
+              "target": "b_screw",
+              "motion": "rotate",
+              "direction": "screw in",
+              "amount": "a little",
+              "view": "derailleur_side_close",
               "caption": "Screw in the B screw a little"
             }
           ]
@@ -1052,7 +1076,11 @@
           "text": "Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.",
           "solution": [
             {
-              "clip": "b-gap-adjust",
+              "target": "b_screw",
+              "motion": "rotate",
+              "direction": "unscrew",
+              "amount": "a little",
+              "view": "derailleur_side_close",
               "caption": "Unscrew the B screw a little"
             }
           ]

@@ -218,7 +218,16 @@ No changes.
 
 ## Player and 3D
 
-No changes yet. AC-17 names the interim 3D catalog.
+### AC-27 The player's 3D registry is the source of 3D names (extends)
+
+- **Date:** 2026-11-17 · **Decided by:** agent (prompt 2, part 2), following AC-17
+- **approach.md:** "Named nodes. Content refers to parts by node name in `focus` and `animation.target`. The build checks that the names exist." "Scenes follow state."
+- **Now:**
+  - `player/src/stage/registry.ts` lists every node, view, clip and motion the 3D stage provides. `npm run manifest` writes it to `build/3d-manifest.json`, which `npm run check` uses instead of `schema/3d-catalog.yaml`. A test fails when the committed manifest and the registry differ, or when a catalog name is missing.
+  - A node may stand for several parts (`cassette` includes the smallest and largest sprocket; `rear_derailleur` includes the upper pulley). `bike` is the whole bike.
+  - Each card passes the state labels before and after it to the stage, so a step that sets or clears a label shows the change (the clamp opening while the bike is still in the stand). How a label changes the scene is kept in the player until SR-05 is decided.
+  - A name the stage does not know shows the whole bike without highlight and logs a warning; it never stops the card. A node that this bike does not have (a kickstand on a road bike) is left out silently.
+- **Where:** `player/src/stage/`, `tools/export-3d-manifest.ts`, `player/test/stage.test.ts`. Assumptions A-26 to A-30, schema requests SR-05 to SR-07.
 
 ## Bike data
 

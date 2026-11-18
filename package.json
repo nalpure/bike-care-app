@@ -9,6 +9,7 @@
     "test": "node tools/run-tests.mjs",
     "walk": "tsx tools/walk.ts",
     "review": "tsx tools/review.ts",
+    "manifest": "tsx tools/export-3d-manifest.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p player",
     "dev": "vite --config player/vite.config.ts",
     "build": "vite build --config player/vite.config.ts",

@@ -4,9 +4,10 @@
 # the animation functions alignAnim, gapAnim, shiftAnim). Names are snake_case for nodes and views,
 # kebab-case for clips.
 #
-# When the player exists (prompt 2) it exports build/3d-manifest.json with the same three lists.
-# npm run check then uses that manifest instead of this file. Add a name here only together with
-# a note in docs/schema-requests.md, so the player knows it has to provide it.
+# The player now exports build/3d-manifest.json from player/src/stage/registry.ts (npm run manifest),
+# and npm run check uses that manifest instead of this file (AC-27). This file stays as the list
+# the player must at least provide: player/test/stage.test.ts fails when a name here is missing.
+# Add a name here only together with a note in docs/schema-requests.md.
 
 nodes:
   - bike

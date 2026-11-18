@@ -282,7 +282,7 @@ Animation: "Shift one gear at a time" (clip shift-to-largest)
 
 ### Set the cable tension
 
-<sub>Unit `card:step:check-cable-tension` · hash `a31b1f7c53a2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension` · hash `b43b0cf76e4c` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 5 min</sub>
 
@@ -291,9 +291,9 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
 <sub>3D: focus barrel_adjuster, chain, cassette · view drive_side</sub>
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.
-  - Show solution: "Unscrew the barrel adjuster a quarter turn" (clip cable-tension-shift)
+  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, unscrew, a quarter turn)
 - [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Screw in the barrel adjuster a quarter turn" (clip cable-tension-shift)
+  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, screw in, a quarter turn)
 - [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
 
 <sub>Appears in:</sub>
@@ -354,7 +354,7 @@ Ride slowly and shift one gear at a time into the easiest gear, the largest spro
 
 ### Set the cable tension on short rides
 
-<sub>Unit `card:step:check-cable-tension-riding` · hash `304e950cb3ce` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension-riding` · hash `86248d52739d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 10 min</sub>
 
@@ -365,9 +365,9 @@ Ride slowly and shift one gear at a time, through all gears and back. Stop and p
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Park the bike, unscrew the barrel adjuster a quarter turn, then ride and shift again. Never unscrew it all the way out.
-  - Show solution: "Unscrew the barrel adjuster a quarter turn" (clip cable-tension-shift)
+  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, unscrew, a quarter turn)
 - [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Park the bike, screw in the barrel adjuster a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Screw in the barrel adjuster a quarter turn" (clip cable-tension-shift)
+  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, screw in, a quarter turn)
 - [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
 
 <sub>Appears in:</sub>
@@ -423,7 +423,7 @@ Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the s
 
 ### Check the outer limit (H screw)
 
-<sub>Unit `card:step:check-high-limit` · hash `75b5930677a2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-high-limit` · hash `6eb35c2013aa` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -435,9 +435,9 @@ Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the
 
 - [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
 - [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
-  - Show solution: "Unscrew the H screw a quarter turn" (clip limit-screw-align)
+  - Show solution: "Unscrew the H screw a quarter turn" (h_screw rotate, unscrew, a quarter turn)
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
-  - Show solution: "Screw in the H screw a quarter turn" (clip limit-screw-align)
+  - Show solution: "Screw in the H screw a quarter turn" (h_screw rotate, screw in, a quarter turn)
 
 <sub>Appears in:</sub>
 
@@ -446,7 +446,7 @@ Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the
 
 ### Check the gap to the sprockets
 
-<sub>Unit `card:step:check-b-gap` · hash `8ac79f91fd9f` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-b-gap` · hash `bf0801466b7d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 3 min</sub>
 
@@ -458,9 +458,9 @@ Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the
 
 - [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for {drive.rear_derailleur_model|your derailleur} gives the exact gap, if you want to check it.
 - [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
-  - Show solution: "Screw in the B screw a little" (clip b-gap-adjust)
+  - Show solution: "Screw in the B screw a little" (b_screw rotate, screw in, a little)
 - [ ] **A big gap, and shifting here was slow** <sub>`wide-gap`</sub> → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
-  - Show solution: "Unscrew the B screw a little" (clip b-gap-adjust)
+  - Show solution: "Unscrew the B screw a little" (b_screw rotate, unscrew, a little)
 
 <sub>Appears in:</sub>
 

@@ -17,9 +17,9 @@ tools/           build script: validate, expand, simulate, review files, bundle 
                  walk.ts (paths on demand), review.ts (review status and sign-off).
                  tools/lib/conditions.ts and tools/lib/resolve.ts are shared with the player:
                  dependency-free, they work on bundle data. Change them only with both in mind.
-build/           generated, never edited by hand: bundle.json, report.md,
+build/           generated, never edited by hand: bundle.json, report.md, 3d-manifest.json,
                  review/ (index.md, cards.md, trees/, journeys/); paths/ is on demand and not committed
-player/          the web app (Vite, TypeScript, three.js)
+player/          the web app (Vite, TypeScript, three.js); src/stage/registry.ts lists the 3D names
 .claude/         subagent definitions, commands, hooks for the content workflow
 ```
 
@@ -33,6 +33,7 @@ The golden example is the symptom "My gears don't shift cleanly": `content/diagn
 - `npm run review -- status` / `npm run review -- sign <unit> --role <role> --by <name>`   review units and sign-offs.
 - `npm run dev`    start the player locally.
 - `npm run build`  static build of the player for sharing (`dist/`).
+- `npm run manifest`  write `build/3d-manifest.json` (the 3D nodes, views and clips content may use) from the player's registry.
 - `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `player/e2e/shots/`.
 
 Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fix them from the message; you should not need to read the build tool.
