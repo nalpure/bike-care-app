@@ -85,7 +85,7 @@ export type Screen =
   | { kind: 'parts'; parts: any[]; canBack: boolean }
   | { kind: 'tools'; required: string[]; helpful: string[]; ticked: string[]; canBack: boolean }
   | { kind: 'card'; card: Card }
-  | { kind: 'exit'; exitKind: ExitKind; message: string; canJump: boolean; putBack: string[]; canBack: boolean }
+  | { kind: 'exit'; exitKind: ExitKind; message: string; canJump: boolean; putBack: string[]; /** state labels still set; the stage shows the bike as it is held */ labels: string[]; canBack: boolean }
   | { kind: 'not-covered'; message: string; canBack: boolean }
   | { kind: 'job'; job: any; urgency?: string; diy?: { minutes: string | null; difficulty?: number }; tell: string; findings: string[]; price: string; canBack: boolean }
   | { kind: 'shop'; summary: ShopSummary; canBack: boolean }
@@ -340,7 +340,7 @@ export class Journey {
       case 'todo':
         return { kind: 'todo', title: s.title, items: this.store.todos(this.bike), canBack: this.canBack };
       case 'exit':
-        return { kind: 'exit', exitKind: s.kind, message: s.message, canJump: false, putBack: [], canBack: this.canBack };
+        return { kind: 'exit', exitKind: s.kind, message: s.message, canJump: false, putBack: [], labels: [], canBack: this.canBack };
     }
   }
 
@@ -775,6 +775,7 @@ export class Journey {
         message: ex.text,
         canJump: labels.size > 0 && target !== undefined,
         putBack: [...labels].map((l) => this.c.stateLabel(l)?.put_back).filter(Boolean),
+        labels: [...labels],
         canBack: this.canBack,
       };
     }
@@ -839,7 +840,7 @@ export class Journey {
     } else if (res.ok.exit) {
       const ex = res.ok.exit;
       if (ex.kind === 'not_covered' || ex.kind === 'uncovered') return { kind: 'not-covered', message: ex.message, canBack: this.canBack };
-      return { kind: 'exit', exitKind: ex.kind, message: ex.message, canJump: false, putBack: [], canBack: this.canBack };
+      return { kind: 'exit', exitKind: ex.kind, message: ex.message, canJump: false, putBack: [], labels: [], canBack: this.canBack };
     }
     // "Is this needed?"
     if (!t.neededDone) {
@@ -889,7 +890,7 @@ export class Journey {
       const earlier = this.session.answers[key];
       if (earlier !== undefined) {
         if (rq.states.includes(earlier)) return null;
-        return { kind: 'exit', exitKind: 'not_needed', message: def.entry.not_needed_message ?? '', canJump: false, putBack: [], canBack: this.canBack };
+        return { kind: 'exit', exitKind: 'not_needed', message: def.entry.not_needed_message ?? '', canJump: false, putBack: [], labels: [], canBack: this.canBack };
       }
       return {
         kind: 'card',

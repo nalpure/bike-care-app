@@ -214,6 +214,9 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .pager .btn { min-height: 46px; padding: 0 16px; }
 .pager .pos { font: 500 12px/1 var(--f-mono); color: var(--ink2); font-variant-numeric: tabular-nums; }
 .app.textonly .stage { display: none; }
+/* exit screen with the stage: the text scrolls under the bike, the buttons stay at the bottom */
+.exitapp { padding-bottom: 0; }
+.exitapp .scroll { padding-bottom: 12px; }
 
 .fab { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
 .assist { position: fixed; z-index: 60; right: var(--gutter-r); bottom: calc(68px + env(safe-area-inset-bottom, 0px)); width: 50px; height: 50px; border-radius: 16px; border: 0; background: var(--ink); color: var(--bg); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
@@ -240,13 +243,13 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
   .stage { flex-basis: clamp(140px, 32%, 300px); }
 }
 /* Landscape phones and wide screens: stage left, text right. */
-@media (min-width: 700px) and (orientation: landscape), (min-width: 860px) {
+@media (min-width: 560px) and (orientation: landscape), (min-width: 860px) {
   .app { flex-direction: row; gap: 20px; }
   .stage { flex: 1.15 1 0; }
   .side { flex: 1 1 0; max-width: 560px; }
   .app.textonly .side { max-width: 640px; margin-inline: auto; }
-}
-@media (min-width: 860px) {
   .scroll, .cta, .wh, .brandrow { max-width: 720px; width: 100%; margin-inline: auto; }
+  .screen:has(.exitapp) .wh { max-width: none; margin-inline: -8px 0; }
+  .exitapp .scroll, .exitapp .cta { max-width: none; }
 }
 @media (prefers-reduced-motion: reduce) { .step.in-next, .step.in-back { animation: none; } .progress i { transition: none; } }

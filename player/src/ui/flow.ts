@@ -273,12 +273,20 @@ function renderExit(app: App, s: Extract<Screen, { kind: 'exit' }>): HTMLElement
     buttons.push(h(`button.btn${s.canJump ? '' : '.primary'}.wide`, { 'data-test': 'find-shop', onclick: () => app.act((x) => x.exitFindShop()) }, 'Find a shop'));
   }
   if (s.exitKind === 'not_covered') buttons.push(h('button.btn.wide', { 'data-test': 'ask', onclick: () => app.openOverlay({ k: 'assistant' }) }, 'Ask the assistant'));
-  return screenWith(app, top(app, app.bike.name, s.exitKind === 'unsafe' ? 'Stop' : 'End of this guide'), [
+  const head = top(app, app.bike.name, s.exitKind === 'unsafe' ? 'Stop' : 'End of this guide');
+  const body = [
     h('h1.h2q', EXIT_TITLE[s.exitKind]),
     h(`p${s.exitKind === 'unsafe' ? '.note.bad' : ''}`, s.message),
     s.putBack.length ? h('div.section', h('span.eyebrow', 'Still to put back'), h('ul.bul', s.putBack.map((p) => h('li', p)))) : null,
     s.canBack ? h('button.link', { 'data-test': 'back-to-step', onclick: () => app.back() }, 'Back to the step') : null,
-  ], buttons);
+  ];
+  // With something still apart, the stage shows the bike as it is held now (in the stand, hung,
+  // upside down), so the user sees what to undo. Optional: the text reads the same without it.
+  if (!s.labels.length || app.store.data.textOnly) return screenWith(app, head, body, buttons);
+  app.stage.show({ id: `exit:${s.labels.join(',')}`, bike: app.bike.name, focus: [], labels: s.labels, labelsBefore: s.labels, facts: app.bike.facts });
+  return h('section.screen', head,
+    h('main.app.exitapp', app.stage.el, h('section.side', h('div.scroll', body), h('div.cta', buttons))),
+  );
 }
 
 function renderJob(app: App, s: Extract<Screen, { kind: 'job' }>): HTMLElement {
