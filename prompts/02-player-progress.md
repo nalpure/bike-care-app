@@ -6,8 +6,8 @@ The work is split into three parts, with the context cleared in between (owner d
 | Part | Scope | Status |
 | --- | --- | --- |
 | 1 | Shared resolver; milestones 1–3; the logic of milestone 6 (exits, jump ahead); journey tests | **done** (2026-11-17) |
-| 2 | Milestones 4–5: 3D stage ported from the prototype, focus, views, clips, state, `build/3d-manifest.json` | next |
-| 3 | Milestone 7 (static build polish, `docs/sharing.md`), exit screens with 3D, final screenshot pass in both orientations | open |
+| 2 | Milestones 4–5: 3D stage ported from the prototype, focus, views, clips, state, `build/3d-manifest.json` | **done** (2026-11-17) |
+| 3 | Milestone 7 (static build polish, `docs/sharing.md`), exit screens with 3D, final screenshot pass in both orientations | next |
 
 ## Owner decisions for this prompt
 
@@ -19,28 +19,35 @@ The work is split into three parts, with the context cleared in between (owner d
 
 ## What exists
 
-- `tools/lib/resolve.ts`: the resolver and path enumeration, shared by build and player, working on bundle data. The build maps bundle objects back to YAML lines (`tools/lib/bundle.ts`). `build/` did not change in the refactor.
-- `player/src/engine/`: no DOM. `content.ts` (bundle lookups, text filling), `store.ts` (local storage, wrapped; bikes, findings, to-dos, notes), `journey.ts` (the state machine for diagnosis, routine check, job screen, tutorial pre-steps and cards, exits, jump ahead, skips, no check twice, back by hand with snapshots).
-- `player/src/ui/`: `app.ts` (shell, tabs, overlays: notice, assistant, feedback), `home.ts` (home, garage, bike sheet, shop placeholder, notes), `flow.ts` (every journey screen and the card), `stage.ts` (the `Stage` interface and a text placeholder), `dom.ts`.
-- The bundle is fetched at start (`./bundle.json`); `player/vite.config.ts` serves it in dev and copies it into `dist/`.
-- Tests: `player/test/journeys.test.ts` (every profile journey through the engine; ending and minutes equal `npm run check`), `player/test/engine.test.ts` (skips, standing warnings, block, progress), `tools/test/resolve.test.ts` (resolver on the written bundle equals the build). `player/e2e/run.ts` clicks every journey in portrait and landscape and checks endings against `build/report.md`.
-- Docs: assumptions A-16 to A-25, schema requests SR-02 to SR-04.
+- `tools/lib/resolve.ts`: the resolver and path enumeration, shared by build and player, working on bundle data.
+- `player/src/engine/`: no DOM. `content.ts`, `store.ts`, `journey.ts` (the state machine). Each card's `stage` carries `focus`, `view`, `animation`, `labels` (after the card) and `labelsBefore`.
+- `player/src/ui/`: `app.ts` (shell, overlays), `home.ts`, `flow.ts` (every journey screen and the card; calls `stage.show()` with the card id, tapped button and bike name), `stage.ts` (the `Stage` interface and the text `PlaceholderStage`, used when the 3D stage cannot start), `dom.ts`.
+- `player/src/stage/` (part 2, AC-27):
+  - `registry.ts`: pure data. Every node (with tag label, name, aliases, one-line "what it does"), which parts a node stands for, views, clips, motions, and `LABEL_SCENES` (state label -> how the bike is held). `manifest()` is what `npm run manifest` writes to `build/3d-manifest.json`.
+  - `bike.ts`: `bikeSpec(facts)` (ported `toBike`; category -> frame, bar, fork, barrel position, kickstand; gear type -> derailleur or one sprocket; `drive.rear_speeds` -> sprockets) and `BikeModel` (ported `buildBike`, `buildStand`, `updateDer`; plus hook and rope, crankset and hubs that turn, the chain that runs along its path).
+  - `chain.ts` (ported `buildPath`), `views.ts` (named camera poses; `whole_bike` in world space, close-ups in bike space so they follow a lifted or turned bike).
+  - `anim.ts`: clips `shift-to-smallest`, `shift-to-largest`, `limit-screw-align`, `b-gap-adjust`, `cable-tension-shift`, and the generic motions. A rotate on `h_screw`, `l_screw`, `b_screw` or `barrel_adjuster` plays the matching clip in the given direction (A-28). Motions on `bike` animate between ways of holding it.
+  - `three-stage.ts`: `ThreeStage` implements `Stage`. r128 look kept (colour management off, lights x pi). Pose from labels (union of before and after during a step), focus fade by context groups, tags, caption, ghost marker and turn arrow, explore mode with OrbitControls and the part card, replay (restarts the step animation), solutions (play `card.solution` in turn, loop). Unknown names: whole bike, no highlight, `console.warn` once. No WebGL: a text box with the parts in focus.
+- `tools/export-3d-manifest.ts` (`npm run manifest`). `npm run check` reports "3D names checked against: build/3d-manifest.json".
+- Content: the H screw, B screw and cable solutions in `content/steps/rear-shifting.yaml` are generic rotate motions with a direction (a clip takes no direction; build rule `animation-kind`).
+- Tests: `player/test/stage.test.ts` (manifest equals registry, catalog names provided, every node built, every view, clip and motion plays, directions) besides the part 1 tests. `player/e2e/run.ts` launches Chromium with SwiftShader flags so WebGL renders headless.
+- Docs: AC-27; assumptions A-26 to A-30; schema requests SR-05 (state label scene), SR-06 (part names in content), SR-07 (direction vocabulary).
 
-## Part 2: what to do
+## Part 3: what to do
 
-1. Port the prototype's 3D (`legacy/Bikefix-garage-guide v2.html`, from about line 1264: `buildPath`, the three.js setup, bike generator `toBike`, camera flights, highlight and fade, tags, tappable parts with `META` names, explore mode, replay) into `player/src/stage/` modules. Implement the existing `Stage` interface in `player/src/ui/stage.ts` (its `el` must persist across renders so the canvas stays pinned) and swap it in `player/src/main.ts`. Keep the visual quality; three.js is now r187 from npm (watch colour management and light intensity changes since r128).
-2. Name the nodes, views and clips exactly as in `schema/3d-catalog.yaml`, or rename in content and catalog together. Port `limit-screw-align`, `b-gap-adjust`, `cable-tension-shift`, `shift-to-smallest`, `shift-to-largest` as named clips; the generic motions are `rotate, push, pull, slide, squeeze, remove, insert`.
-3. A missing node, view or clip: whole bike, no highlight, `console.warn`, never a crash.
-4. Parts by facts where the prototype supports it (`bike.category` -> frame and handlebar; stand or upside down from the run choice; the stage receives `facts` and `labels`).
-5. Session state hides parts: there is no label -> node mapping in the content yet. Add a schema request (or propose `nodes_hidden` on state labels) and use the closest form; today's labels are `bike_in_stand`, `bike_hung`, `bike_upside_down` (show the stand, the hook, or the bike turned over).
-6. Export `build/3d-manifest.json` (nodes, views, clips, motions) from the player's registry with a script, and make sure `npm run check` passes with it (the loader in `tools/lib/content.ts` already prefers it).
-7. "Show solution" plays `card.solution` on the stage; the replay button replays the step animation.
-8. After each milestone: `npm run check`, `npm test`, `npm run test:e2e` (from the repo root, never with the shell inside `player/e2e/shots/`), look at the screenshots, fix, commit.
+1. Exit screens with 3D: the exit, not-covered and done screens have no stage yet. Decide whether an exit with something apart shows the stage (bike still held, what to put back highlighted). Keep it optional: the screen must read well without it.
+2. Milestone 7: static build polish (`npm run build`, open `dist/` from a plain file host, phone in both orientations), `docs/sharing.md` (Netlify and Cloudflare Pages + Access, how testers send notes).
+3. Final screenshot pass in both orientations. The e2e screenshots are taken right after each click, so fades and camera flights are often mid-way; for a careful look wait about 2 s per card (a small script that drives `window.__app` is quick to write). Look at: the B gap view (`derailleur_side_close`, the gap bar is small), tags that overlap on close views, the from-behind view (the tyre takes a lot of room), landscape on a short phone.
+4. After each step: `npm run check`, `npm test`, `npm run test:e2e` (from the repo root, never with the shell inside `player/e2e/shots/`), look at the screenshots, fix, commit.
 
 ## Known gaps and notes
 
 - Shop search and the Shop tab are placeholders by design.
 - The bike sheet labels facts by their question until SR-02 is decided; question pictures are grey tiles until SR-03.
+- The garage has no 3D preview of the bike (the prototype had one on the bike sheet); not required.
+- Cargo bikes are drawn as city bikes; hub gears and gearboxes simply (one sprocket); there is no full-suspension frame (no fact selects it).
+- With reduced motion the camera and the bike's pose jump instead of flying; animations still loop, as in the prototype.
+- After changing `registry.ts`, run `npm run manifest` and `npm run check`; the stage test fails until the manifest matches.
 - The e2e test does not swipe; swipe is wired in `flow.ts` (`attachSwipe`) for touch pointers only.
 - `npm audit` reports a ReDoS in `picomatch` (dev tools only, nothing in `dist/`).
 - On Windows run Vitest only through `npm test` (see the repo memory about the drive letter).
