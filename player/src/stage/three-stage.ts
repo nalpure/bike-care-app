@@ -119,7 +119,7 @@ export class ThreeStage implements Stage {
   private camVp: ViewPose | null = null;
 
   // tags, explore
-  private tagList: Array<{ el: HTMLElement; obj: T.Object3D }> = [];
+  private tagList: Array<{ el: HTMLElement; obj: T.Object3D; w?: number; h?: number }> = [];
   private tagTimer = 0;
   private noteTimer = 0;
   private exploring = false;
@@ -808,14 +808,37 @@ export class ThreeStage implements Stage {
       const w = this.el.clientWidth;
       const hgt = this.el.clientHeight;
       const pv = new T.Vector3();
-      for (const tg of this.tagList) {
+      // Each tag sits above its anchor. Close views bring anchors together, so a tag that would
+      // cover one already placed (lowest first) moves up above it.
+      const placed: Array<{ l: number; r: number; t: number; b: number }> = [];
+      const items = this.tagList.map((tg) => {
         tg.obj.getWorldPosition(pv);
         pv.project(cam);
-        const x = (pv.x * 0.5 + 0.5) * w;
-        const y = (-pv.y * 0.5 + 0.5) * hgt;
-        const off = pv.z > 1 || x < 12 || x > w - 12 || y < 24 || y > hgt - 12;
+        if (!tg.w) {
+          tg.w = tg.el.offsetWidth;
+          tg.h = tg.el.offsetHeight;
+        }
+        return { tg, x: (pv.x * 0.5 + 0.5) * w, y: (-pv.y * 0.5 + 0.5) * hgt, z: pv.z };
+      }).sort((a, b) => b.y - a.y);
+      for (const { tg, x, y, z } of items) {
+        const off = z > 1 || x < 12 || x > w - 12 || y < 24 || y > hgt - 12;
         tg.el.style.visibility = off ? 'hidden' : 'visible';
-        if (!off) tg.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-150%)`;
+        if (off) continue;
+        const tw = tg.w ?? 0;
+        const th = tg.h ?? 0;
+        const box = { l: x - tw / 2, r: x + tw / 2, t: y - th * 1.5, b: y - th * 0.5 };
+        for (let moved = true, n = 0; moved && n < 8; n++) {
+          moved = false;
+          for (const o of placed) {
+            if (box.l < o.r + 2 && box.r > o.l - 2 && box.t < o.b + 2 && box.b > o.t - 2) {
+              box.b = o.t - 2;
+              box.t = box.b - th;
+              moved = true;
+            }
+          }
+        }
+        placed.push(box);
+        tg.el.style.transform = `translate(${box.l.toFixed(1)}px,${box.t.toFixed(1)}px)`;
       }
     }
     this.gl.render(this.scene, cam);

@@ -23,6 +23,8 @@ function contentBundle(): Plugin {
       this.emitFile({ type: 'asset', fileName: 'bundle.json', source: readFileSync(bundlePath, 'utf8') });
       // A test build is not for search engines.
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: 'User-agent: *\nDisallow: /\n' });
+      // Netlify and Cloudflare Pages read _headers: no indexing, and a new bundle shows on reload.
+      this.emitFile({ type: 'asset', fileName: '_headers', source: '/*\n  X-Robots-Tag: noindex, nofollow\n/bundle.json\n  Cache-Control: no-cache\n' });
     },
   };
 }
