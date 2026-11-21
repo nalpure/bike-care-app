@@ -81,7 +81,7 @@ No questions: everything needed is already known.
 - On its wheels, and test with short rides ◀ **chosen**
   - Needs no tools, but takes longer. You adjust while the bike stands and test by riding.
 
-Tools picker. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light. (✓ = the owner has it)
+Tools picker. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: none. (✓ = the owner has it)
 
 Time shown for this bike: 26 to 29 min (depends on how the bike is held).
 
@@ -95,8 +95,6 @@ Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the 
 
 <sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
 
-Tools: Torch or phone light (helpful)
-
 - [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue ◀ **this path**
 - [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
 - [ ] **I cannot find one** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
@@ -109,13 +107,13 @@ Put the bike on its kickstand, or lean it against a wall at the saddle and rear 
 
 ##### 3. Check the inner limit (L screw) · `check-low-limit-by-hand` · safety check · 3 min
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key.
 
 <sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
 
 Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the spokes, as far as it goes)
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
 - [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The L screw is set. Let go of the derailleur. ◀ **this path**
 - [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.
@@ -131,11 +129,11 @@ Ride slowly on a quiet path and shift into the hardest gear, the smallest sprock
 
 ##### 5. Check the outer limit (H screw) · `check-high-limit` · safety check · 3 min
 
-Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?
+Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key.
 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
 - [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change. ◀ **this path**
 - [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
@@ -151,11 +149,11 @@ Ride slowly and shift one gear at a time into the easiest gear, the largest spro
 
 ##### 7. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
-Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
+Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key.
 
 <sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
 - [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
 - [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.

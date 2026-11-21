@@ -1,30 +1,29 @@
 # Tool catalog and parts.
 # Tools are picked fresh for each run. Parts are bought and fitted.
+# A step lists a tool only when its text names it: by its name or one of its mentions.
 
 tools:
   - id: bike-stand
     name: "Bike work stand"
     kind: tool
+    mentions: [stand]
 
   - id: hook-or-rope
     name: "Strong hook or rope that can carry the bike"
     kind: tool
-    do_not_use:
-      - { name: "Thin string or a coat hook", reason: "It can break, and the bike falls" }
+    mentions: [hook or rope]
 
   - id: work-mat
     name: "Soft mat or old blanket"
     kind: tool
+    mentions: [mat, blanket]
     substitutes:
       - { name: "Flattened cardboard box" }
-
-  - id: torch
-    name: "Torch or phone light"
-    kind: tool
 
   - id: derailleur-screw-tool
     name: "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur"
     kind: tool
+    mentions: [screwdriver, hex key]
     substitutes:
       - { name: "Bike multi-tool with a small cross-head bit and small hex keys" }
     do_not_use:

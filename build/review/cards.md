@@ -9,15 +9,13 @@ Where a card appears, and what is apart at that moment, is listed under it. Orde
 
 ### Look at the rear derailleur
 
-<sub>Unit `card:inspection:derailleur-alignment` · hash `326e26552f60` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:derailleur-alignment` · hash `54a1e043fb73` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
-
-Tools. Needed: none. Helpful: Torch or phone light.
 
 <sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
 
@@ -35,15 +33,13 @@ Tools. Needed: none. Helpful: Torch or phone light.
 
 ### Find the barrel adjuster
 
-<sub>Unit `card:inspection:barrel-adjuster-present` · hash `e3198886af3d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:barrel-adjuster-present` · hash `0dde7e3cf43e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
 Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
-
-Tools. Needed: none. Helpful: Torch or phone light.
 
 <sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
 
@@ -60,15 +56,13 @@ Tools. Needed: none. Helpful: Torch or phone light.
 
 ### Look at the chain
 
-<sub>Unit `card:inspection:chain-condition` · hash `04b93b54a74a` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:chain-condition` · hash `8e9ed0e4f0d0` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
 Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it.
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur or hub_gear or gearbox or single_speed.</sub>
-
-Tools. Needed: none. Helpful: Torch or phone light.
 
 <sub>3D: focus chain · view chain_close</sub>
 
@@ -398,13 +392,13 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 ### Check the inner limit (L screw)
 
-<sub>Unit `card:step:check-low-limit-by-hand` · hash `9f93ae07281b` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit-by-hand` · hash `ceb09f2a2632` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key.
 
-Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light.
+Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: none.
 
 <sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
 
@@ -423,13 +417,13 @@ Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the s
 
 ### Check the outer limit (H screw)
 
-<sub>Unit `card:step:check-high-limit` · hash `6eb35c2013aa` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-high-limit` · hash `825775f82479` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
-Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?
+Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key.
 
-Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light.
+Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: none.
 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
@@ -446,13 +440,13 @@ Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the
 
 ### Check the gap to the sprockets
 
-<sub>Unit `card:step:check-b-gap` · hash `bf0801466b7d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-b-gap` · hash `7d9674710ae5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 3 min</sub>
 
-Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
+Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key.
 
-Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light.
+Tools. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: none.
 
 <sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
 
@@ -610,34 +604,31 @@ Put back: "Turn the bike back onto its wheels."
 
 ### Bike work stand
 
-<sub>Unit `card:tool:bike-stand` · hash `2d8f65d23db2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:tool:bike-stand` · hash `77a55a73cbcf` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 Name: "Bike work stand" (tool)
+<sub>Step texts may call it: "stand"</sub>
 
 ### Strong hook or rope that can carry the bike
 
-<sub>Unit `card:tool:hook-or-rope` · hash `f32ed33ca4ad` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:tool:hook-or-rope` · hash `b3f0606029b5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 Name: "Strong hook or rope that can carry the bike" (tool)
-- Do not use: Thin string or a coat hook, because It can break, and the bike falls
+<sub>Step texts may call it: "hook or rope"</sub>
 
 ### Soft mat or old blanket
 
-<sub>Unit `card:tool:work-mat` · hash `d8d203e4a063` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:tool:work-mat` · hash `31eb57c9c5b3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 Name: "Soft mat or old blanket" (tool)
+<sub>Step texts may call it: "mat", "blanket"</sub>
 - Instead you can use: Flattened cardboard box
-
-### Torch or phone light
-
-<sub>Unit `card:tool:torch` · hash `df44176974ac` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-Name: "Torch or phone light" (tool)
 
 ### Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
-<sub>Unit `card:tool:derailleur-screw-tool` · hash `82bd8b0f7550` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:tool:derailleur-screw-tool` · hash `455e113eed4d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 Name: "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur" (tool)
+<sub>Step texts may call it: "screwdriver", "hex key"</sub>
 - Instead you can use: Bike multi-tool with a small cross-head bit and small hex keys
 - Do not use: A screwdriver that is too big or too small, because It slips and damages the screw head

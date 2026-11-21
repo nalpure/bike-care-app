@@ -15,6 +15,7 @@ export const STATIC_RULES: Record<string, string> = {
   'unknown-procedure': 'Every procedure referenced exists.',
   'unknown-inspection': 'Every inspection referenced exists.',
   'unknown-tool': 'Every tool referenced exists in the catalog.',
+  'tool-not-mentioned': 'A step or inspection lists a tool only when its text names it (by name or a mentions word).',
   'unknown-part': 'Every part referenced exists.',
   'unknown-fact': 'Every fact key referenced exists in facts.yaml.',
   'unknown-choice': 'Every run choice referenced exists.',

@@ -3,7 +3,7 @@
 profile:
   id: road-bike-stand
   name: "Road bike with a work stand"
-  description: "Road bike, 11-speed mechanical rear derailleur. The owner has a stand and a torch."
+  description: "Road bike, 11-speed mechanical rear derailleur. The owner has a work stand."
   facts:
     bike.category: road_gravel
     bike.ebike: false
@@ -12,7 +12,7 @@ profile:
     drive.rear_speeds: 11
     drive.rear_derailleur_model: "Shimano 105 RD-R7000"
   answers: {}
-  tools: [bike-stand, torch]
+  tools: [bike-stand]
   journeys:
     - id: chain-touches-spokes
       title: "Adjusting in the stand, but the chain touches the spokes at the end"

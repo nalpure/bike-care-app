@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "a2cbe173ec26db44",
+  "content_hash": "65b35955efea9f25",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -209,23 +209,27 @@
     {
       "id": "bike-stand",
       "name": "Bike work stand",
-      "kind": "tool"
+      "kind": "tool",
+      "mentions": [
+        "stand"
+      ]
     },
     {
       "id": "hook-or-rope",
       "name": "Strong hook or rope that can carry the bike",
       "kind": "tool",
-      "do_not_use": [
-        {
-          "name": "Thin string or a coat hook",
-          "reason": "It can break, and the bike falls"
-        }
+      "mentions": [
+        "hook or rope"
       ]
     },
     {
       "id": "work-mat",
       "name": "Soft mat or old blanket",
       "kind": "tool",
+      "mentions": [
+        "mat",
+        "blanket"
+      ],
       "substitutes": [
         {
           "name": "Flattened cardboard box"
@@ -233,14 +237,13 @@
       ]
     },
     {
-      "id": "torch",
-      "name": "Torch or phone light",
-      "kind": "tool"
-    },
-    {
       "id": "derailleur-screw-tool",
       "name": "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur",
       "kind": "tool",
+      "mentions": [
+        "screwdriver",
+        "hex key"
+      ],
       "substitutes": [
         {
           "name": "Bike multi-tool with a small cross-head bit and small hex keys"
@@ -267,12 +270,6 @@
       "hands_off": true,
       "minutes": 1,
       "text": "Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.",
-      "tools": {
-        "required": [],
-        "helpful": [
-          "torch"
-        ]
-      },
       "focus": [
         "rear_derailleur",
         "derailleur_hanger",
@@ -307,12 +304,6 @@
       "hands_off": true,
       "minutes": 1,
       "text": "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.",
-      "tools": {
-        "required": [],
-        "helpful": [
-          "torch"
-        ]
-      },
       "focus": [
         "barrel_adjuster",
         "shift_cable"
@@ -350,12 +341,6 @@
       "hands_off": true,
       "minutes": 1,
       "text": "Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it.",
-      "tools": {
-        "required": [],
-        "helpful": [
-          "torch"
-        ]
-      },
       "focus": [
         "chain"
       ],
@@ -910,13 +895,10 @@
       "kind": "safety_check",
       "title": "Check the inner limit (L screw)",
       "minutes": 3,
-      "text": "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?",
+      "text": "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key.",
       "tools": {
         "required": [
           "derailleur-screw-tool"
-        ],
-        "helpful": [
-          "torch"
         ]
       },
       "focus": [
@@ -976,13 +958,10 @@
       "kind": "safety_check",
       "title": "Check the outer limit (H screw)",
       "minutes": 3,
-      "text": "Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?",
+      "text": "Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key.",
       "tools": {
         "required": [
           "derailleur-screw-tool"
-        ],
-        "helpful": [
-          "torch"
         ]
       },
       "focus": [
@@ -1034,13 +1013,10 @@
       "kind": "check",
       "title": "Check the gap to the sprockets",
       "minutes": 3,
-      "text": "Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.",
+      "text": "Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key.",
       "tools": {
         "required": [
           "derailleur-screw-tool"
-        ],
-        "helpful": [
-          "torch"
         ]
       },
       "focus": [

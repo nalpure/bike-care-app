@@ -2,13 +2,13 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-Road bike, 11-speed mechanical rear derailleur. The owner has a stand and a torch.
+Road bike, 11-speed mechanical rear derailleur. The owner has a work stand.
 
 | | |
 | --- | --- |
 | Known before the first flow | `bike.category` = road_gravel ("Road or gravel bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_speeds` = 11<br>`drive.rear_derailleur_model` = Shimano 105 RD-R7000 |
 | Answers when asked | none |
-| Tools with them | Bike work stand<br>Torch or phone light |
+| Tools with them | Bike work stand |
 
 ## Journey 1: Adjusting in the stand, but the chain touches the spokes at the end
 
@@ -78,7 +78,7 @@ No questions: everything needed is already known.
 - On its wheels, and test with short rides
   - Needs no tools, but takes longer. You adjust while the bike stands and test by riding.
 
-Tools picker. Needed: Bike work stand ✓; Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light ✓. (✓ = the owner has it)
+Tools picker. Needed: Bike work stand ✓; Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: none. (✓ = the owner has it)
 
 Time shown for this bike: 26 to 29 min (depends on how the bike is held).
 
@@ -91,8 +91,6 @@ Time shown for this bike: 26 to 29 min (depends on how the bike is held).
 Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
 
 <sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
-
-Tools: Torch or phone light (helpful)
 
 - [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue ◀ **this path**
 - [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
@@ -112,13 +110,13 @@ Tools: Bike work stand
 
 ##### 3. Check the inner limit (L screw) · `check-low-limit-by-hand` · safety check · 3 min
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop?
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key.
 
 <sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
 
 Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the spokes, as far as it goes)
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
 - [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The L screw is set. Let go of the derailleur. ◀ **this path**
 - [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.
@@ -136,11 +134,11 @@ Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
 ##### 5. Check the outer limit (H screw) · `check-high-limit` · safety check · 3 min
 
-Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket?
+Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key.
 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
 - [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
 - [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
@@ -160,11 +158,11 @@ Animation: "Shift one gear at a time" (clip shift-to-largest)
 
 ##### 7. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
-Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
+Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key.
 
 <sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur; Torch or phone light (helpful)
+Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
 
 - [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for Shimano 105 RD-R7000 gives the exact gap, if you want to check it.
 - [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
@@ -256,7 +254,7 @@ No questions: everything needed is already known.
 - On its wheels, and test with short rides
   - Needs no tools, but takes longer. You adjust while the bike stands and test by riding.
 
-Tools picker. Needed: Bike work stand ✓; Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Torch or phone light ✓. (✓ = the owner has it)
+Tools picker. Needed: Bike work stand ✓; Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: none. (✓ = the owner has it)
 
 Time shown for this bike: 26 to 29 min (depends on how the bike is held).
 
@@ -268,8 +266,6 @@ Stand behind the bike and look at the rear derailleur, the part below the sprock
 
 <sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
 
-Tools: Torch or phone light (helpful)
-
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → continue ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **EXIT, unsafe**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
 
@@ -278,8 +274,6 @@ Tools: Torch or phone light (helpful)
 Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
 
 <sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
-
-Tools: Torch or phone light (helpful)
 
 - [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue
 - [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue

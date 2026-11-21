@@ -140,7 +140,7 @@ describe('review units and the ledger', () => {
   - { unit: "${card.id}", hash: "${card.hash}", role: mechanic, by: "test", date: "2026-11-17", verdict: approved }
   - { unit: "${tree.id}", hash: "${tree.hash}", role: mechanic, by: "test", date: "2026-11-17", verdict: approved }
 `);
-    b.edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').text = 'Look from the side at the small gap between the upper toothed wheel and the largest sprocket.'));
+    b.edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').text = 'Look from the side at the small gap between the upper toothed wheel and the largest sprocket. Keep the screwdriver at hand.'));
     const after = b.run();
     expect(unit(after, card.id).byRole.mechanic.status).toBe('changed');
     expect(unit(after, tree.id).byRole.mechanic.status).toBe('approved');
@@ -202,6 +202,16 @@ describe('rules broken on purpose', () => {
     expect(e, show(r)).toHaveLength(1);
     expect(e[0].id).toBe('step check-high-limit');
     expect(e[0].message).toContain('sonic-screwdriver');
+  });
+
+  it('a tool on the list that the text never names', () => {
+    const r = sandbox()
+      .edit('content/steps/holding.yaml', (d) => (step(d, 'turn-bike-upright').tools = { helpful: ['work-mat'] }))
+      .run();
+    const e = errorsOf(r, 'tool-not-mentioned');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].id).toBe('step turn-bike-upright');
+    expect(e[0].message).toContain('work-mat');
   });
 
   it('a show_how_from that does not lie ahead', () => {

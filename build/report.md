@@ -6,7 +6,7 @@
 
 ## Summary
 
-- Result: **passed**, 0 warning(s)
+- Result: **passed**, 3 warning(s)
 - Files validated: 19
 - 3D names checked against: `build/3d-manifest.json`
 - Bundle: `build/bundle.json`
@@ -27,7 +27,7 @@ Details per unit in [review/index.md](review/index.md).
 
 | Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
 | --- | --- | --- | --- | --- |
-| card | 39 | 0 of 31 | 0 of 39 | 0 |
+| card | 38 | 0 of 30 | 0 of 38 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
 | journey | 9 | — | 0 of 9 | 0 |
 
@@ -94,6 +94,7 @@ Journeys that end at a shop, a stop or not covered: 4 of 9.
 | `unknown-procedure` | pass | Every procedure referenced exists. |
 | `unknown-inspection` | pass | Every inspection referenced exists. |
 | `unknown-tool` | pass | Every tool referenced exists in the catalog. |
+| `tool-not-mentioned` | pass | A step or inspection lists a tool only when its text names it (by name or a mentions word). |
 | `unknown-part` | pass | Every part referenced exists. |
 | `unknown-fact` | pass | Every fact key referenced exists in facts.yaml. |
 | `unknown-choice` | pass | Every run choice referenced exists. |
@@ -156,3 +157,11 @@ Journeys that end at a shop, a stop or not covered: 4 of 9.
 - Price for job `adjust-rear-shifting` is a placeholder.
 - Price for job `chain-care` is a placeholder.
 - Price for job `derailleur-check-at-shop` is a placeholder.
+
+## Issues
+
+```
+WARNING content/steps/rear-shifting.yaml:147 | step check-low-limit-by-hand | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
+WARNING content/steps/rear-shifting.yaml:171 | step check-high-limit | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
+WARNING content/steps/rear-shifting.yaml:194 | step check-b-gap | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
+```

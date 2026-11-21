@@ -107,12 +107,35 @@ function sentences(text: string): number {
   return text.split(/[.!?](?:\s|$)/).filter((s) => s.trim().length > 0).length;
 }
 
-function checkToolUse(x: Ctx, tools: any, loc: Loc): void {
+/** Every text of a step or inspection the user reads on its card, lower-cased, for the mention rule. */
+function cardText(def: any): string {
+  const parts: string[] = [def.text, def.generic_text, ...(def.details ?? []).map((d: any) => d.text)];
+  for (const b of def.buttons ?? []) parts.push(b.label, b.text, b.block, b.exit?.text);
+  for (const s of def.states ?? []) parts.push(s.label, s.meaning);
+  return parts.filter(Boolean).join(' \n ').toLowerCase();
+}
+
+/** The words that count as naming a tool: its full name and its mentions. */
+export function toolWords(tool: any): string[] {
+  return [tool.name, ...(tool.mentions ?? [])].map((w: string) => w.toLowerCase());
+}
+
+function mentions(text: string, word: string): boolean {
+  const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z])${esc}`).test(text);
+}
+
+function checkToolUse(x: Ctx, tools: any, loc: Loc, def: any): void {
   if (!tools) return;
+  const text = cardText(def);
   for (const kind of ['required', 'helpful'] as const) {
     (tools[kind] ?? []).forEach((t: any, i: number) => {
       const id = typeof t === 'string' ? t : t.id;
-      if (!x.c.tools.has(id)) err(x, sub(loc, 'tools', kind, i), 'unknown-tool', `Tool "${id}" is not in content/tools.yaml.`);
+      const tool = x.c.tools.get(id);
+      if (!tool) err(x, sub(loc, 'tools', kind, i), 'unknown-tool', `Tool "${id}" is not in content/tools.yaml.`);
+      else if (!toolWords(tool.def).some((w) => mentions(text, w))) {
+        err(x, sub(loc, 'tools', kind, i), 'tool-not-mentioned', `Tool "${id}" is listed, but the text never names it. Name it in the text ("${tool.def.name}"${tool.def.mentions ? ` or ${tool.def.mentions.map((m: string) => `"${m}"`).join(', ')}` : ''}), add a short word to its mentions in content/tools.yaml, or take it off the list.`);
+      }
       if (typeof t === 'object') checkCondition(x, t.when, sub(loc, 'tools', kind, i));
     });
   }
@@ -228,7 +251,7 @@ function checkStep(x: Ctx, e: Entry): void {
   checkCondition(x, s.when, sub(loc, 'when'));
   if (s.if_unknown === 'generic' && !s.generic_text) err(x, loc, 'generic-needs-text', 'if_unknown: generic needs generic_text.');
   if (s.generic_text && s.if_unknown !== 'generic' && s.if_unknown !== 'ask') warn(x, loc, 'unused-generic-text', 'generic_text is only shown with if_unknown: generic or ask.');
-  checkToolUse(x, s.tools, loc);
+  checkToolUse(x, s.tools, loc, s);
   (s.parts ?? []).forEach((p: string, i: number) => {
     if (!x.c.parts.has(p)) err(x, sub(loc, 'parts', i), 'unknown-part', `Part "${p}" is not in content/tools.yaml under parts.`);
   });
@@ -247,7 +270,7 @@ function checkInspection(x: Ctx, e: Entry): void {
   const d = e.def;
   const loc = locOf(e, 'inspection');
   checkCondition(x, d.applies_when, sub(loc, 'applies_when'));
-  checkToolUse(x, d.tools, loc);
+  checkToolUse(x, d.tools, loc, d);
   checkScene(x, d, loc);
   checkDetails(x, d, loc);
   checkText(x, d.text, sub(loc, 'text'));

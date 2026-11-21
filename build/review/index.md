@@ -5,7 +5,7 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 39 fully approved
+- Cards: 0 of 38 fully approved
 - Flow trees: 0 of 3 fully approved
 - Journeys: 0 of 9 fully approved
 
@@ -51,7 +51,6 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:tool:bike-stand` | Bike work stand | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:tool:hook-or-rope` | Strong hook or rope that can carry the bike | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:tool:work-mat` | Soft mat or old blanket | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:tool:torch` | Torch or phone light | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:tool:derailleur-screw-tool` | Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `journey:city-derailleur-no-stand/slow-shifting-upside-down` | Slow shifting, adjusted at home with the bike upside down | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:city-derailleur-no-stand/bent-derailleur` | The derailleur looks bent, so the owner goes to a shop | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |

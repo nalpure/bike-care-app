@@ -14,7 +14,6 @@ inspections:
     hands_off: true
     minutes: 1
     text: "Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain."
-    tools: { required: [], helpful: [torch] }
     focus: [rear_derailleur, derailleur_hanger, cassette]
     view: derailleur_from_behind
     states:
@@ -32,7 +31,6 @@ inspections:
     hands_off: true
     minutes: 1
     text: "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter."
-    tools: { required: [], helpful: [torch] }
     focus: [barrel_adjuster, shift_cable]
     view: barrel_adjuster_close
     states:
@@ -52,7 +50,6 @@ inspections:
     hands_off: true
     minutes: 1
     text: "Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it."
-    tools: { required: [], helpful: [torch] }
     focus: [chain]
     view: chain_close
     animation: { target: crank, motion: rotate, direction: "backwards", amount: "slowly, two full turns", caption: "Turn the pedals backwards" }

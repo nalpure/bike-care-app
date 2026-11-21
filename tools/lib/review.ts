@@ -235,6 +235,7 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
   }
   for (const [id, e] of c.tools) {
     const body = [`Name: "${e.def.name}" (${e.def.kind})`];
+    if (e.def.mentions?.length) body.push(`<sub>Step texts may call it: ${e.def.mentions.map((m: string) => `"${m}"`).join(', ')}</sub>`);
     for (const s of e.def.substitutes ?? []) body.push(`- Instead you can use: ${s.name}${s.note ? ` (${s.note})` : ''}`);
     for (const s of e.def.do_not_use ?? []) body.push(`- Do not use: ${s.name}, because ${s.reason}`);
     add('tool', id, e.def.name, e.def, ['mechanic', 'beginner'], body);
