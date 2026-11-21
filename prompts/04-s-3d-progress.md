@@ -15,6 +15,19 @@ All in `f61a775` (pushed to `main`):
 - **Garage preview and snapshot** (below), the frame colour from `bike.colour`, and the frame fitted to `geometry.*` within plausible ranges, with a test using extreme values.
 - `player/README.md`: 3D file table, a "Garage preview" section, the recipe, "Known 3D shortcomings".
 
+## Owner feedback round (derailleur look, chainstay, chain twist)
+
+Done in `2df5622` (finished in a second session after the first was interrupted):
+
+- **Derailleur body:** `derGeom` / `derPose` in `bike.ts`. The body turns about the hanger bolt within 45°, two link plates swing inwards, the P-knuckle carries the cage, and the cage plates are rounded slabs. The H, L and B screws and the barrel adjuster sit on the body and move with it (`turnable(..., parent)`; `poseArrow` in `three-stage.ts` follows them).
+- **Cassette and chainstay:** sprockets at 1.25 × real spacing (by speed count), centred on a chain line of 100–115 mm; the chainring sits on it. Chainstays on both sides bend out once behind the chainring (`stayPts`), and the axle runs from dropout to dropout.
+- **Chain twist:** each link's width stays across the bike (`setDer`).
+- The owner's answer to question 1: the long body is fine.
+
+Choices without the owner: the 1.25 factor and the chain line values; the body's turning range (45°) and cage angles (-35° to -55°); the inner cage plate is narrower at the lower pulley so it clears the next sprocket on 13-speed cassettes.
+
+**Blender?** Not yet. A modelled derailleur (glTF) would look better, but it would have to be rigged so its body, links and cage still move with `derPose`, and the geometry would have to be refit for every cassette. Worth it only once the procedural shapes are the limit; then a modelled body and cage plates on the existing joints would be the cheapest step.
+
 ## Interfaces other sessions rely on
 
 - **Preview** (`player/src/stage/three-stage.ts`, class `ThreeStage`):
