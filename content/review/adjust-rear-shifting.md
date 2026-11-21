@@ -16,12 +16,12 @@ Each item names the step or inspection ids it affects, so a change can be traced
 | R-06 | `hang-bike` | Hanging the bike by the front of the saddle: does the rear wheel lift enough, and is it stable while the pedals turn? | Allowed with a warning that the hook or rope must carry the bike. |
 | R-07 | `turn-upside-down` | Bikes with hydraulic brakes: should they stay upside down only briefly? E-bikes: can the display or handlebar parts be damaged? | Only the heavy-bike warning. No hydraulic-brake warning, because the brake type is not asked in this flow. |
 | R-08 | `check-all-gears` | The stop "chain falls off or touches the spokes" after the limit screws were checked. Could this still be a limit screw a beginner can fix (a block) rather than a bent part (a stop)? | Stop, with "Put the bike back on its wheels" and the jump to `release-bike`. |
-| R-09 | `derailleur-alignment` | Seeing a bent derailleur or hanger from behind is approximate. Small bends are invisible; a leaning derailleur is always serious? | Two states, straight or leaning/twisted. Leaning leads to a shop with `do_not_ride` (A-01). |
+| R-09 | `derailleur-alignment` | Seeing a bent derailleur or hanger from behind is approximate. Small bends are invisible; a leaning derailleur is always serious? | Two states, straight or leaning/twisted. Leaning leads to a shop with `do_not_ride`. |
 | R-10 | `chain-condition` | Visual only. Chain wear cannot be judged by eye, and wear limits are safety values we do not invent. | No wear state. The shop text asks the shop to check wear. |
 | R-11 | `shift-test-ride` | Labels map "pedalling gets lighter" to bigger sprockets (cable too loose) and "harder" to smaller sprockets (cable too tight). Correct for standard derailleurs, reversed for rapid-rise. | As R-03 (b). |
 | R-12 | `ride-to-smallest-sprocket`, `ride-to-largest-sprocket`, `check-cable-tension-riding` | Test rides with a misadjusted derailleur. Is riding into the largest sprocket safe after only the hand check of the low limit? | Hand check first, then rides. Every riding step is forbidden while the bike is held. |
 | R-13 | all shifting steps | Bikes with front gears: should the user pick a certain chainring before checking the limits and the B gap? `drive.front_count` exists in the fact list but is not used. | Not handled. Steps talk only about the rear sprockets. |
-| R-15 | `barrel-adjuster-present` | Where to look for an inline adjuster on the frame; bikes without any adjuster. | An inspection before the bike is lifted; "I cannot find one" ends with "not supported yet" and a shop (owner decision, IC-04). |
+| R-15 | `barrel-adjuster-present` | Where to look for an inline adjuster on the frame; bikes without any adjuster. | An inspection before the bike is lifted; "I cannot find one" ends with "not supported yet" and a shop (owner decision). |
 | R-16 | `check-all-gears`, `check-all-gears-riding` | "Go back to the cable step" relies on the user going back by hand, because the app never jumps back. | Text tells the user to go back. |
 | R-14 | `shift-test-ride` in `finish` | After adjusting in a stand, shifting under load on the road can differ. Is a "still not clean" result a shop case, or should it send the user back to the cable step? | Stop with a calm text: you can ride carefully; a shop can check the cable. |
 
@@ -29,6 +29,6 @@ Each item names the step or inspection ids it affects, so a change can be traced
 
 | Id | Question | Default in use |
 | --- | --- | --- |
-| RO-01 | Should rapid-rise derailleurs and bikes without a barrel adjuster get their own fact and exits? | **Decided 2026-11-17:** too niche to ask; caught as "not supported" (IC-04). Rapid-rise only when the bike's data says so. |
-| RO-03 | A tutorial opened right after the diagnosis repeated `derailleur-alignment`. | **Decided 2026-11-17:** never the same check twice in a session (IC-03, AC-20). |
+| RO-01 | Should rapid-rise derailleurs and bikes without a barrel adjuster get their own fact and exits? | **Decided 2026-11-17:** too niche to ask; caught as "not supported". Rapid-rise only when the bike's data says so. |
+| RO-03 | A tutorial opened right after the diagnosis repeated `derailleur-alignment`. | **Decided 2026-11-17:** never the same check twice in a session (hard rule 12). |
 | RO-02 | Is the test-ride path acceptable for a beginner at all, given R-05 and R-12? | Offered as the fourth option, not recommended. |

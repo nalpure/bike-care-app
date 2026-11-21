@@ -1,7 +1,7 @@
 // Drives a profile journey through the player's engine, the way the owner in the profile would tap.
 // Shared by the logic test (journeys.test.ts) and kept free of DOM code.
 //
-// The profile says what the owner knows, answers, has, sees and taps (AC-15). The driver answers
+// The profile says what the owner knows, answers, has, sees and taps. The driver answers
 // exactly that; any screen the profile does not answer fails the journey.
 
 import { Content } from '../src/engine/content.js';

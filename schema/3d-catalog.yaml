@@ -5,7 +5,7 @@
 # kebab-case for clips.
 #
 # The player now exports build/3d-manifest.json from player/src/stage/registry.ts (npm run manifest),
-# and npm run check uses that manifest instead of this file (AC-27). This file stays as the list
+# and npm run check uses that manifest instead of this file. This file stays as the list
 # the player must at least provide: player/test/stage.test.ts fails when a name here is missing.
 # Add a name here only together with a note in docs/schema-requests.md.
 

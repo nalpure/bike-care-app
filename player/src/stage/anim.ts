@@ -66,7 +66,7 @@ export interface AnimCtx {
 }
 
 /**
- * +1 or -1 from the free-text direction of an animation (assumption A-27).
+ * +1 or -1 from the free-text direction of an animation.
  * Screwing in, tightening, forward, up, in and towards are +1; the opposites are -1.
  */
 export function dirSign(direction?: string): 1 | -1 {
@@ -192,7 +192,7 @@ export function motion(a: any, ctx: AnimCtx): Anim | undefined {
   if ((target === 'rear_wheel' || target === 'front_wheel') && kind === 'rotate') {
     return { duration: 4, frame: () => ({ wheelSpeed: { [target]: sign * 2 } }) };
   }
-  // Turning a derailleur screw or the barrel adjuster shows what it does (assumption A-28):
+  // Turning a derailleur screw or the barrel adjuster shows what it does:
   // the limit screws bring the pulley into line, the B screw sets the gap, the barrel the cable.
   if ((target === 'h_screw' || target === 'l_screw') && kind === 'rotate') return clip('limit-screw-align', a, ctx);
   if (target === 'b_screw' && kind === 'rotate') return clip('b-gap-adjust', a, ctx);

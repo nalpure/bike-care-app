@@ -6,7 +6,7 @@ Implement, in this repository, a repeatable workflow that turns a short brief ("
 
 You are implementing the workflow, not writing bike content. Use Claude Code's own mechanisms (subagent definitions, custom commands, hooks, headless runs). Check the current Claude Code documentation for their exact formats before you write them.
 
-Read `CLAUDE.md`, `docs/idea.md`, `docs/approach.md`, their change files `docs/idea-changes.md` and `docs/approach-changes.md`, and the output of prompt 1 first. Everything below marked **Requirement** must hold. Everything marked **Idea** is a suggestion: keep it, change it or drop it, and write your reasoning to `docs/workflow-decisions.md`.
+Read `CLAUDE.md`, `docs/idea.md`, `docs/decisions.md`, `docs/approach.md`, the area guides (`content/CLAUDE.md`, `tools/CLAUDE.md`) and the output of prompts 1 and 4 first. Everything below marked **Requirement** must hold. Everything marked **Idea** is a suggestion: keep it, change it or drop it, and list your reasoning in your handoff file (not in `docs/`).
 
 ## Why this exists
 
@@ -45,7 +45,7 @@ A first attempt had one agent write a whole tutorial for five brake types in one
 
 ## Checking generated content
 
-The build tool already expands and simulates every path, but reviewing paths one by one repeats the same content many times. Since prompt 1 it writes **review units** instead (see `approach-changes.md` AC-26), each shown once with a content hash:
+The build tool already expands and simulates every path, but reviewing paths one by one repeats the same content many times. Since prompt 1 it writes **review units** instead, each shown once with a content hash:
 
 - `card:<kind>:<id>` in `build/review/cards.md`: one piece of user-facing text, with every context it appears in.
 - `tree:<kind>:<id>` in `build/review/trees/`: the structure of one flow (branches, order, what is apart, exits, jumps), without card texts.

@@ -7,7 +7,7 @@
 // name listed here; player/test/stage.test.ts checks that.
 //
 // Part names, other names and the one-line "what it does" are shown when the user taps a part.
-// They describe the part only, never how to repair it (assumption A-26, schema request SR-06).
+// They describe the part only, never how to repair it (schema request SR-06).
 
 export interface NodeInfo {
   /** short tag shown on the part during a step */

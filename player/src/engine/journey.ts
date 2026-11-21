@@ -17,7 +17,7 @@ import type { Bike, Finding, Store } from './store.js';
 
 // ---------------------------------------------------------------- session
 
-/** One sitting. Inspection answers are kept so no check is shown twice (AC-20). */
+/** One sitting. Inspection answers are kept so no check is shown twice (hard rule 12). */
 export class Session {
   /** inspection id (with position) -> state id */
   answers: Record<string, string> = {};
@@ -724,7 +724,7 @@ export class Journey {
   /**
    * The next item index after `from` on this path: not skipped by a button, within the sequence
    * after a jump (finish is skipped), and not an inspection already answered in this session
-   * before the work started (AC-20). Returns the index and the auto-answered items passed on the way.
+   * before the work started (hard rule 12). Returns the index and the auto-answered items passed on the way.
    */
   private nextIndex(t: TutState, all: PathItem[], run: TutorialRun, from: number): { idx?: number; auto: Array<{ idx: number; state: string }> } {
     const skipped = this.skippedSet(t, all);
