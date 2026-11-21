@@ -63,7 +63,7 @@ export function buildPath(circ: Circle[], o: Path): number {
       c++;
     }
     // The straight run to the next wheel. Where the two wheels are in different planes, the chain
-    // leaves each in its plane and bends sideways on the way (smoothstep in z), as a real chain
+    // leaves each in its plane and bends sideways on the way (smootherstep in z: it stays in its plane close to a wheel, where the next sprocket is only a few mm away), as a real chain
     // flexes, instead of cutting across at an angle into the neighbouring sprockets.
     const nx = circ[(i + 1) % n];
     if (Math.abs(nx.z - ci.z) > 1e-6) {
@@ -77,7 +77,7 @@ export function buildPath(circ: Circle[], o: Path): number {
         const t = k / m;
         o.x[c] = x0 + (x1 - x0) * t;
         o.y[c] = y0 + (y1 - y0) * t;
-        o.z[c] = ci.z + (nx.z - ci.z) * t * t * (3 - 2 * t);
+        o.z[c] = ci.z + (nx.z - ci.z) * t * t * t * (t * (6 * t - 15) + 10);
         c++;
       }
     }

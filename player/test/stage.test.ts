@@ -45,7 +45,7 @@ function hitsSprocket(B: BikeSpec, p: T.Vector3, halfWidth: number, halfHeight: 
   const d = Math.hypot(p.x - B.rx, p.y - B.huby);
   for (let j = 0; j < B.n; j++) {
     if (j === skip) continue;
-    if (Math.abs(p.z - B.zs[j]) < B.sp * 0.25 + halfWidth + 0.001 && d - halfHeight < B.rs[j] + 0.0025 + 0.002) return j;
+    if (Math.abs(p.z - B.zs[j]) < B.sprT / 2 + halfWidth && d - halfHeight < B.rs[j] + 0.0025 + 0.002) return j;
   }
   return undefined;
 }
@@ -117,6 +117,42 @@ describe('bike builder', () => {
 
   it('keeps the tyres clear of the frame, fork and battery on every kind of bike', () => {
     for (const cat of ['mtb', 'road_gravel', 'trekking_city', 'cargo', 'unknown']) expectTyresClear(bikeSpec({ 'bike.category': cat, 'bike.ebike': true }), cat);
+  });
+
+  it('draws the common cassette for each kind of bike and number of speeds', () => {
+    const rows: Array<[string, number, number, number]> = [
+      ['road_gravel', 8, 11, 28], ['road_gravel', 9, 11, 28], ['road_gravel', 10, 11, 32], ['road_gravel', 11, 11, 32], ['road_gravel', 12, 11, 34],
+      ['trekking_city', 7, 14, 28], ['trekking_city', 8, 11, 32], ['trekking_city', 9, 11, 34], ['trekking_city', 10, 11, 36],
+      ['mtb', 8, 11, 32], ['mtb', 9, 11, 34], ['mtb', 10, 11, 36], ['mtb', 11, 11, 42], ['mtb', 12, 10, 51],
+    ];
+    for (const [cat, n, first, last] of rows) {
+      const c = bikeSpec({ 'bike.category': cat, 'drive.rear_speeds': n }).cassette;
+      expect([c.length, c[0], c[n - 1]], `${cat} ${n}`).toEqual([n, first, last]);
+      for (let i = 1; i < n; i++) expect(c[i], `${cat} ${n}`).toBeGreaterThan(c[i - 1]);
+    }
+    // other speed counts: the nearest row's first and last tooth, evenly spread
+    const five = bikeSpec({ 'bike.category': 'trekking_city', 'drive.rear_speeds': 5 }).cassette;
+    expect([five.length, five[0], five[4]]).toEqual([5, 14, 28]);
+    const thirteen = bikeSpec({ 'bike.category': 'mtb', 'drive.rear_speeds': 13 }).cassette;
+    expect([thirteen.length, thirteen[0], thirteen[12]]).toEqual([13, 10, 51]);
+    // a range in the cassette model: the same speeds, stretched to those teeth
+    const model = bikeSpec({ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11, 'drive.cassette_model': 'Shimano CS-HG700 11–34' }).cassette;
+    expect([model.length, model[0], model[10]]).toEqual([11, 11, 34]);
+    expect(bikeSpec({ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11, 'drive.cassette_model': 'Shimano 105 CS-R7000' }).cassette).toEqual(bikeSpec({ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11 }).cassette);
+    expect(bikeSpec({ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11, 'drive.cassette_model': 'x 11-12' }).cassette[10]).toBe(32);
+  });
+
+  it('spaces the sprockets as on a real cassette and sizes the chain by the speeds', () => {
+    const real: Record<number, number> = { 7: 5, 8: 4.8, 9: 4.35, 10: 3.95, 11: 3.74, 12: 3.5 };
+    const chain: Record<number, number> = { 7: 7.3, 8: 7.3, 9: 6.6, 10: 5.9, 11: 5.5, 12: 5.3, 13: 5.3 };
+    for (const n of [7, 8, 9, 10, 11, 12, 13]) {
+      const B = bikeSpec({ 'bike.category': n === 7 ? 'trekking_city' : 'mtb', 'drive.rear_speeds': n });
+      expect(B.sp * 500, `${n} speeds`).toBeCloseTo(real[n] ?? 3.3, 6);
+      for (let i = 1; i < B.n; i++) expect(B.zs[i - 1] - B.zs[i]).toBeCloseTo(B.sp, 9);
+      expect(B.chainW * 500, `${n} speeds`).toBeCloseTo(chain[n], 6);
+      // the chain on one sprocket does not touch the next one
+      expect(B.chainW / 2 + B.sprT / 2).toBeLessThan(B.sp);
+    }
   });
 
   it('raises the bottom bracket to a typical height for each kind of bike', () => {

@@ -286,7 +286,7 @@ export function buildDerailleur(m: BikeModel): void {
   dg.add(cage);
   const cx = -CO * Math.sin(KAPPA);
   const cy = CO * Math.cos(KAPPA);
-  const pulleyW = Math.min(0.011, B.sp * 0.9);
+  const pulleyW = B.chainW * 0.7;
   m.add('upper_pulley', gearGeo(RP, 11, pulleyW), null, null, { parent: cage, k: 0.35, flat: true });
   m.add(D, gearGeo(RP, 11, pulleyW), [0, -LC, 0], null, { parent: cage, k: 0.35, flat: true });
   m.add(D, slabGeo(hullShape([[cx, cy, 0.019], [0, 0, 0.028], [0, -LC, 0.033]]), pw, pw + 0.006, 0.002), null, null, { parent: cage, k: 0.52 });

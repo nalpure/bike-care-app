@@ -46,10 +46,13 @@ export interface BikeSpec {
   chainring: number;
   tt: number;
   n: number;
+  /** distance between sprockets, and the thickness of one (scene units) */
   sp: number;
+  sprT: number;
   zs: number[];
   rs: number[];
   rc: number;
+  /** outer width of the chain, by number of speeds (scene units) */
   chainW: number;
   /** z of the chainring, and of the cassette's middle */
   chainline: number;
@@ -67,15 +70,76 @@ export interface BikeSpec {
   barTop: V2;
 }
 
-export function cassetteFor(kind: BikeSpec['kind'], n: number): number[] {
-  if (n <= 1) return [18];
-  const last = kind === 'road' ? 28 : kind === 'city' ? (n <= 8 ? 28 : 34) : n >= 11 ? 51 : n >= 9 ? 42 : 34;
+/**
+ * Common cassettes, one row per kind of bike and number of speeds. DRAWING DATA, not facts: the
+ * tooth counts only decide what the 3D view shows and are never given as a part's compatibility
+ * (hard rule 3). Where I am not sure of the exact real sequence, the sequence is a plausible
+ * spread with the right first and last tooth.
+ */
+const CASSETTES: Record<BikeSpec['kind'], Record<number, number[]>> = {
+  road: {
+    8: [11, 13, 15, 17, 19, 21, 24, 28],
+    9: [11, 12, 13, 15, 17, 19, 21, 24, 28],
+    10: [11, 12, 14, 16, 18, 20, 23, 26, 29, 32],
+    11: [11, 12, 13, 14, 16, 18, 20, 22, 25, 28, 32],
+    12: [11, 12, 13, 14, 15, 17, 19, 21, 24, 27, 30, 34],
+  },
+  city: {
+    7: [14, 16, 18, 20, 22, 24, 28],
+    8: [11, 13, 15, 17, 20, 23, 27, 32],
+    9: [11, 13, 15, 17, 20, 23, 26, 30, 34],
+    10: [11, 13, 15, 17, 19, 21, 24, 28, 32, 36],
+  },
+  mountain: {
+    8: [11, 13, 15, 18, 21, 24, 28, 32],
+    9: [11, 13, 15, 17, 20, 23, 26, 30, 34],
+    10: [11, 13, 15, 17, 19, 21, 24, 28, 32, 36],
+    11: [11, 13, 15, 17, 19, 21, 24, 28, 32, 37, 42],
+    12: [10, 12, 14, 16, 18, 21, 24, 28, 33, 39, 45, 51],
+  },
+};
+
+/** `n` tooth counts spread evenly (geometric, so the small sprockets stay close) from `first` to `last`. */
+function spread(first: number, last: number, n: number): number[] {
   const out: number[] = [];
   for (let i = 0; i < n; i++) {
-    let t = Math.round(11 * Math.pow(last / 11, i / (n - 1)));
+    let t = Math.round(first * Math.pow(last / first, i / Math.max(1, n - 1)));
     if (i && t <= out[i - 1]) t = out[i - 1] + 1;
     out.push(t);
   }
+  return out;
+}
+
+/**
+ * The sprockets to draw (smallest first) for a kind of bike and a number of speeds.
+ * Rule: take the row of the table above with the same kind and speeds. For other speeds (5, 6, 13)
+ * take the row with the nearest speeds (the larger one on a tie) and spread `n` tooth counts
+ * evenly between its smallest and largest. If `model` (drive.cassette_model) contains a range such
+ * as `11-34` or `11–42`, use the same row, stretched to that first and last tooth; a range that
+ * cannot be a cassette (first below 9, last above 55, or too narrow for `n` sprockets) is ignored.
+ * One sprocket (hub gear, single speed): 18 teeth.
+ */
+export function cassetteFor(kind: BikeSpec['kind'], n: number, model?: unknown): number[] {
+  if (n <= 1) return [18];
+  const rows = CASSETTES[kind];
+  const speeds = Object.keys(rows).map(Number);
+  const near = speeds.reduce((a, b) => (Math.abs(b - n) < Math.abs(a - n) || (Math.abs(b - n) === Math.abs(a - n) && b > a) ? b : a));
+  const row = rows[near];
+  let first = row[0];
+  let last = row[row.length - 1];
+  const range = typeof model === 'string' ? /(?<!\d)(\d{2})\s*[-–]\s*(\d{2})(?!\d)/.exec(model) : null;
+  if (range) {
+    const [f, l] = [Number(range[1]), Number(range[2])];
+    if (f >= 9 && l <= 55 && l - f >= n - 1) {
+      first = f;
+      last = l;
+    }
+  }
+  if (near === n && first === row[0] && last === row[row.length - 1]) return row.slice();
+  // the table's shape (or, for other speeds, an even spread), stretched to the first and last tooth
+  const base = near === n ? row : spread(row[0], row[row.length - 1], n);
+  const out = base.map((t) => Math.round(first + ((t - base[0]) / (base[n - 1] - base[0])) * (last - first)));
+  for (let i = 1; i < n; i++) if (out[i] <= out[i - 1]) out[i] = out[i - 1] + 1;
   return out;
 }
 
@@ -116,6 +180,11 @@ export function geometryOf(facts: Record<string, unknown>): Partial<Record<keyof
  * derailleur and 8 sprockets, the most common case in the target market.
  *
  * Rules (facts -> drawing):
+ * - Drivetrain sizes are real, in mm: sprocket spacing 5 (up to 7 speeds), 4.8, 4.35, 3.95, 3.74,
+ *   3.5, 3.3 (8 to 13); chain outer width 7.3 (up to 8 speeds), 6.6, 5.9, 5.5, 5.3 (12 and 13);
+ *   sprocket thickness 1.8 (less where it would touch the chain on the next sprocket). They are
+ *   drawing values, never shown as a part's compatibility. The dropouts sit 12 mm (0.0245 units)
+ *   outside the smallest sprocket's middle. The sprockets are `cassetteFor` (see there).
  * - bike.category: road_gravel -> road frame; mtb -> mountain frame with a suspension fork;
  *   anything else -> city frame with a kickstand. Cargo bikes are drawn as city bikes.
  * - bike.handlebar (drop, flat, riser) picks the bar; unknown -> drop on road bikes, riser on
@@ -147,12 +216,16 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   const bar: BikeSpec['bar'] = hb === 'drop' || hb === 'flat' || hb === 'riser' ? hb : road ? 'drop' : mtb ? 'riser' : 'flat';
   const colourFact = facts['bike.colour'];
   const colour = typeof colourFact === 'string' && /^#[0-9a-f]{6}$/i.test(colourFact) ? colourFact.toLowerCase() : null;
-  const cassette = cassetteFor(kind, speeds);
+  const cassette = cassetteFor(kind, speeds, facts['drive.cassette_model']);
   const n = cassette.length;
-  // Sprocket spacing 1.25 times the real one (so the sprockets still read on a phone), on a
-  // realistic chain line: the cassette's middle lines up with the chainring.
-  const realMm = n <= 7 ? 5 : n === 8 ? 4.8 : n === 9 ? 4.35 : n === 10 ? 3.95 : n === 11 ? 3.74 : n === 12 ? 3.5 : 3.3;
-  const sp = n > 1 ? (realMm * 1.25) / 500 : 0.03;
+  // Sprocket spacing, chain width and sprocket thickness are the real ones (drawing values, see
+  // the comment above bikeSpec), on a realistic chain line: the cassette's middle lines up with
+  // the chainring. The close-up views make up for the small spacing.
+  const spMm = n <= 7 ? 5 : n === 8 ? 4.8 : n === 9 ? 4.35 : n === 10 ? 3.95 : n === 11 ? 3.74 : n === 12 ? 3.5 : 3.3;
+  const sp = n > 1 ? spMm / 500 : 0.03;
+  const chainMm = speeds <= 8 ? 7.3 : speeds === 9 ? 6.6 : speeds === 10 ? 5.9 : speeds === 11 ? 5.5 : 5.3;
+  // 1.8 mm thick, thinner only where the chain would not fit beside the next sprocket
+  const sprT = (n > 1 ? Math.min(1.8, 2 * (spMm - chainMm / 2) - 0.1) : 1.8) / 500;
   const chainline = road ? 0.1 : mtb ? 0.115 : 0.105;
   const zs = cassette.map((_, i) => (n > 1 ? chainline + ((n - 1) / 2 - i) * sp : chainline));
   const tt = road ? 0.028 : mtb ? 0.07 : 0.045;
@@ -209,7 +282,7 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   const grip = gripOf(bar, HT);
   const S: V3 = bar === 'drop' ? [C[0] + 0.165, C[1] + 0.012, 0.21] : [grip[0], grip[1] - 0.04, 0.255];
   const barTop: V2 = bar === 'drop' ? [C[0] + 0.19, C[1] + 0.058] : [grip[0], grip[1] + 0.02];
-  const chainW = Math.min(0.013, sp * 1.1);
+  const chainW = chainMm / 500;
   return {
     kind, bar, gears, colour,
     forkKind: mtb ? 'susp' : 'rigid',
@@ -220,12 +293,12 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
     cassette,
     chainring: road ? 50 : mtb ? 32 : 44,
     tt,
-    n, sp, zs,
+    n, sp, sprT, zs,
     rs: cassette.map(rOf),
     rc: rOf(road ? 50 : mtb ? 32 : 44),
     chainW,
     chainline,
-    zDrop: zs[0] + sp * 0.25 + 0.022,
+    zDrop: zs[0] + 0.0245,
     ST, HT, HB,
     saddleX, saddleY,
     C, S, barTop,
