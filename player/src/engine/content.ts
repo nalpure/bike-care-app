@@ -47,6 +47,7 @@ export class Content {
     if (!f) return [];
     if (f.type === 'enum') return f.values;
     if (f.type === 'boolean') return [true, false];
+    if (f.type === 'number' && Array.isArray(f.values)) return f.values;
     return [];
   }
 

@@ -41,9 +41,9 @@ describe('profile journeys in the player', () => {
     const p = check.content!.profiles.get('city-derailleur-no-stand')!.def;
     const j = p.journeys.find((x: any) => x.id === 'routine-check-slow-shifting');
     const store = new Store(memoryKV());
-    store.current.facts = { ...p.facts, ...p.answers };
+    const bike = store.addBike(p.name, { ...p.facts, ...p.answers });
     const session = new Session();
-    const routine = new Journey(content, store, store.current, session, { check: j.start.check });
+    const routine = new Journey(content, store, bike, session, { check: j.start.check });
     for (let i = 0; i < 20 && routine.screen().kind === 'card'; i++) {
       const s = routine.screen();
       if (s.kind !== 'card') break;
@@ -52,10 +52,10 @@ describe('profile journeys in the player', () => {
     }
     const end = routine.screen();
     expect(end.kind).toBe('todo');
-    const item = store.todos(store.current).find((f) => f.job === 'adjust-rear-shifting')!;
+    const item = store.todos(bike).find((f) => f.job === 'adjust-rear-shifting')!;
     expect(item).toBeDefined();
     // Opened later from the home screen: the job screen, then the tutorial's first pre-step.
-    const todo = new Journey(content, store, store.current, session, { job: item.job!, urgency: item.urgency });
+    const todo = new Journey(content, store, bike, session, { job: item.job!, urgency: item.urgency });
     expect(todo.screen().kind).toBe('job');
     todo.jobDiy();
     const first = todo.screen();

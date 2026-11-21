@@ -32,6 +32,11 @@ export interface Stage {
   /** plays a button's solution animations in the same step */
   playSolution(anims: any[]): void;
   replay(): void;
+  /** The whole bike turning slowly inside host (the garage's bike page). Only the 3D stage has it. */
+  preview?(facts: Record<string, unknown>, host: HTMLElement, opts?: { name?: string }): void;
+  endPreview?(): void;
+  /** A still picture (PNG data URL) of a bike for lists; null when it cannot be drawn. */
+  snapshot?(facts: Record<string, unknown>, width?: number, height?: number, name?: string): string | null;
 }
 
 export class PlaceholderStage implements Stage {

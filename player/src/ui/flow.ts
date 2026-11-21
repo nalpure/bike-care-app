@@ -4,6 +4,7 @@
 import { UNKNOWN } from '../../../tools/lib/conditions.js';
 import type { Card, Journey, Screen, ShopSummary } from '../engine/journey.js';
 import type { App } from './app.js';
+import { bikeTitle } from '../engine/bikes.js';
 import { h, icon, ICON } from './dom.js';
 
 const EXIT_TITLE: Record<string, string> = {
@@ -30,14 +31,14 @@ export function renderJourney(app: App, j: Journey): HTMLElement {
   const s = j.screen();
   switch (s.kind) {
     case 'position':
-      return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+      return screenWith(app, top(app, app.bikeName, 'Before you start'), [
         h('h1.h2q', 'Which one?'),
         h('div.qopts', s.values.map((v) => h('button.opt', { 'data-test': `pos-${v}`, onclick: () => app.act((x) => x.answerPosition(s.param, v), 'next') }, h('span.ol', POSITION_LABEL[v] ?? v)))),
       ]);
     case 'question':
       return renderQuestion(app, j, s);
     case 'tool-question':
-      return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+      return screenWith(app, top(app, app.bikeName, 'Before you start'), [
         h('h1.h2q', `Do you have this? ${app.c.toolName(s.tool)}`),
         h('div.qopts',
           h('button.opt', { onclick: () => app.act((x) => x.answerTool(s.tool, true), 'next') }, h('span.ol', 'Yes')),
@@ -47,7 +48,7 @@ export function renderJourney(app: App, j: Journey): HTMLElement {
     case 'choice':
       return renderChoice(app, s);
     case 'parts':
-      return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+      return screenWith(app, top(app, app.bikeName, 'Before you start'), [
         h('h1.h2q', 'Parts you need'),
         h('ul.list', s.parts.map((p) => h('li', h('div.li', h('span.tx', h('b', p.name ?? p.id), p.note ? h('span', p.note) : null))))),
       ], [h('button.btn.primary.wide', { onclick: () => app.act((x) => x.partsOk(), 'next') }, 'I have them')]);
@@ -58,7 +59,7 @@ export function renderJourney(app: App, j: Journey): HTMLElement {
     case 'exit':
       return renderExit(app, s);
     case 'not-covered':
-      return screenWith(app, top(app, app.bike.name, 'End of this guide'), [
+      return screenWith(app, top(app, app.bikeName, 'End of this guide'), [
         h('h1.h2q', 'Not covered yet'),
         h('p', s.message),
         h('p.lead', 'We do not show a guess. A shop can help, or ask the assistant.'),
@@ -99,9 +100,54 @@ export function renderJourney(app: App, j: Journey): HTMLElement {
           ));
         })),
       ], [h('button.btn.primary.wide', { 'data-test': 'done', onclick: () => app.closeJourney() }, 'Done')]);
+    case 'keep':
+      return renderKeep(app, j, s);
     case 'closed':
       return h('section.screen');
   }
+}
+
+// ---------------------------------------------------------------- keep what the flow learned
+
+function renderKeep(app: App, j: Journey, s: Extract<Screen, { kind: 'keep' }>): HTMLElement {
+  const c = app.c;
+  const label = (k: string) => c.t(c.fact(k)?.label) || k;
+  const lines = s.learned.length
+    ? h('ul.bul', { 'data-test': 'keep-facts' }, s.learned.map(([k, v]) => h('li', `${label(k)}: ${c.valueText(k, v)}`)))
+    : null;
+  // Side by side, so the name field keeps its room on a phone held sideways.
+  const skip = h('button.btn', { 'data-test': 'keep-skip', onclick: () => app.act((x) => x.keepSkip(), 'next') }, 'Not now');
+  if (s.bike) {
+    return screenWith(app, top(app, s.bike, 'Before you go on'), [
+      h('h1.h2q', `Save this to ${s.bike}?`),
+      h('p.lead', 'The app learned this about your bike. Saved, it will not ask again.'),
+      lines,
+    ], [h('div.row2', skip, h('button.btn.primary', { 'data-test': 'keep-save', onclick: () => {
+      app.act((x) => x.keepSave(), 'next');
+      app.toast(`Saved to ${s.bike}`);
+    } }, 'Save'))]);
+  }
+  const title = bikeTitle(j.bikeFacts);
+  const name = h('input.text', { value: title, maxlength: 32, placeholder: 'e.g. Blue city bike', 'aria-label': 'Name of the bike', 'data-test': 'keep-name' }) as HTMLInputElement;
+  const save = h('button.btn.primary', { 'data-test': 'keep-save', disabled: !title, onclick: () => {
+    const n = name.value.trim();
+    if (!n) return;
+    app.act((x) => x.keepSave(n), 'next');
+    const b = j.garageBike;
+    if (b) {
+      app.adoptSession(b);
+      app.toast(`Added "${b.name}" to your garage`);
+    }
+  } }, 'Add to my garage') as HTMLButtonElement;
+  name.addEventListener('input', () => (save.disabled = !name.value.trim()));
+  name.addEventListener('keydown', (e) => e.key === 'Enter' && save.click());
+  return screenWith(app, top(app, app.bikeName, 'Before you go on'), [
+    h('h1.h2q', 'Keep this bike in your garage?'),
+    h('p.lead', s.learned.length ? 'The app learned this about it. In your garage, it will not ask again.' : 'Then the to-do items found stay with it.'),
+    lines,
+    s.findings ? h('p.s', `${s.findings === 1 ? 'One finding' : `${s.findings} findings`} from this check go with it.`) : null,
+    h('div.field', h('label', 'Name of the bike'), name),
+  ], [h('div.row2', skip, save)]);
 }
 
 // ---------------------------------------------------------------- questions and pre-steps
@@ -126,13 +172,13 @@ function renderQuestion(app: App, j: Journey, s: Extract<Screen, { kind: 'questi
     body.push(inp, h('button.btn.primary.wide', { onclick: () => inp.value.trim() && answer(f?.type === 'number' ? Number(inp.value) : inp.value.trim()) }, 'Continue'));
   }
   body.push(h('button.link', { 'data-test': 'answer-unknown', onclick: () => answer(UNKNOWN) }, 'I\'ll check later'));
-  return screenWith(app, top(app, app.bike.name, 'Before you start · one question'), body);
+  return screenWith(app, top(app, app.bikeName, 'Before you start · one question'), body);
 }
 
 function renderChoice(app: App, s: Extract<Screen, { kind: 'choice' }>): HTMLElement {
   const c = app.c;
   const ch = s.choice;
-  return screenWith(app, top(app, app.bike.name, 'Before you start'), [
+  return screenWith(app, top(app, app.bikeName, 'Before you start'), [
     h('h1.h2q', ch.question),
     h('div.qopts', ch.options.map((o: any) =>
       h('button.opt', { 'data-test': `choice-${o.id}`, onclick: () => app.act((x) => x.choose(ch.id, o.id), 'next') },
@@ -181,8 +227,8 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   const textOnly = app.store.data.textOnly;
   if (!textOnly) {
     app.stage.show({
-      id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bike.name,
-      focus: card.stage.focus, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: app.bike.facts,
+      id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bikeName,
+      focus: card.stage.focus, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: (app.journey?.bikeFacts ?? {}),
     });
   }
 
@@ -236,7 +282,7 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   return h('section.screen',
     h('div.gtop',
       h('button.ib', { 'aria-label': 'Close', 'data-test': 'close', onclick: () => app.closeJourney() }, icon(ICON.close)),
-      h('div.t', `${app.bike.name} · ${flowTitle}`),
+      h('div.t', `${app.bikeName} · ${flowTitle}`),
       h('button.toggle', { 'aria-pressed': String(textOnly), 'data-test': 'text-only', onclick: () => app.setTextOnly(!textOnly) }, textOnly ? '3D view' : 'Text only'),
     ),
     appEl,
@@ -279,7 +325,7 @@ function renderExit(app: App, s: Extract<Screen, { kind: 'exit' }>): HTMLElement
     buttons.push(h(`button.btn${s.canJump ? '' : '.primary'}.wide`, { 'data-test': 'find-shop', onclick: () => app.act((x) => x.exitFindShop()) }, 'Find a shop'));
   }
   if (s.exitKind === 'not_covered') buttons.push(h('button.btn.wide', { 'data-test': 'ask', onclick: () => app.openOverlay({ k: 'assistant' }) }, 'Ask the assistant'));
-  const head = top(app, app.bike.name, s.exitKind === 'unsafe' ? 'Stop' : 'End of this guide');
+  const head = top(app, app.bikeName, s.exitKind === 'unsafe' ? 'Stop' : 'End of this guide');
   const body = [
     h('h1.h2q', EXIT_TITLE[s.exitKind]),
     h(`p${s.exitKind === 'unsafe' ? '.note.bad' : ''}`, s.message),
@@ -289,14 +335,14 @@ function renderExit(app: App, s: Extract<Screen, { kind: 'exit' }>): HTMLElement
   // With something still apart, the stage shows the bike as it is held now (in the stand, hung,
   // upside down), so the user sees what to undo. Optional: the text reads the same without it.
   if (!s.labels.length || app.store.data.textOnly) return screenWith(app, head, body, buttons);
-  app.stage.show({ id: `exit:${s.labels.join(',')}`, bike: app.bike.name, focus: [], labels: s.labels, labelsBefore: s.labels, facts: app.bike.facts });
+  app.stage.show({ id: `exit:${s.labels.join(',')}`, bike: app.bikeName, focus: [], labels: s.labels, labelsBefore: s.labels, facts: (app.journey?.bikeFacts ?? {}) });
   return h('section.screen', head,
     h('main.app.exitapp', app.stage.el, h('section.side', h('div.scroll', body), h('div.cta', buttons))),
   );
 }
 
 function renderJob(app: App, s: Extract<Screen, { kind: 'job' }>): HTMLElement {
-  return screenWith(app, top(app, app.bike.name, 'What now?'), [
+  return screenWith(app, top(app, app.bikeName, 'What now?'), [
     h('h1.h2q', s.job.title),
     s.urgency === 'do_not_ride' ? h('div.note.bad', 'Do not ride the bike until this is fixed.') : null,
     s.findings.length ? h('div.section', h('span.eyebrow', 'What was found'), h('ul.bul', s.findings.map((f) => h('li', f)))) : null,
@@ -329,7 +375,7 @@ export function summaryText(s: ShopSummary): string {
 
 function renderShop(app: App, s: ShopSummary): HTMLElement {
   const text = summaryText(s);
-  return screenWith(app, top(app, app.bike.name, 'For the shop'), [
+  return screenWith(app, top(app, app.bikeName, 'For the shop'), [
     h('h1.h2q', 'Show this to the mechanic'),
     h('div.card.summary', { 'data-test': 'shop-summary' },
       h('dl',

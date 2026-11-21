@@ -16,8 +16,8 @@ function setup(change: (b: any) => void): Journey {
   change(b);
   const c = new Content(b);
   const store = new Store(memoryKV());
-  store.current.facts = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' };
-  const j = new Journey(c, store, store.current, new Session(), { tutorial: 'adjust-rear-shifting' });
+  const bike = store.addBike('Test bike', { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' });
+  const j = new Journey(c, store, bike, new Session(), { tutorial: 'adjust-rear-shifting' });
   j.choose('hold_bike', 'stand');
   j.startTutorial();
   return j;

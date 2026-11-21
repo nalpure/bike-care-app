@@ -26,7 +26,8 @@ build/bundle.json --fetch--> engine/content.ts (Content: lookups, text filling)
 tools/lib/resolve.ts  ----->  engine/journey.ts (Journey: state machine, no DOM) <--- engine/store.ts (localStorage)
 tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union type)
                                    v
-                              ui/app.ts (shell, tabs, overlays) -> ui/flow.ts (journey screens, card) / ui/home.ts
+                              ui/app.ts (shell, tabs, overlays) -> ui/flow.ts (journey screens, card) / ui/home.ts (home, garage list)
+                                   |                                  ui/pick.ts (which bike, before a flow) / ui/bike.ts (bike page) / ui/swipe.ts
                                    |  stage.show(StageView)
                                    v
                               stage/three-stage.ts (ThreeStage)  or  ui/stage.ts (PlaceholderStage)
@@ -35,7 +36,8 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 - **engine/** has no DOM. `Journey.screen()` returns the current `Screen` (question, choice, tools, card, exit, job, shop, done, …). The UI calls actions (`tap`, `next`, `back`, `answerFact`, `choose`, `exitShowHow`, …) through `app.act()` and renders again. The journey never plans steps: `tools/lib/resolve.ts` is shared with the build, so the app and the reviewed output can't drift apart. Change it only with both in mind.
 - **ui/** renders one screen at a time with `h()` from `dom.ts`. `flow.ts` has every journey screen; one card component serves inspections, steps and checks. `#root[data-view]` names the screen (`journey:card:<id>`); the e2e tests and `window.__app` (the App) rely on it.
 - **stage/** is the 3D view. Its element is created once and moved into each card, so the canvas carries on while the text changes. On an exit reached while something is still apart, the stage shows how the bike is held. Without WebGL it shows a text box; if three.js can't start at all, `main.ts` falls back to `PlaceholderStage`.
-- **Storage:** `store.ts`, key `bike-app/v1`, wrapped so the app works without localStorage. It holds bikes and their facts, to-do items, notes and settings (text only, notice seen).
+- **Storage:** `store.ts`, key `bike-app/v2`, wrapped so the app works without localStorage. It holds the garage (`bikes[]`: name, facts, findings, `added`, `done` per job, `kmPerWeek`), the user's tools, notes and settings. No bike is "in use": every flow starts on `ui/pick.ts`. A first start and a reset fill the garage from the bundle's `demo_bikes`. Version 1 data is dropped, not migrated.
+- **Bikes and flows:** `Journey` works on a copy of the chosen bike (or an unknown bike, `null`). What it learned reaches the garage only through the keep screen (`keepSave`, once per flow); findings and finished jobs reach the garage bike at once. `engine/bikes.ts` has the complete-bike lookup (a stub over `demo_bikes`), the range check and the geometry fit checks. `engine/service.ts` has the traffic lights.
 
 ## The 3D stage (`player/src/stage/`)
 
@@ -89,8 +91,9 @@ The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. 
 ## Other known gaps
 
 - Shop search and the Shop tab are placeholders by design. The assistant panel only shows the context it would receive.
-- Question pictures are grey tiles until SR-03. The bike sheet lists all facts in one list; A1 groups them (`fact_groups`).
-- Swipe (`attachSwipe` in `flow.ts`) works for touch only and is not covered by the e2e test.
+- Question pictures are grey tiles until SR-03.
+- Service intervals are unverified placeholders from the content; the lights only mean something once they are checked.
+- The bike page's 3D preview and the garage pictures need the 3D stage; with `PlaceholderStage` they are left out.
 - `npm audit` reports a ReDoS in `picomatch` (dev tools only, nothing in `dist/`).
 
 ## Decisions behind the player

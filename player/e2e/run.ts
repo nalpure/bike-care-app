@@ -37,28 +37,23 @@ async function click(page: Page, test: string): Promise<void> {
   await page.locator(`[data-test="${test}"]`).first().click();
 }
 
-async function setUpBike(page: Page, p: any): Promise<void> {
-  await page.locator('.tabbar button', { hasText: 'Garage' }).click();
-  await page.fill('[data-test="new-bike-name"]', p.name.slice(0, 32));
-  await click(page, 'add-bike');
-  for (const [k, v] of Object.entries<any>(p.facts ?? {})) {
-    const chip = page.locator(`[data-test="fact-${k}-${v}"]`);
-    if (await chip.count()) await chip.click();
-    else {
-      await page.fill(`[data-test="fact-${k}"]`, String(v));
-      await page.locator(`[data-test="fact-${k}"]`).press('Enter');
-      await page.locator(`[data-test="fact-${k}"]`).blur();
-    }
+/** The first screen of a flow: the profile's test bike from the garage, or an unknown bike. */
+async function pickBike(page: Page, p: any, demoIds: string[]): Promise<void> {
+  if (demoIds.includes(p.id)) await click(page, `pick-${p.id}`);
+  else {
+    await click(page, 'pick-unknown');
+    await click(page, 'unknown-questions');
   }
-  await page.locator('.tabbar button', { hasText: 'Repair' }).click();
 }
 
-async function walk(page: Page, p: any, j: any, shotDir: string): Promise<{ ending: string; error?: string }> {
+async function walk(page: Page, p: any, j: any, shotDir: string, demoIds: string[]): Promise<{ ending: string; error?: string }> {
   let n = 0;
   const shot = async (name: string) => page.screenshot({ path: join(shotDir, `${String(++n).padStart(2, '0')}-${name.replace(/[^a-z0-9-]+/gi, '_')}.png`) });
   if (j.start.diagnosis) await click(page, `diagnosis-${j.start.diagnosis}`);
   else if (j.start.tutorial) await click(page, `tutorial-${j.start.tutorial}`);
   else await click(page, 'routine');
+  await shot('pick');
+  await pickBike(page, p, demoIds);
   let lastCard = '';
   let jumped = false;
   let fromJob = '';
@@ -67,7 +62,9 @@ async function walk(page: Page, p: any, j: any, shotDir: string): Promise<{ endi
     const v = await view(page);
     const [, kind, id] = v.split(':');
     await shot(`${kind}${id ? `-${id}` : ''}`);
-    if (kind === 'question') {
+    if (kind === 'keep') {
+      await click(page, 'keep-skip');
+    } else if (kind === 'question') {
       const ans = p.answers?.[id];
       if (ans === undefined) return { ending: 'incomplete profile', error: `question ${id}` };
       await click(page, `answer-${ans}`);
@@ -166,40 +163,207 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     await page.goto(URL);
     await click(page, 'notice-ok');
     await page.addStyleTag({ content: '.toast { display: none !important; }' });
+    const errors: string[] = [];
+    const expect = (ok: boolean, what: string) => ok || errors.push(what);
+    const shot = (name: string) => page.screenshot({ path: join(dir, `${name}.png`) });
+    const repair = () => page.locator('.tabbar button', { hasText: 'Repair' }).click();
+
+    // An unknown bike, answering the questions, saved under a name the user enters.
     await click(page, 'tutorial-adjust-rear-shifting');
+    await shot('01-pick');
+    await click(page, 'pick-unknown');
+    await shot('02-unknown');
+    await click(page, 'unknown-questions');
     await click(page, 'answer-derailleur');
     await click(page, 'answer-mechanical');
+    expect(await view(page) === 'journey:keep:', 'no keep screen after the questions');
+    expect(await page.locator('[data-test="keep-save"]').isDisabled(), 'a new bike could be saved without a name');
+    await page.fill('[data-test="keep-name"]', 'Blue city bike');
+    await shot('03-keep-new');
+    await click(page, 'keep-save');
     await click(page, 'choice-stand');
     await click(page, 'start');
     await click(page, 'note');
     await page.fill('[data-test="note-text"]', 'Which side is behind?');
-    await page.screenshot({ path: join(dir, '01-note.png') });
+    await shot('04-note');
     await click(page, 'note-save');
     await click(page, 'assistant');
-    await page.screenshot({ path: join(dir, '02-assistant.png') });
+    await shot('05-assistant');
     await page.keyboard.press('Escape');
     await click(page, 'text-only');
-    await page.screenshot({ path: join(dir, '03-text-only.png') });
+    await shot('06-text-only');
     await click(page, 'close');
     await page.locator('.tabbar button', { hasText: 'Notes' }).click();
-    await page.screenshot({ path: join(dir, '04-notes.png') });
+    await shot('07-notes');
     const exported = await page.locator('[data-test="notes-export"]').inputValue();
-    await page.locator('.tabbar button', { hasText: 'Garage' }).click();
-    await page.screenshot({ path: join(dir, '05-garage.png') });
-    await page.locator('[data-test="bike-unknown"]').click();
-    await page.screenshot({ path: join(dir, '06-bike-sheet.png'), fullPage: true });
-    await page.locator('[data-test="bike-name"]').fill('Blue city bike');
-    await page.locator('[data-test="bike-name"]').blur();
-    await page.screenshot({ path: join(dir, '07-bike-named.png') });
-    const want = ['Review unit: card:inspection:derailleur-alignment', 'Flow: adjust-rear-shifting', 'drive.gear_type=derailleur', 'Which side is behind?'];
+    const want = ['Review unit: card:inspection:derailleur-alignment', 'Flow: adjust-rear-shifting', 'drive.gear_type=derailleur', 'Which side is behind?', 'Bike: Blue city bike'];
     const missing = want.filter((w) => !exported.includes(w));
-    const named = (await page.locator('.wh .t b').textContent()) === 'Blue city bike';
-    return { id, ending: 'ok', expected: 'ok', error: missing.length ? `notes export lacks: ${missing.join('; ')}` : named ? undefined : 'naming the unknown bike failed' };
+    expect(!missing.length, `notes export lacks: ${missing.join('; ')}`);
+
+    // The saved bike is in the garage with what was learned; the next flow offers it.
+    await page.locator('.tabbar button', { hasText: 'Garage' }).click();
+    const saved = page.locator('.card', { hasText: 'Blue city bike' });
+    expect(await saved.count() === 1, 'the new bike is not in the garage');
+    await shot('08-garage');
+    await repair();
+    await click(page, 'tutorial-adjust-rear-shifting');
+    await page.locator('.list button', { hasText: 'Blue city bike' }).click();
+    expect(await view(page) === 'journey:choice:', `the saved bike was asked again (${await view(page)})`);
+    await click(page, 'back');
+    expect((await view(page)) === 'pick:list', 'back from the first screen does not return to the bike choice');
+    await click(page, 'back');
+
+    // The complete bike: found among the test bikes.
+    await click(page, 'diagnosis-gears-shift-badly');
+    await click(page, 'pick-unknown');
+    await click(page, 'unknown-complete');
+    await page.fill('[data-test="form-brand"]', 'Corvana');
+    await page.fill('[data-test="form-model"]', 'SL 3');
+    await page.fill('[data-test="form-year"]', '1900');
+    await click(page, 'lookup');
+    expect(await page.locator('[data-test="form-error"]').count() === 1, 'a model year of 1900 was accepted');
+    await page.fill('[data-test="form-year"]', '2020');
+    await shot('09-complete-form');
+    await click(page, 'lookup');
+    expect(await page.locator('[data-test="lookup-found"]').count() === 1, 'the lookup did not find the Corvana');
+    await shot('10-lookup-found');
+    await click(page, 'lookup-use');
+    expect(await view(page) === 'journey:keep:', 'no offer to keep the looked-up bike');
+    expect((await page.locator('[data-test="keep-name"]').inputValue()) === 'Corvana Strada SL 3', 'the looked-up name is not suggested');
+    await click(page, 'keep-skip');
+    await click(page, 'back');
+    await click(page, 'back');
+    await click(page, 'back');
+
+    // The complete bike: not found, so the questions follow.
+    await click(page, 'unknown-complete');
+    await page.fill('[data-test="form-brand"]', 'Acme');
+    await page.fill('[data-test="form-model"]', 'Roadster');
+    await click(page, 'lookup');
+    expect(await page.locator('[data-test="lookup-none"]').count() === 1, 'an unknown bike was found');
+    await shot('11-lookup-none');
+    await click(page, 'lookup-questions');
+    expect((await view(page)).startsWith('journey:question:'), `no questions after a failed lookup (${await view(page)})`);
+    // Back leads out the way the user came: question, result, form, unknown bike, bike choice, home.
+    for (let i = 0; i < 5; i++) await click(page, 'back');
+    expect(await view(page) === 'home', `back did not lead home (${await view(page)})`);
+
+    // Delete a bike by swiping it to the left; a warning comes first.
+    await page.locator('.tabbar button', { hasText: 'Garage' }).click();
+    const row = page.locator('.swipe', { hasText: 'Blue city bike' }).locator('.front');
+    const box = (await row.boundingBox())!;
+    await page.mouse.move(box.x + box.width - 20, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width - 140, box.y + box.height / 2, { steps: 8 });
+    await page.mouse.up();
+    await page.waitForTimeout(250);
+    await shot('12-swiped');
+    await page.locator('.swipe.open .del').click();
+    await shot('13-delete-warning');
+    await click(page, 'confirm-ok');
+    expect(await page.locator('.card', { hasText: 'Blue city bike' }).count() === 0, 'the swiped bike was not deleted');
+    return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
   } catch (e: any) {
     return { id, ending: 'crashed', expected: 'ok', error: String(e?.message ?? e).split('\n')[0] };
   } finally {
     await ctx.close();
   }
+}
+
+/** The bike page: preview, the four tabs, editing a fact, the geometry check, colour, a red service item, delete. */
+async function bikePage(browser: import('playwright').Browser): Promise<Result> {
+  const id = 'extras/bike-page';
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const dir = join(SHOTS, 'portrait', 'bike-page');
+  mkdirSync(dir, { recursive: true });
+  try {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto(URL);
+    await click(page, 'notice-ok');
+    await page.addStyleTag({ content: '.toast { display: none !important; }' });
+    const expect = (ok: boolean, what: string) => ok || errors.push(what);
+    const shot = (name: string) => page.screenshot({ path: join(dir, `${name}.png`) });
+    const fact = (key: string) => page.evaluate((k) => (window as any).__app.store.bike('road-bike-stand').facts[k], key);
+    await page.locator('.tabbar button', { hasText: 'Garage' }).click();
+    expect(await page.locator('.bikecard img.thumb').count() > 0, 'the garage list has no pictures of the bikes');
+    await shot('01-garage');
+    await click(page, 'bike-road-bike-stand');
+    await page.waitForTimeout(600);
+    expect(await page.locator('[data-test="preview"] canvas').count() === 1, 'no 3D preview on the bike page');
+    await shot('02-characteristics');
+
+    // Characteristics: tap a line, change the answer.
+    await page.locator('[data-test="row-bike.ebike"] button.fline').click();
+    await click(page, 'fact-bike.ebike-true');
+    expect(await fact('bike.ebike') === true, 'the e-bike answer was not changed');
+
+    // Components: groups with their model facts; a group opens to its facts.
+    await click(page, 'tab-components');
+    await shot('03-components');
+    await click(page, 'group-drive');
+    expect(await page.locator('[data-test="row-drive.cassette_model"]').count() === 1, 'the drivetrain group does not list its facts');
+    await page.locator('[data-test="row-drive.cassette_model"] button.fline').click();
+    await page.fill('[data-test="fact-drive.cassette_model"]', 'Test 11-32');
+    await click(page, 'fact-save');
+    expect(await fact('drive.cassette_model') === 'Test 11-32', 'a component model was not saved');
+    await click(page, 'group-back');
+
+    // Geometry: a value outside the range, and one that does not fit the others, are refused.
+    await click(page, 'tab-geometry');
+    await page.locator('[data-test="row-geometry.stack_mm"] button.fline').click();
+    await page.fill('[data-test="fact-geometry.stack_mm"]', '400');
+    await click(page, 'fact-save');
+    expect(/between 450 and 720/.test((await page.locator('[data-test="fact-error"]').textContent()) ?? ''), 'a stack of 400 mm was not refused with the range');
+    expect(await fact('geometry.stack_mm') === 560, 'the refused stack was stored');
+    await page.fill('[data-test="fact-geometry.stack_mm"]', '580');
+    await click(page, 'fact-save');
+    expect(await fact('geometry.stack_mm') === 580, 'a stack of 580 mm was not saved');
+    await page.locator('[data-test="row-geometry.reach_mm"] button.fline').click();
+    await page.fill('[data-test="fact-geometry.reach_mm"]', '520');
+    await click(page, 'fact-save');
+    expect(/clearly longer/.test((await page.locator('[data-test="fact-error"]').textContent()) ?? ''), 'a reach almost as long as the top tube was accepted');
+    await shot('04-geometry-refused');
+
+    // Colour.
+    await click(page, 'colour-c0392b');
+    expect(await fact('bike.colour') === '#c0392b', 'the frame colour was not saved');
+
+    // Service: nothing is known without the weekly distance; a long time on the bike turns it red.
+    await click(page, 'tab-service');
+    expect(await page.locator('[data-test="red-banner"]').count() === 0, 'a red banner on a new bike');
+    await shot('05-service-unknown');
+    await page.evaluate(() => {
+      const a = (window as any).__app;
+      a.store.bike('road-bike-stand').added = '2025-01-01';
+      a.store.save();
+    });
+    await page.fill('[data-test="km-week"]', '100');
+    await click(page, 'km-save');
+    expect(await page.locator('[data-test="red-banner"]').count() === 1, 'no red banner for an overdue job');
+    expect(await page.locator('[data-test="service-chain-care"] [data-light="red"]').count() === 1, 'the overdue job is not red');
+    await shot('06-service-red');
+    await page.locator('.wh .ib').click();
+    expect(await page.locator('.bikecard [data-test="red-banner"]').count() === 1, 'no red banner in the garage list');
+    await shot('07-garage-red');
+
+    // Delete from the bike page, with the warning.
+    await click(page, 'bike-road-bike-stand');
+    await click(page, 'remove-bike');
+    await click(page, 'confirm-ok');
+    expect(await page.locator('[data-test="bike-road-bike-stand"]').count() === 0, 'the bike was not deleted');
+    return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
+  } catch (e: any) {
+    await shot_fail(page, dir);
+    return { id, ending: 'crashed', expected: 'ok', error: String(e?.message ?? e).split('\n')[0] };
+  } finally {
+    await ctx.close();
+  }
+}
+
+async function shot_fail(page: Page, dir: string): Promise<void> {
+  await page.screenshot({ path: join(dir, 'failed.png') }).catch(() => undefined);
 }
 
 async function main(): Promise<void> {
@@ -221,6 +385,7 @@ async function main(): Promise<void> {
       } catch { /* not up yet */ }
       await new Promise((r) => setTimeout(r, 200));
     }
+    const demoIds: string[] = JSON.parse(readFileSync(join(REPO, 'build/bundle.json'), 'utf8')).demo_bikes.map((d: any) => d.id);
     const profiles = readdirSync(join(REPO, 'profiles')).filter((f) => f.endsWith('.yaml'));
     for (const f of profiles) {
       const p = YAML.parse(readFileSync(join(REPO, 'profiles', f), 'utf8')).profile;
@@ -237,11 +402,10 @@ async function main(): Promise<void> {
           mkdirSync(dir, { recursive: true });
           await page.screenshot({ path: join(dir, '00-notice.png') });
           await click(page, 'notice-ok');
-          await setUpBike(page, p);
           // Toasts would cover the next screens in these fast clicks.
           await page.addStyleTag({ content: '.toast { display: none !important; }' });
           await page.screenshot({ path: join(dir, '00-home.png') });
-          const r = await walk(page, p, j, dir).catch((e) => ({ ending: 'crashed', error: String(e?.message ?? e).split('\n')[0] }));
+          const r = await walk(page, p, j, dir, demoIds).catch((e) => ({ ending: 'crashed', error: String(e?.message ?? e).split('\n')[0] }));
           if (orient === 'portrait') {
             const exp = expected.get(`${p.id}|${j.title}`) ?? '(not in report)';
             results.push({ id: `${p.id}/${j.id}`, ending: r.ending, expected: exp, error: r.error ?? (errors.length ? errors.join('; ') : undefined) });
@@ -253,6 +417,7 @@ async function main(): Promise<void> {
       }
     }
     results.push(await extras(browser));
+    results.push(await bikePage(browser));
   } finally {
     await browser.close();
     server.kill();

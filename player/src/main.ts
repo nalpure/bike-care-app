@@ -11,7 +11,7 @@ async function boot(): Promise<void> {
   const root = document.getElementById('root')!;
   try {
     const content = await loadBundle();
-    const store = new Store(browserKV());
+    const store = new Store(browserKV(), content.bundle.demo_bikes ?? []);
     let stage: Stage;
     try {
       stage = new ThreeStage();

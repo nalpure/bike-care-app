@@ -1,9 +1,11 @@
 // Home, garage, bike sheet, shop placeholder and feedback notes.
 
 import { UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
-import { UNKNOWN_BIKE, type Bike } from '../engine/store.js';
+import type { Bike } from '../engine/store.js';
 import type { App } from './app.js';
 import { h, icon, ICON } from './dom.js';
+import { redBanner } from './bike.js';
+import { swipeRow } from './swipe.js';
 
 function header(app: App, title: string, small: string, onBack: () => void): HTMLElement {
   return h('div.wh', h('button.ib', { 'aria-label': 'Back', onclick: onBack }, icon(ICON.back)), h('div.t', h('small', small), h('b', title)));
@@ -15,7 +17,9 @@ function brand(app: App, title: string): HTMLElement {
 
 /** One line about what is known: "Road or gravel bike · derailleur …". */
 export function bikeSummary(app: App, b: Bike): string {
-  const known = Object.entries(b.facts).filter(([, v]) => String(v) !== UNKNOWN);
+  // Name facts and the colour say nothing new next to the name; geometry is for the bike page.
+  const skip = (k: string) => /^bike\.(brand|model|line|year|colour)$/.test(k) || k.startsWith('geometry.') || k.endsWith('_model');
+  const known = Object.entries(b.facts).filter(([k, v]) => String(v) !== UNKNOWN && !skip(k));
   if (!known.length) return 'Nothing known yet. The app asks when it needs to.';
   return known.slice(0, 4).map(([k, v]) => app.c.valueText(k, v)).join(' · ');
 }
@@ -30,25 +34,19 @@ function urgencyBadge(u?: string): HTMLElement | null {
 
 export function renderHome(app: App): HTMLElement {
   const c = app.c;
-  const b = app.bike;
-  const todos = app.store.todos(b);
+  const todos = app.store.garage().flatMap((b) => app.store.todos(b).map((f) => ({ b, f })));
   const row = (title: string, sub: string, onclick: () => void, badge?: HTMLElement | null, test?: string) =>
     h('li', h('button.li', { onclick, 'data-test': test }, h('span.tx', h('b', title), sub ? h('span', sub) : null), badge ?? null));
 
   return h('section.screen',
     brand(app, 'Repair'),
     h('div.scroll',
-      h('button.card', { onclick: () => app.go({ k: 'garage' }), 'data-test': 'bike-card' },
-        h('div.top', h('span.eyebrow', 'Bike in use'), h('span.link', 'Change')),
-        h('b.t', b.name),
-        h('span.s', bikeSummary(app, b)),
-      ),
       todos.length
         ? h('div.section',
-          h('span.eyebrow', 'To do on this bike'),
-          h('ul.list', todos.map((f) => {
+          h('span.eyebrow', 'To do'),
+          h('ul.list', todos.map(({ b, f }) => {
             const st = c.inspection(f.inspection)?.states.find((x: any) => x.id === f.state);
-            return row(c.jobTitle(f.job!), st?.label ?? '', () => app.openTodo(f), urgencyBadge(f.urgency), `todo-${f.job}`);
+            return row(c.jobTitle(f.job!), [b.name, st?.label].filter(Boolean).join(' · '), () => app.openTodo(b, f), urgencyBadge(f.urgency), `todo-${f.job}`);
           })),
         )
         : null,
@@ -74,107 +72,65 @@ export function renderHome(app: App): HTMLElement {
 
 // ---------------------------------------------------------------- garage
 
+/** Pictures drawn once per bike and its facts; drawing is cheap but a list redraws often. */
+const thumbs = new Map<string, string | null>();
+
+function thumb(app: App, b: Bike): HTMLElement | null {
+  if (!app.stage.snapshot) return null;
+  const key = JSON.stringify([b.id, b.name, b.facts]);
+  if (!thumbs.has(key)) {
+    if (thumbs.size > 40) thumbs.clear();
+    thumbs.set(key, app.stage.snapshot(b.facts, 240, 150, b.name));
+  }
+  const url = thumbs.get(key);
+  return url ? h('img.thumb', { src: url, alt: '', width: 120, height: 75 }) : null;
+}
+
 export function renderGarage(app: App): HTMLElement {
   const name = h('input.text', { placeholder: 'Name, e.g. Blue city bike', maxlength: 32, 'aria-label': 'Name of the new bike', 'data-test': 'new-bike-name' }) as HTMLInputElement;
   const add = () => {
+    if (!name.value.trim()) return;
     const b = app.store.addBike(name.value);
     app.toast(`Added "${b.name}" to your garage`);
     app.go({ k: 'bike', id: b.id });
   };
   name.addEventListener('keydown', (e) => e.key === 'Enter' && add());
-  const unknown = app.store.bike(UNKNOWN_BIKE)!;
-  const card = (b: Bike) =>
-    h('button.card', { onclick: () => app.go({ k: 'bike', id: b.id }), 'data-test': `bike-${b.id}` },
-      h('div.top', h('b.t', b.name), app.store.data.current === b.id ? h('span.badge.ready', 'In use') : null),
-      h('span.s', bikeSummary(app, b)),
-      app.store.todos(b).length ? h('span.s', `${app.store.todos(b).length} to do`) : null,
+  const card = (b: Bike) => {
+    const todos = app.store.todos(b).length;
+    return swipeRow(
+      h('button.card.bikecard', { onclick: () => app.go({ k: 'bike', id: b.id }), 'data-test': `bike-${b.id}` },
+        thumb(app, b),
+        h('span.tx',
+          h('div.top', h('b.t', b.name), todos ? h('span.badge', `${todos} to do`) : null),
+          h('span.s', bikeSummary(app, b)),
+          redBanner(app, b),
+        ),
+      ),
+      h('button.del', { 'aria-label': `Delete ${b.name}`, 'data-test': `delete-${b.id}`, onclick: () => app.confirmDelete(b) }, icon(ICON.trash), 'Delete'),
+      `row-${b.id}`,
     );
+  };
+  const bikes = app.store.garage();
   return h('section.screen',
     brand(app, 'Garage'),
     h('div.scroll',
-      h('p.lead', 'Your bikes. A bike needs only a name; the app learns the rest as you use it.'),
-      h('div.bikes', app.store.garage().map(card), Object.keys(unknown.facts).length || unknown.findings.length || app.store.data.current === UNKNOWN_BIKE ? card(unknown) : null),
+      h('p.lead', bikes.length ? 'Your bikes. Swipe a bike to the left to delete it.' : 'No bikes yet. A bike needs only a name; the app learns the rest as you use it.'),
+      h('div.bikes', bikes.map(card)),
       h('div.field',
         h('label', 'Add a bike'),
         name,
         h('button.btn.primary.wide', { onclick: add, 'data-test': 'add-bike' }, 'Add bike'),
       ),
-    ),
-  );
-}
-
-export function renderBike(app: App, id: string): HTMLElement {
-  const c = app.c;
-  const b = app.store.bike(id);
-  if (!b) return renderGarage(app);
-  const isUnknown = b.id === UNKNOWN_BIKE;
-  const nameInput = h('input.text', { value: isUnknown ? '' : b.name, maxlength: 32, placeholder: 'Name this bike', 'aria-label': 'Bike name', 'data-test': 'bike-name' }) as HTMLInputElement;
-  nameInput.addEventListener('change', () => {
-    if (isUnknown) {
-      if (!nameInput.value.trim()) return;
-      const nb = app.store.nameUnknownBike(nameInput.value);
-      app.go({ k: 'bike', id: nb.id });
-      return;
-    }
-    b.name = nameInput.value.trim() || b.name;
-    app.store.save();
-  });
-
-  const editor = (key: string, f: any) => {
-    const cur = b.facts[key];
-    const set = (v: Value | undefined) => {
-      app.store.setFact(b, key, v);
-      app.render();
-    };
-    const values = c.factValues(key);
-    if (values.length) {
-      return h('div.chips', { role: 'group' },
-        values.map((v) => h('button.cb', { 'aria-pressed': String(String(cur) === String(v)), onclick: () => set(v), 'data-test': `fact-${key}-${v}` }, c.valueText(key, v))),
-        h('button.cb', { 'aria-pressed': String(cur === undefined), onclick: () => set(undefined) }, 'Not known'),
-      );
-    }
-    const inp = h('input.text', { value: cur === undefined ? '' : String(cur), type: f.type === 'number' ? 'number' : 'text', 'aria-label': key, 'data-test': `fact-${key}` }) as HTMLInputElement;
-    inp.addEventListener('change', () => {
-      const raw = inp.value.trim();
-      set(raw === '' ? undefined : f.type === 'number' ? Number(raw) : raw);
-    });
-    return inp;
-  };
-
-  const facts = [...c.ix.facts.values()];
-  const label = (f: any) => c.t(f.label) || f.key;
-  const todos = app.store.todos(b);
-  return h('section.screen',
-    header(app, isUnknown ? 'Unknown bike' : b.name, 'Garage', () => app.go({ k: 'garage' })),
-    h('div.scroll',
-      h('div.field', h('label', isUnknown ? 'Give this bike a name to keep it in your garage' : 'Name'), nameInput),
-      app.store.data.current === b.id
-        ? h('div.note', 'This is the bike in use. Guides and checks use what is known here.')
-        : h('button.btn.primary.wide', { onclick: () => {
-          app.store.use(b.id);
-          app.go({ k: 'home' });
-        }, 'data-test': 'use-bike' }, 'Use this bike'),
-      todos.length ? h('div.section', h('span.eyebrow', 'To do'), h('ul.list', todos.map((f) => h('li', h('button.li', { onclick: () => {
-        app.store.use(b.id);
-        app.openTodo(f);
-      } }, h('span.tx', h('b', c.jobTitle(f.job!)), h('span', `Found ${f.date}`)), urgencyBadge(f.urgency)))))) : null,
-      h('div.section',
-        h('span.eyebrow', 'What the app knows about this bike'),
-        h('p.s', 'Facts fill in as guides ask. You can change them here.'),
-        h('div.group', facts.map((f) =>
-          h('div.field', { style: 'padding:12px 0' },
-            h('span.lbl', label(f)),
-            f.ask === 'never' ? h('span.s', 'Never asked. Set it only if you know it from the bike\'s papers.') : null,
-            editor(f.key, f),
-          ),
-        )),
-      ),
-      !isUnknown ? h('button.link', { onclick: () => {
-        if (confirm(`Remove ${b.name} from the garage?`)) {
-          app.store.removeBike(b.id);
-          app.go({ k: 'garage' });
-        }
-      } }, 'Remove this bike') : null,
+      h('button.link', { 'data-test': 'reset-garage', onclick: () => app.openOverlay({
+        k: 'confirm',
+        title: 'Reset the test garage?',
+        text: 'All bikes go back to the test bikes as they come with this build. Your notes stay.',
+        ok: 'Reset',
+        run: () => {
+          app.store.reset();
+          app.toast('The garage is back to the test bikes');
+        },
+      }) }, 'Reset the test garage'),
     ),
   );
 }

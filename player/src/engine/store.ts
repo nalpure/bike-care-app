@@ -24,6 +24,12 @@ export interface Bike {
   name: string;
   facts: Record<string, Value>;
   findings: Finding[];
+  /** day the bike came into the garage (YYYY-MM-DD) */
+  added: string;
+  /** job id -> day it was last done (a finished tutorial) */
+  done: Record<string, string>;
+  /** rough distance ridden per week, for the service estimate */
+  kmPerWeek?: number;
 }
 
 export interface Note {
@@ -40,30 +46,38 @@ export interface Note {
 }
 
 export interface AppData {
-  version: 1;
+  version: 2;
+  /** the garage. No bike is "in use": each flow starts by choosing one. */
   bikes: Bike[];
-  /** the bike in use; "unknown" is the built-in bike that is not in the garage yet */
-  current: string;
   tools: string[];
   notes: Note[];
   noticeSeen: boolean;
   textOnly: boolean;
 }
 
-export const UNKNOWN_BIKE = 'unknown';
+/** A test bike from the bundle (demo_bikes). */
+export interface DemoBike {
+  id: string;
+  name: string;
+  facts: Record<string, Value>;
+}
 
-const KEY = 'bike-app/v1';
+const KEY = 'bike-app/v2';
 
-function blank(): AppData {
-  return {
-    version: 1,
-    bikes: [{ id: UNKNOWN_BIKE, name: 'Unknown bike', facts: {}, findings: [] }],
-    current: UNKNOWN_BIKE,
-    tools: [],
-    notes: [],
-    noticeSeen: false,
-    textOnly: false,
-  };
+export function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function newId(): string {
+  return `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function demoGarage(demos: DemoBike[]): Bike[] {
+  return demos.map((d) => ({ id: d.id, name: d.name, facts: { ...d.facts }, findings: [], added: today(), done: {} }));
+}
+
+function blank(demos: DemoBike[]): AppData {
+  return { version: 2, bikes: demoGarage(demos), tools: [], notes: [], noticeSeen: false, textOnly: false };
 }
 
 /** A key-value store that never throws. Falls back to memory. */
@@ -109,19 +123,24 @@ export function memoryKV(): KV {
 export class Store {
   data: AppData;
 
-  constructor(private kv: KV) {
-    this.data = blank();
+  /** demos: the bundle's test bikes; they fill the garage on first start and after a reset. */
+  constructor(private kv: KV, private demos: DemoBike[] = []) {
+    this.data = blank(demos);
     try {
       const raw = kv.get(KEY);
       if (raw) {
         const d = JSON.parse(raw);
-        if (d?.version === 1) this.data = { ...blank(), ...d };
+        // Version 1 (one bike in use, a built-in unknown bike) is not migrated: there were no testers yet.
+        if (d?.version === 2 && Array.isArray(d.bikes)) this.data = { ...blank(demos), ...d };
       }
     } catch {
-      this.data = blank();
+      this.data = blank(demos);
     }
-    if (!this.data.bikes.some((b) => b.id === UNKNOWN_BIKE)) this.data.bikes.unshift(blank().bikes[0]);
-    if (!this.bike(this.data.current)) this.data.current = UNKNOWN_BIKE;
+    for (const b of this.data.bikes) {
+      b.findings ??= [];
+      b.done ??= {};
+      b.added ??= today();
+    }
   }
 
   save(): void {
@@ -132,44 +151,27 @@ export class Store {
     return this.data.bikes.find((b) => b.id === id);
   }
 
-  get current(): Bike {
-    return this.bike(this.data.current) ?? this.data.bikes[0];
-  }
-
-  /** Bikes in the garage (the unknown bike is not one of them). */
+  /** Bikes in the garage. */
   garage(): Bike[] {
-    return this.data.bikes.filter((b) => b.id !== UNKNOWN_BIKE);
+    return this.data.bikes;
   }
 
-  addBike(name: string): Bike {
-    const b: Bike = { id: `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name: name.trim() || 'My bike', facts: {}, findings: [] };
+  addBike(name: string, facts: Record<string, Value> = {}, findings: Finding[] = []): Bike {
+    const b: Bike = { id: newId(), name: name.trim() || 'My bike', facts: { ...facts }, findings: [...findings], added: today(), done: {} };
     this.data.bikes.push(b);
-    this.data.current = b.id;
-    this.save();
-    return b;
-  }
-
-  /** Turns the unknown bike into a garage bike, keeping what was learned. */
-  nameUnknownBike(name: string): Bike {
-    const u = this.bike(UNKNOWN_BIKE)!;
-    const b: Bike = { id: `b${Date.now().toString(36)}`, name: name.trim() || 'My bike', facts: { ...u.facts }, findings: [...u.findings] };
-    u.facts = {};
-    u.findings = [];
-    this.data.bikes.push(b);
-    this.data.current = b.id;
     this.save();
     return b;
   }
 
   removeBike(id: string): void {
-    if (id === UNKNOWN_BIKE) return;
     this.data.bikes = this.data.bikes.filter((b) => b.id !== id);
-    if (this.data.current === id) this.data.current = UNKNOWN_BIKE;
     this.save();
   }
 
-  use(id: string): void {
-    if (this.bike(id)) this.data.current = id;
+  /** Back to the test garage: the demo bikes as they come in the bundle. Notes and settings stay. */
+  reset(): void {
+    this.data.bikes = demoGarage(this.demos);
+    this.data.tools = [];
     this.save();
   }
 
@@ -193,8 +195,10 @@ export class Store {
     return bike.findings.filter((f) => f.job && !f.cleared);
   }
 
+  /** The job was done: its to-do items are cleared and the day is kept for the service estimate. */
   clearJob(bike: Bike, job: string, date: string): void {
     for (const f of bike.findings) if (f.job === job && !f.cleared) f.cleared = date;
+    bike.done = { ...(bike.done ?? {}), [job]: date };
     this.save();
   }
 

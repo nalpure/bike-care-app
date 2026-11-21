@@ -91,6 +91,8 @@ export type Screen =
   | { kind: 'shop'; summary: ShopSummary; canBack: boolean }
   | { kind: 'done'; title: string; minutes: number; askFixed: boolean; canBack: boolean }
   | { kind: 'todo'; items: Finding[]; title: string; canBack: boolean }
+  /** Offer to keep what this flow learned: on the garage bike in use, or as a new garage bike. */
+  | { kind: 'keep'; learned: Array<[string, Value]>; bike: string | null; findings: number; canBack: boolean }
   | { kind: 'closed' };
 
 export type Start =
@@ -151,20 +153,37 @@ interface Snapshot {
 
 // ---------------------------------------------------------------- journey
 
+/** Whether what the flow learns goes onto a garage bike. Asked once per flow (the keep screen). */
+type Offer = 'ask' | 'saved' | 'skipped';
+
 export class Journey {
   private st: State;
+  /** the bike the flow works on: a copy, so answers reach the garage only when the user keeps them */
+  private bike: Bike;
+  /** the garage bike chosen at the start; null for an unknown bike until the user saves it */
+  private home: Bike | null;
+  private offer: Offer = 'ask';
   private history: Snapshot[] = [];
   private progressMax = 0;
   /** ids of the cards shown, in order, for feedback notes and the assistant */
   shownPath: string[] = [];
 
+  /**
+   * bike: the garage bike chosen for this flow, or null for an unknown bike.
+   * preset: facts given before the flow (the complete-bike form); they count as learned.
+   */
   constructor(
     private c: Content,
     private store: Store,
-    private bike: Bike,
+    bike: Bike | null,
     private session: Session,
     start: Start,
+    preset: Record<string, Value> = {},
   ) {
+    this.home = bike;
+    this.bike = bike
+      ? { ...bike, facts: { ...bike.facts, ...preset }, findings: clone(bike.findings), done: { ...bike.done } }
+      : { id: 'unknown', name: 'Unknown bike', facts: { ...preset }, findings: [], added: '', done: {} };
     this.st = { stage: { k: 'closed' }, found: [], minutes: 0 };
     if ('diagnosis' in start) this.st.stage = { k: 'diag', id: start.diagnosis, params: start.params ?? {}, i: 0, started: false };
     else if ('tutorial' in start) this.st.stage = { k: 'tut', t: this.newTut(start.tutorial, start.params ?? {}) };
@@ -174,6 +193,48 @@ export class Journey {
 
   get bikeName(): string {
     return this.bike.name;
+  }
+
+  /** What this flow knows about the bike (garage facts plus answers so far). */
+  get bikeFacts(): Record<string, Value> {
+    return this.bike.facts;
+  }
+
+  /** The garage bike this flow works on, if any (null for an unknown bike not saved yet). */
+  get garageBike(): Bike | null {
+    return this.home;
+  }
+
+  /** Facts this flow knows that the garage bike does not (all of them for an unknown bike). */
+  learned(): Array<[string, Value]> {
+    return Object.entries(this.bike.facts).filter(([k, v]) => String(v) !== UNKNOWN && (!this.home || String(this.home.facts[k]) !== String(v)));
+  }
+
+  /** Copies findings and finished jobs to the garage bike, and facts once the user kept them. */
+  private persist(): void {
+    if (this.home) {
+      this.home.findings = clone(this.bike.findings);
+      this.home.done = { ...this.bike.done };
+      if (this.offer === 'saved') Object.assign(this.home.facts, this.bike.facts);
+    }
+    this.store.save();
+  }
+
+  /** Keep screen: save what was learned. An unknown bike becomes a garage bike and needs a name. */
+  keepSave(name?: string): void {
+    if (!this.home) {
+      if (!name?.trim()) return;
+      this.home = this.store.addBike(name, {}, []);
+      this.bike.id = this.home.id;
+      this.bike.name = this.home.name;
+    }
+    this.offer = 'saved';
+    this.persist();
+  }
+
+  /** Keep screen: go on without saving. Answers still count for this flow. */
+  keepSkip(): void {
+    this.offer = 'skipped';
   }
 
   /** What the assistant and feedback notes receive. */
@@ -216,7 +277,7 @@ export class Journey {
     this.bike.facts = JSON.parse(s.facts);
     this.bike.findings = JSON.parse(s.findings);
     Object.assign(this.session, JSON.parse(s.session));
-    this.store.save();
+    this.persist();
   }
 
   get canBack(): boolean {
@@ -292,9 +353,9 @@ export class Journey {
     if (String(v) === UNKNOWN) {
       if (!this.session.unknown.includes(key)) this.session.unknown.push(key);
     } else {
-      this.store.setFact(this.bike, key, v);
+      this.bike.facts[key] = v;
     }
-    this.store.save();
+    this.persist();
   }
 
   answerTool(tool: string, has: boolean): void {
@@ -314,6 +375,18 @@ export class Journey {
   // ------------------------------------------------------------ screen
 
   screen(): Screen {
+    const s = this.flowScreen();
+    if (this.offer !== 'ask' || s.kind === 'closed' || s.kind === 'question' || s.kind === 'tool-question' || s.kind === 'position') return s;
+    // Once per flow, on the screen after the questions; for an unknown bike also at the end when
+    // the flow made findings (to-do items need a garage bike).
+    const learned = this.learned();
+    const end = s.kind === 'done' || s.kind === 'todo' || s.kind === 'shop';
+    const findings = this.home ? 0 : this.bike.findings.length;
+    if (learned.length || (end && findings)) return { kind: 'keep', learned, bike: this.home?.name ?? null, findings, canBack: this.canBack };
+    return s;
+  }
+
+  private flowScreen(): Screen {
     this.ensureDiagStarted();
     const s = this.st.stage;
     switch (s.k) {
@@ -432,6 +505,7 @@ export class Journey {
     this.store.addFinding(this.bike, {
       inspection, pos, state, job: hit?.job, urgency: hit?.urgency, source, date: new Date().toISOString().slice(0, 10),
     });
+    this.persist();
     if (hit && st) this.st.found.push(st.label);
   }
 
@@ -1018,7 +1092,10 @@ export class Journey {
       this.st.stage = { k: 'shop', summary: this.shopSummary(def?.job, extra, still) };
       return;
     }
-    if (def?.job) this.store.clearJob(this.bike, def.job, new Date().toISOString().slice(0, 10));
+    if (def?.job) {
+      this.store.clearJob(this.bike, def.job, new Date().toISOString().slice(0, 10));
+      this.persist();
+    }
     const askFixed = !!this.st.diag && this.st.diag.next < (this.c.ix.diagnoses.get(this.st.diag.id)?.checks.length ?? 0);
     this.st.stage = { k: 'done', title: this.c.jobTitle(def?.job ?? t.id), minutes: this.st.minutes, askFixed };
   }
@@ -1041,4 +1118,8 @@ export class Journey {
     this.st.stage = { k: 'job', job: f.job!, urgency: f.urgency, params: f.pos ? { pos: f.pos } : {} };
   }
 
+}
+
+function clone<T>(x: T): T {
+  return JSON.parse(JSON.stringify(x));
 }

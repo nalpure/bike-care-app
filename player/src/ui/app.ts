@@ -4,20 +4,42 @@
 
 import type { Content } from '../engine/content.js';
 import { Journey, Session, type Start } from '../engine/journey.js';
+import type { Value } from '../../../tools/lib/conditions.js';
 import type { Bike, Finding, Store } from '../engine/store.js';
 import { h, icon, ICON } from './dom.js';
 import { renderJourney } from './flow.js';
-import { renderBike, renderGarage, renderHome, renderNotes, renderShopTab } from './home.js';
+import { endPreview, renderBike } from './bike.js';
+import { renderGarage, renderHome, renderNotes, renderShopTab } from './home.js';
+import { renderPick, type PickStep } from './pick.js';
 import type { Stage } from './stage.js';
 
-export type View = { k: 'home' } | { k: 'garage' } | { k: 'bike'; id: string } | { k: 'shop' } | { k: 'notes' } | { k: 'journey' };
+export type View =
+  | { k: 'home' }
+  | { k: 'garage' }
+  | { k: 'bike'; id: string }
+  | { k: 'shop' }
+  | { k: 'notes' }
+  /** the first screen of a flow: which bike, and for an unknown bike how to describe it */
+  | { k: 'pick'; start: Start; step: PickStep }
+  | { k: 'journey' };
 
-type Overlay = null | { k: 'notice' } | { k: 'assistant' } | { k: 'feedback' };
+type Overlay =
+  | null
+  | { k: 'notice' }
+  | { k: 'assistant' }
+  | { k: 'feedback' }
+  /** a warning before something that cannot be undone */
+  | { k: 'confirm'; title: string; text: string; ok: string; run: () => void };
 
 export class App {
   view: View = { k: 'home' };
   journey: Journey | null = null;
-  session = new Session();
+  /** one sitting per garage bike (hard rule 12); an unknown bike starts a fresh one each time */
+  private sessions = new Map<string, Session>();
+  /** where Back on the first screen of the journey returns to */
+  private origin: View = { k: 'home' };
+  /** the sitting of the open journey */
+  private sitting = new Session();
   overlay: Overlay = null;
   /** direction of the last card move, for the slide animation */
   moved: 'next' | 'back' | null = null;
@@ -33,24 +55,44 @@ export class App {
     document.addEventListener('keydown', (e) => this.onKey(e));
   }
 
-  get bike(): Bike {
-    return this.store.current;
-  }
-
   go(view: View): void {
     this.view = view;
     this.render();
   }
 
-  start(start: Start): void {
-    this.journey = new Journey(this.c, this.store, this.bike, this.session, start);
+  /** A flow starts by choosing the bike, unless it is opened from a bike (a to-do item). */
+  start(start: Start, bike?: Bike): void {
+    if (bike) this.run(start, bike, {}, this.view);
+    else this.go({ k: 'pick', start, step: { k: 'list' } });
+  }
+
+  /** Starts the journey on a garage bike, or on an unknown bike (null) with facts given so far. */
+  run(start: Start, bike: Bike | null, preset: Record<string, Value>, origin: View): void {
+    let session = bike ? this.sessions.get(bike.id) : undefined;
+    if (!session) {
+      session = new Session();
+      if (bike) this.sessions.set(bike.id, session);
+    }
+    this.sitting = session;
+    this.journey = new Journey(this.c, this.store, bike, session, start, preset);
+    this.origin = origin;
     this.moved = null;
     this.view = { k: 'journey' };
     this.render();
   }
 
-  openTodo(f: Finding): void {
-    this.start({ job: f.job!, urgency: f.urgency, params: f.pos ? { pos: f.pos } : {} });
+  /** The keep screen saved an unknown bike: later flows on it share its sitting. */
+  adoptSession(bike: Bike): void {
+    if (!this.sessions.has(bike.id)) this.sessions.set(bike.id, this.sitting);
+  }
+
+  openTodo(bike: Bike, f: Finding): void {
+    this.start({ job: f.job!, urgency: f.urgency, params: f.pos ? { pos: f.pos } : {} }, bike);
+  }
+
+  /** Name of the bike in the open flow, for headers. */
+  get bikeName(): string {
+    return this.journey?.bikeName ?? '';
   }
 
   /** Runs an action on the journey and re-renders. */
@@ -66,7 +108,8 @@ export class App {
   back(): void {
     if (!this.journey) return;
     if (!this.journey.canBack) {
-      this.closeJourney();
+      this.journey = null;
+      this.go(this.origin);
       return;
     }
     // On a card, Back goes to the previous card, not just to the same card before its tap.
@@ -85,6 +128,21 @@ export class App {
     this.journey = null;
     this.view = { k: 'home' };
     this.render();
+  }
+
+  /** The warning before a bike is deleted; after() runs once it is gone. */
+  confirmDelete(b: Bike, after?: () => void): void {
+    this.openOverlay({
+      k: 'confirm',
+      title: `Delete ${b.name}?`,
+      text: 'Its facts, findings and to-do items are deleted from this phone. This cannot be undone.',
+      ok: 'Delete',
+      run: () => {
+        this.store.removeBike(b.id);
+        after?.();
+        this.toast(`Deleted "${b.name}"`);
+      },
+    });
   }
 
   toast(msg: string): void {
@@ -133,6 +191,8 @@ export class App {
   render(): void {
     const keepScroll = this.root.querySelector<HTMLElement>('.scroll')?.scrollTop ?? 0;
     const sameView = this.root.dataset.view === this.viewKey();
+    // The bike page owns the 3D stage while it is open; any other screen lets it go (a card takes it by itself).
+    if (this.view.k !== 'bike' && this.view.k !== 'journey') endPreview(this);
     this.root.replaceChildren();
     this.root.dataset.view = this.viewKey();
     let screen: HTMLElement;
@@ -144,7 +204,7 @@ export class App {
         screen = renderGarage(this);
         break;
       case 'bike':
-        screen = renderBike(this, this.view.id);
+        screen = renderBike(this, this.view.id, () => this.go({ k: 'garage' })) ?? renderGarage(this);
         break;
       case 'shop':
         screen = renderShopTab(this);
@@ -152,12 +212,15 @@ export class App {
       case 'notes':
         screen = renderNotes(this);
         break;
+      case 'pick':
+        screen = renderPick(this, this.view);
+        break;
       case 'journey':
         screen = this.journey ? renderJourney(this, this.journey) : renderHome(this);
         break;
     }
     this.root.append(screen);
-    const inJourney = this.view.k === 'journey';
+    const inJourney = this.view.k === 'journey' || this.view.k === 'pick';
     if (!inJourney) this.root.append(this.tabbar());
     this.root.append(this.assistantButton(inJourney));
     if (this.overlay) this.root.append(this.renderOverlay());
@@ -172,6 +235,7 @@ export class App {
       const s = this.journey.screen();
       return `journey:${s.kind}:${s.kind === 'card' ? s.card.id : s.kind === 'question' ? s.key : ''}`;
     }
+    if (this.view.k === 'pick') return `pick:${this.view.step.k}`;
     return this.view.k === 'bike' ? `bike:${this.view.id}` : this.view.k;
   }
 
@@ -217,10 +281,24 @@ export class App {
         } }, 'I understand'),
       ));
     }
+    if (o.k === 'confirm') {
+      return modal(h('div.card', { role: 'alertdialog', 'aria-label': o.title },
+        h('b.t', o.title),
+        h('p', o.text),
+        h('div.row2',
+          h('button.btn', { 'data-test': 'confirm-cancel', onclick: this.closeOverlay }, 'Cancel'),
+          h('button.btn.danger', { 'data-test': 'confirm-ok', onclick: () => {
+            this.overlay = null;
+            o.run();
+            this.render();
+          } }, o.ok),
+        ),
+      ));
+    }
     if (o.k === 'assistant') {
-      const ctx = this.journey?.context() ?? { facts: { ...this.bike.facts }, state: [], path: [] };
+      const ctx = this.journey?.context() ?? { facts: {}, state: [], path: [] };
       const lines = [
-        `Bike: ${this.bike.name}`,
+        `Bike: ${this.journey?.bikeName ?? '(none chosen)'}`,
         `Flow: ${ctx.flow ?? '(none)'}`,
         `Step: ${ctx.item ?? '(none)'}`,
         `Review unit: ${ctx.unit ?? '(none)'}`,
@@ -237,7 +315,7 @@ export class App {
       ));
     }
     // feedback
-    const ctx = this.journey?.context() ?? { facts: { ...this.bike.facts }, state: [], path: [] };
+    const ctx = this.journey?.context() ?? { facts: {}, state: [], path: [] };
     const ta = h('textarea.text', { placeholder: 'What is unclear, wrong or missing here?', 'aria-label': 'Your note', 'data-test': 'note-text' }) as HTMLTextAreaElement;
     return modal(h('div.card', { role: 'dialog', 'aria-label': 'Feedback' },
       h('span.eyebrow', `Note on ${ctx.unit ?? 'this screen'}`),
@@ -257,7 +335,7 @@ export class App {
             unit: ctx.unit,
             path: ctx.path,
             facts: ctx.facts,
-            bike: this.bike.name,
+            bike: this.journey?.bikeName ?? '(none chosen)',
             content_hash: this.c.bundle.content_hash,
           });
           this.overlay = null;

@@ -24,8 +24,7 @@ export function startOf(j: any): Start {
 
 export function drive(c: Content, profile: any, j: any): Driven {
   const store = new Store(memoryKV());
-  const bike = store.current;
-  bike.facts = { ...(profile.facts ?? {}) };
+  const bike = store.addBike(profile.name, profile.facts ?? {});
   store.setTools(profile.tools ?? []);
   const journey = new Journey(c, store, bike, new Session(), startOf(j));
   const out: Driven = { ending: '', minutes: 0, screens: [], blocks: 0 };
@@ -62,6 +61,10 @@ export function drive(c: Content, profile: any, j: any): Driven {
         journey.choose(s.choice.id, v);
         break;
       }
+      case 'keep':
+        // The owner goes on without saving; the answers still count for this flow.
+        journey.keepSkip();
+        break;
       case 'parts':
         journey.partsOk();
         break;
