@@ -10,6 +10,11 @@ export interface Circle {
   s: number;
 }
 
+/** One piece of the path, exact: an arc on a wheel or a straight run (straight in xy, bending sideways in z). `s0` and `len` are lengths in the xy plane. */
+export type PathSeg =
+  | { k: 'arc'; wheel: number; s0: number; len: number; cx: number; cy: number; z: number; r: number; a0: number; sw: number }
+  | { k: 'line'; s0: number; len: number; x0: number; y0: number; z0: number; x1: number; y1: number; z1: number };
+
 export interface Path {
   x: number[];
   y: number[];
@@ -17,11 +22,16 @@ export interface Path {
   /** cumulative length */
   l: number[];
   n: number;
+  /** the same path as exact pieces, in travel order */
+  segs: PathSeg[];
 }
 
 const TAU = Math.PI * 2;
 
-export const newPath = (): Path => ({ x: [], y: [], z: [], l: [], n: 0 });
+export const newPath = (): Path => ({ x: [], y: [], z: [], l: [], n: 0, segs: [] });
+
+/** z along a run that bends sideways: stays in its plane close to a wheel (smootherstep). */
+export const bend = (t: number) => t * t * t * (t * (6 * t - 15) + 10);
 
 /**
  * Fills `o` with a closed polyline around the circles in travel order and returns its length.
@@ -41,6 +51,8 @@ export function buildPath(circ: Circle[], o: Path): number {
     T.push([Math.sin(phi), -Math.cos(phi)]);
   }
   let c = 0;
+  let sAcc = 0;
+  o.segs.length = 0;
   const angleIn = (i: number) => {
     const ci = circ[i];
     const m1 = T[(i - 1 + n) % n];
@@ -54,6 +66,8 @@ export function buildPath(circ: Circle[], o: Path): number {
     let dl = (td - ta) * ci.s;
     dl = ((dl % TAU) + TAU) % TAU;
     const sw = dl * ci.s;
+    o.segs.push({ k: 'arc', wheel: i, s0: sAcc, len: dl * ci.r, cx: ci.x, cy: ci.y, z: ci.z, r: ci.r, a0: ta, sw });
+    sAcc += dl * ci.r;
     const steps = Math.max(2, Math.ceil(dl / 0.14));
     for (let k = 0; k <= steps; k++) {
       const th = ta + (sw * k) / steps;
@@ -66,18 +80,25 @@ export function buildPath(circ: Circle[], o: Path): number {
     // leaves each in its plane and bends sideways on the way (smootherstep in z: it stays in its plane close to a wheel, where the next sprocket is only a few mm away), as a real chain
     // flexes, instead of cutting across at an angle into the neighbouring sprockets.
     const nx = circ[(i + 1) % n];
+    const tb = angleIn((i + 1) % n);
+    const x1 = nx.x + nx.r * Math.cos(tb);
+    const y1 = nx.y + nx.r * Math.sin(tb);
+    {
+      const sx = ci.x + ci.r * Math.cos(td);
+      const sy = ci.y + ci.r * Math.sin(td);
+      const len = Math.hypot(x1 - sx, y1 - sy);
+      o.segs.push({ k: 'line', s0: sAcc, len, x0: sx, y0: sy, z0: ci.z, x1, y1, z1: nx.z });
+      sAcc += len;
+    }
     if (Math.abs(nx.z - ci.z) > 1e-6) {
       const x0 = o.x[c - 1];
       const y0 = o.y[c - 1];
-      const tb = angleIn((i + 1) % n);
-      const x1 = nx.x + nx.r * Math.cos(tb);
-      const y1 = nx.y + nx.r * Math.sin(tb);
       const m = Math.min(24, Math.max(2, Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 0.04)));
       for (let k = 1; k < m; k++) {
         const t = k / m;
         o.x[c] = x0 + (x1 - x0) * t;
         o.y[c] = y0 + (y1 - y0) * t;
-        o.z[c] = ci.z + (nx.z - ci.z) * t * t * t * (t * (6 * t - 15) + 10);
+        o.z[c] = ci.z + (nx.z - ci.z) * bend(t);
         c++;
       }
     }

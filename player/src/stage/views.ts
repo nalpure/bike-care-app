@@ -33,7 +33,7 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
     const top = B.huby + B.rs[B.n - 1] * 0.4;
     const ty = (top + low) / 2;
     const zc = B.chainline;
-    return { p: [B.rx - 0.95, ty + 0.05, zc + 0.13], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
+    return { p: [B.rx - 0.75, ty + 0.03, zc + 0.1], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
   },
   // The gap between the upper pulley and the largest sprocket, seen along the sprocket's edge
   // from behind, above and outside: the derailleur's body and links stay out of the way.

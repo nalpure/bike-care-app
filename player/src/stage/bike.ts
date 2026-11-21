@@ -5,8 +5,8 @@
 // This file re-exports every name it exported before the split.
 //
 // Units: 1 scene unit = 0.5 m. x points to the front wheel, y up, z to the drive side.
-// The drivetrain is drawn 1.25 times as wide (z) as on a real bike (sprocket spacing `sp`), so the
-// sprockets read on a phone; session C changes that to the real spacing.
+// The drivetrain is drawn at its real size: sprocket spacing, sprocket and chain width, teeth and
+// links (see the rules in bikeSpec).
 
 import * as T from 'three';
 import { buildCockpit, buildShiftCable } from './cockpit.js';
@@ -15,6 +15,7 @@ import { buildDerailleur, derGeom, derPose, moveDerailleur, SCREW_LEN, type DerP
 import { curveGeo, disposeTree, hullShape, slabGeo, tubeGeo, UP } from './geo.js';
 import { batteryLine, GAP_OK, GROUND, HP, LC, LIFT, stayPts, stayZ, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
 import { newPath, type Circle } from './chain.js';
+import type { Pins } from './pins.js';
 
 export * from './spec.js';
 export { disposeTree, seg } from './geo.js';
@@ -111,13 +112,21 @@ export class BikeModel {
   /** @internal builder state */
   der: DerParts | null = null;
   /** @internal builder state */
-  chainMesh!: T.InstancedMesh;
+  chainInner!: T.InstancedMesh;
+  /** @internal builder state */
+  chainOuter!: T.InstancedMesh;
+  /** @internal builder state */
+  pins!: Pins;
+  /** @internal builder state */
+  readonly cassetteG = new T.Group();
   /** @internal builder state */
   circ: Circle[] = [];
   /** @internal builder state */
   path = newPath();
   /** @internal builder state */
   N = 0;
+  /** the links laid now (at most N) */
+  links = 0;
   private decal: { cv: HTMLCanvasElement; tex: T.CanvasTexture; mat: T.MeshBasicMaterial; key: string } | null = null;
   /** @internal builder state */
   Q = new T.Object3D();

@@ -7,7 +7,7 @@ import * as T from 'three';
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
 import { dirSign, makeAnim, type AnimCtx } from '../src/stage/anim.js';
-import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_OK, GEOMETRY_RANGES, GROUND, type BikeSpec } from '../src/stage/bike.js';
+import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_OK, GEOMETRY_RANGES, GROUND, PITCH, type BikeSpec } from '../src/stage/bike.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
 import { CLIPS, LABEL_SCENES, manifest, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS } from '../src/stage/registry.js';
 import { viewPose } from '../src/stage/views.js';
@@ -155,6 +155,72 @@ describe('bike builder', () => {
     }
   });
 
+  it('sets every pin on a wheel in a tooth gap, one pitch from the next, in any gear and at any chain position', () => {
+    const bikes = [
+      { 'bike.category': 'road_gravel', 'drive.rear_speeds': 11 },
+      { 'bike.category': 'trekking_city', 'drive.rear_speeds': 8 },
+      { 'bike.category': 'mtb', 'drive.rear_speeds': 12 },
+    ];
+    const mod = (v: number, d: number) => ((v % d) + d) % d;
+    for (const facts of bikes) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const B = m.spec;
+      for (const gear of [0, Math.floor(B.n / 2), B.n - 1]) {
+        for (const shift of [0, 0.0377, 0.31, -1.234, 12.5]) {
+          m.chainShift = shift;
+          m.setDer(m.zOf(gear), GAP_OK);
+          const P = m.pins;
+          const label = `${facts['bike.category']} gear ${gear + 1}, shift ${shift}`;
+          let onRing = 0;
+          let onSprocket = 0;
+          for (let k = 0; k < m.links; k++) {
+            // tooth gap centres: the wheel's angle plus whole teeth; the sprocket block and the chainring turn with the chain
+            const w = P.wheel[k];
+            if (w !== 0 && w !== 1) continue;
+            const ring = w === 0;
+            const a = Math.atan2(P.y[k] - (ring ? B.bby : B.huby), P.x[k] - (ring ? 0 : B.rx));
+            const step = (2 * Math.PI) / (ring ? B.chainring : B.cassette[gear]);
+            const d = mod(a - (ring ? m.crankset.rotation.z : m.cassetteG.rotation.z), step);
+            const off = Math.min(d, step - d) * (ring ? B.rc : B.rs[gear]) * 500;
+            expect(off, `${label}: pin ${k} on the ${ring ? 'chainring' : 'sprocket'}`).toBeLessThan(0.3);
+            if (ring) onRing++;
+            else onSprocket++;
+            // the next pin, if it is on the same wheel, is one pitch away
+            const j = (k + 1) % m.links;
+            if (P.wheel[j] === w) expect(Math.abs(Math.hypot(P.x[j] - P.x[k], P.y[j] - P.y[k], P.z[j] - P.z[k]) - PITCH) * 500, `${label}: pitch`).toBeLessThan(0.05);
+          }
+          expect(onRing, `${label}: pins on the chainring`).toBeGreaterThan(8);
+          expect(onSprocket, `${label}: pins on the sprocket`).toBeGreaterThan(2);
+        }
+      }
+      m.dispose();
+    }
+  });
+
+  it('keeps the drivetrain within its triangle budget and draws the chain in at most 4 calls', () => {
+    const tris = (o: T.Object3D) => {
+      let n = 0;
+      o.traverse((c: any) => {
+        if (c.isMesh) n += ((c.geometry.index ? c.geometry.index.count : c.geometry.attributes.position.count) / 3) * (c.isInstancedMesh ? c.count : 1);
+      });
+      return n;
+    };
+    for (const facts of [{ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11 }, { 'bike.category': 'mtb', 'drive.rear_speeds': 12 }, { 'bike.category': 'trekking_city', 'drive.rear_speeds': 8 }]) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const label = JSON.stringify(facts);
+      expect(tris(m.cassetteG), `${label}: cassette`).toBeLessThanOrEqual(15000);
+      expect(tris(m.parts.get('chainring')!.group), `${label}: chainring`).toBeLessThanOrEqual(3000);
+      // the longest chain: every link its capacity
+      m.chainInner.count = Math.ceil(m.N / 2);
+      m.chainOuter.count = Math.floor(m.N / 2);
+      expect(tris(m.parts.get('chain')!.group), `${label}: chain`).toBeLessThanOrEqual(20000);
+      let calls = 0;
+      m.parts.get('chain')!.group.traverse((c: any) => { if (c.isMesh) calls++; });
+      expect(calls, `${label}: chain meshes`).toBeLessThanOrEqual(4);
+      m.dispose();
+    }
+  });
+
   it('raises the bottom bracket to a typical height for each kind of bike', () => {
     // bottom bracket height above the ground, in mm: road about 270-300, city 280-310, mountain 300-340
     const mm = (B: BikeSpec) => (B.bby - GROUND) * 500;
@@ -174,7 +240,7 @@ describe('bike builder', () => {
         const der = meshPoints(m, ['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shift_cable']);
         const bad = der.find(({ p }) => hitsSprocket(B, p, 0, 0) !== undefined);
         expect(bad && `${bad.part} at ${bad.p.toArray().map((v) => v.toFixed(3))}`, `${label}, gear ${i + 1}: derailleur`).toBeUndefined();
-        // the chain runs on sprocket i; its links are chainW wide and 0.014 high
+        // the chain runs on sprocket i; its plates are chainW wide and 0.016 high
         const pts = m.chainPoints();
         for (let k = 1; k < pts.length; k++) {
           const a = new T.Vector3(...pts[k - 1]);
@@ -182,7 +248,7 @@ describe('bike builder', () => {
           const steps = Math.ceil(a.distanceTo(b) / 0.005);
           for (let s = 0; s <= steps; s++) {
             const p = a.clone().lerp(b, s / steps);
-            const j = hitsSprocket(B, p, B.chainW / 2, 0.007, i);
+            const j = hitsSprocket(B, p, B.chainW / 2, 0.008, i);
             if (j !== undefined) expect.fail(`${label}, gear ${i + 1}: the chain touches sprocket ${j + 1} at ${p.toArray().map((v) => v.toFixed(3))}`);
           }
         }
