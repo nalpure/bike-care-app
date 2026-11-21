@@ -41,13 +41,13 @@ Modules in `player/src/stage/` (lines now): `spec.ts` 291, `geo.ts` 126, `derail
 
 ## Questions for the owner
 
-- `npm run shots` is broken since the garage change (`player/e2e/slow.ts:55` reads `app.bike.facts`, but no bike is "in use" any more). It fails with "Cannot read properties of undefined (reading 'facts')". Not caused by this session. Recommended: fix it in a small own task (pick the bike through the garage first) before session C, since sessions C to E want to look at 3D changes. Until then the e2e garage shot `player/e2e/shots/portrait/bike-page/03-components.png` shows the road bike.
+None open. `npm run shots` was broken since the garage change (it read `app.bike.facts`); fixed in `player/e2e/slow.ts`: it sets the facts on a demo garage bike, opens the guides list, starts the tutorial and picks that bike. `npm run shots -- --only road` takes 14 screenshots per size again.
 
 ## Next steps
 
 1. Session B (`05-b-library.md`): parts library, no change in the builders needed.
 2. Session C: starts in `spec.ts` and `drivetrain.ts`. Make a new digest baseline first only if you want to compare something that must not change.
-3. Maybe fix `npm run shots` (see Questions).
+3. `npm run shots` works again: `npm run build && npm run shots -- --only road` for a look at 3D changes.
 
 ## Gotchas
 

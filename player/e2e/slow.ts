@@ -19,10 +19,10 @@ const PORT = 4189;
 const SUB = '/sub/';
 const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.txt': 'text/plain' };
 
-/** Bikes to draw: facts set on the unknown bike before the tutorial starts, and how it is held. */
-const BIKES: Array<{ id: string; facts: Record<string, unknown>; hold: string }> = [
-  { id: 'road-stand', facts: { 'bike.category': 'road_gravel', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 11 }, hold: 'stand' },
-  { id: 'city-upside-down', facts: { 'bike.category': 'city', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 8 }, hold: 'upside_down' },
+/** Bikes to draw: a demo bike of the garage, the facts set on it before the tutorial starts, and how it is held. */
+const BIKES: Array<{ id: string; garage: string; facts: Record<string, unknown>; hold: string }> = [
+  { id: 'road-stand', garage: 'road-bike-stand', facts: { 'bike.category': 'road_gravel', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 11 }, hold: 'stand' },
+  { id: 'city-upside-down', garage: 'city-derailleur-no-stand', facts: { 'bike.category': 'city', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 8 }, hold: 'upside_down' },
 ];
 const SIZES = [{ width: 390, height: 844 }, { width: 667, height: 375 }];
 
@@ -52,12 +52,15 @@ try {
       page.on('pageerror', (e) => console.log(`ERROR ${bike.id} ${vp.width}x${vp.height}: ${e}`));
       await page.goto(`http://localhost:${PORT}${SUB}`);
       await page.click('[data-test="notice-ok"]');
-      await page.evaluate((facts) => {
+      await page.evaluate(({ id, facts }) => {
         const app = (window as any).__app;
-        Object.assign(app.bike.facts, facts);
+        Object.assign(app.store.bike(id).facts, facts);
         app.store.save();
-      }, bike.facts);
+      }, { id: bike.garage, facts: bike.facts });
+      // the guides sit in a collapsed list on the repair menu
+      await page.locator('details.guides summary').click();
       await page.click('[data-test="tutorial-adjust-rear-shifting"]');
+      await page.click(`[data-test="pick-${bike.garage}"]`);
       let n = 0;
       const shot = (name: string) => page.screenshot({ path: join(dir, `${String(++n).padStart(2, '0')}-${name}.png`) });
       for (let guard = 0; guard < 80; guard++) {
