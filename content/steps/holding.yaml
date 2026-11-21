@@ -18,7 +18,7 @@ steps:
     kind: action
     title: "Hang the bike up"
     minutes: 3
-    text: "Hang the bike by the front of its saddle from the hook or rope, so the rear wheel is off the ground. Check that it hangs firmly before you let go."
+    text: "Hang the bike by the front of its saddle from a strong hook or rope, so the rear wheel is off the ground, and check that it hangs firmly before you let go. Never use thin string or a coat hook: it can break, and the bike falls."
     tools: { required: [hook-or-rope], helpful: [] }
     sets: [bike_hung]
     focus: [saddle, rear_wheel]

@@ -127,11 +127,11 @@ Animation: "Close the clamp around the seat post" (stand_clamp rotate, tighten, 
 
 ### Hang the bike up
 
-<sub>Unit `card:step:hang-bike` · hash `edd34011504f` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:hang-bike` · hash `7d9d8f8c0fd5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 3 min</sub>
 
-Hang the bike by the front of its saddle from the hook or rope, so the rear wheel is off the ground. Check that it hangs firmly before you let go.
+Hang the bike by the front of its saddle from a strong hook or rope, so the rear wheel is off the ground, and check that it hangs firmly before you let go. Never use thin string or a coat hook: it can break, and the bike falls.
 
 Tools. Needed: Strong hook or rope that can carry the bike. Helpful: none.
 

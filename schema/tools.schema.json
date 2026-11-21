@@ -29,18 +29,6 @@
               "required": ["name"],
               "additionalProperties": false
             }
-          },
-          "do_not_use": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": { "$ref": "common.schema.json#/$defs/text" },
-                "reason": { "$ref": "common.schema.json#/$defs/text" }
-              },
-              "required": ["name", "reason"],
-              "additionalProperties": false
-            }
           }
         },
         "required": ["id", "name", "kind"],

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "6ea28bbcd726ea1e",
+  "content_hash": "d040e92dc8001bf8",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -537,7 +537,7 @@
       "kind": "action",
       "title": "Hang the bike up",
       "minutes": 3,
-      "text": "Hang the bike by the front of its saddle from the hook or rope, so the rear wheel is off the ground. Check that it hangs firmly before you let go.",
+      "text": "Hang the bike by the front of its saddle from a strong hook or rope, so the rear wheel is off the ground, and check that it hangs firmly before you let go. Never use thin string or a coat hook: it can break, and the bike falls.",
       "tools": {
         "required": [
           "hook-or-rope"
