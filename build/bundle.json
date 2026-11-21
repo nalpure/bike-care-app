@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "65b35955efea9f25",
+  "content_hash": "6ea28bbcd726ea1e",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -138,6 +138,27 @@
       }
     },
     {
+      "key": "drive.rear_derailleur_screws",
+      "type": "enum",
+      "values": [
+        "cross",
+        "hex"
+      ],
+      "ask": "never",
+      "safety": false,
+      "note": "The heads of the limit and B screws. Never asked: it only picks the tool. Known from the bike's parts list or the derailleur model; when unknown, the tools screen shows both tools and how to tell them apart.",
+      "answers": {
+        "cross": {
+          "en": "Cross-head screws",
+          "de": "Kreuzschlitzschrauben"
+        },
+        "hex": {
+          "en": "Hex screws",
+          "de": "Innensechskantschrauben"
+        }
+      }
+    },
+    {
       "key": "drive.rear_speeds",
       "type": "number",
       "safety": false,
@@ -237,22 +258,53 @@
       ]
     },
     {
-      "id": "derailleur-screw-tool",
-      "name": "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur",
+      "id": "small-cross-screwdriver",
+      "name": "Small cross-head screwdriver",
       "kind": "tool",
       "mentions": [
-        "screwdriver",
+        "screwdriver"
+      ],
+      "substitutes": [
+        {
+          "name": "Bike multi-tool with a small cross-head bit"
+        }
+      ]
+    },
+    {
+      "id": "small-hex-keys",
+      "name": "Small hex keys",
+      "kind": "tool",
+      "mentions": [
         "hex key"
       ],
       "substitutes": [
         {
-          "name": "Bike multi-tool with a small cross-head bit and small hex keys"
+          "name": "Bike multi-tool with small hex keys"
         }
-      ],
-      "do_not_use": [
+      ]
+    }
+  ],
+  "tool_sets": [
+    {
+      "id": "derailleur-screw-tool",
+      "name": "A tool for the small screws on the rear derailleur",
+      "tell_apart": "Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.",
+      "options": [
         {
-          "name": "A screwdriver that is too big or too small",
-          "reason": "It slips and damages the screw head"
+          "tool": "small-cross-screwdriver",
+          "when": {
+            "drive.rear_derailleur_screws": [
+              "cross"
+            ]
+          }
+        },
+        {
+          "tool": "small-hex-keys",
+          "when": {
+            "drive.rear_derailleur_screws": [
+              "hex"
+            ]
+          }
         }
       ]
     }
@@ -897,7 +949,7 @@
       "minutes": 3,
       "text": "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key.",
       "tools": {
-        "required": [
+        "one_of": [
           "derailleur-screw-tool"
         ]
       },
@@ -960,7 +1012,7 @@
       "minutes": 3,
       "text": "Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key.",
       "tools": {
-        "required": [
+        "one_of": [
           "derailleur-screw-tool"
         ]
       },
@@ -1015,7 +1067,7 @@
       "minutes": 3,
       "text": "Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key.",
       "tools": {
-        "required": [
+        "one_of": [
           "derailleur-screw-tool"
         ]
       },

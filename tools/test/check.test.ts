@@ -214,6 +214,15 @@ describe('rules broken on purpose', () => {
     expect(e[0].message).toContain('work-mat');
   });
 
+  it('a tool set option that reads a fact the app would ask', () => {
+    const r = sandbox()
+      .edit('content/tools.yaml', (d) => (d.tool_sets[0].options[0].when = { 'drive.gear_type': ['derailleur'] }))
+      .run();
+    const e = errorsOf(r, 'tool-set-when');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].id).toBe('tool set derailleur-screw-tool');
+  });
+
   it('a show_how_from that does not lie ahead', () => {
     const r = sandbox()
       .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-all-gears').buttons.find((x: any) => x.exit).exit.show_how_from = 'shift-to-smallest-sprocket'))

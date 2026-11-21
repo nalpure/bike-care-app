@@ -64,9 +64,11 @@
       "additionalProperties": false
     },
     "toolUse": {
+      "description": "Three tiers. required: the step cannot be done without it. one_of: tool sets (tools.yaml, tool_sets) of which the bike needs one, depending on its part. helpful: the text mentions it as an aid.",
       "type": "object",
       "properties": {
         "required": { "type": "array", "items": { "$ref": "#/$defs/toolRef" } },
+        "one_of": { "type": "array", "items": { "$ref": "#/$defs/id" } },
         "helpful": { "type": "array", "items": { "$ref": "#/$defs/toolRef" } }
       },
       "additionalProperties": false

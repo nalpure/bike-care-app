@@ -33,6 +33,7 @@ export interface Content {
   choices: Map<string, Entry>;
   states: Map<string, Entry>;
   tools: Map<string, Entry>;
+  toolSets: Map<string, Entry>;
   parts: Map<string, Entry>;
   inspections: Map<string, Entry>;
   jobs: Map<string, Entry>;
@@ -56,7 +57,7 @@ export function loadContent(root: string, issues: Issues): Content | null {
   const c: Content = {
     root,
     files: [],
-    facts: new Map(), choices: new Map(), states: new Map(), tools: new Map(), parts: new Map(),
+    facts: new Map(), choices: new Map(), states: new Map(), tools: new Map(), toolSets: new Map(), parts: new Map(),
     inspections: new Map(), jobs: new Map(), steps: new Map(), procedures: new Map(),
     tutorials: new Map(), diagnoses: new Map(), checks: new Map(), profiles: new Map(),
     catalog: { nodes: new Set(), views: new Set(), clips: new Set(), motions: new Set(), source: '' },
@@ -119,6 +120,7 @@ export function loadContent(root: string, issues: Issues): Content | null {
   const toolsF = load('content/tools.yaml', 'tools');
   if (toolsF) {
     register(c.tools, 'tool', toolsF, 'tools');
+    register(c.toolSets, 'tool set', toolsF, 'tool_sets');
     register(c.parts, 'part', toolsF, 'parts');
   }
   const inspF = load('content/inspections.yaml', 'inspections');

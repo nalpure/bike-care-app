@@ -12,7 +12,7 @@ import { neverAsked } from './refs.js';
 import type { Issues } from './issues.js';
 import {
   choiceBlock, exitScreen, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
-  toolSummary, type Known,
+  toolSummary, toolTiers, type Known,
 } from './render.js';
 import { lineAt } from './yamlfile.js';
 
@@ -211,8 +211,7 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
   const all = combined(run);
   const tools = toolSummary(c, all);
   const has = (t: string) => (r.p.def.tools ?? []).includes(t);
-  const tl = (ids: string[]) => ids.map((x) => `${toolName(c, x)}${has(x) ? ' ✓' : ''}`).join('; ') || 'none';
-  r.L.push(`Tools picker. Needed: ${tl(tools.required)}. Helpful: ${tl(tools.helpful)}. (✓ = the owner has it)`, '');
+  r.L.push(`Tools picker. ${toolTiers(c, tools, (x) => (has(x) ? ' ✓' : ''))}. (✓ = the owner has it)`, '');
   const time = tutorialTimeRange(c, t, Object.fromEntries(r.known), params);
   r.L.push(`Time shown for this bike: ${time ?? '?'} (depends on how the bike is held).`, '');
 

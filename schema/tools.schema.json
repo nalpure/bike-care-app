@@ -47,6 +47,33 @@
         "additionalProperties": false
       }
     },
+    "tool_sets": {
+      "description": "\"One of these, depending on your part\": tools of which a bike needs only one. Each option may name, with when, the bike data that says it fits; when reads only facts marked ask: never, so nothing is asked.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "name": { "description": "What the set is for, as the tools screen shows it.", "$ref": "common.schema.json#/$defs/text" },
+          "tell_apart": { "description": "How the user tells which option fits, shown when the bike's data does not say.", "$ref": "common.schema.json#/$defs/text" },
+          "options": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "properties": {
+                "tool": { "$ref": "common.schema.json#/$defs/id" },
+                "when": { "$ref": "common.schema.json#/$defs/condition" }
+              },
+              "required": ["tool"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["id", "name", "tell_apart", "options"],
+        "additionalProperties": false
+      }
+    },
     "parts": {
       "type": "array",
       "items": {

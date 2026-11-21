@@ -19,6 +19,8 @@ export interface BundleData {
   choices: any[];
   states: any[];
   tools: any[];
+  /** "one of these, depending on your part": a set of tools of which the bike needs one */
+  tool_sets: any[];
   parts: any[];
   inspections: any[];
   jobs: any[];
@@ -34,6 +36,7 @@ export interface Index {
   choices: Map<string, any>;
   states: Map<string, any>;
   tools: Map<string, any>;
+  tool_sets: Map<string, any>;
   parts: Map<string, any>;
   inspections: Map<string, any>;
   jobs: Map<string, any>;
@@ -51,6 +54,7 @@ export function indexBundle(b: BundleData): Index {
     choices: by(b.choices),
     states: by(b.states),
     tools: by(b.tools),
+    tool_sets: by(b.tool_sets),
     parts: by(b.parts),
     inspections: by(b.inspections),
     jobs: by(b.jobs),
@@ -210,8 +214,17 @@ export interface Problem<S = unknown> {
   id: string;
 }
 
+/** One "one of these" set on a path: the options that fit this bike (all of them when its data does not say). */
+export interface ToolSetUse {
+  set: string;
+  options: string[];
+  /** true when the bike's data picked the options; false when all are shown */
+  decided: boolean;
+}
+
 export interface ToolList {
   required: string[];
+  one_of: ToolSetUse[];
   helpful: string[];
 }
 
@@ -233,12 +246,39 @@ export interface PathItem<S = unknown> {
   tools: ToolList;
 }
 
-function toolsOf(def: any, r: Reader): ToolList {
+function toolsOf(ix: Index, def: any, r: Reader): ToolList {
   const pick = (list: any[] | undefined) =>
     (list ?? [])
       .filter((t) => typeof t === 'string' || evaluate(t.when, (k) => r.peek(k)) || conditionReadsUnknown(t.when, r))
       .map((t) => (typeof t === 'string' ? t : t.id));
-  return { required: pick(def.tools?.required), helpful: pick(def.tools?.helpful) };
+  return { required: pick(def.tools?.required), one_of: (def.tools?.one_of ?? []).map((id: string) => toolSetUse(ix, id, r)), helpful: pick(def.tools?.helpful) };
+}
+
+/**
+ * The options of a tool set that fit this bike. An option's when reads only facts from the bike's
+ * data (ask: never), so nothing is asked: when the data names the option, only it is shown;
+ * otherwise every option, and the app shows the set's tell_apart note.
+ */
+export function toolSetUse(ix: Index, id: string, r: Reader): ToolSetUse {
+  const options: any[] = ix.tool_sets.get(id)?.options ?? [];
+  const fits = options.filter((o) => o.when && evaluate(o.when, (k) => r.peek(k)));
+  if (fits.length) return { set: id, options: fits.map((o) => o.tool), decided: true };
+  return { set: id, options: options.map((o) => o.tool), decided: false };
+}
+
+/** Every tool a set of tool lists names, in order: needed, the shown options of each set, helpful. */
+export function mergeTools(lists: ToolList[]): ToolList {
+  const req = new Set<string>();
+  const help = new Set<string>();
+  const sets = new Map<string, ToolSetUse>();
+  for (const l of lists) {
+    l.required.forEach((t) => req.add(t));
+    l.helpful.forEach((t) => help.add(t));
+    for (const u of l.one_of) if (!sets.has(u.set)) sets.set(u.set, u);
+  }
+  const inSets = new Set([...sets.values()].flatMap((u) => u.options));
+  for (const t of [...req, ...inSets]) help.delete(t);
+  return { required: [...req], one_of: [...sets.values()], helpful: [...help] };
 }
 
 function conditionReadsUnknown(cond: Condition | undefined, r: Reader): boolean {
@@ -334,7 +374,7 @@ function expandItem<S>(
     if (insp.applies_when && !evaluate(substCondition(insp.applies_when, params), r.ask)) {
       run.problems.push({ rule: 'inspection-not-applicable', id: `tutorial ${tid} / inspect ${id}`, src, message: `Inspection ${id} does not apply to this bike (its applies_when fails), but the case calls it.` });
     }
-    out.push({ kind: 'inspect', id, def: insp, list, via, outcomes: it.outcomes, buttons: [], generic: false, src, defSrc: loc(insp), tools: toolsOf(insp, r) });
+    out.push({ kind: 'inspect', id, def: insp, list, via, outcomes: it.outcomes, buttons: [], generic: false, src, defSrc: loc(insp), tools: toolsOf(ix, insp, r) });
   }
   return;
 }
@@ -356,7 +396,7 @@ function pushStep<S>(ix: Index, id: string, list: 'sequence' | 'finish', src: S,
     const { ok, sawUnknown } = evalTracked(substCondition(b.when, params), r.branch);
     return ok || sawUnknown;
   });
-  out.push({ kind: 'step', id, def: s, list, via, buttons, generic, src, defSrc: loc(s), tools: toolsOf(s, r) });
+  out.push({ kind: 'step', id, def: s, list, via, buttons, generic, src, defSrc: loc(s), tools: toolsOf(ix, s, r) });
 }
 
 function expandProcedure<S>(

@@ -145,7 +145,7 @@ steps:
     title: "Check the inner limit (L screw)"
     minutes: 3
     text: "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key."
-    tools: { required: [derailleur-screw-tool] }
+    tools: { one_of: [derailleur-screw-tool] }
     focus: [rear_derailleur, upper_pulley, largest_sprocket, l_screw]
     view: derailleur_from_behind
     animation: { target: rear_derailleur, motion: push, direction: "towards the spokes", amount: "as far as it goes", caption: "Push the derailleur in by hand" }
@@ -169,7 +169,7 @@ steps:
     title: "Check the outer limit (H screw)"
     minutes: 3
     text: "Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key."
-    tools: { required: [derailleur-screw-tool] }
+    tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, smallest_sprocket, h_screw]
     view: derailleur_from_behind
     buttons:
@@ -192,7 +192,7 @@ steps:
     title: "Check the gap to the sprockets"
     minutes: 3
     text: "Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key."
-    tools: { required: [derailleur-screw-tool] }
+    tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, largest_sprocket, b_screw]
     view: derailleur_side_close
     buttons:

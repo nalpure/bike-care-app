@@ -3,6 +3,7 @@
 import type { Content } from './content.js';
 import { fillText, UNKNOWN, type Value } from './conditions.js';
 import { combined, type DiagnosisCheck, type PathItem } from './expand.js';
+import { mergeTools, type ToolList, type ToolSetUse } from './resolve.js';
 import { tutorialTimeRange, type Combo, type DiagnosisFlow, type DiagnosisFlowPath, type TutorialFlow, type TutorialPath } from './flows.js';
 import { factDef } from './refs.js';
 
@@ -98,7 +99,7 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
   const scene = sceneLine(it.def);
   if (scene) L.push('', scene);
   if (it.def.animation) L.push('', `Animation: ${animLine(it.def.animation)}`);
-  const tools = [...it.tools.required.map((t) => toolName(c, t)), ...it.tools.helpful.map((t) => `${toolName(c, t)} (helpful)`)];
+  const tools = [...it.tools.required.map((t) => toolName(c, t)), ...it.tools.one_of.map((u) => oneOfText(c, u)), ...it.tools.helpful.map((t) => `${toolName(c, t)} (helpful)`)];
   if (tools.length) L.push('', `Tools: ${tools.join('; ')}`);
 
   if (it.kind === 'inspect') {
@@ -138,15 +139,24 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
   return L;
 }
 
-export function toolSummary(c: Content, items: PathItem[]): { required: string[]; helpful: string[] } {
-  const req = new Set<string>();
-  const help = new Set<string>();
-  for (const it of items) {
-    it.tools.required.forEach((t) => req.add(t));
-    it.tools.helpful.forEach((t) => help.add(t));
-  }
-  for (const t of req) help.delete(t);
-  return { required: [...req], helpful: [...help] };
+export function toolSummary(_c: Content, items: PathItem[]): ToolList {
+  return mergeTools(items.map((it) => it.tools));
+}
+
+/** "Small cross-head screwdriver or Small hex keys (Look at ...)" for a tool set on a path. */
+export function oneOfText(c: Content, u: ToolSetUse, mark: (id: string) => string = () => ''): string {
+  const names = u.options.map((t) => `${toolName(c, t)}${mark(t)}`).join(' or ');
+  if (u.decided) return `${names} (the bike's data says which)`;
+  return `${names} (${c.toolSets.get(u.set)?.def.tell_apart ?? ''})`;
+}
+
+/** The three tiers as one line: "Needed: ... One of these: ... Helpful: ...". */
+export function toolTiers(c: Content, t: ToolList, mark: (id: string) => string = () => '', sep = '. '): string {
+  const names = (ids: string[]) => ids.map((x) => `${toolName(c, x)}${mark(x)}`).join('; ') || 'none';
+  const parts = [`Needed: ${names(t.required)}`];
+  if (t.one_of.length) parts.push(`One of these, depending on your part: ${t.one_of.map((u) => oneOfText(c, u, mark)).join('; ')}`);
+  parts.push(`Helpful: ${names(t.helpful)}`);
+  return parts.join(sep);
 }
 
 export function choiceBlock(c: Content, choiceId: string, chosen: Value | undefined): string[] {
@@ -244,7 +254,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
       ['Run choices', choicesCell(c, p.combo)],
       ['Ends', endingText(p, all)],
       ['Time', `${p.minutes} min`],
-      ['Tools', `Needed: ${tools.required.map((x) => toolName(c, x)).join('; ') || 'none'}<br>Helpful: ${tools.helpful.map((x) => toolName(c, x)).join('; ') || 'none'}`],
+      ['Tools', toolTiers(c, tools, undefined, '<br>')],
     ]),
   );
 
@@ -257,7 +267,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
   }
   if (qs.length || t.entry?.requires_finding?.length) L.push('');
   for (const chId of t.choices ?? []) L.push(...choiceBlock(c, chId, p.combo.assign[`choice.${chId}`]));
-  L.push(`Tools picker. Needed: ${tools.required.map((x) => toolName(c, x)).join('; ') || 'none'}. Helpful: ${tools.helpful.map((x) => toolName(c, x)).join('; ') || 'none'}.`, '');
+  L.push(`Tools picker. ${toolTiers(c, tools)}.`, '');
 
   L.push('## Steps', '');
   let finishShown = false;

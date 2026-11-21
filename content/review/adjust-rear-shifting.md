@@ -23,6 +23,7 @@ Each item names the step or inspection ids it affects, so a change can be traced
 | R-13 | all shifting steps | Bikes with front gears: should the user pick a certain chainring before checking the limits and the B gap? `drive.front_count` exists in the fact list but is not used. | Not handled. Steps talk only about the rear sprockets. |
 | R-15 | `barrel-adjuster-present` | Where to look for an inline adjuster on the frame; bikes without any adjuster. | An inspection before the bike is lifted; "I cannot find one" ends with "not supported yet" and a shop (owner decision). |
 | R-16 | `check-all-gears`, `check-all-gears-riding` | "Go back to the cable step" relies on the user going back by hand, because the app never jumps back. | Text tells the user to go back. |
+| R-17 | tool set `derailleur-screw-tool`, fact `drive.rear_derailleur_screws` | Limit and B screws: cross-head or hex, and which sizes? Do some derailleurs use Torx, or mix heads (hex limit screws, a different B screw)? | Two options without sizes, "Small cross-head screwdriver" and "Small hex keys". When the bike's data does not say, the tools screen shows both with "a cross in the screw head needs the screwdriver, a six-sided hole needs a hex key". |
 | R-14 | `shift-test-ride` in `finish` | After adjusting in a stand, shifting under load on the road can differ. Is a "still not clean" result a shop case, or should it send the user back to the cable step? | Stop with a calm text: you can ride carefully; a shop can check the cable. |
 
 ## For the owner

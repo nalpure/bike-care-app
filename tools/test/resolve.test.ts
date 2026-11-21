@@ -38,6 +38,14 @@ describe('shared resolver on the written bundle', () => {
     expect(n).toBeGreaterThan(5);
   });
 
+  it('shows only the tool the bike data names, and every option otherwise', () => {
+    const t = ix.tutorials.get('adjust-rear-shifting');
+    const base = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'choice.hold_bike': 'stand' };
+    const sets = (extra: Record<string, Value>) => R.mergeTools(R.combined(R.resolveTutorial(ix, t, fixedReader({ ...base, ...extra }))).map((it) => it.tools)).one_of;
+    expect(sets({ 'drive.rear_derailleur_screws': 'hex' })).toEqual([{ set: 'derailleur-screw-tool', options: ['small-hex-keys'], decided: true }]);
+    expect(sets({})).toEqual([{ set: 'derailleur-screw-tool', options: ['small-cross-screwdriver', 'small-hex-keys'], decided: false }]);
+  });
+
   it('resolves every diagnosis combination like the build tool', () => {
     for (const d of c.diagnoses.values()) {
       for (const e of enumerate(c, (r) => resolveDiagnosis(c, d, r))) {

@@ -154,7 +154,6 @@ function renderTools(app: App, j: Journey, s: Extract<Screen, { kind: 'tools' }>
     const on = s.ticked.includes(id);
     const extra: string[] = [];
     if (t?.substitutes?.length) extra.push(`Or: ${t.substitutes.map((x: any) => x.name).join('; ')}`);
-    if (t?.do_not_use?.length) extra.push(`Do not use: ${t.do_not_use.map((x: any) => `${x.name} (${x.reason})`).join('; ')}`);
     return h('button.tick', { role: 'checkbox', 'aria-checked': String(on), 'data-test': `tool-${id}`, onclick: () => app.act((x) => x.toggleTool(id)) },
       h('span.box', icon(ICON.check)),
       h('span.tx', h('b', c.toolName(id)), extra.map((e) => h('span', e))),
@@ -164,6 +163,13 @@ function renderTools(app: App, j: Journey, s: Extract<Screen, { kind: 'tools' }>
   return screenWith(app, top(app, 'Your tools', 'Before you start'), [
     h('p.lead', 'Tick what you have. The guide uses this to pick its steps.'),
     s.required.length ? h('div.field', h('span.eyebrow', 'You need'), h('div.group', s.required.map(tick))) : null,
+    // Minimal version; session A2 designs this screen.
+    ...s.oneOf.map((u) => {
+      const set = c.ix.tool_sets.get(u.set);
+      return h('div.field', h('span.eyebrow', u.decided ? 'You need' : 'One of these, depending on your bike'),
+        !u.decided && set?.tell_apart ? h('p.s', set.tell_apart) : null,
+        h('div.group', u.options.map(tick)));
+    }),
     s.helpful.length ? h('div.field', h('span.eyebrow', 'Helpful'), h('div.group', s.helpful.map(tick))) : null,
     missing.length ? h('div.note', h('span', 'Not ticked yet: '), h('strong', missing.map((x) => c.toolName(x)).join('; ')), h('span', '. Some steps need it. You can still start and read along, or take the bike to a shop.')) : null,
   ], [h('button.btn.primary.wide', { 'data-test': 'start', onclick: () => app.act((x) => x.startTutorial(), 'next') }, 'Start the guide')]);

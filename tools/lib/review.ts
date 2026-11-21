@@ -125,9 +125,10 @@ function toolsLine(c: Content, tools: any): string | null {
   if (!tools) return null;
   const name = (t: any) => (typeof t === 'string' ? toolName(c, t) : `${toolName(c, t.id)} (when ${cond(t.when)})`);
   const req = (tools.required ?? []).map(name);
+  const sets = (tools.one_of ?? []).map((id: string) => c.toolSets.get(id)?.def.name ?? id);
   const help = (tools.helpful ?? []).map(name);
-  if (!req.length && !help.length) return null;
-  return `Tools. Needed: ${req.join('; ') || 'none'}. Helpful: ${help.join('; ') || 'none'}.`;
+  if (!req.length && !sets.length && !help.length) return null;
+  return `Tools. Needed: ${req.join('; ') || 'none'}.${sets.length ? ` One of these, depending on your part: ${sets.join('; ')}.` : ''} Helpful: ${help.join('; ') || 'none'}.`;
 }
 
 function sceneLine(def: any): string | null {
@@ -239,6 +240,11 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
     for (const s of e.def.substitutes ?? []) body.push(`- Instead you can use: ${s.name}${s.note ? ` (${s.note})` : ''}`);
     for (const s of e.def.do_not_use ?? []) body.push(`- Do not use: ${s.name}, because ${s.reason}`);
     add('tool', id, e.def.name, e.def, ['mechanic', 'beginner'], body);
+  }
+  for (const [id, e] of c.toolSets) {
+    const body = [`Name: "${e.def.name}" (one of these, depending on your part)`, '', `How to tell: "${e.def.tell_apart}"`, ''];
+    for (const o of e.def.options) body.push(`- ${toolName(c, o.tool)}${o.when ? ` <sub>shown alone when ${cond(o.when)}</sub>` : ''}`);
+    add('tool-set', id, e.def.name, e.def, ['mechanic', 'beginner'], body);
   }
   return units;
 }
@@ -505,7 +511,7 @@ export function reviewFiles(statuses: UnitStatus[], journeyMarkdown: Map<string,
   const cards = statuses.filter((s) => s.unit.kind === 'card');
   const groups: Array<[string, string]> = [
     ['inspection', 'Inspections'], ['step', 'Steps'], ['fact', 'Questions and bike record'], ['choice', 'Run choices'],
-    ['job', 'Jobs and shop texts'], ['state', 'State labels'], ['tool', 'Tools'],
+    ['job', 'Jobs and shop texts'], ['state', 'State labels'], ['tool', 'Tools'], ['tool-set', 'Tool sets (one of these)'],
   ];
   const C = head('Card sheet', [
     'Every piece of text the user sees, exactly once. Review the wording as a beginner, the mechanics as a mechanic.',

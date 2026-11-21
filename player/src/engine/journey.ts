@@ -10,7 +10,7 @@
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
 import {
   combined, enumerate, findJumpTarget, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy,
-  type DiagnosisRun, type PathItem, type Reader, type ToolList, type TutorialRun,
+  type DiagnosisRun, type PathItem, type Reader, type ToolList, type ToolSetUse, type TutorialRun, mergeTools,
 } from '../../../tools/lib/resolve.js';
 import type { Content } from './content.js';
 import type { Bike, Finding, Store } from './store.js';
@@ -83,7 +83,7 @@ export type Screen =
   | { kind: 'tool-question'; tool: string; canBack: boolean }
   | { kind: 'choice'; choice: any; chosen?: string; canBack: boolean }
   | { kind: 'parts'; parts: any[]; canBack: boolean }
-  | { kind: 'tools'; required: string[]; helpful: string[]; ticked: string[]; canBack: boolean }
+  | { kind: 'tools'; required: string[]; oneOf: ToolSetUse[]; helpful: string[]; ticked: string[]; canBack: boolean }
   | { kind: 'card'; card: Card }
   | { kind: 'exit'; exitKind: ExitKind; message: string; canJump: boolean; putBack: string[]; /** state labels still set; the stage shows the bike as it is held */ labels: string[]; canBack: boolean }
   | { kind: 'not-covered'; message: string; canBack: boolean }
@@ -792,7 +792,7 @@ export class Journey {
       title: it.def.title,
       text: this.c.fill(it.generic ? it.def.generic_text : it.def.text, this.known, t.params),
       details: this.c.details(it.def, this.known, t.params),
-      needs: it.tools.required.map((x) => this.c.toolName(x)),
+      needs: [...it.tools.required.map((x) => this.c.toolName(x)), ...it.tools.one_of.map((u) => u.options.map((x) => this.c.toolName(x)).join(' or '))],
       question: it.kind === 'inspect' || it.buttons.length ? 'What do you see on your bike?' : undefined,
       buttons: it.kind === 'inspect' ? it.def.states.map((x: any) => ({ id: x.id, label: x.label })) : it.buttons.map((b) => ({ id: b.id, label: b.label })),
       chosen: tap,
@@ -856,21 +856,15 @@ export class Journey {
     }
     if (!t.tools) {
       const tools = this.toolSummary(combined(res.ok));
-      const ticked = [...new Set([...t.ticked, ...this.impliedTools(t)])].filter((x) => tools.required.includes(x) || tools.helpful.includes(x));
-      return { kind: 'tools', required: tools.required, helpful: tools.helpful, ticked, canBack: this.canBack };
+      const listed = [...tools.required, ...tools.one_of.flatMap((u) => u.options), ...tools.helpful];
+      const ticked = [...new Set([...t.ticked, ...this.impliedTools(t)])].filter((x) => listed.includes(x));
+      return { kind: 'tools', required: tools.required, oneOf: tools.one_of, helpful: tools.helpful, ticked, canBack: this.canBack };
     }
     return { kind: 'closed' };
   }
 
   private toolSummary(items: PathItem[]): ToolList {
-    const req = new Set<string>();
-    const help = new Set<string>();
-    for (const it of items) {
-      it.tools.required.forEach((x) => req.add(x));
-      it.tools.helpful.forEach((x) => help.add(x));
-    }
-    for (const x of req) help.delete(x);
-    return { required: [...req], helpful: [...help] };
+    return mergeTools(items.map((it) => it.tools));
   }
 
   /** The "is this needed?" inspection, unless a finding or this session already answers it. */
@@ -931,7 +925,8 @@ export class Journey {
     this.snapshot();
     t.tools = [...new Set([...t.ticked, ...this.impliedTools(t)])];
     // Remember the user's tools for the next run.
-    this.store.setTools([...new Set([...this.store.data.tools.filter((x) => !scr.required.includes(x) && !scr.helpful.includes(x)), ...t.ticked])]);
+    const listed = [...scr.required, ...scr.oneOf.flatMap((u) => u.options), ...scr.helpful];
+    this.store.setTools([...new Set([...this.store.data.tools.filter((x) => !listed.includes(x)), ...t.ticked])]);
     const res = this.tutRun(t);
     if (!('ok' in res)) return;
     t.started = true;

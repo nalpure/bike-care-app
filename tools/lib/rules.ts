@@ -15,6 +15,7 @@ export const STATIC_RULES: Record<string, string> = {
   'unknown-procedure': 'Every procedure referenced exists.',
   'unknown-inspection': 'Every inspection referenced exists.',
   'unknown-tool': 'Every tool referenced exists in the catalog.',
+  'tool-set-when': 'A tool set option reads only facts the app never asks (the bike data), so the tools screen asks nothing.',
   'tool-not-mentioned': 'A step or inspection lists a tool only when its text names it (by name or a mentions word).',
   'unknown-part': 'Every part referenced exists.',
   'unknown-fact': 'Every fact key referenced exists in facts.yaml.',

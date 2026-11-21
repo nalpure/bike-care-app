@@ -139,6 +139,34 @@ function checkToolUse(x: Ctx, tools: any, loc: Loc, def: any): void {
       if (typeof t === 'object') checkCondition(x, t.when, sub(loc, 'tools', kind, i));
     });
   }
+  (tools.one_of ?? []).forEach((id: string, i: number) => {
+    const set = x.c.toolSets.get(id);
+    if (!set) {
+      err(x, sub(loc, 'tools', 'one_of', i), 'unknown-tool', `Tool set "${id}" is not in content/tools.yaml under tool_sets.`);
+      return;
+    }
+    const opts = set.def.options.map((o: any) => x.c.tools.get(o.tool)).filter(Boolean);
+    if (!opts.some((t: any) => toolWords(t.def).some((w) => mentions(text, w)))) {
+      err(x, sub(loc, 'tools', 'one_of', i), 'tool-not-mentioned', `Tool set "${id}" is listed, but the text names none of its tools (${opts.map((t: any) => `"${t.def.mentions?.[0] ?? t.def.name}"`).join(', ')}).`);
+    }
+  });
+}
+
+/** Tool sets: the options exist, and their conditions read only facts the app never asks. */
+function checkToolSet(x: Ctx, e: Entry): void {
+  const loc = locOf(e, 'tool set');
+  if (x.c.tools.has(e.def.id)) err(x, loc, 'duplicate-id', `"${e.def.id}" is both a tool and a tool set. Give them different ids.`);
+  checkText(x, e.def.tell_apart, loc);
+  e.def.options.forEach((o: any, i: number) => {
+    const ol = sub(loc, 'options', i);
+    if (!x.c.tools.has(o.tool)) err(x, ol, 'unknown-tool', `Tool "${o.tool}" is not in content/tools.yaml.`);
+    checkCondition(x, o.when, sub(ol, 'when'));
+    for (const [key] of conditionPairs(o.when)) {
+      if (key.startsWith('tool.') || key.startsWith('choice.') || (factDef(x.c, key) && !neverAsked(x.c, key))) {
+        err(x, ol, 'tool-set-when', `An option reads ${key}, but options may read only facts marked ask: never (the bike's data), so the tools screen never asks a question.`);
+      }
+    }
+  });
 }
 
 function checkAnimation(x: Ctx, a: any, loc: Loc): void {
@@ -480,6 +508,7 @@ function checkProfile(x: Ctx, e: Entry): void {
 
 export function checkStatic(c: Content, issues: Issues): void {
   const x: Ctx = { c, issues };
+  for (const e of c.toolSets.values()) checkToolSet(x, e);
   for (const e of c.steps.values()) checkStep(x, e);
   for (const e of c.inspections.values()) checkInspection(x, e);
   for (const e of c.procedures.values()) checkProcedure(x, e);

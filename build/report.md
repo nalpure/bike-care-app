@@ -27,7 +27,7 @@ Details per unit in [review/index.md](review/index.md).
 
 | Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
 | --- | --- | --- | --- | --- |
-| card | 38 | 0 of 30 | 0 of 38 | 0 |
+| card | 41 | 0 of 32 | 0 of 41 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
 | journey | 9 | — | 0 of 9 | 0 |
 
@@ -94,6 +94,7 @@ Journeys that end at a shop, a stop or not covered: 4 of 9.
 | `unknown-procedure` | pass | Every procedure referenced exists. |
 | `unknown-inspection` | pass | Every inspection referenced exists. |
 | `unknown-tool` | pass | Every tool referenced exists in the catalog. |
+| `tool-set-when` | pass | A tool set option reads only facts the app never asks (the bike data), so the tools screen asks nothing. |
 | `tool-not-mentioned` | pass | A step or inspection lists a tool only when its text names it (by name or a mentions word). |
 | `unknown-part` | pass | Every part referenced exists. |
 | `unknown-fact` | pass | Every fact key referenced exists in facts.yaml. |

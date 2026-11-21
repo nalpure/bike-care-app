@@ -80,7 +80,7 @@ No questions: everything needed is already known.
 - On its wheels, and test with short rides
   - Needs no tools, but takes longer. You adjust while the bike stands and test by riding.
 
-Tools picker. Needed: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur. Helpful: Soft mat or old blanket. (✓ = the owner has it)
+Tools picker. Needed: none. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: Soft mat or old blanket. (✓ = the owner has it)
 
 Time shown for this bike: 26 to 29 min (depends on how the bike is held).
 
@@ -118,7 +118,7 @@ Push the rear derailleur by hand towards the spokes, as far as it goes. Look fro
 
 Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the spokes, as far as it goes)
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
+Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
 - [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The L screw is set. Let go of the derailleur.
 - [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again. ◀ **this path**
@@ -142,7 +142,7 @@ Look from directly behind the bike at the upper of the two small toothed wheels 
 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
+Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
 - [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change. ◀ **this path**
 - [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
@@ -164,7 +164,7 @@ Keep the chain on the largest sprocket. Look from the side at the gap between th
 
 <sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
 
-Tools: Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur
+Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
 - [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
 - [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.

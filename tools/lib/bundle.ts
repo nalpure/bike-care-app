@@ -49,6 +49,7 @@ export function bundleOf(c: Content): BundleView {
     choices: defs(c.choices),
     states: defs(c.states),
     tools: defs(c.tools),
+    tool_sets: defs(c.toolSets),
     parts: defs(c.parts),
     inspections: defs(c.inspections),
     jobs: defs(c.jobs),

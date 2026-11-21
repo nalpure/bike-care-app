@@ -20,13 +20,27 @@ tools:
     substitutes:
       - { name: "Flattened cardboard box" }
 
-  - id: derailleur-screw-tool
-    name: "Small cross-head screwdriver or small hex key, whichever fits the small screws on the derailleur"
+  - id: small-cross-screwdriver
+    name: "Small cross-head screwdriver"
     kind: tool
-    mentions: [screwdriver, hex key]
+    mentions: [screwdriver]
     substitutes:
-      - { name: "Bike multi-tool with a small cross-head bit and small hex keys" }
-    do_not_use:
-      - { name: "A screwdriver that is too big or too small", reason: "It slips and damages the screw head" }
+      - { name: "Bike multi-tool with a small cross-head bit" }
+
+  - id: small-hex-keys
+    name: "Small hex keys"
+    kind: tool
+    mentions: [hex key]
+    substitutes:
+      - { name: "Bike multi-tool with small hex keys" }
+
+# One of these, depending on your part. The bike's data may say which one fits.
+tool_sets:
+  - id: derailleur-screw-tool
+    name: "A tool for the small screws on the rear derailleur"
+    tell_apart: "Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key."
+    options:
+      - { tool: small-cross-screwdriver, when: { drive.rear_derailleur_screws: [cross] } }
+      - { tool: small-hex-keys, when: { drive.rear_derailleur_screws: [hex] } }
 
 parts: []

@@ -67,6 +67,16 @@ facts:
       standard: { en: "Standard (high-normal) rear derailleur", de: "Standard-Schaltwerk (High-Normal)" }
       low_normal: { en: "Rapid-rise (low-normal) rear derailleur", de: "Rapid-Rise-Schaltwerk (Low-Normal)" }
 
+  - key: drive.rear_derailleur_screws
+    type: enum
+    values: [cross, hex]
+    ask: never
+    safety: false
+    note: "The heads of the limit and B screws. Never asked: it only picks the tool. Known from the bike's parts list or the derailleur model; when unknown, the tools screen shows both tools and how to tell them apart."
+    answers:
+      cross: { en: "Cross-head screws", de: "Kreuzschlitzschrauben" }
+      hex: { en: "Hex screws", de: "Innensechskantschrauben" }
+
   - key: drive.rear_speeds
     type: number
     safety: false

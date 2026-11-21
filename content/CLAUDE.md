@@ -26,7 +26,8 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 ## Tools
 
 - List a tool on a step only when the step's text uses it. Nothing goes on the list "just in case".
-- Required: the step cannot be done without it. Helpful: the text mentions it as an aid.
+- Three tiers. `required`: the step cannot be done without it. `one_of`: a tool set (`tool_sets` in `tools.yaml`) when the bike needs only one of several tools, depending on its part; an option's `when` reads an `ask: never` fact, and the set's `tell_apart` says how to choose. `helpful`: the text mentions it as an aid.
+- The build checks that the text names each listed tool, by its name or a word in its `mentions`.
 - No "do not use" lists. A real danger goes into the step text as a warning (see Texts).
 
 ## Safety
