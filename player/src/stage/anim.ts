@@ -114,7 +114,9 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       const screw: ScrewNode = a.target === 'l_screw' || a.target === 'h_screw' ? a.target : ctx.focus.includes('l_screw') && !ctx.focus.includes('h_screw') ? 'l_screw' : 'h_screw';
       const base = screw === 'h_screw' ? small : large;
       // H limits the way out, L the way in; screwing in moves the pulley away from that limit.
-      const off = screw === 'h_screw' ? (sign > 0 ? 0.07 : -0.07) : sign > 0 ? -0.07 : 0.07;
+      // Out of line by about two sprockets, so the difference reads but stays plausible.
+      const o = Math.max(0.016, spec.sp * 2);
+      const off = screw === 'h_screw' ? (sign > 0 ? o : -o) : sign > 0 ? -o : o;
       return {
         duration: 4.4,
         frame: (t) => {
@@ -122,7 +124,7 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
           return {
             derZ: base + left,
             screws: { [screw]: sign * QUARTER * ramp(t, 0.2, 2.6) },
-            status: Math.abs(left) < 0.012 ? 'good' : 'bad',
+            status: Math.abs(left) < o * 0.18 ? 'good' : 'bad',
             ghost: { kind: 'align', z: base },
             arrow: t < 2.9 ? { node: screw, dir: sign } : undefined,
           };

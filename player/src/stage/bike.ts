@@ -57,7 +57,9 @@ export interface BikeSpec {
   rs: number[];
   rc: number;
   chainW: number;
-  /** z of the drive-side dropout and derailleur hanger: just outside the smallest sprocket */
+  /** z of the chainring, and of the cassette's middle */
+  chainline: number;
+  /** z of the rear dropouts (±) and the derailleur hanger: just outside the smallest sprocket */
   zDrop: number;
   /** top of the seat tube, top and bottom of the head tube */
   ST: V2;
@@ -153,8 +155,12 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   const colour = typeof colourFact === 'string' && /^#[0-9a-f]{6}$/i.test(colourFact) ? colourFact.toLowerCase() : null;
   const cassette = cassetteFor(kind, speeds);
   const n = cassette.length;
-  const sp = n > 1 ? 0.16 / (n - 1) : 0.03;
-  const zs = cassette.map((_, i) => (n > 1 ? 0.32 - i * sp : 0.22));
+  // Sprocket spacing 1.25 times the real one (so the sprockets still read on a phone), on a
+  // realistic chain line: the cassette's middle lines up with the chainring.
+  const realMm = n <= 7 ? 5 : n === 8 ? 4.8 : n === 9 ? 4.35 : n === 10 ? 3.95 : n === 11 ? 3.74 : n === 12 ? 3.5 : 3.3;
+  const sp = n > 1 ? (realMm * 1.25) / 500 : 0.03;
+  const chainline = road ? 0.1 : mtb ? 0.115 : 0.105;
+  const zs = cassette.map((_, i) => (n > 1 ? chainline + ((n - 1) / 2 - i) * sp : chainline));
   const tt = road ? 0.028 : mtb ? 0.07 : 0.045;
 
   // ---- geometry: defaults, replaced by the bike's own values where known
@@ -209,7 +215,7 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   const grip = gripOf(bar, HT);
   const S: V3 = bar === 'drop' ? [C[0] + 0.165, C[1] + 0.012, 0.21] : [grip[0], grip[1] - 0.04, 0.255];
   const barTop: V2 = bar === 'drop' ? [C[0] + 0.19, C[1] + 0.058] : [grip[0], grip[1] + 0.02];
-  const chainW = Math.min(0.02, sp * 0.7);
+  const chainW = Math.min(0.013, sp * 1.1);
   return {
     kind, bar, gears, colour,
     forkKind: mtb ? 'susp' : 'rigid',
@@ -224,7 +230,8 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
     rs: cassette.map(rOf),
     rc: rOf(road ? 50 : mtb ? 32 : 44),
     chainW,
-    zDrop: zs[0] + sp * 0.25 + 0.02,
+    chainline,
+    zDrop: zs[0] + sp * 0.25 + 0.022,
     ST, HT, HB,
     saddleX, saddleY,
     C, S, barTop,
@@ -250,66 +257,198 @@ export function batteryLine(B: BikeSpec): [V2, V2] {
   return [[B.HB[0] - 0.12, B.HB[1] - 0.06], [0.12, B.bby + 0.15]];
 }
 
+/**
+ * A rear stay's centre line on one side (sd = 1 drive side, -1 the other), as points for a tube.
+ * Chainstays run straight from the bottom bracket inside the chainring, bend out once just behind
+ * it (clearing the tyre), then run straight to the dropout. Seat stays run straight. Both meet
+ * the dropout square, for the last 0.09 units, so they stay outside the sprockets.
+ */
+export function stayPts(B: BikeSpec, which: 'chain' | 'seat', sd: 1 | -1): V3[] {
+  const { rx, huby, bby, zDrop } = B;
+  const D: V3 = [rx, huby, sd * zDrop];
+  const lerp = (p: V3, q: V3, t: number): V3 => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t, p[2] + (q[2] - p[2]) * t];
+  // the point 0.09 from the axle towards `from`, at the dropout's z
+  const end = (from: V3): V3 => {
+    const d = Math.hypot(from[0] - rx, from[1] - huby) || 1;
+    return [rx + ((from[0] - rx) / d) * 0.09, huby + ((from[1] - huby) / d) * 0.09, sd * zDrop];
+  };
+  if (which === 'seat') {
+    const sy = B.ST[1] - (B.kind === 'road' ? 0.05 : 0);
+    const A: V3 = [B.ST[0], sy, sd * 0.05];
+    const E = end(A);
+    return [A, lerp(A, E, 0.85), E, D];
+  }
+  const kx = -(B.rc + 0.045);
+  const ky = bby + (huby - bby) * (kx / rx);
+  const zk = Math.max(0.07, B.tt + 0.024);
+  const A: V3 = [0, bby, sd * 0.065];
+  const K: V3 = [kx, ky, sd * zk];
+  const E = end(K);
+  return [A, lerp(A, K, 0.8), K, lerp(K, E, 0.15), lerp(K, E, 0.85), E, D];
+}
+
+/** z of a chainstay at x (between the bottom bracket and the axle), on one side. */
+function stayZ(B: BikeSpec, x: number, sd: 1 | -1): number {
+  const p = stayPts(B, 'chain', sd);
+  for (let i = 1; i < p.length; i++) {
+    if (x >= p[i][0]) return p[i - 1][2] + (p[i][2] - p[i - 1][2]) * ((x - p[i - 1][0]) / (p[i][0] - p[i - 1][0] || 1));
+  }
+  return p[p.length - 1][2];
+}
+
 // ------------------------------------------------------------------ derailleur layout
 
-/**
- * The rear derailleur's fixed points. It hangs from the hanger bolt, below and behind the axle,
- * outside the smallest sprocket. The body (B-knuckle) runs down from there; at its foot, the
- * parallelogram links swing in the plane seen from behind: upright on the smallest sprocket,
- * leaning in towards the spokes for the larger ones. Their free end (the P-knuckle) carries the
- * cage, so nothing but the chain and the pulleys comes near the sprockets.
+/*
+ * The rear derailleur is built like a real one. Its body (B-knuckle) turns about the hanger bolt,
+ * below and behind the axle, outside the smallest sprocket, and points backwards. Two parallel
+ * link plates (the parallelogram) swing from the body inwards towards the spokes; their far end
+ * (the P-knuckle) carries the cage pivot, and the cage hangs from it with the two pulleys.
+ *
+ * For a derailleur position z and a gap, derPose() finds the link swing (from z), the cage angle
+ * (rotating back a little on the small sprockets) and the body's turn about the bolt that brings
+ * the upper pulley to the gap below the sprocket. The body only turns within a range, as on a real
+ * derailleur: on the small sprockets of a wide-range cassette the gap then opens up. No part
+ * stretches; nothing but the chain and the pulleys comes near the sprockets (stage.test.ts).
  */
+
+/** inner link this far inside the outer one; outer link's free end this far outside the chain */
+const EZ = 0.022;
+const POFF = 0.05;
+/** link pins to the cage pivot, and cage pivot to the upper pulley */
+const PIN = 0.018;
+const CO = 0.045;
+/** body angle on the largest sprocket, how far it turns, and the cage angle on the smallest and largest */
+const BETA_L = -135 * DEG;
+const BETA_RANGE = 45 * DEG;
+const CAGE_S = -35 * DEG;
+const CAGE_L = -55 * DEG;
+
 export interface DerGeom {
-  /** z of the hanger, and of the body and links */
+  /** z of the hanger, and of the outer link's pin on the body (the inner one is EZ further in) */
   zH: number;
-  zL: number;
-  /** link length and the links' fixed pivot on the body */
-  Lk: number;
-  Bk: V3;
-  /** hanger bolt */
-  Hb: V3;
-  /** body: x centre, top and bottom */
-  bodyX: number;
-  top: number;
-  bottom: number;
+  zB: number;
+  /** link length; body length from the bolt to the link pins */
+  L: number;
+  eb: number;
+  /** hanger bolt (x, y) */
+  Hb: V2;
 }
 
 export function derGeom(B: BikeSpec): DerGeom {
   const { zs, rs, n, rx, huby } = B;
   const zH = B.zDrop;
-  const zL = zH + 0.016;
-  const dz = zs[0] - zs[n - 1];
-  const dy = Math.max(1e-3, rs[n - 1] - rs[0]);
-  // links long enough that their end follows the pulley from the smallest to the largest sprocket
-  const Lk = Math.min(0.21, Math.max(0.15, (dz * dz + dy * dy) / (2 * dy)));
-  const uy = huby - rs[0] - GAP_OK - RP;
-  const Bk: V3 = [rx - 0.05, uy - Lk, zL];
-  return { zH, zL, Lk, Bk, Hb: [rx - 0.03, huby - 0.055, zH], bodyX: rx - 0.125, top: huby - 0.04, bottom: Bk[1] - 0.016 };
+  const zB = zH + 0.03;
+  const span = zs[0] - zs[n - 1];
+  const L = Math.max(0.09, span / Math.sin(60 * DEG));
+  const Hb: V2 = [rx - 0.012, huby - 0.052];
+  // body length: on the largest sprocket, with the body at BETA_L and the cage at CAGE_L, the
+  // upper pulley sits at the right gap
+  const DL = rs[n - 1] + GAP_OK + RP;
+  const w: V2 = [Hb[0] - rx + CO * Math.cos(CAGE_L), Hb[1] - huby + CO * Math.sin(CAGE_L)];
+  const bw = w[0] * Math.cos(BETA_L) + w[1] * Math.sin(BETA_L);
+  const rho = -bw + Math.sqrt(Math.max(0, bw * bw - (w[0] ** 2 + w[1] ** 2 - DL * DL)));
+  const phiL = Math.asin(Math.max(-1, Math.min(1, (zB - (zs[n - 1] + POFF)) / L)));
+  const eb = Math.max(0.02, rho - L * Math.cos(phiL) - PIN);
+  return { zH, zB, L, eb, Hb };
 }
 
-/** Where the P-knuckle (the links' free end) is when the derailleur is at z. */
-export function pivotAt(B: BikeSpec, G: DerGeom, z: number): V3 {
-  const s = Math.max(-0.6, Math.min(1, (B.zs[0] - z) / G.Lk));
-  return [G.Bk[0], G.Bk[1] + G.Lk * Math.cos(Math.asin(s)), G.zL - G.Lk * s];
+export interface DerPose {
+  /** body angle (bolt -> cage pivot), link swing, cage angle (pivot -> upper pulley), all in rad */
+  beta: number;
+  phi: number;
+  cage: number;
+  /** cage pivot and upper pulley (x, y) */
+  Cv: V2;
+  U: V2;
 }
 
-/** A turnable part: screws and the barrel adjuster. `axis` points from the head into the thread. */
+const angDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+/** Where the derailleur's parts are for a position z, a gap and the sprocket radius r there. */
+export function derPose(B: BikeSpec, G: DerGeom, z: number, gap: number, r: number): DerPose {
+  const s = Math.max(-0.95, Math.min(0.99, (G.zB - (z + POFF)) / G.L));
+  const phi = Math.asin(s);
+  const rho = G.eb + G.L * Math.cos(phi) + PIN;
+  const t = (r - B.rs[0]) / (B.rs[B.n - 1] - B.rs[0] || 1);
+  const cage = CAGE_S + (CAGE_L - CAGE_S) * Math.max(0, Math.min(1, t));
+  const w: V2 = [G.Hb[0] - B.rx + CO * Math.cos(cage), G.Hb[1] - B.huby + CO * Math.sin(cage)];
+  const lw = Math.hypot(w[0], w[1]);
+  const need = r + gap + RP;
+  const dAt = (b: number) => Math.hypot(w[0] + rho * Math.cos(b), w[1] + rho * Math.sin(b));
+  const inRange = (b: number) => Math.abs(angDiff(b, BETA_L)) <= BETA_RANGE + 1e-9;
+  // exact solutions of |w + rho dir(b)| = need inside the range: take the one nearest BETA_L
+  const c = (need * need - rho * rho - lw * lw) / (2 * rho * lw);
+  let beta: number | null = null;
+  if (Math.abs(c) <= 1) {
+    const aw = Math.atan2(w[1], w[0]);
+    const sols = [aw + Math.acos(c), aw - Math.acos(c)].filter(inRange);
+    if (sols.length) beta = sols.sort((p, q) => Math.abs(angDiff(p, BETA_L)) - Math.abs(angDiff(q, BETA_L)))[0];
+  }
+  if (beta === null) {
+    // can't reach the gap: the end of the range (or the turning point inside it) that keeps the
+    // pulley clear and nearest
+    const cands = [BETA_L - BETA_RANGE, BETA_L + BETA_RANGE, Math.atan2(w[1], w[0]) + Math.PI, Math.atan2(w[1], w[0])].filter(inRange);
+    const clear = cands.filter((b) => dAt(b) >= need);
+    beta = clear.length ? clear.sort((p, q) => dAt(p) - dAt(q))[0] : cands.sort((p, q) => dAt(q) - dAt(p))[0];
+  }
+  const Cv: V2 = [G.Hb[0] + rho * Math.cos(beta), G.Hb[1] + rho * Math.sin(beta)];
+  return { beta, phi, cage, Cv, U: [Cv[0] + CO * Math.cos(cage), Cv[1] + CO * Math.sin(cage)] };
+}
+
+/** A turnable part: screws and the barrel adjuster. `pos` and `axis` are in its parent's frame; `axis` points from the head into the thread. */
 export interface Turn {
   pos: V3;
   axis: V3;
   len: number;
 }
 
-/** Where the barrel adjuster sits and which way it points, on this bike. */
+/** The derailleur barrel adjuster (or cable stop) on the body, in the body's frame (origin at the bolt, body along -x). */
+function bodyBarrel(G: DerGeom): Turn {
+  const ax: V3 = [0.55, -0.835, 0];
+  return { pos: [-G.eb + 0.006, 0.034, (G.zH + G.zB) / 2 + 0.002], axis: ax, len: 0.034 };
+}
+
+/** Body frame -> bike space, for a body angle beta. */
+function bodyToBike(G: DerGeom, beta: number, p: V3): V3 {
+  const th = beta + Math.PI;
+  return [G.Hb[0] + p[0] * Math.cos(th) - p[1] * Math.sin(th), G.Hb[1] + p[0] * Math.sin(th) + p[1] * Math.cos(th), p[2]];
+}
+
+/**
+ * Where the barrel adjuster is on this bike, in bike space (on the derailleur: with the chain on
+ * the middle sprocket). `axis` points from its head into the thread.
+ */
 export function barrelTurn(B: BikeSpec): Turn {
   if (B.barrelAt === 'derailleur') {
     const G = derGeom(B);
-    return { pos: [B.rx - 0.055, B.huby - 0.022, G.zL], axis: [0, -1, 0], len: 0.034 };
+    const mid = Math.floor(B.n / 2);
+    const P = derPose(B, G, B.zs[mid], GAP_OK, B.rs[mid]);
+    const t = bodyBarrel(G);
+    const th = P.beta + Math.PI;
+    return { pos: bodyToBike(G, P.beta, t.pos), axis: [t.axis[0] * Math.cos(th) - t.axis[1] * Math.sin(th), t.axis[0] * Math.sin(th) + t.axis[1] * Math.cos(th), 0], len: t.len };
   }
   // on the trigger pod's inner end, pointing in and forward where the cable leaves
   const ax: V3 = [0.45, 0, -0.89];
   const tip: V3 = [B.S[0] + 0.012, B.S[1] + 0.004, B.S[2] - 0.0225];
   return { pos: [tip[0] + ax[0] * 0.019, tip[1], tip[2] + ax[2] * 0.019], axis: [-ax[0], 0, -ax[2]], len: 0.038 };
+}
+
+/** The upper pulley's position (x, y) for a derailleur position z and a gap. */
+export function upperPulley(B: BikeSpec, z: number, gap = GAP_OK): V2 {
+  const G = derGeom(B);
+  const r = rAt(B, z);
+  return derPose(B, G, z, gap, r).U;
+}
+
+/** Sprocket radius at a z between the sprockets. */
+export function rAt(B: BikeSpec, z: number): number {
+  const { zs, rs, n } = B;
+  if (z >= zs[0]) return rs[0];
+  if (z <= zs[n - 1]) return rs[n - 1];
+  for (let i = 0; i < n - 1; i++) {
+    if (z <= zs[i] && z >= zs[i + 1]) return rs[i] + (rs[i + 1] - rs[i]) * ((zs[i] - z) / (zs[i] - zs[i + 1]));
+  }
+  return rs[0];
 }
 
 // ------------------------------------------------------------------ parts
@@ -387,7 +526,7 @@ function curveGeo(pts: V3[], r: number, seg = 48): T.BufferGeometry {
   return new T.TubeGeometry(new T.CatmullRomCurve3(pts.map((p) => new T.Vector3(...p))), seg, r, 8, false);
 }
 
-/** A toothed wheel in the xy plane, centred on z = 0: sprockets, chainring, pulleys. */
+/** A toothed wheel in the xy plane, centred on z = 0: chainring and pulleys. */
 function gearGeo(r: number, teeth: number, thick: number, depth = 0.006): T.BufferGeometry {
   const s = new T.Shape();
   const m = teeth * 2;
@@ -402,16 +541,36 @@ function gearGeo(r: number, teeth: number, thick: number, depth = 0.006): T.Buff
   return g;
 }
 
-/** A flat plate shaped like a slot from (0, 0) to (0, -len), centred on z = 0. */
-function slotGeo(r1: number, r2: number, len: number, thick: number): T.BufferGeometry {
-  const s = new T.Shape();
-  s.absarc(0, 0, r1, 0, Math.PI, false);
-  s.lineTo(-r2, -len);
-  s.absarc(0, -len, r2, Math.PI, TAU, false);
-  s.lineTo(r1, 0);
-  const g = new T.ExtrudeGeometry(s, { depth: thick, bevelEnabled: false, curveSegments: 8 });
-  g.translate(0, 0, -thick / 2);
+/** A flat shape between z0 and z1 with rounded (bevelled) edges. */
+function slabGeo(s: T.Shape, z0: number, z1: number, bevel = 0.003): T.BufferGeometry {
+  const b = Math.min(bevel, (z1 - z0) / 2.2);
+  const g = new T.ExtrudeGeometry(s, { depth: Math.max(1e-4, z1 - z0 - 2 * b), bevelEnabled: true, bevelThickness: b, bevelSize: b * 0.9, bevelSegments: 2, curveSegments: 10 });
+  g.translate(0, 0, z0 + b);
   return g;
+}
+
+/** Outline around circles [x, y, r]: their convex hull, as a shape (cage plates, hanger). */
+function hullShape(circles: Array<[number, number, number]>): T.Shape {
+  const pts: V2[] = [];
+  for (const [x, y, r] of circles) for (let i = 0; i < 24; i++) pts.push([x + r * Math.cos((i / 24) * TAU), y + r * Math.sin((i / 24) * TAU)]);
+  pts.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cross = (o: V2, a: V2, b: V2) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower: V2[] = [];
+  for (const p of pts) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper: V2[] = [];
+  for (const p of [...pts].reverse()) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  return new T.Shape([...lower.slice(0, -1), ...upper.slice(0, -1)].map(([x, y]) => new T.Vector2(x, y)));
+}
+
+/** A tapered capsule along x, from x0 (half-width w0) to x1 (half-width w1). */
+function capsuleShape(x0: number, x1: number, w0: number, w1: number): T.Shape {
+  return hullShape([[x0, 0, w0], [x1, 0, w1]]);
 }
 
 /** A flat plate from a polygon in the xy plane, centred on z. */
@@ -471,7 +630,7 @@ export class BikeModel {
   readonly parts = new Map<string, Part>();
   /** where each node's tag is anchored */
   readonly anchors = new Map<string, T.Object3D>();
-  /** screws and the barrel adjuster: where they are, which way they turn, and the group that turns */
+  /** screws and the barrel adjuster: where they are (in their parent), which way they turn, and the group that turns */
   readonly turns = new Map<string, Turn & { spin: T.Object3D }>();
   readonly crankset = new T.Group();
   readonly rearHub = new T.Group();
@@ -484,14 +643,21 @@ export class BikeModel {
   gap = GAP_OK;
   chainShift = 0;
 
-  private der: { G: DerGeom; links: T.Mesh[]; pk: T.Mesh; pin: T.Mesh; arm: T.Mesh; wire: T.Mesh | null; wireTop: V3 } | null = null;
+  private der: {
+    G: DerGeom;
+    body: T.Group;
+    links: T.Mesh[];
+    pk: T.Group;
+    wire: T.Mesh | null;
+    housing: T.Mesh | null;
+    housingFrom: V3;
+  } | null = null;
   private chainMesh!: T.InstancedMesh;
   private circ: Circle[] = [];
   private path = newPath();
   private N = 0;
   private decal: { cv: HTMLCanvasElement; tex: T.CanvasTexture; mat: T.MeshBasicMaterial; key: string } | null = null;
   private Q = new T.Object3D();
-  private AX = new T.Vector3(1, 0, 0);
   private pt = { x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0 };
 
   constructor(readonly spec: BikeSpec, readonly standMat: T.Material) {
@@ -572,8 +738,8 @@ export class BikeModel {
    * along local y, head at -y, inside a group that spins about y; `spin.rotation.y > 0` turns it
    * clockwise as seen from the head (screwing in).
    */
-  private turnable(id: string, t: Turn): T.Object3D {
-    const p = this.part(id, this.bike, t.pos);
+  private turnable(id: string, t: Turn, parent: T.Object3D = this.bike): T.Object3D {
+    const p = this.part(id, parent, t.pos);
     const orient = new T.Group();
     orient.quaternion.setFromUnitVectors(UP, new T.Vector3(...t.axis).normalize());
     const spin = new T.Group();
@@ -584,11 +750,11 @@ export class BikeModel {
     return spin;
   }
 
-  private screw(id: string, at: V3, axis: V3): void {
-    const spin = this.turnable(id, { pos: at, axis, len: 0.028 });
-    this.add(id, new T.CylinderGeometry(0.008, 0.008, 0.028, 10), null, null, { parent: spin, k: 1.15 });
-    this.add(id, new T.CylinderGeometry(0.013, 0.013, 0.008, 14), [0, -0.016, 0], null, { parent: spin, k: 1.15 });
-    this.add(id, new T.BoxGeometry(0.02, 0.004, 0.0035), [0, -0.0205, 0], null, { parent: spin, dark: true });
+  private screw(id: string, at: V3, axis: V3, parent: T.Object3D): void {
+    const spin = this.turnable(id, { pos: at, axis, len: 0.026 }, parent);
+    this.add(id, new T.CylinderGeometry(0.0075, 0.0075, 0.026, 10), null, null, { parent: spin, k: 1.15 });
+    this.add(id, new T.CylinderGeometry(0.012, 0.012, 0.007, 14), [0, -0.015, 0], null, { parent: spin, k: 1.2 });
+    this.add(id, new T.BoxGeometry(0.018, 0.004, 0.0035), [0, -0.0185, 0], null, { parent: spin, dark: true });
   }
 
   // ---------------------------------------------------------------- build
@@ -596,10 +762,9 @@ export class BikeModel {
   private build(): void {
     const B = this.spec;
     const road = B.kind === 'road';
-    const { ST, HT, HB, C, S, rx, huby, bby } = B;
+    const { ST, HT, HB, C, S, rx, huby, bby, zDrop: zD, chainline: zc } = B;
     const [hx, hy] = HT;
     const FX = B.FX;
-    const zD = B.zDrop;
 
     // Wheels: built around their hubs so they can turn.
     const wheel = (id: string, hub: T.Group, cx: number) => {
@@ -611,12 +776,12 @@ export class BikeModel {
       this.add(id, new T.TorusGeometry(rm, B.tt, 12, 56), null, null, { k: 0.45 });
       this.add(id, new T.TorusGeometry(rim, 0.02, 8, 56), null, null, { k: 1, tint: 'rims' });
       const rear = id === 'rear_wheel';
-      // hub shell and axle; the rear axle reaches the drive-side dropout outside the sprockets
-      const z0 = rear ? -0.13 : -0.1;
-      const z1 = rear ? zD + 0.02 : 0.1;
-      this.add(id, new T.CylinderGeometry(0.012, 0.012, z1 - z0, 10), [0, 0, (z0 + z1) / 2], [HP, 0, 0], { k: 1.2 });
-      const s1 = rear ? B.zs[B.n - 1] - 0.02 : 0.05;
-      this.add(id, new T.CylinderGeometry(0.028, 0.028, s1 + 0.06, 16), [0, 0, (s1 - 0.06) / 2], [HP, 0, 0], { k: 0.9 });
+      // axle from dropout to dropout, and the hub shell between the spoke flanges (inside the sprockets)
+      const za = rear ? zD + 0.02 : 0.1;
+      this.add(id, new T.CylinderGeometry(0.011, 0.011, 2 * za, 10), null, [HP, 0, 0], { k: 1.2 });
+      const s1 = rear ? B.zs[B.n - 1] - 0.012 : 0.05;
+      this.add(id, new T.CylinderGeometry(0.026, 0.026, s1 + 0.05, 16), [0, 0, (s1 - 0.05) / 2], [HP, 0, 0], { k: 0.9 });
+      for (const fz of [0.03, -0.03]) this.add(id, new T.CylinderGeometry(0.034, 0.034, 0.006, 16), [0, 0, fz], [HP, 0, 0], { k: 0.9 });
       if (rear && B.gears === 'hub') this.add(id, new T.CylinderGeometry(0.075, 0.075, 0.13, 20), null, [HP, 0, 0], { k: 0.8 });
       for (let i = 0; i < 18; i++) {
         const a = (i / 18) * TAU;
@@ -627,32 +792,31 @@ export class BikeModel {
     wheel('rear_wheel', this.rearHub, rx);
     wheel('front_wheel', this.frontHub, FX);
 
-    // Frame. On the drive side the stays bend out around the sprockets to the dropout, which
-    // sits just outside the smallest sprocket, as on a real bike; the hanger is bolted there.
+    // Frame
     this.part('frame');
     const ft = (a: V3, b: V3, r: number) => this.add('frame', tubeGeo(a, b, r), null, null, { tint: 'frame' });
     const fr = B.kind === 'mountain' ? 0.03 : road ? 0.02 : 0.024;
     const dtR = fr + 0.004;
-    const sy = ST[1] - (road ? 0.05 : 0);
     ft([0, bby, 0], [ST[0], ST[1], 0], fr + (road ? 0.004 : 0));
     ft([ST[0], ST[1], 0], [HT[0], HT[1], 0], fr - 0.002);
     ft([HT[0], HT[1], 0], [HB[0], HB[1], 0], 0.03);
     ft([0, bby, 0], [HB[0], HB[1], 0], fr + 0.004);
-    ft([0, bby, -0.1], [rx, huby, -0.1], 0.016);
-    ft([ST[0], sy, -0.05], [rx, huby, -0.1], 0.012);
-    for (const [from, z0, r] of [[[0, bby], 0.1, 0.016], [[ST[0], sy], 0.05, 0.012]] as Array<[V2, number, number]>) {
-      this.add('frame', curveGeo(stayPts(B, from, z0), r, 24), null, null, { tint: 'frame' });
+    // rear triangle on both sides; the dropouts sit just outside the sprockets
+    for (const sd of [1, -1] as const) {
+      this.add('frame', curveGeo(stayPts(B, 'chain', sd), 0.016, 48), null, null, { tint: 'frame' });
+      this.add('frame', curveGeo(stayPts(B, 'seat', sd), 0.012, 40), null, null, { tint: 'frame' });
+      // dropout plate; on the drive side the hanger sits on its outside
+      const dz = sd > 0 ? zD - 0.0095 : -zD;
+      this.add('frame', slabGeo(hullShape([[rx, huby, 0.03], [rx + 0.045, huby - 0.012, 0.02], [rx + 0.02, huby + 0.04, 0.018]]), dz - 0.004, dz + 0.004, 0.002), null, null, { tint: 'frame' });
     }
-    // drive-side dropout
-    this.add('frame', polyGeo([[rx + 0.035, huby + 0.02], [rx + 0.03, huby - 0.025], [rx - 0.02, huby - 0.03], [rx - 0.03, huby + 0.03], [rx + 0.0, huby + 0.045]], zD - 0.012, 0.006), null, null, { tint: 'frame' });
-    this.add('frame', new T.CylinderGeometry(0.045, 0.045, 0.2, 18), [0, bby, 0], [HP, 0, 0], { tint: 'frame' });
+    this.add('frame', new T.CylinderGeometry(0.045, 0.045, 0.15, 18), [0, bby, 0], [HP, 0, 0], { tint: 'frame' });
     this.makeDecal([0, bby], HB, dtR);
     this.anchor('frame', this.bike, [HB[0] / 2, (bby + HB[1]) / 2, 0.03]);
 
     if (B.motor) {
       this.part('motor');
       const [b0, b1] = batteryLine(B);
-      this.add('motor', new T.BoxGeometry(0.2, 0.2, 0.22), [0.0, bby + 0.01, 0], null, { k: 0.6 });
+      this.add('motor', new T.BoxGeometry(0.2, 0.2, 0.2), [0.0, bby + 0.01, 0], null, { k: 0.6 });
       this.add('motor', tubeGeo([b0[0], b0[1], 0], [b1[0], b1[1], 0], 0.05), null, null, { k: 0.55 });
     }
 
@@ -691,8 +855,9 @@ export class BikeModel {
       this.part('kickstand');
       const kx = -0.42;
       const ky = bby + (huby - bby) * (kx / rx);
-      this.add('kickstand', new T.BoxGeometry(0.06, 0.03, 0.05), [kx, ky - 0.02, -0.1], null, { k: 0.7 });
-      this.add('kickstand', tubeGeo([kx, ky - 0.03, -0.11], [kx - 0.14, GROUND + 0.02, -0.34], 0.012), null, null, { k: 0.7 });
+      const kz = stayZ(B, kx, -1) - 0.012;
+      this.add('kickstand', new T.BoxGeometry(0.06, 0.03, 0.05), [kx, ky - 0.02, kz], null, { k: 0.7 });
+      this.add('kickstand', tubeGeo([kx, ky - 0.03, kz - 0.01], [kx - 0.14, GROUND + 0.02, -0.34], 0.012), null, null, { k: 0.7 });
       this.add('kickstand', new T.BoxGeometry(0.07, 0.012, 0.04), [kx - 0.14, GROUND + 0.012, -0.34], null, { k: 0.5 });
     }
 
@@ -700,21 +865,22 @@ export class BikeModel {
     this.crankset.position.set(0, bby, 0);
     this.bike.add(this.crankset);
     this.part('chainring', this.crankset);
-    this.add('chainring', gearGeo(B.rc, B.chainring, 0.012, 0.007), [0, 0, 0.22], null, { flat: true });
-    this.add('chainring', new T.CylinderGeometry(B.rc * 0.55, B.rc * 0.55, 0.024, 5), [0, 0, 0.23], [HP, 0, 0], { k: 0.7, flat: true });
-    this.anchor('chainring', this.bike, [0, bby + B.rc + 0.01, 0.22]);
+    this.add('chainring', gearGeo(B.rc, B.chainring, 0.012, 0.007), [0, 0, zc], null, { flat: true });
+    this.add('chainring', new T.CylinderGeometry(B.rc * 0.55, B.rc * 0.55, 0.016, 5), [0, 0, zc + 0.012], [HP, 0, 0], { k: 0.7, flat: true });
+    this.anchor('chainring', this.bike, [0, bby + B.rc + 0.01, zc]);
     this.part('crank', this.crankset);
-    this.add('crank', tubeGeo([0, 0, 0.27], [0.14, -0.3, 0.29], 0.02));
-    this.add('crank', new T.BoxGeometry(0.1, 0.025, 0.08), [0.14, -0.3, 0.34], null, { k: 0.5 });
-    this.add('crank', tubeGeo([0, 0, -0.12], [-0.14, 0.3, -0.14], 0.02));
-    this.add('crank', new T.BoxGeometry(0.1, 0.025, 0.08), [-0.14, 0.3, -0.19], null, { k: 0.5 });
-    this.add('crank', new T.CylinderGeometry(0.02, 0.02, 0.42, 10), [0, 0, 0.08], [HP, 0, 0]);
-    this.anchor('crank', this.crankset, [0.14, -0.3, 0.34]);
+    const zr = zc + 0.035;
+    this.add('crank', tubeGeo([0, 0, zr], [0.14, -0.3, zr + 0.02], 0.02));
+    this.add('crank', new T.BoxGeometry(0.1, 0.025, 0.08), [0.14, -0.3, zr + 0.07], null, { k: 0.5 });
+    this.add('crank', tubeGeo([0, 0, -zr], [-0.14, 0.3, -zr - 0.02], 0.02));
+    this.add('crank', new T.BoxGeometry(0.1, 0.025, 0.08), [-0.14, 0.3, -zr - 0.07], null, { k: 0.5 });
+    this.add('crank', new T.CylinderGeometry(0.02, 0.02, 2 * zr, 10), null, [HP, 0, 0]);
+    this.anchor('crank', this.crankset, [0.14, -0.3, zr + 0.07]);
 
-    // Sprockets turn with the rear wheel.
+    // Sprockets turn with the rear wheel: smooth discs reaching the tooth tips, as in the
+    // prototype (teeth on a stack of sprockets read as noise on a phone).
     const sprocketPart = (i: number) => (B.n === 1 ? 'cassette' : i === 0 ? 'smallest_sprocket' : i === B.n - 1 ? 'largest_sprocket' : 'cassette');
     for (const id of new Set(B.cassette.map((_, i) => sprocketPart(i)))) this.part(id, this.rearHub);
-    // smooth discs reaching the tooth tips, as in the prototype: teeth on a stack of sprockets read as noise on a phone
     B.cassette.forEach((t, i) => this.add(sprocketPart(i), new T.CylinderGeometry(B.rs[i] + 0.0025, B.rs[i] + 0.0025, B.sp * 0.5, Math.min(t, 48)), [0, 0, B.zs[i]], [HP, 0, 0], { k: 0.9, flat: true }));
     const mid = Math.floor(B.n / 2);
     if (B.n > 1) {
@@ -731,18 +897,18 @@ export class BikeModel {
 
     // Gear cable from the shifter to the derailleur (or the hub, or the gearbox)
     if (hasShifter) {
-      const G = B.gears === 'derailleur' ? derGeom(B) : null;
       const bt = barrelTurn(B);
-      // the housing ends on top of the derailleur body (at the barrel adjuster or a cable stop)
-      const derTop: V3 = G ? [rx - 0.055, huby - 0.022 + (B.barrelAt === 'derailleur' ? bt.len / 2 : 0.012), G.zL] : [0, 0, 0];
-      const end: V3 = G ? derTop : B.gears === 'hub' ? [rx + 0.035, huby - 0.02, zD + 0.02] : [0.05, bby + 0.1, 0.09];
-      const loop: V3[] = G ? [[rx + 0.08, huby + 0.055, G.zL + 0.05], [rx - 0.0, huby + 0.07, G.zL + 0.035], [rx - 0.05, huby + 0.04, G.zL + 0.005]] : [];
+      // On a derailleur the housing ends in a loop behind the axle; its last bit, to the
+      // derailleur (which turns about its bolt), is placed in setDer.
+      const derEnd: V3 | null = this.der ? this.der.housingFrom : null;
+      const end: V3 = derEnd ?? (B.gears === 'hub' ? [rx + 0.035, huby - 0.02, zD + 0.02] : [0.05, bby + 0.1, zc - 0.01]);
+      const loop: V3[] = derEnd ? [[rx + 0.1, huby + 0.03, zD + 0.04], [rx + 0.01, huby + 0.06, zD + 0.06]] : [];
       // along the down tube (u from the bottom bracket) or just above the top tube (at x)
       const dt = (u: number): V3 => [HB[0] * (1 - u), bby + (HB[1] - bby) * u, 0.06];
       const tt = (x: number, z: number): V3 => [x, ST[1] + ((x - ST[0]) / (HT[0] - ST[0])) * (HT[1] - ST[1]) + 0.04, z];
-      const cs = stayPts(B, [0, bby], 0.1);
-      const ss = stayPts(B, [ST[0], sy], 0.05);
-      const off = (p: V3, dy: number, dz: number): V3 => [p[0], p[1] + dy, p[2] + dz];
+      const cs = stayPts(B, 'chain', 1);
+      const ss = stayPts(B, 'seat', 1);
+      const along = (a: V3, b: V3, t: number, dy: number, dz: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + dy, a[2] + (b[2] - a[2]) * t + dz];
       let start: V3[];
       if (B.bar === 'drop') {
         start = [[S[0] - 0.035, S[1] - 0.02, S[2] - 0.005], [C[0] + 0.07, C[1] - 0.012, 0.2], [C[0] + 0.015, C[1] - 0.02, 0.13], [C[0] - 0.03, C[1] - 0.07, 0.07]];
@@ -751,17 +917,16 @@ export class BikeModel {
         start = [head, [head[0] + 0.06, head[1] - 0.02, head[2] - 0.08], [hx + 0.08, hy - 0.04, 0.09]];
       }
       const path: V3[] = B.bar === 'drop'
-        ? [...start, [HB[0] + 0.02, HB[1] + 0.01, 0.07], [HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, bby - 0.07, 0.06], off(cs[1], 0.035, 0.02), off(cs[2], 0.04, 0.025), ...loop, end]
+        ? [...start, [HB[0] + 0.02, HB[1] + 0.01, 0.07], [HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, bby - 0.07, 0.05], along(cs[2], cs[4], 0.1, 0.035, 0.02), along(cs[2], cs[4], 0.6, 0.035, 0.022), ...loop, end]
         : B.gears === 'gearbox'
           ? [...start, [HB[0] - 0.08, HB[1] - 0.05, 0.07], dt(0.4), end]
-          : [...start, tt(HT[0] - 0.25, 0.08), tt(HT[0] - 0.45, 0.05), tt(-0.05, 0.05), tt(ST[0] + 0.02, 0.06), off(ss[1], 0.03, 0.02), off(ss[2], 0.035, 0.025), ...loop, end];
+          : [...start, tt(HT[0] - 0.25, 0.08), tt(HT[0] - 0.45, 0.05), tt(-0.05, 0.05), tt(ST[0] + 0.02, 0.06), along(ss[0], ss[1], 0.4, 0.03, 0.02), along(ss[0], ss[1], 0.75, 0.03, 0.022), ...loop, end];
       this.add('shift_cable', curveGeo(path, 0.006, 96), null, null, { k: 0.6 });
-      this.anchor('shift_cable', this.bike, B.bar === 'drop' ? off(cs[1], 0.05, 0.02) : tt(-0.05, 0.08));
-      if (G && this.der) {
-        // the inner wire from the housing end down to its clamp on the links, placed in setDer
-        const wire = this.add('shift_cable', new T.CylinderGeometry(0.0035, 0.0035, 1, 6), null, null, { k: 1.3 });
-        this.der.wire = wire;
-        this.der.wireTop = [rx - 0.055, huby - 0.022 - (B.barrelAt === 'derailleur' ? bt.len / 2 : 0), G.zL];
+      this.anchor('shift_cable', this.bike, B.bar === 'drop' ? along(cs[2], cs[4], 0.3, 0.05, 0.02) : tt(-0.05, 0.08));
+      if (this.der) {
+        // the housing's last bit, and the inner wire from the barrel down to its clamp on the outer link
+        this.der.housing = this.add('shift_cable', new T.CylinderGeometry(0.006, 0.006, 1, 8), null, null, { k: 0.6 });
+        this.der.wire = this.add('shift_cable', new T.CylinderGeometry(0.0028, 0.0028, 1, 6), null, null, { parent: this.der.body, k: 1.3 });
       }
     }
 
@@ -769,13 +934,13 @@ export class BikeModel {
     const z0 = B.zs[B.n - 1];
     this.circ = B.gears === 'derailleur'
       ? [
-        { x: 0, y: bby, z: 0.22, r: B.rc, s: 1 },
+        { x: 0, y: bby, z: zc, r: B.rc, s: 1 },
         { x: rx, y: huby, z: z0, r: B.rs[0], s: 1 },
         { x: rx, y: huby - 0.2, z: z0, r: RP, s: -1 },
         { x: rx, y: huby - 0.3, z: z0, r: RP, s: 1 },
       ]
       : [
-        { x: 0, y: bby, z: 0.22, r: B.rc, s: 1 },
+        { x: 0, y: bby, z: zc, r: B.rc, s: 1 },
         { x: rx, y: huby, z: B.zs[0], r: B.rs[0], s: 1 },
       ];
     this.part('chain');
@@ -791,7 +956,7 @@ export class BikeModel {
     const chain = this.parts.get('chain')!;
     chain.group.add(this.chainMesh);
     chain.mats.push(cm);
-    this.anchor('chain', this.bike, [-0.45, (bby + B.rc + huby + B.rs[mid]) / 2 + 0.03, 0.2]);
+    this.anchor('chain', this.bike, [-0.45, (bby + B.rc + huby + B.rs[mid]) / 2 + 0.03, zc]);
   }
 
   /** Handlebar, brake levers and the right shifter. */
@@ -857,68 +1022,93 @@ export class BikeModel {
     if (hasShifter) this.anchor('shifter_rear', this.bike, [S[0], S[1] + 0.05, S[2]]);
   }
 
-  /** Hanger, body with the H, L and B screws, parallelogram links, cage and pulleys. */
+  /** Hanger; body with the H, L and B screws; parallelogram links; P-knuckle; cage and pulleys. */
   private buildDerailleur(): void {
     const B = this.spec;
     const { rx, huby } = B;
     const G = derGeom(B);
-    const { zH, zL, Bk } = G;
-
-    // Hanger: a plate from the axle down and back to the derailleur bolt, with a tab the B screw rests on.
-    this.part('derailleur_hanger');
-    this.add('derailleur_hanger', polyGeo([[rx + 0.03, huby + 0.012], [rx + 0.022, huby - 0.03], [rx - 0.005, huby - 0.07], [rx - 0.035, huby - 0.082], [rx - 0.058, huby - 0.06], [rx - 0.068, huby - 0.03], [rx - 0.05, huby - 0.012], [rx - 0.018, huby + 0.03], [rx + 0.012, huby + 0.035]], zH, 0.009), null, null, { k: 0.8 });
-    this.add('derailleur_hanger', new T.BoxGeometry(0.012, 0.022, 0.02), [rx - 0.069, huby - 0.026, zL - 0.004], null, { k: 0.8 });
-    this.anchor('derailleur_hanger', this.bike, [rx - 0.035, huby - 0.07, zH + 0.01]);
-
-    // Body (B-knuckle): a head on the hanger bolt, then down to the links' pivots.
-    this.part('rear_derailleur');
-    this.part('upper_pulley');
+    const { zH, zB, L, eb, Hb } = G;
     const D = 'rear_derailleur';
-    const [hbx, hby] = [G.Hb[0], G.Hb[1]];
-    this.add(D, new T.CylinderGeometry(0.014, 0.014, zL - zH + 0.02, 12), [hbx, hby, (zH + zL) / 2 + 0.005], [HP, 0, 0], { k: 1.2 });
-    const x0 = G.bodyX - 0.013;
-    this.add(D, new T.BoxGeometry(hbx + 0.012 - x0, 0.04, 0.028), [(hbx + 0.012 + x0) / 2, hby + 0.006, zL], null, { k: 0.75 });
-    this.add(D, new T.BoxGeometry(0.026, G.top - G.bottom, 0.022), [G.bodyX, (G.top + G.bottom) / 2, zL], null, { k: 0.75 });
-    this.add(D, new T.BoxGeometry(Bk[0] - 0.013 - x0, 0.032, 0.022), [(Bk[0] - 0.013 + x0) / 2, Bk[1], zL], null, { k: 0.75 });
-    this.add(D, new T.CylinderGeometry(0.006, 0.006, 0.034, 8), [Bk[0], Bk[1], zL], [0, 0, HP], { k: 1.2 });
-    const links = [-0.01, 0.01].map(() => this.add(D, new T.BoxGeometry(0.022, 1, 0.005), null, null, { k: 0.95 }));
-    const pk = this.add(D, new T.BoxGeometry(0.04, 0.03, 0.024), null, null, { k: 0.75 });
-    const pin = this.add(D, new T.CylinderGeometry(0.006, 0.006, 0.034, 8), null, [0, 0, HP], { k: 1.2 });
-    const arm = this.add(D, new T.CylinderGeometry(0.008, 0.008, 1, 10), null, null, { k: 0.7 });
+    const pw = B.chainW / 2 + 0.0035;
+    const P0 = derPose(B, G, B.zs[B.n - 1], GAP_OK, B.rs[B.n - 1]);
 
-    // Cage: two plates with the upper and lower pulley; turns about the upper pulley.
+    // Hanger: a plate from the axle down to the derailleur bolt, with a tab the B screw rests on.
+    this.part('derailleur_hanger');
+    const tab = bodyToBike(G, P0.beta, [0.019, 0.03, 0]);
+    this.add('derailleur_hanger', slabGeo(hullShape([[rx, huby, 0.03], [Hb[0], Hb[1], 0.022], [tab[0], tab[1], 0.012]]), zH - 0.0045, zH + 0.0045, 0.002), null, null, { k: 0.8 });
+    this.add('derailleur_hanger', new T.CylinderGeometry(0.008, 0.008, zB - zH + 0.005, 10), [tab[0], tab[1], (zH + zB) / 2], [HP, 0, 0], { k: 0.8 });
+    this.anchor('derailleur_hanger', this.bike, [(rx + Hb[0]) / 2, (huby + Hb[1]) / 2, zH + 0.01]);
+
+    this.part(D);
+    this.part('upper_pulley');
+    const dg = this.parts.get(D)!.group;
+
+    // Body (B-knuckle): turns about the bolt; its frame has the bolt at the origin and points along -x.
+    const body = new T.Group();
+    body.position.set(Hb[0], Hb[1], 0);
+    dg.add(body);
+    const bz0 = zH + 0.005;
+    const bz1 = zB + 0.008;
+    this.add(D, new T.CylinderGeometry(0.021, 0.021, bz1 - zH + 0.006, 20), [0, 0, (bz1 + zH - 0.006) / 2], [HP, 0, 0], { parent: body, k: 0.45 });
+    this.add(D, new T.CylinderGeometry(0.011, 0.011, 0.006, 6), [0, 0, bz1 + 0.003], [HP, 0, 0], { parent: body, k: 1.25 });
+    this.add(D, slabGeo(capsuleShape(0, -eb - 0.004, 0.022, 0.02), bz0, bz1, 0.005), null, null, { parent: body, k: 0.5 });
+    // a lighter cover on the outer face, as on a real derailleur
+    this.add(D, slabGeo(capsuleShape(-0.01, -eb + 0.004, 0.014, 0.013), bz1 - 0.001, bz1 + 0.002, 0.001), null, null, { parent: body, k: 0.85 });
+    for (const z of [zB, zB - EZ]) this.add(D, new T.CylinderGeometry(0.005, 0.005, 0.05, 8), [-eb, 0, z], null, { parent: body, k: 1.2 });
+
+    // Links: rigid plates from pins on the body to pins on the P-knuckle; they swing inwards.
+    const links = [0.02, 0.016].map((hw, i) => {
+      const geo = slabGeo(capsuleShape(0, -L, hw, hw * 0.9), -0.003, 0.003, 0.0015);
+      const m = this.add(D, geo, [-eb, 0, i ? zB - EZ : zB], null, { parent: body, k: i ? 0.55 : 0.75 });
+      return m;
+    });
+    // P-knuckle: moves with the links' free end without turning; carries the cage pivot (round cap)
+    const pk = new T.Group();
+    body.add(pk);
+    this.add(D, slabGeo(capsuleShape(0.004, -PIN, 0.017, 0.021), -EZ - 0.005, 0.006, 0.004), null, null, { parent: pk, k: 0.5 });
+    this.add(D, new T.CylinderGeometry(0.023, 0.023, 0.014, 22), [-PIN, 0, 0.004], [HP, 0, 0], { parent: pk, k: 0.4 });
+    this.add(D, new T.CylinderGeometry(0.012, 0.012, 0.004, 16), [-PIN, 0, 0.012], [HP, 0, 0], { parent: pk, k: 0.95 });
+    for (const z of [0, -EZ]) this.add(D, new T.CylinderGeometry(0.005, 0.005, 0.05, 8), [0, 0, z], null, { parent: pk, k: 1.2 });
+
+    // Cage: two plates with the upper and lower pulley; hangs from the pivot, at local (0, CO).
     const cage = new T.Group();
     this.cage = cage;
-    this.parts.get(D)!.group.add(cage);
-    const pw = B.chainW / 2 + 0.006;
-    this.add('upper_pulley', gearGeo(RP, 11, 0.011), null, null, { parent: cage, k: 0.55, flat: true });
-    this.add(D, gearGeo(RP, 11, 0.011), [0, -LC, 0], null, { parent: cage, k: 0.55, flat: true });
-    this.add(D, slotGeo(0.03, 0.034, LC, 0.004), [0, 0, pw + 0.002], null, { parent: cage, k: 0.95 });
+    dg.add(cage);
+    this.add('upper_pulley', gearGeo(RP, 11, Math.min(0.011, B.sp * 0.9)), null, null, { parent: cage, k: 0.35, flat: true });
+    this.add(D, gearGeo(RP, 11, Math.min(0.011, B.sp * 0.9)), [0, -LC, 0], null, { parent: cage, k: 0.35, flat: true });
+    this.add(D, slabGeo(hullShape([[0, CO, 0.019], [0, 0, 0.03], [0, -LC, 0.035]]), pw, pw + 0.006, 0.002), null, null, { parent: cage, k: 0.5 });
     // the inner plate starts below the upper pulley's axle, so it stays off the next larger sprocket
-    this.add(D, slotGeo(0.014, 0.028, LC - 0.024, 0.004), [0, -0.024, -pw - 0.002], null, { parent: cage, k: 0.95 });
-    for (const y of [0, -LC]) this.add(D, new T.CylinderGeometry(0.01, 0.01, 2 * pw + 0.012, 10), [0, y, 0], [HP, 0, 0], { parent: cage, k: 1.25 });
+    this.add(D, slabGeo(hullShape([[0, -0.068, 0.012], [0, -LC, 0.024]]), -pw - 0.004, -pw, 0.0015), null, null, { parent: cage, k: 0.55 });
+    for (const y of [0, -LC]) this.add(D, new T.CylinderGeometry(0.011, 0.011, 2 * pw + 0.006, 12), [0, y, 0], [HP, 0, 0], { parent: cage, k: 1.25 });
+    // pivot axle from the cage up into the P-knuckle
+    this.add(D, new T.CylinderGeometry(0.009, 0.009, POFF - pw, 10), [0, CO, (POFF + pw) / 2], [HP, 0, 0], { parent: cage, k: 1.1 });
     this.anchor('upper_pulley', cage, [0, 0.01, 0.02]);
-    this.anchor(D, cage, [0, -LC * 0.55, 0.03]);
-    this.der = { G, links, pk, pin, arm, wire: null, wireTop: [0, 0, 0] };
+    this.anchor(D, cage, [0, CO * 0.5, 0.05]);
 
-    // Limit screws H (upper) and L on the back of the body, the B screw on top of its head:
-    // all with their heads towards the back of the bike, where you turn them.
-    this.screw('h_screw', [G.bodyX - 0.012, huby - 0.1, zL], [1, 0, 0]);
-    this.screw('l_screw', [G.bodyX - 0.012, huby - 0.14, zL], [1, 0, 0]);
-    this.screw('b_screw', [rx - 0.088, huby - 0.026, zL], [1, 0, 0]);
+    // Limit screws H and L on top of the body, heads up and back where you turn them; the B
+    // screw behind the bolt, its tip against the hanger's tab.
+    this.screw('h_screw', [-0.022, 0.026, (zH + zB) / 2 + 0.006], [0.3, -0.954, 0], body);
+    this.screw('l_screw', [-0.046, 0.024, (zH + zB) / 2 + 0.006], [0.3, -0.954, 0], body);
+    this.screw('b_screw', [0.003, 0.03, zB - 0.004], [1, 0, 0], body);
 
-    // Barrel adjuster: on top of the body, or on the trigger shifter
-    const bt = barrelTurn(B);
-    const spin = this.turnable('barrel_adjuster', bt);
+    // Barrel adjuster: on the body where the housing comes in, or on the trigger shifter
+    const bt = B.barrelAt === 'derailleur' ? bodyBarrel(G) : barrelTurn(B);
+    const spin = this.turnable('barrel_adjuster', bt, B.barrelAt === 'derailleur' ? body : this.bike);
     const br = 0.013;
     this.add('barrel_adjuster', new T.CylinderGeometry(br, br, bt.len * 0.75, 10), [0, -bt.len * 0.125, 0], null, { parent: spin, flat: true });
     for (const y of [-0.3, 0, 0.3]) this.add('barrel_adjuster', new T.CylinderGeometry(br + 0.002, br + 0.002, 0.004, 10), [0, -bt.len * 0.125 + y * bt.len * 0.75, 0], null, { parent: spin, k: 0.8, flat: true });
     this.add('barrel_adjuster', new T.CylinderGeometry(br * 0.55, br * 0.55, bt.len * 0.25, 8), [0, bt.len * 0.375, 0], null, { parent: spin, k: 1.2 });
     this.add('barrel_adjuster', new T.BoxGeometry(0.006, 0.004, br * 2.2), [0, -bt.len / 2, 0], null, { parent: spin, dark: true });
     if (B.barrelAt !== 'derailleur') {
-      // a plain cable stop on the derailleur
-      this.add(D, new T.CylinderGeometry(0.01, 0.01, 0.024, 10), [rx - 0.055, huby - 0.022, zL], null, { k: 1.1 });
+      // a plain cable stop where the barrel would be
+      const st = bodyBarrel(G);
+      const stop = this.add(D, new T.CylinderGeometry(0.01, 0.01, 0.022, 10), null, null, { parent: body, k: 1.1 });
+      stop.position.set(...st.pos);
+      stop.quaternion.setFromUnitVectors(UP, new T.Vector3(...st.axis));
     }
+    // the housing loop ends here; its last bit to the body is placed in setDer
+    const head = bodyToBike(G, P0.beta, bodyBarrel(G).pos);
+    this.der = { G, body, links, pk, wire: null, housing: null, housingFrom: [head[0] - 0.03, head[1] + 0.07, head[2] + 0.03] };
   }
 
   private buildStand(): void {
@@ -1026,24 +1216,17 @@ export class BikeModel {
 
   /** Sprocket radius at a z between the sprockets. */
   rAtZ(z: number): number {
-    const { zs, rs, n } = this.spec;
-    if (z >= zs[0]) return rs[0];
-    if (z <= zs[n - 1]) return rs[n - 1];
-    for (let i = 0; i < n - 1; i++) {
-      if (z <= zs[i] && z >= zs[i + 1]) return rs[i] + (rs[i + 1] - rs[i]) * ((zs[i] - z) / (zs[i] - zs[i + 1]));
-    }
-    return rs[0];
+    return rAt(this.spec, z);
   }
 
-  /** Where the upper pulley sits for a derailleur position z and a gap: straight below the sprocket. */
-  layout(z: number, gap: number): { r: number; a: number; gx: number; gy: number; lx: number; ly: number } {
+  /** Where the upper pulley sits for a derailleur position z and a gap (see derPose), with the cage angle and the lower pulley. */
+  layout(z: number, gap: number): { r: number; a: number; gx: number; gy: number; lx: number; ly: number; pose: DerPose } {
     const B = this.spec;
     const r = this.rAtZ(z);
-    const u = (r - B.rs[0]) / (B.rs[B.n - 1] - B.rs[0] || 1);
-    const a = -0.55 + 0.5 * u;
-    const gx = B.rx - 0.005;
-    const gy = B.huby - r - gap - RP;
-    return { r, a, gx, gy, lx: gx + LC * Math.sin(a), ly: gy - LC * Math.cos(a) };
+    const G = this.der?.G ?? derGeom(B);
+    const pose = derPose(B, G, z, gap, r);
+    const [gx, gy] = pose.U;
+    return { r, a: pose.cage + HP, gx, gy, lx: gx + LC * Math.cos(pose.cage), ly: gy + LC * Math.sin(pose.cage), pose };
   }
 
   private layoutCirc(z: number, gap: number) {
@@ -1066,23 +1249,24 @@ export class BikeModel {
     this.gap = gap;
     const d = this.der;
     if (this.cage && d) {
-      const B = this.spec;
-      const L = this.layoutCirc(z, gap);
-      this.cage.position.set(L.gx, L.gy, z);
-      this.cage.rotation.z = L.a;
-      const pv = pivotAt(B, d.G, z);
-      const { Bk } = d.G;
-      d.links.forEach((m, i) => {
-        const dx = i ? 0.01 : -0.01;
-        plate(m, [Bk[0] + dx, Bk[1], Bk[2]], [pv[0] + dx, pv[1], pv[2]], [1, 0, 0]);
-      });
-      d.pk.position.set(...pv);
-      d.pin.position.set(...pv);
-      const pw = B.chainW / 2 + 0.006;
-      seg(d.arm, pv, [L.gx, L.gy, z + pw + 0.008]);
+      const { G } = d;
+      const Lo = this.layoutCirc(z, gap);
+      const P = Lo.pose;
+      this.cage.position.set(Lo.gx, Lo.gy, z);
+      this.cage.rotation.z = Lo.a;
+      d.body.rotation.z = P.beta + Math.PI;
+      for (const m of d.links) m.rotation.y = -P.phi;
+      const px = -G.eb - G.L * Math.cos(P.phi);
+      const pz = G.zB - G.L * Math.sin(P.phi);
+      d.pk.position.set(px, 0, pz);
+      const bb = bodyBarrel(G);
       if (d.wire) {
-        const k = 0.35;
-        seg(d.wire, d.wireTop, [Bk[0] + (pv[0] - Bk[0]) * k + 0.013, Bk[1] + (pv[1] - Bk[1]) * k, Bk[2] + (pv[2] - Bk[2]) * k]);
+        const k = 0.45;
+        seg(d.wire, [bb.pos[0] + bb.axis[0] * bb.len * 0.5, bb.pos[1] + bb.axis[1] * bb.len * 0.5, bb.pos[2]], [-G.eb - G.L * Math.cos(P.phi) * k, -0.012, G.zB - G.L * Math.sin(P.phi) * k + 0.006]);
+      }
+      if (d.housing) {
+        const head = bodyToBike(G, P.beta, [bb.pos[0] - bb.axis[0] * bb.len * 0.5, bb.pos[1] - bb.axis[1] * bb.len * 0.5, bb.pos[2]]);
+        seg(d.housing, d.housingFrom, head);
       }
     }
     const total = buildPath(this.circ, this.path);
@@ -1094,8 +1278,11 @@ export class BikeModel {
     for (let k = 0; k < this.N; k++) {
       hint = pointAt(this.path, k * step + shift, pt, hint);
       Q.position.set(pt.x, pt.y, pt.z);
-      tD.set(pt.dx, pt.dy, pt.dz).normalize();
-      Q.quaternion.setFromUnitVectors(this.AX, tD);
+      // the link runs along the chain, its width stays across the bike: no twist where the chain bends sideways
+      tX.set(pt.dx, pt.dy, pt.dz).normalize();
+      tN.set(0, 0, 1).addScaledVector(tX, -tX.z).normalize();
+      tD.crossVectors(tN, tX);
+      Q.quaternion.setFromRotationMatrix(tM.makeBasis(tX, tD, tN));
       Q.scale.set(1, k % 2 ? 0.7 : 1, 1);
       Q.updateMatrix();
       this.chainMesh.setMatrixAt(k, Q.matrix);
@@ -1108,19 +1295,4 @@ export class BikeModel {
     const { zs, n } = this.spec;
     return zs[Math.max(0, Math.min(n - 1, i))];
   }
-}
-
-/**
- * Control points of a drive-side stay from `from` (at z0) to the dropout: straight in the frame
- * plane, bending out to the dropout's z where it passes the sprockets (0.45 units from the axle).
- */
-function stayPts(B: BikeSpec, from: V2, z0: number): V3[] {
-  const { rx, huby, zDrop } = B;
-  const dx = from[0] - rx;
-  const dy = from[1] - huby;
-  const L = Math.hypot(dx, dy);
-  const at = (d: number): V2 => [rx + (dx / L) * d, huby + (dy / L) * d];
-  const a = at(0.45);
-  const b = at(0.26);
-  return [[from[0], from[1], z0], [a[0], a[1], z0 + (zDrop - z0) * 0.55], [b[0], b[1], zDrop], [rx, huby, zDrop]];
 }

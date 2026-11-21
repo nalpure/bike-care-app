@@ -794,9 +794,12 @@ export class ThreeStage implements Stage {
 
   private placeArrow(a: Frame['arrow']): void {
     const key = a ? `${a.node}|${a.dir}` : '';
-    if (key === this.arrowKey) return;
-    this.arrowKey = key;
     const m = this.model!;
+    if (key === this.arrowKey) {
+      if (a && this.arrow.visible) this.poseArrow(a);
+      return;
+    }
+    this.arrowKey = key;
     if (!a || !m.has(a.node)) {
       this.arrow.visible = false;
       return;
@@ -817,12 +820,29 @@ export class ThreeStage implements Stage {
     cone.rotation.z = -HP;
     arc.renderOrder = cone.renderOrder = 10;
     this.arrow.add(arc, cone);
-    // The ring sits just off the head and turns counterclockwise about its normal. Its normal
-    // points into the thread when screwing in, so seen from the head it turns clockwise.
-    const ax = new T.Vector3(...turn.axis).normalize();
-    this.arrow.position.set(...turn.pos).addScaledVector(ax, -(turn.len / 2 + 0.014));
-    this.arrow.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), a.dir > 0 ? ax : ax.negate());
     this.arrow.visible = true;
+    this.poseArrow(a);
+  }
+
+  /**
+   * Puts the turn arrow on its screw, which may move with the derailleur's body. The ring sits
+   * just off the head and turns counterclockwise about its normal; the normal points into the
+   * thread when screwing in, so seen from the head it turns clockwise.
+   */
+  private poseArrow(a: NonNullable<Frame['arrow']>): void {
+    const turn = this.model?.turns.get(a.node);
+    const orient = turn?.spin.parent;
+    if (!turn || !orient) return;
+    this.root.updateMatrixWorld(true);
+    const head = orient.localToWorld(new T.Vector3(0, -(turn.len / 2 + 0.014), 0));
+    const tip = orient.localToWorld(new T.Vector3(0, 1, 0));
+    const base = orient.localToWorld(new T.Vector3(0, 0, 0));
+    this.root.worldToLocal(head);
+    this.root.worldToLocal(tip);
+    this.root.worldToLocal(base);
+    const ax = tip.sub(base).normalize();
+    this.arrow.position.copy(head);
+    this.arrow.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), a.dir > 0 ? ax : ax.negate());
   }
 
   private placeGhost(g: Frame['ghost']): void {
@@ -835,16 +855,22 @@ export class ThreeStage implements Stage {
       this.ghostRing.visible = this.plumb.visible = true;
       this.gapBar.visible = false;
       this.ghostRing.position.set(L.gx, L.gy, g.z);
-      const len = m.spec.huby - L.gy;
-      this.plumb.scale.set(1, len, 1);
-      this.plumb.position.set(m.spec.rx, m.spec.huby - len / 2, g.z);
+      // a line in the sprocket's plane from the axle to where the pulley belongs
+      seg(this.plumb, new T.Vector3(m.spec.rx, m.spec.huby, g.z), new T.Vector3(L.gx, L.gy, g.z));
     } else {
-      const n = m.spec.n;
-      const top = m.spec.huby - m.spec.rs[n - 1];
+      // the gap itself, between the largest sprocket and the upper pulley, beside them
+      const B = m.spec;
+      const n = B.n;
+      const L = m.layout(B.zs[n - 1], this.gapNow);
+      const d = Math.hypot(L.gx - B.rx, L.gy - B.huby) || 1;
+      const ux = (L.gx - B.rx) / d;
+      const uy = (L.gy - B.huby) / d;
+      const r0 = B.rs[n - 1] + 0.0025;
+      const r1 = Math.max(r0 + 0.002, d - RP - 0.003);
+      const z = B.zs[n - 1] + 0.02;
       this.ghostRing.visible = this.plumb.visible = false;
       this.gapBar.visible = true;
-      this.gapBar.scale.set(1, Math.max(0.002, this.gapNow), 1);
-      this.gapBar.position.set(m.spec.rx + 0.05, top - this.gapNow / 2, m.spec.zs[n - 1]);
+      seg(this.gapBar, new T.Vector3(B.rx + ux * r0, B.huby + uy * r0, z), new T.Vector3(B.rx + ux * r1, B.huby + uy * r1, z));
     }
   }
 
