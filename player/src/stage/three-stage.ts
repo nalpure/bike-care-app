@@ -11,9 +11,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { h, icon } from '../ui/dom.js';
 import type { Stage, StageView } from '../ui/stage.js';
 import { ease, makeAnim, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
-import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, HUBY, LIFT, RP, RX, seg, type BikeSpec, type Part } from './bike.js';
-import { CLIPS, LABEL_SCENES, MOTIONS, NODES, partsOf, VIEWS, type Pose } from './registry.js';
-import { viewPose, type ViewPose } from './views.js';
+import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
+import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
+import { previewPose, viewPose, type ViewPose } from './views.js';
 
 const nowS = () => performance.now() / 1000;
 const reduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -29,7 +29,7 @@ function poseVals(p: Pose, B: BikeSpec): PoseVals {
   if (p === 'stand') return { hx: 0, hy: 0, hrz: 0, rx: 0, ry: LIFT, rrx: 0 };
   if (p === 'flipped') {
     // resting on saddle and handlebar
-    const xs = -0.3;
+    const xs = B.saddleX;
     const ys = B.saddleY + 0.025;
     const by = B.barTop;
     return { hx: xs, hy: GROUND, hrz: -Math.atan((ys - by[1]) / (by[0] - xs)), rx: -xs, ry: ys, rrx: Math.PI };
@@ -49,6 +49,33 @@ function mixPose(a: PoseVals, b: PoseVals, k: number): PoseVals {
 
 interface Playing { anim?: Anim; caption: string; view?: string }
 
+/** What the user tapped in the garage preview. */
+export interface PreviewPick {
+  /** registry node, e.g. rear_derailleur */
+  node: string;
+  /** generic name, e.g. "Rear derailleur" */
+  name: string;
+  /** the part's model from the bike's facts ("Shimano XT RD-M8100"), or '' */
+  model: string;
+}
+
+export interface PreviewOptions {
+  /** the bike's name, written on the down tube */
+  name?: string;
+  /** called when the user taps a part (null: tapped beside the bike) */
+  onPick?: (pick: PreviewPick | null) => void;
+}
+
+/** Styles for the preview mode, kept here so the stage folder carries its own look. */
+const PREVIEW_CSS = `
+.stage3d.preview { flex: none; width: 100%; height: 100%; min-height: 0; }
+.stage3d.preview .fabs, .stage3d.preview .cap, .stage3d.preview .tags3d { display: none; }
+.stage3d .ptag { position: absolute; left: 0; top: 0; display: none; flex-direction: column; gap: 2px; max-width: min(70%, 260px); padding: 6px 9px; border-radius: 9px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); font: 600 14px/1.2 var(--f-body); pointer-events: none; will-change: transform; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+.stage3d .ptag.on { display: flex; }
+.stage3d .ptag small { font: 500 10.5px/1.25 var(--f-mono); letter-spacing: .02em; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage3d .ptag::after { content: ""; position: absolute; left: 50%; bottom: -5px; width: 8px; height: 8px; margin-left: -4px; transform: rotate(45deg); background: var(--panel); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+`;
+
 export class ThreeStage implements Stage {
   readonly el: HTMLElement;
   private canvas: HTMLCanvasElement;
@@ -61,9 +88,12 @@ export class ThreeStage implements Stage {
   private pdesc: HTMLElement;
   private xall: HTMLElement;
   private xfocus: HTMLElement;
+  private ptag: HTMLElement;
 
   private gl: T.WebGLRenderer | null = null;
   private scene = new T.Scene();
+  /** lights only; snapshot() renders a bike in it */
+  private snapScene = new T.Scene();
   private camera = new T.PerspectiveCamera(35, 1, 0.05, 60);
   private holder = new T.Group();
   private root = new T.Group();
@@ -75,6 +105,7 @@ export class ThreeStage implements Stage {
 
   private COL = { part: new T.Color(), accent: new T.Color(), good: new T.Color(), bad: new T.Color() };
   private tmpCol = new T.Color();
+  private frameCol = new T.Color();
 
   // ghost marker (where the pulley should be) and the turn arrow
   private ghostMat = new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.75, depthTest: false });
@@ -126,6 +157,13 @@ export class ThreeStage implements Stage {
   private showAll = true;
   private selected: string | null = null;
   private lastCap: string | null = null;
+  // garage preview
+  private previewing = false;
+  private previewOpts: PreviewOptions = {};
+  private pickAnchor = new T.Object3D();
+  private pickOn = false;
+  private pickParts = new Set<string>();
+  private idleTimer = 0;
   private last = nowS();
   private first = true;
 
@@ -140,8 +178,9 @@ export class ThreeStage implements Stage {
     this.pdesc = h('span');
     this.xfocus = h('button', { 'aria-pressed': 'false', onclick: () => this.setShowAll(false) }, 'Step focus');
     this.xall = h('button', { 'aria-pressed': 'true', onclick: () => this.setShowAll(true) }, 'Show all');
+    this.ptag = h('div.ptag', { 'aria-live': 'polite', 'data-test': 'preview-tag' });
     this.el = h('section.stage.stage3d', { 'aria-label': '3D view of the bike', 'data-test': 'stage' },
-      this.canvas, this.noglEl, this.tagsEl, this.capEl, this.noteEl,
+      this.canvas, this.noglEl, this.tagsEl, this.ptag, this.capEl, this.noteEl,
       h('div.fabs',
         h('button.fab', { 'aria-label': 'Replay animation', 'data-test': 'replay', onclick: () => this.replay() }, icon(ICON_REPLAY)),
         h('button.fab', { 'aria-label': 'Explore in 3D', 'data-test': 'explore', onclick: () => this.enterExplore() }, icon(ICON_EXPAND)),
@@ -172,11 +211,13 @@ export class ThreeStage implements Stage {
     gl.outputColorSpace = T.LinearSRGBColorSpace;
     gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     const s = this.scene;
-    s.add(new T.AmbientLight(0xffffff, 0.45 * Math.PI));
-    s.add(new T.HemisphereLight(0xffffff, 0x5a6b78, 0.7 * Math.PI));
-    const sun = new T.DirectionalLight(0xffffff, 0.85 * Math.PI);
-    sun.position.set(-2, 4, 5);
-    s.add(sun);
+    for (const sc of [s, this.snapScene]) {
+      sc.add(new T.AmbientLight(0xffffff, 0.45 * Math.PI));
+      sc.add(new T.HemisphereLight(0xffffff, 0x5a6b78, 0.7 * Math.PI));
+      const sun = new T.DirectionalLight(0xffffff, 0.85 * Math.PI);
+      sun.position.set(-2, 4, 5);
+      sc.add(sun);
+    }
     s.add(this.holder);
     this.holder.add(this.root);
     const gm = this.grid.material as T.LineBasicMaterial;
@@ -199,7 +240,18 @@ export class ThreeStage implements Stage {
     controls.minDistance = 0.35;
     controls.maxDistance = 9;
     controls.enabled = false;
+    controls.autoRotateSpeed = 0.7;
+    // in the preview, the bike stops turning while the user drags it and starts again later
+    controls.addEventListener('start', () => {
+      controls.autoRotate = false;
+      clearTimeout(this.idleTimer);
+    });
+    controls.addEventListener('end', () => {
+      clearTimeout(this.idleTimer);
+      if (this.previewing && !reduceMotion()) this.idleTimer = window.setTimeout(() => (controls.autoRotate = this.previewing), 6000);
+    });
     this.controls = controls;
+    if (!document.getElementById('stage-preview-css')) document.head.append(h('style', { id: 'stage-preview-css' }, PREVIEW_CSS));
 
     this.readColors();
     matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => this.readColors());
@@ -240,6 +292,7 @@ export class ThreeStage implements Stage {
     this.scene.add(m.standG, m.hookG);
     this.derTarget = m.derZ;
     this.moved.clear();
+    this.clearPick();
   }
 
   private resize = (): void => {
@@ -256,6 +309,7 @@ export class ThreeStage implements Stage {
   // ------------------------------------------------------------------ Stage interface
 
   show(v: StageView): void {
+    if (this.previewing) this.endPreview();
     if (!this.gl) {
       this.showText(v);
       return;
@@ -411,6 +465,13 @@ export class ThreeStage implements Stage {
     if (!m) return;
     const hotCtx = new Set<string>();
     for (const id of this.hotParts) for (const c of m.parts.get(id)!.ctx) hotCtx.add(c);
+    if (this.previewing) {
+      for (const p of m.parts.values()) {
+        p.visT = this.hidden.has(p.id) ? 0 : 1;
+        p.hotT = this.pickParts.has(p.id) ? 1 : 0;
+      }
+      return;
+    }
     for (const p of m.parts.values()) {
       const isHot = this.hotParts.has(p.id);
       const isCtx = this.ctxAll || p.ctx.includes('frame') || p.ctx.some((c) => hotCtx.has(c));
@@ -469,6 +530,185 @@ export class ThreeStage implements Stage {
       this.root.localToWorld(t);
     }
     return { p, t };
+  }
+
+  // ------------------------------------------------------------------ garage preview
+
+  /**
+   * Garage preview: the bike drawn from `facts`, whole, turning slowly. Drag to turn it, pinch
+   * to zoom; tap a part for a tag with its name and, when the bike's facts know it, its model in
+   * small text. The stage element moves into `host`, which gives it its size. Showing a card
+   * (`show`) or `endPreview()` leaves the preview. Calling it again with other facts redraws.
+   */
+  preview(facts: Record<string, unknown>, host: HTMLElement, opts: PreviewOptions = {}): void {
+    if (this.el.parentElement !== host) host.append(this.el);
+    this.el.classList.add('preview');
+    this.previewOpts = opts;
+    if (!this.gl || !this.controls) {
+      this.noglEl.hidden = false;
+      this.noglEl.replaceChildren(h('div', h('span', 'The 3D view is not available on this device.')));
+      return;
+    }
+    if (this.exploring) this.exitExplore();
+    this.previewing = true;
+    const spec = bikeSpec(facts);
+    if (JSON.stringify(spec) !== this.specKey) this.rebuild(spec);
+    const m = this.model!;
+    this.view = { focus: [], labels: [], facts, bike: opts.name };
+    this.cardKey = '';
+    this.sol = null;
+    this.stepAnim = null;
+    this.restZ = undefined;
+    this.hotParts = new Set();
+    this.hidden = new Set();
+    this.ctxAll = true;
+    this.poseTo = this.posePrev = this.poseBefore = this.poseAfter = 'ground';
+    this.poseFrom = poseVals('ground', m.spec);
+    this.poseK = 1;
+    this.tagsEl.replaceChildren();
+    this.tagList = [];
+    this.clearPick();
+    const vp = previewPose(m.spec);
+    this.camera.position.set(...vp.p);
+    this.look.set(...vp.t);
+    this.tw = null;
+    this.camVp = null;
+    const c = this.controls;
+    c.target.copy(this.look);
+    c.maxPolarAngle = HP * 1.02;
+    c.minDistance = 1.2;
+    c.enabled = true;
+    c.autoRotate = !reduceMotion();
+    c.update();
+    this.noteEl.classList.remove('pick');
+    this.noteEl.textContent = 'Tap a part';
+    this.applyFocus();
+    this.resize();
+  }
+
+  /** Leaves the garage preview; the next `show` flies the camera to its card. */
+  /**
+   * A still picture of the bike drawn from `facts` (the preview's camera, transparent
+   * background), as a PNG data URL, or null without WebGL. For lists that show several bikes;
+   * it does not disturb the live stage. Width and height in CSS pixels.
+   */
+  snapshot(facts: Record<string, unknown>, width = 320, height = 200, name?: string): string | null {
+    const gl = this.gl;
+    if (!gl || typeof document === 'undefined') return null;
+    const k = 2;
+    const W = Math.round(width * k);
+    const H = Math.round(height * k);
+    const m = new BikeModel(bikeSpec(facts), this.standMat);
+    const target = new T.WebGLRenderTarget(W, H);
+    try {
+      const frameCol = m.spec.colour ? new T.Color(m.spec.colour) : null;
+      for (const p of m.parts.values()) {
+        for (const mat of p.mats) {
+          mat.opacity = 1;
+          mat.depthWrite = true;
+          if (mat.userData.dark) mat.color.copy(this.COL.part).multiplyScalar(0.22);
+          else if (frameCol && mat.userData.tint === 'frame') mat.color.copy(frameCol);
+          else mat.color.copy(this.COL.part).multiplyScalar(mat.userData.k);
+        }
+      }
+      m.drawDecal(name ?? '', frameCol ?? this.COL.part, 1);
+      this.snapScene.add(m.bike);
+      const vp = previewPose(m.spec);
+      const cam = new T.PerspectiveCamera(35, W / H, 0.05, 60);
+      cam.fov = (2 * Math.atan(BASE_TAN * Math.max(1, 1.3 / cam.aspect)) * 180) / Math.PI;
+      cam.updateProjectionMatrix();
+      cam.position.set(...vp.p);
+      cam.lookAt(...vp.t);
+      const clear = gl.getClearAlpha();
+      gl.setRenderTarget(target);
+      gl.setClearAlpha(0);
+      gl.clear();
+      gl.render(this.snapScene, cam);
+      const px = new Uint8Array(W * H * 4);
+      gl.readRenderTargetPixels(target, 0, 0, W, H, px);
+      gl.setRenderTarget(null);
+      gl.setClearAlpha(clear);
+      // WebGL rows run bottom to top; draw at double size, then scale down for smooth edges
+      const big = document.createElement('canvas');
+      big.width = W;
+      big.height = H;
+      const img = new ImageData(W, H);
+      for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);
+      big.getContext('2d')?.putImageData(img, 0, 0);
+      const out = document.createElement('canvas');
+      out.width = Math.round(width);
+      out.height = Math.round(height);
+      const c = out.getContext('2d');
+      if (!c) return null;
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(big, 0, 0, out.width, out.height);
+      return out.toDataURL('image/png');
+    } catch (e) {
+      console.warn('[stage] snapshot failed', e);
+      return null;
+    } finally {
+      this.snapScene.remove(m.bike);
+      m.dispose();
+      target.dispose();
+    }
+  }
+
+  endPreview(): void {
+    if (!this.previewing) return;
+    this.previewing = false;
+    clearTimeout(this.idleTimer);
+    this.el.classList.remove('preview');
+    this.clearPick();
+    if (this.controls) {
+      this.controls.enabled = false;
+      this.controls.autoRotate = false;
+      this.controls.maxPolarAngle = Math.PI;
+      this.controls.minDistance = 0.35;
+    }
+    this.cardKey = '';
+    this.noteEl.textContent = '';
+    this.applyFocus();
+    this.resize();
+  }
+
+  private pick(hit: { id: string; obj: T.Object3D; at: T.Vector3 } | null): void {
+    const node = hit ? previewNode(hit.id) : null;
+    if (!hit || !node || !NODES[node]) {
+      this.clearPick();
+      this.previewOpts.onPick?.(null);
+      return;
+    }
+    const info = NODES[node];
+    const model = modelOf(node, this.view.facts);
+    hit.obj.add(this.pickAnchor);
+    this.pickAnchor.position.copy(hit.obj.worldToLocal(hit.at.clone()));
+    this.pickOn = true;
+    this.pickParts = new Set(partsOf(node));
+    this.ptag.replaceChildren(h('span', info.name), ...(model ? [h('small', model)] : []));
+    this.ptag.classList.add('on');
+    this.applyFocus();
+    this.previewOpts.onPick?.({ node, name: info.name, model });
+  }
+
+  private clearPick(): void {
+    this.pickOn = false;
+    this.pickParts = new Set();
+    this.pickAnchor.removeFromParent();
+    this.ptag.classList.remove('on');
+    if (this.previewing) this.applyFocus();
+  }
+
+  private placePickTag(): void {
+    if (!this.pickOn) return;
+    const w = this.el.clientWidth;
+    const hgt = this.el.clientHeight;
+    const pv = this.pickAnchor.getWorldPosition(new T.Vector3()).project(this.camera);
+    const tw = this.ptag.offsetWidth;
+    const th = this.ptag.offsetHeight;
+    const x = Math.max(6, Math.min(w - tw - 6, (pv.x * 0.5 + 0.5) * w - tw / 2));
+    const y = Math.max(6, (-pv.y * 0.5 + 0.5) * hgt - th - 10);
+    this.ptag.style.visibility = pv.z > 1 ? 'hidden' : 'visible';
+    this.ptag.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;
   }
 
   // ------------------------------------------------------------------ explore and picking
@@ -531,6 +771,10 @@ export class ThreeStage implements Stage {
         return p && p.vis > 0.3 && x.object.visible;
       });
       const id: string | null = hit ? hit.object.userData.partId : null;
+      if (this.previewing) {
+        this.pick(id && hit ? { id, obj: hit.object, at: hit.point } : null);
+        return;
+      }
       if (this.exploring) {
         this.selected = id;
         this.showInfo(id);
@@ -557,10 +801,12 @@ export class ThreeStage implements Stage {
       this.arrow.visible = false;
       return;
     }
-    this.scene.updateMatrixWorld(true);
-    const wp = m.parts.get(a.node)!.group.getWorldPosition(new T.Vector3());
-    this.root.worldToLocal(wp);
-    const r = a.node === 'barrel_adjuster' ? 0.045 : 0.033;
+    const turn = m.turns.get(a.node);
+    if (!turn) {
+      this.arrow.visible = false;
+      return;
+    }
+    const r = a.node === 'barrel_adjuster' ? 0.04 : 0.03;
     this.arrow.children.slice().forEach((c) => {
       this.arrow.remove(c);
       (c as T.Mesh).geometry.dispose();
@@ -571,17 +817,11 @@ export class ThreeStage implements Stage {
     cone.rotation.z = -HP;
     arc.renderOrder = cone.renderOrder = 10;
     this.arrow.add(arc, cone);
-    const cw = a.dir > 0;
-    if (a.node === 'barrel_adjuster' && m.spec.barrelAt === 'derailleur') {
-      this.arrow.position.set(wp.x, wp.y + 0.045, wp.z);
-      this.arrow.rotation.set(cw ? HP : -HP, 0, 0);
-    } else if (a.node === 'b_screw') {
-      this.arrow.position.set(wp.x + 0.045, wp.y, wp.z);
-      this.arrow.rotation.set(0, cw ? -HP : HP, 0);
-    } else {
-      this.arrow.position.set(wp.x - 0.045, wp.y, wp.z);
-      this.arrow.rotation.set(0, cw ? HP : -HP, 0);
-    }
+    // The ring sits just off the head and turns counterclockwise about its normal. Its normal
+    // points into the thread when screwing in, so seen from the head it turns clockwise.
+    const ax = new T.Vector3(...turn.axis).normalize();
+    this.arrow.position.set(...turn.pos).addScaledVector(ax, -(turn.len / 2 + 0.014));
+    this.arrow.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), a.dir > 0 ? ax : ax.negate());
     this.arrow.visible = true;
   }
 
@@ -595,16 +835,16 @@ export class ThreeStage implements Stage {
       this.ghostRing.visible = this.plumb.visible = true;
       this.gapBar.visible = false;
       this.ghostRing.position.set(L.gx, L.gy, g.z);
-      const len = HUBY - L.gy;
+      const len = m.spec.huby - L.gy;
       this.plumb.scale.set(1, len, 1);
-      this.plumb.position.set(RX, HUBY - len / 2, g.z);
+      this.plumb.position.set(m.spec.rx, m.spec.huby - len / 2, g.z);
     } else {
       const n = m.spec.n;
-      const top = HUBY - m.spec.rs[n - 1];
+      const top = m.spec.huby - m.spec.rs[n - 1];
       this.ghostRing.visible = this.plumb.visible = false;
       this.gapBar.visible = true;
       this.gapBar.scale.set(1, Math.max(0.002, this.gapNow), 1);
-      this.gapBar.position.set(RX + 0.05, top - this.gapNow / 2, m.spec.zs[n - 1]);
+      this.gapBar.position.set(m.spec.rx + 0.05, top - this.gapNow / 2, m.spec.zs[n - 1]);
     }
   }
 
@@ -690,6 +930,7 @@ export class ThreeStage implements Stage {
     const m = this.model!;
     const f = 1 - Math.exp(-dt * 6);
     const COL = this.COL;
+    const frameCol = m.spec.colour ? this.frameCol.set(m.spec.colour) : null;
     for (const p of m.parts.values()) {
       let hotT = p.hotT;
       let hotCol = COL.accent;
@@ -708,13 +949,14 @@ export class ThreeStage implements Stage {
           mat.color.copy(COL.part).multiplyScalar(0.22);
           continue;
         }
-        this.tmpCol.copy(COL.part).multiplyScalar(mat.userData.k);
+        if (frameCol && mat.userData.tint === 'frame') this.tmpCol.copy(frameCol);
+        else this.tmpCol.copy(COL.part).multiplyScalar(mat.userData.k);
         mat.color.copy(this.tmpCol).lerp(hotCol, p.hot);
         mat.emissive.copy(hotCol).multiplyScalar(p.hot * 0.18);
       }
     }
     const frame = m.parts.get('frame');
-    m.drawDecal(this.view.bike ?? '', COL.part, frame ? frame.vis : 1);
+    m.drawDecal(this.view.bike ?? '', frameCol ?? COL.part, frame ? frame.vis : 1);
   }
 
   private tick = (): void => {
@@ -754,16 +996,7 @@ export class ThreeStage implements Stage {
     m.crankset.rotation.z = -this.crankAngle;
     m.rearHub.rotation.z = -this.wheelAngle.rear_wheel;
     m.frontHub.rotation.z = -this.wheelAngle.front_wheel;
-    for (const s of ['h_screw', 'l_screw', 'b_screw'] as ScrewNode[]) {
-      const p = m.parts.get(s);
-      if (p) p.group.rotation.x = fr.screws?.[s] ?? 0;
-    }
-    const barrel = m.parts.get('barrel_adjuster');
-    if (barrel) {
-      const bv = fr.screws?.barrel_adjuster ?? 0;
-      if (m.spec.barrelAt === 'shifter') barrel.group.rotation.x = -bv;
-      else barrel.group.rotation.y = bv;
-    }
+    for (const [id, t] of m.turns) t.spin.rotation.y = fr.screws?.[id as ScrewNode] ?? 0;
     const lever = m.parts.get('stand_clamp')?.group.userData.lever as T.Object3D | undefined;
     if (lever) lever.rotation.z = fr.lever ?? 0;
     this.applyNodeMotion(fr);
@@ -784,7 +1017,7 @@ export class ThreeStage implements Stage {
 
     // camera
     const cam = this.camera;
-    if (this.exploring && this.controls) {
+    if ((this.exploring || this.previewing) && this.controls) {
       this.controls.update();
       this.look.copy(this.controls.target);
     } else if (this.tw) {
@@ -804,7 +1037,8 @@ export class ThreeStage implements Stage {
 
     this.colorParts(fr, dt);
 
-    if (!this.exploring) {
+    if (this.previewing) this.placePickTag();
+    else if (!this.exploring) {
       const w = this.el.clientWidth;
       const hgt = this.el.clientHeight;
       const pv = new T.Vector3();

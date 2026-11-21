@@ -41,12 +41,29 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 
 | File | Holds |
 | --- | --- |
-| `registry.ts` | Pure data, and the source of 3D names. `NODES` lists every name content may use (tag label, name, aliases, one line on what the part does). `NODE_PARTS` maps a node that stands for several meshes. Also `VIEWS`, `CLIPS`, `MOTIONS`, and `LABEL_SCENES` (state label -> how the bike is held, what is hidden) |
-| `bike.ts` | `bikeSpec(facts)`: which bike to draw (category -> frame, bar, fork, barrel position, kickstand; gear type -> derailleur or one sprocket; speeds -> sprockets). `BikeModel`: builds the meshes. `add(id, geometry, …)` registers a part under its node id, and `anchors` are where tags attach. Also the stand, hook and rope, and the derailleur layout (`setDer`, `layout`) |
-| `chain.ts` | The chain path around chainring, sprocket and pulleys |
+| `registry.ts` | Pure data, and the source of 3D names. `NODES` lists every name content may use (tag label, name, aliases, one line on what the part does, and `model_fact`: the text fact(s) with the part's model, shown in the garage preview). `NODE_PARTS` maps a node that stands for several meshes. Also `VIEWS`, `CLIPS`, `MOTIONS`, `LABEL_SCENES` (state label -> how the bike is held, what is hidden), and `previewNode` / `modelOf` for the preview tag |
+| `bike.ts` | `bikeSpec(facts)`: which bike to draw. The rules are in the comment above it (category, `bike.handlebar`, gear type, speeds, e-bike, `bike.colour`, `geometry.*`). Its dimensions (axle positions `rx`, `huby`, tyre `rt`, bottom bracket `bby`, frame points) are per bike; `RX`, `HUBY`, `RT`, `BBY` are only the defaults. `BikeModel`: builds the meshes. `add(id, geometry, …)` registers a part under its node id, `anchors` are where tags attach, `turns` are the screws and the barrel adjuster with their axis. Also the stand, hook and rope, and the derailleur: `derGeom` (hanger, body, links), `layout` (where the upper pulley sits), `setDer` (moves cage, links and chain) |
+| `chain.ts` | The chain path around chainring, sprocket and pulleys; between wheels in different planes the chain bends sideways gently instead of cutting across |
 | `views.ts` | Named camera poses. `whole_bike` is in world space; close-ups are in bike space, so they follow a lifted, hung or flipped bike |
 | `anim.ts` | Named clips (`shift-to-smallest`, `limit-screw-align`, `b-gap-adjust`, `cable-tension-shift`, …) and the generic motions. A `rotate` on a screw or the barrel adjuster plays the matching clip in the given direction |
-| `three-stage.ts` | `ThreeStage`: scene, lights and the prototype's r128 look (colour management off, lights × π), the pose for each way of holding the bike (`poseVals`), focus fade, tags (stacked so they don't overlap), caption, explore mode, replay, solutions |
+| `three-stage.ts` | `ThreeStage`: scene, lights and the prototype's r128 look (colour management off, lights × π), the pose for each way of holding the bike (`poseVals`), focus fade, tags (stacked so they don't overlap), caption, explore mode, replay, solutions, and the garage preview (below) |
+
+### Garage preview
+
+`ThreeStage` has a preview mode for the garage: the whole bike drawn from one bike's facts, turning slowly; drag to turn it, pinch to zoom, tap a part for a tag with its generic name and, in small text, its model when the bike's facts know it.
+
+```ts
+stage.preview(facts, host, { name, onPick })   // shows the bike in host (an element with a size)
+stage.endPreview()                             // optional: show() for a card also ends it
+// onPick({ node, name, model }) on a tap on a part, onPick(null) on a tap beside the bike
+stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any bike, or null
+```
+
+- There is one stage (one WebGL context). `preview` moves its element into `host`, like a card does; give `host` a width and height. Calling it again with another bike's facts redraws.
+- For a list of bikes, use `snapshot`: the same camera, a transparent background, drawn without touching the live stage (a few milliseconds per bike; cache the result per bike and its facts).
+- The tag shows `NODES[node].name` and `modelOf(node, facts)`: the values of the node's `model_fact` facts, joined. A tapped sprocket shows as the sprockets, the upper wheel as the derailleur (`previewNode`).
+- `PlaceholderStage` (`ui/stage.ts`) has no preview; check `'preview' in stage` before calling it.
+- Without WebGL the host shows a one-line note.
 
 ### Changing the 3D bike: recipe
 
@@ -55,16 +72,17 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 3. Renaming a node used by content: rename it in `content/` and `registry.ts` together, then run the manifest and the check.
 4. Which bike the facts produce: `bikeSpec` in `bike.ts`. Write a new rule as a comment there and list it in your handoff file.
 5. Camera: `views.ts`. Holding poses: `LABEL_SCENES` plus `poseVals` in `three-stage.ts`. Look and lights: `three-stage.ts`.
-6. Check it: `npm run build && npm run shots`, look at the PNGs, then run the full test set above.
+6. Check it: `npm run build && npm run shots`, look at the PNGs, then run the full test set above. `stage.test.ts` checks that the derailleur, chain and frame stay off the sprockets in every gear of every kind of bike, and that tyres clear the frame, also with extreme geometry.
 
 The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. Keep its look.
 
 ### Known 3D shortcomings
 
-- The `derailleur_from_behind` view (L and H screw checks): the tyre fills much of the frame and the derailleur is small and off-centre, worst with the bike upside down. You can't really judge "in line with the sprocket". Best fix: a closer camera, or a target nearer the pulley.
-- `derailleur_side_close` (B gap): the gap is small on a phone.
-- Cargo bikes are drawn as city bikes; hub gears and gearboxes as one sprocket; there is no full-suspension frame.
-- The garage has no 3D preview of the bike (the prototype had one on the bike sheet).
+- The drivetrain is drawn about twice as wide as on a real bike, so the sprockets read on a phone. To reach across it, the derailleur's links are long and its body hangs low below the axle; the sprockets are smooth discs, without teeth.
+- The derailleur's links pivot so the upper pulley follows the sprockets; a short arm from the links' end to the pulley absorbs what the links can't follow, so its length changes a little when shifting.
+- Cargo bikes are drawn as city bikes; hub gears and gearboxes as one sprocket; there is no full-suspension frame, no front derailleur and no brakes at the wheels (only the levers).
+- Geometry facts: top tube and wheelbase are not used (the front wheel follows the head angle with a 45 mm fork offset). An unusual combination moves a wheel away from the frame instead of drawing them touching.
+- The garage preview uses the one shared stage, so only one bike can turn in 3D at a time; other bikes can be shown as `snapshot` pictures.
 - With reduced motion the camera and the pose jump; animations still loop.
 
 ## Other known gaps
