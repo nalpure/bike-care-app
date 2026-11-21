@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "0cc97417bda7bcbd",
+  "content_hash": "42d9b7b3f0cf7c38",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -472,7 +472,6 @@
     {
       "id": "adjust-rear-shifting",
       "title": "Adjust the rear gears",
-      "tutorial": "adjust-rear-shifting",
       "covers": {
         "when": {
           "drive.gear_type": [
@@ -537,7 +536,8 @@
         "tell": "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable.",
         "price_eur": "<range>",
         "price_source": "<source, date>"
-      }
+      },
+      "tutorial": "adjust-rear-shifting"
     },
     {
       "id": "chain-care",
@@ -568,8 +568,7 @@
       "tools": {
         "required": [
           "bike-stand"
-        ],
-        "helpful": []
+        ]
       },
       "sets": [
         "bike_in_stand"
@@ -596,8 +595,7 @@
       "tools": {
         "required": [
           "hook-or-rope"
-        ],
-        "helpful": []
+        ]
       },
       "sets": [
         "bike_hung"
@@ -622,7 +620,6 @@
       "minutes": 2,
       "text": "Lay a soft mat on the floor and turn the bike over onto its saddle and handlebar. With a heavy bike, ask someone to help.",
       "tools": {
-        "required": [],
         "helpful": [
           "work-mat"
         ]
@@ -651,8 +648,7 @@
       "tools": {
         "required": [
           "bike-stand"
-        ],
-        "helpful": []
+        ]
       },
       "clears": [
         "bike_in_stand"
@@ -678,8 +674,7 @@
       "tools": {
         "required": [
           "hook-or-rope"
-        ],
-        "helpful": []
+        ]
       },
       "clears": [
         "bike_hung"
@@ -1283,8 +1278,6 @@
   ],
   "tutorials": [
     {
-      "id": "adjust-rear-shifting",
-      "job": "adjust-rear-shifting",
       "difficulty": 2,
       "choices": [
         "hold_bike"
@@ -1421,7 +1414,9 @@
             "finish": []
           }
         }
-      ]
+      ],
+      "id": "adjust-rear-shifting",
+      "job": "adjust-rear-shifting"
     }
   ],
   "diagnoses": [

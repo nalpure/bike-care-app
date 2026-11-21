@@ -138,15 +138,17 @@ export function loadContent(root: string, issues: Issues): Content | null {
   for (const dir of listDirs(root, 'content/tutorials')) {
     const tdir = `content/tutorials/${dir}`;
     const f = load(`${tdir}/tutorial.yaml`, 'tutorial');
-    if (!f) continue;
+    if (!f?.data?.tutorial) continue;
+    // The folder names the job; the tutorial's id is the job's id, and the job gets its tutorial.
+    f.data.tutorial.id = dir;
+    f.data.tutorial.job = dir;
+    const job = c.jobs.get(dir);
+    if (job) job.def.tutorial = dir;
     single(c.tutorials as Map<string, Entry>, 'tutorial', f, 'tutorial');
-    const entry = c.tutorials.get(f.data?.tutorial?.id);
+    const entry = c.tutorials.get(dir);
     if (!entry || entry.file !== f) continue;
     entry.dir = tdir;
     entry.cases = new Map();
-    if (dir !== f.data.tutorial.id) {
-      issues.warn(f.rel, `tutorial ${f.data.tutorial.id}`, 'tutorial-folder', `The folder is "${dir}" but the tutorial id is "${f.data.tutorial.id}". Name the folder after the tutorial.`);
-    }
     const includes: string[] = [];
     for (const top of f.data.tutorial.cases ?? []) {
       if (top.include) includes.push(top.include);
@@ -187,24 +189,18 @@ export function loadContent(root: string, issues: Issues): Content | null {
   const ledger = load('reviews/ledger.yaml', 'ledger', false);
   if (ledger) c.ledger = ledger;
 
-  // 3D names: the player's manifest wins once it exists.
+  // 3D names: the player's registry, exported by npm run manifest.
   const manifest = join(root, 'build/3d-manifest.json');
-  if (existsSync(manifest)) {
+  if (!existsSync(manifest)) {
+    issues.error('build/3d-manifest.json', '-', 'missing-file', 'The 3D names are missing. Run npm run manifest.');
+    ok = false;
+  } else {
     const m = JSON.parse(readFileSync(manifest, 'utf8'));
     c.catalog = {
       nodes: new Set(m.nodes ?? []), views: new Set(m.views ?? []), clips: new Set(m.clips ?? []),
       motions: new Set(m.motions ?? ['rotate', 'push', 'pull', 'slide', 'squeeze', 'remove', 'insert']),
       source: 'build/3d-manifest.json',
     };
-  } else {
-    const f = load('schema/3d-catalog.yaml', '3d-catalog');
-    if (f) {
-      c.catalog = {
-        nodes: new Set(f.data.nodes ?? []), views: new Set(f.data.views ?? []), clips: new Set(f.data.clips ?? []),
-        motions: new Set(f.data.motions ?? ['rotate', 'push', 'pull', 'slide', 'squeeze', 'remove', 'insert']),
-        source: 'schema/3d-catalog.yaml',
-      };
-    }
   }
 
   // Files in content/ that no loader reads

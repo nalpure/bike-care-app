@@ -1,6 +1,6 @@
 // Writes build/3d-manifest.json from the player's 3D registry (player/src/stage/registry.ts):
-// every node, view, clip and motion the player can show. npm run check prefers this manifest
-// over schema/3d-catalog.yaml, so content is checked against what the player really has.
+// every node, view, clip and motion the player can show. npm run check reads this manifest,
+// so content is checked against what the player really has.
 // player/test/stage.test.ts fails when the committed manifest and the registry differ.
 //
 //   npm run manifest

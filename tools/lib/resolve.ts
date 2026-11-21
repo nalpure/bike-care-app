@@ -509,7 +509,7 @@ export function skippedBy<S>(all: PathItem<S>[], index: number, button: any): Se
 export interface DiagnosisCheck<S = unknown> {
   id: string;
   def: any;
-  /** effective leads_to per state after overrides (null = not a hit) */
+  /** leads_to per state (null = not a hit) */
   hits: Record<string, { job: string; urgency: string } | null>;
   skipped: boolean;
   src: S;
@@ -529,7 +529,7 @@ export function resolveDiagnosis<S = unknown>(ix: Index, d: any, r: Reader, para
     const skipped = !!insp?.applies_when && !evaluate(substCondition(insp.applies_when, params), r.ask);
     const hits: DiagnosisCheck['hits'] = {};
     for (const st of insp?.states ?? []) {
-      hits[st.id] = ch.override && st.id in ch.override ? ch.override[st.id] : st.leads_to ?? null;
+      hits[st.id] = st.leads_to ?? null;
     }
     return { id, def: insp, hits, skipped, src: loc(d, 'checks', i) };
   });

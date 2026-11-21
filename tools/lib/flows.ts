@@ -108,7 +108,6 @@ export const SIM_RULES: Record<string, string> = {
   'early-stop-misplaced': 'A stop that needs nothing apart sits before the first step that opens something.',
   'exit-in-finish-with-state': 'finish runs only after everything is put back.',
   'check-needs-buttons': 'Every check and safety check on a path shows 2 or 3 buttons.',
-  'too-many-buttons': 'At most three buttons or states per screen.',
   'choice-not-declared': 'A tutorial declares every run choice its conditions read.',
   'skip-not-ahead': 'A button skips only steps that come later in the same sequence.',
   'inspection-not-applicable': 'An inspection called on a path applies to that bike.',
@@ -232,7 +231,6 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
   v.items.forEach((it) => {
     if (it.kind === 'step' && it.def.kind !== 'action') {
       if (it.buttons.length < 2) agg.add('check-needs-buttons', it.defSrc, `${tid} / ${itemName(it)}`, `On this path the ${it.def.kind} shows ${it.buttons.length} button(s); it needs 2 or 3.`, v.id);
-      if (it.buttons.length > 3) agg.add('too-many-buttons', it.defSrc, `${tid} / ${itemName(it)}`, `On this path the step shows ${it.buttons.length} buttons; at most 3.`, v.id);
     }
   });
 

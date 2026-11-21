@@ -7,9 +7,8 @@
 # the pedals by hand; on its wheels the user adjusts between short test rides. The order of work
 # differs, which is when approach.md allows this branch.
 
+# The folder name is the job (jobs.yaml) and the tutorial's id.
 tutorial:
-  id: adjust-rear-shifting
-  job: adjust-rear-shifting
   difficulty: 2
   choices: [hold_bike]
   # Run before the work in every case. After a diagnosis that already looked, they are not shown again.

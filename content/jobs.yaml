@@ -1,4 +1,5 @@
-# Jobs: what can be done about a finding. A job has a tutorial, a shop route, or both.
+# Jobs: what can be done about a finding. Every job has a shop route; a job has a tutorial
+# when content/tutorials/<job id>/ exists.
 # Prices are placeholders until a curated price table exists. The app shows "no estimate yet".
 # covers: which bikes the job's tutorial covers, written once. The tutorial and every diagnosis
 # with covers_like this job read it. The not-covered screen adds a shop and the assistant itself.
@@ -6,7 +7,6 @@
 jobs:
   - id: adjust-rear-shifting
     title: "Adjust the rear gears"
-    tutorial: adjust-rear-shifting
     covers:
       when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
       not_covered:

@@ -15,6 +15,7 @@ export class Sandbox {
   constructor() {
     this.root = mkdtempSync(join(tmpdir(), 'bike-check-'));
     for (const dir of ['schema', 'content', 'profiles']) cpSync(join(REPO, dir), join(this.root, dir), { recursive: true });
+    cpSync(join(REPO, 'build/3d-manifest.json'), join(this.root, 'build/3d-manifest.json'));
   }
 
   /** Parse a YAML file, change it, write it back. */

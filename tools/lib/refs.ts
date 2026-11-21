@@ -385,9 +385,7 @@ function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list:
 
 function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile> }): void {
   const loc = locOf(e, 'tutorial');
-  const job = x.c.jobs.get(t.job);
-  if (!job) err(x, sub(loc, 'job'), 'unknown-job', `Job "${t.job}" is not in content/jobs.yaml.`);
-  else if (job.def.tutorial !== t.id) warn(x, sub(loc, 'job'), 'job-tutorial-link', `Job ${t.job} does not point back to tutorial ${t.id}.`);
+  if (!x.c.jobs.has(t.job)) err(x, loc, 'unknown-job', `The folder content/tutorials/${t.job} names job "${t.job}", which is not in content/jobs.yaml. Name the folder after its job.`);
   (t.choices ?? []).forEach((ch: string, i: number) => {
     if (!x.c.choices.has(ch)) err(x, sub(loc, 'choices', i), 'unknown-choice', `Choice "${ch}" is not in content/choices.yaml.`);
   });
@@ -433,10 +431,6 @@ function checkDiagnosis(x: Ctx, e: Entry): void {
       return;
     }
     if (!insp.def.hands_off) err(x, l, 'hands-off-only', `Inspection ${ch.inspect} is not hands_off. Diagnoses use only hands-off inspections.`);
-    for (const [s, o] of Object.entries<any>(ch.override ?? {})) {
-      if (!insp.def.states.some((st: any) => st.id === s)) err(x, sub(l, 'override', s), 'unknown-state', `Inspection ${ch.inspect} has no state "${s}".`);
-      if (o && !x.c.jobs.has(o.job)) err(x, sub(l, 'override', s), 'unknown-job', `override names job "${o.job}", which does not exist.`);
-    }
   });
   if (!x.c.jobs.has(d.no_hit.job)) err(x, sub(loc, 'no_hit'), 'unknown-job', `no_hit names job "${d.no_hit.job}", which does not exist.`);
 }
@@ -518,7 +512,6 @@ export function checkStatic(c: Content, issues: Issues): void {
   for (const e of c.profiles.values()) checkProfile(x, e);
   for (const e of c.jobs.values()) {
     const loc = locOf(e, 'job');
-    if (e.def.tutorial && !c.tutorials.has(e.def.tutorial)) err(x, sub(loc, 'tutorial'), 'unknown-tutorial', `Job names tutorial "${e.def.tutorial}", which does not exist in content/tutorials/.`);
     if (e.def.covers) {
       const cl = sub(loc, 'covers');
       checkCondition(x, e.def.covers.when, sub(cl, 'when'));

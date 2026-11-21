@@ -9,7 +9,7 @@ Each area has its own guide, loaded when you work there: `content/CLAUDE.md` (wr
 ```
 docs/            idea.md, approach.md, decisions.md, schema-requests.md, sharing.md (publishing test builds)
 legacy/          old prototype HTML and the brake pad YAML drafts. Reference only, never imported.
-schema/          JSON Schema for every content file (*.schema.json), 3d-catalog.yaml. The reference for every field.
+schema/          JSON Schema for every content file (*.schema.json). The reference for every field.
 content/         facts.yaml, choices.yaml, states.yaml, tools.yaml, inspections.yaml, jobs.yaml,
                  steps/, procedures.yaml, tutorials/<job>/, diagnoses/, checks/, review/
 profiles/        test bikes (facts, answers, tools, journeys), one YAML each

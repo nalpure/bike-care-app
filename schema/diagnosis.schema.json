@@ -21,14 +21,7 @@
           "items": {
             "type": "object",
             "properties": {
-              "inspect": { "$ref": "common.schema.json#/$defs/id" },
-              "override": {
-                "description": "Per state: a different job and urgency, or null for not a hit.",
-                "type": "object",
-                "additionalProperties": {
-                  "anyOf": [{ "$ref": "common.schema.json#/$defs/leadsTo" }, { "type": "null" }]
-                }
-              }
+              "inspect": { "$ref": "common.schema.json#/$defs/id" }
             },
             "required": ["inspect"],
             "additionalProperties": false

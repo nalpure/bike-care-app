@@ -8,7 +8,7 @@ steps:
     title: "Clamp the bike in the stand"
     minutes: 2
     text: "Clamp the seat post in the stand so the rear wheel hangs free. With a heavy bike, ask someone to help you lift it."
-    tools: { required: [bike-stand], helpful: [] }
+    tools: { required: [bike-stand] }
     sets: [bike_in_stand]
     focus: [stand_clamp, seat_post]
     view: whole_bike
@@ -19,7 +19,7 @@ steps:
     title: "Hang the bike up"
     minutes: 3
     text: "Hang the bike by the front of its saddle from a strong hook or rope, so the rear wheel is off the ground, and check that it hangs firmly before you let go. Never use thin string or a coat hook: it can break, and the bike falls."
-    tools: { required: [hook-or-rope], helpful: [] }
+    tools: { required: [hook-or-rope] }
     sets: [bike_hung]
     focus: [saddle, rear_wheel]
     view: whole_bike
@@ -30,7 +30,7 @@ steps:
     title: "Turn the bike over"
     minutes: 2
     text: "Lay a soft mat on the floor and turn the bike over onto its saddle and handlebar. With a heavy bike, ask someone to help."
-    tools: { required: [], helpful: [work-mat] }
+    tools: { helpful: [work-mat] }
     sets: [bike_upside_down]
     focus: [saddle, handlebar]
     view: whole_bike
@@ -41,7 +41,7 @@ steps:
     title: "Take the bike out of the stand"
     minutes: 1
     text: "Hold the bike, open the stand clamp and put the bike on its wheels. With a heavy bike, ask someone to help."
-    tools: { required: [bike-stand], helpful: [] }
+    tools: { required: [bike-stand] }
     clears: [bike_in_stand]
     focus: [stand_clamp]
     view: whole_bike
@@ -52,7 +52,7 @@ steps:
     title: "Take the bike down"
     minutes: 1
     text: "Hold the bike, lift it off the hook or rope and put the rear wheel on the ground."
-    tools: { required: [hook-or-rope], helpful: [] }
+    tools: { required: [hook-or-rope] }
     clears: [bike_hung]
     focus: [saddle, rear_wheel]
     view: whole_bike

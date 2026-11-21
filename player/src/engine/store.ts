@@ -9,7 +9,7 @@ export interface Finding {
   /** position for positional inspections (front, rear) */
   pos?: string;
   state: string;
-  /** job and urgency this state calls for, after diagnosis overrides; none = not a to-do */
+  /** job and urgency this state calls for; none = not a to-do */
   job?: string;
   urgency?: string;
   /** where it was found: diagnosis id, routine check id, or tutorial id */

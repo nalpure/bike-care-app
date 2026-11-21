@@ -95,8 +95,8 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `unknown-part` | pass | Every part referenced exists. |
 | `unknown-fact` | pass | Every fact key referenced exists in facts.yaml. |
 | `unknown-choice` | pass | Every run choice referenced exists. |
-| `unknown-job` | pass | Every leads_to, override and no_hit names an existing job. |
-| `unknown-tutorial` | pass | Every job's tutorial exists. |
+| `unknown-job` | pass | Every leads_to, no_hit and covers_like names an existing job, and every tutorial folder is named after one. |
+| `unknown-tutorial` | pass | Every tutorial a profile journey starts exists. |
 | `unknown-state-label` | pass | Every state label in sets, clears and forbidden_while exists in states.yaml. |
 | `skip-unsafe` | pass | Buttons skip only later plain steps: never safety checks, inspection calls or steps that change state labels. |
 | `unknown-show-how-from` | pass | Every show_how_from names an existing step or procedure. |
@@ -143,7 +143,6 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `missing-safety-check` | pass | Every path, including jump-ahead paths, passes the safety checks for what was opened. |
 | `early-stop-misplaced` | pass | A stop that needs nothing apart sits before the first step that opens something. |
 | `exit-in-finish-with-state` | pass | finish runs only after everything is put back. |
-| `too-many-buttons` | pass | At most three buttons or states per screen. |
 | `choice-not-declared` | pass | A tutorial declares every run choice its conditions read. |
 | `skip-not-ahead` | pass | A button skips only steps that come later in the same sequence. |
 | `inspection-not-applicable` | pass | An inspection called on a path applies to that bike. |

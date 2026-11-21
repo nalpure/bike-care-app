@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bike-app.invalid/schema/tutorial.schema.json",
-  "title": "content/tutorials/<job>/tutorial.yaml: one tutorial per job",
+  "title": "content/tutorials/<job>/tutorial.yaml: one tutorial per job. The folder is named after the job; that name is also the tutorial's id.",
   "$defs": {
     "leafCase": {
       "description": "when plus include.",
@@ -30,8 +30,6 @@
     "tutorial": {
       "type": "object",
       "properties": {
-        "id": { "$ref": "common.schema.json#/$defs/id" },
-        "job": { "$ref": "common.schema.json#/$defs/id" },
         "params": { "$ref": "common.schema.json#/$defs/params" },
         "difficulty": { "type": "integer", "minimum": 1, "maximum": 5 },
         "choices": {
@@ -60,7 +58,7 @@
         },
         "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/topCase" } }
       },
-      "required": ["id", "job", "difficulty", "cases"],
+      "required": ["difficulty", "cases"],
       "additionalProperties": false
     }
   },

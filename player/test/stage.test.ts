@@ -70,15 +70,6 @@ describe('3D registry and manifest', () => {
     expect(file).toEqual(manifest());
   });
 
-  it('provides every name of the interim catalog schema/3d-catalog.yaml', () => {
-    const cat = YAML.parse(readFileSync(join(REPO, 'schema/3d-catalog.yaml'), 'utf8'));
-    const m = manifest();
-    expect(cat.nodes.filter((n: string) => !m.nodes.includes(n))).toEqual([]);
-    expect(cat.views.filter((n: string) => !m.views.includes(n))).toEqual([]);
-    expect(cat.clips.filter((n: string) => !m.clips.includes(n))).toEqual([]);
-    expect(cat.motions.filter((n: string) => !m.motions.includes(n))).toEqual([]);
-  });
-
   it('maps only state labels that exist in content/states.yaml', () => {
     const ids = YAML.parse(readFileSync(join(REPO, 'content/states.yaml'), 'utf8')).states.map((s: any) => s.id);
     expect(Object.keys(LABEL_SCENES).filter((l) => !ids.includes(l))).toEqual([]);

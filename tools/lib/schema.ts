@@ -10,7 +10,7 @@ const BASE = 'https://bike-app.invalid/schema/';
 
 export type SchemaName =
   | 'facts' | 'choices' | 'states' | 'tools' | 'inspections' | 'jobs' | 'steps' | 'procedures'
-  | 'tutorial' | 'case' | 'diagnosis' | 'check' | 'profile' | '3d-catalog' | 'ledger';
+  | 'tutorial' | 'case' | 'diagnosis' | 'check' | 'profile' | 'ledger';
 
 export class SchemaValidator {
   private ajv: Ajv2020;

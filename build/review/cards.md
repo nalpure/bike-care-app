@@ -107,7 +107,7 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 ### Clamp the bike in the stand
 
-<sub>Unit `card:step:clamp-in-stand` · hash `2f540ab30e6d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:clamp-in-stand` · hash `627f7668f32a` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 2 min</sub>
 
@@ -127,7 +127,7 @@ Animation: "Close the clamp around the seat post" (stand_clamp rotate, clockwise
 
 ### Hang the bike up
 
-<sub>Unit `card:step:hang-bike` · hash `9b8735cb982e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:hang-bike` · hash `319aca2f1366` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 3 min</sub>
 
@@ -147,7 +147,7 @@ Animation: "Lift the rear of the bike onto the hook" (bike pull, up, until the r
 
 ### Turn the bike over
 
-<sub>Unit `card:step:turn-upside-down` · hash `921c45c5c354` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:turn-upside-down` · hash `75a66efc971c` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 2 min</sub>
 
@@ -167,7 +167,7 @@ Animation: "Turn the bike over onto the mat" (bike rotate, half a turn)
 
 ### Take the bike out of the stand
 
-<sub>Unit `card:step:unclamp-from-stand` · hash `13ec6b9b362e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:unclamp-from-stand` · hash `273e3c96cda3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 1 min</sub>
 
@@ -188,7 +188,7 @@ Animation: "Open the clamp while you hold the bike" (stand_clamp rotate, counter
 
 ### Take the bike down
 
-<sub>Unit `card:step:take-bike-down` · hash `440710a4e697` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:take-bike-down` · hash `3d4218aaf45a` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 1 min</sub>
 

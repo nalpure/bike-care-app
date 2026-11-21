@@ -431,8 +431,8 @@ function diagnosisTree(c: Content, d: any): { lines: string[]; structure: unknow
     const insp = c.inspections.get(ch.inspect)?.def;
     L.push(`${i + 1}. ${itemTitle(c, 'inspect', ch.inspect)} · ${insp?.minutes} min${insp?.applies_when ? ` · only when ${cond(insp.applies_when)}` : ''}`);
     for (const st of insp?.states ?? []) {
-      const hit = ch.override && st.id in ch.override ? ch.override[st.id] : st.leads_to;
-      L.push(`   - \`${st.id}\` → ${hit ? `job **${c.jobs.get(hit.job)?.def.title ?? hit.job}** (${hit.urgency})${ch.override && st.id in ch.override ? ' (override)' : ''}` : 'next check'}`);
+      const hit = st.leads_to;
+      L.push(`   - \`${st.id}\` → ${hit ? `job **${c.jobs.get(hit.job)?.def.title ?? hit.job}** (${hit.urgency})` : 'next check'}`);
     }
   });
   L.push('', `No hit → job **${c.jobs.get(d.no_hit.job)?.def.title ?? d.no_hit.job}**.`, '');
