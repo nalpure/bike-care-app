@@ -39,6 +39,10 @@ export interface Note {
   flow?: string;
   item?: string;
   unit?: string;
+  /** title of the screen the note was written on */
+  title?: string;
+  /** the last steps before the note, for a quick read; `path` is the whole way */
+  last?: string[];
   path: string[];
   facts: Record<string, Value>;
   bike: string;
@@ -53,6 +57,8 @@ export interface AppData {
   notes: Note[];
   noticeSeen: boolean;
   textOnly: boolean;
+  /** where the user put the assistant button: the screen edge it sticks to and its height (0 top, 1 bottom) */
+  assistant?: { side: 'left' | 'right'; y: number };
 }
 
 /** A test bike from the bundle (demo_bikes). */

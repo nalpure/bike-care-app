@@ -35,6 +35,16 @@ function head(app: App, v: PickView, title: string, back: () => void): HTMLEleme
   );
 }
 
+/** What the back arrow does on each step; the edge swipe and the browser's back do the same. */
+export function pickBack(app: App, v: PickView): void {
+  const step = v.step;
+  const to = (s: PickStep) => app.go({ ...v, step: s });
+  if (step.k === 'list') app.go({ k: 'home' });
+  else if (step.k === 'unknown') to({ k: 'list' });
+  else if (step.k === 'form') to({ k: 'unknown' });
+  else to({ k: 'form', form: step.form });
+}
+
 export function renderPick(app: App, v: PickView): HTMLElement {
   const step = v.step;
   const to = (s: PickStep) => app.go({ ...v, step: s });

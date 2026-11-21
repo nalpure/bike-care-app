@@ -151,6 +151,12 @@ interface Snapshot {
   session: string;
 }
 
+/** How a screen without a card is named in notes. */
+const SCREEN_TITLE: Record<string, string> = {
+  tools: 'Tools list', parts: 'Parts you need', exit: 'End of the guide', 'not-covered': 'Not covered yet', job: 'What now?',
+  shop: 'For the shop', done: 'Done', todo: 'To-do result', keep: 'Keep what was learned', position: 'Which one?', 'tool-question': 'Do you have this tool?',
+};
+
 // ---------------------------------------------------------------- journey
 
 /** Whether what the flow learns goes onto a garage bike. Asked once per flow (the keep screen). */
@@ -238,7 +244,7 @@ export class Journey {
   }
 
   /** What the assistant and feedback notes receive. */
-  context(): { flow?: string; item?: string; unit?: string; facts: Record<string, Value>; state: string[]; path: string[] } {
+  context(): { flow?: string; item?: string; unit?: string; title?: string; facts: Record<string, Value>; state: string[]; path: string[] } {
     const s = this.st.stage;
     const out = { facts: { ...this.bike.facts }, state: [] as string[], path: [...this.shownPath] } as ReturnType<Journey['context']>;
     if (s.k === 'diag' || s.k === 'routine') out.flow = s.id;
@@ -247,13 +253,18 @@ export class Journey {
     if (scr.kind === 'card') {
       out.item = scr.card.id;
       out.unit = scr.card.unit;
+      out.title = scr.card.title;
       out.state = scr.card.stage.labels;
     } else if (scr.kind === 'question') {
       out.item = scr.key;
       out.unit = `card:fact:${scr.key}`;
+      out.title = this.c.t(scr.fact?.question) || scr.key;
     } else if (scr.kind === 'choice') {
       out.item = scr.choice.id;
       out.unit = `card:choice:${scr.choice.id}`;
+      out.title = scr.choice.question;
+    } else if (scr.kind !== 'closed') {
+      out.title = SCREEN_TITLE[scr.kind] ?? scr.kind;
     }
     return out;
   }

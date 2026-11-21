@@ -28,6 +28,7 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
                                    v
                               ui/app.ts (shell, tabs, overlays) -> ui/flow.ts (journey screens, card) / ui/home.ts (home, garage list)
                                    |                                  ui/pick.ts (which bike, before a flow) / ui/bike.ts (bike page) / ui/swipe.ts
+                                   |                                  ui/assistant.ts (floating button) / ui/edge.ts (edge swipe back)
                                    |  stage.show(StageView)
                                    v
                               stage/three-stage.ts (ThreeStage)  or  ui/stage.ts (PlaceholderStage)
@@ -37,6 +38,9 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 - **ui/** renders one screen at a time with `h()` from `dom.ts`. `flow.ts` has every journey screen; one card component serves inspections, steps and checks. `#root[data-view]` names the screen (`journey:card:<id>`); the e2e tests and `window.__app` (the App) rely on it.
 - **stage/** is the 3D view. Its element is created once and moved into each card, so the canvas carries on while the text changes. On an exit reached while something is still apart, the stage shows how the bike is held. Without WebGL it shows a text box; if three.js can't start at all, `main.ts` falls back to `PlaceholderStage`.
 - **Storage:** `store.ts`, key `bike-app/v2`, wrapped so the app works without localStorage. It holds the garage (`bikes[]`: name, facts, findings, `added`, `done` per job, `kmPerWeek`), the user's tools, notes and settings. No bike is "in use": every flow starts on `ui/pick.ts`. A first start and a reset fill the garage from the bundle's `demo_bikes`. Version 1 data is dropped, not migrated.
+- **Navigation:** `App.backTarget()` says what Back does on the current screen (null on the main tabs); the arrow, the edge swipe (`ui/edge.ts`) and the browser's back (`popstate`; the app keeps one history entry while it can go back) all call `App.goBack()`. On a card, Next, the swipe up (`attachSwipeUp` in `flow.ts`, touch events on the text only) and the arrow keys go through `App.advance()`, which slides the text out before the next one slides in from below (not with reduced motion). The progress bar is vertical, left of the text.
+- **Assistant button:** `ui/assistant.ts`, one button on every screen. Drag it; it sticks to the left or right edge and `store.data.assistant` keeps `{ side, y }`. `placeAssistant` moves it (not saved) out of the way of `PROTECTED` buttons and, where possible, text; add a selector there when a new screen has a button it must not cover.
+- **Notes:** a note keeps the screen (`unit`, `title`), the bike, the flow and the last three steps (`last`); the whole `path` and the facts are under Details in the Notes tab and at the end of the exported text.
 - **Bikes and flows:** `Journey` works on a copy of the chosen bike (or an unknown bike, `null`). What it learned reaches the garage only through the keep screen (`keepSave`, once per flow); findings and finished jobs reach the garage bike at once. `engine/bikes.ts` has the complete-bike lookup (a stub over `demo_bikes`), the range check and the geometry fit checks. `engine/service.ts` has the traffic lights.
 
 ## The 3D stage (`player/src/stage/`)
@@ -92,6 +96,8 @@ The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. 
 
 - Shop search and the Shop tab are placeholders by design. The assistant panel only shows the context it would receive.
 - Question pictures are grey tiles until SR-03.
+- The edge swipe works from the first 24 px of the left edge only. Safari on iOS has its own edge swipe there; the app keeps a history entry so that swipe also goes back in the app, and ignores a browser back within 0.7 s of its own swipe. Chrome on Android uses a system gesture the page never sees; it goes through the same history entry.
+- Swipe up works with touch only (not a mouse drag); the e2e test sends touch events through the Chrome DevTools protocol.
 - Service intervals are unverified placeholders from the content; the lights only mean something once they are checked.
 - The bike page's 3D preview and the garage pictures need the 3D stage; with `PlaceholderStage` they are left out.
 - `npm audit` reports a ReDoS in `picomatch` (dev tools only, nothing in `dist/`).

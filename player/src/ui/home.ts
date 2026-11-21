@@ -1,7 +1,7 @@
 // Home, garage, bike sheet, shop placeholder and feedback notes.
 
 import { UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
-import type { Bike } from '../engine/store.js';
+import type { Bike, Note } from '../engine/store.js';
 import type { App } from './app.js';
 import { h, icon, ICON } from './dom.js';
 import { redBanner } from './bike.js';
@@ -38,34 +38,52 @@ export function renderHome(app: App): HTMLElement {
   const row = (title: string, sub: string, onclick: () => void, badge?: HTMLElement | null, test?: string) =>
     h('li', h('button.li', { onclick, 'data-test': test }, h('span.tx', h('b', title), sub ? h('span', sub) : null), badge ?? null));
 
+  // To-do items come after the repair choices, unless one says not to ride: that one comes first.
+  const todoBlock = todos.length
+    ? h('div.section', { 'data-test': 'todo-block' },
+      h('span.eyebrow', 'To do'),
+      h('ul.list', todos.map(({ b, f }) => {
+        const st = c.inspection(f.inspection)?.states.find((x: any) => x.id === f.state);
+        return row(c.jobTitle(f.job!), [b.name, st?.label].filter(Boolean).join(' · '), () => app.openTodo(b, f), urgencyBadge(f.urgency), `todo-${f.job}`);
+      })),
+    )
+    : null;
+  const urgent = todos.some(({ f }) => f.urgency === 'do_not_ride');
+  const guides = c.tutorialJobs();
+  const check = c.routineCheck();
+
   return h('section.screen',
     brand(app, 'Repair'),
     h('div.scroll',
-      todos.length
+      urgent ? todoBlock : null,
+      h('div.section',
+        h('h1.h1', 'What is wrong?'),
+        h('div.symptoms', c.diagnoses().map((d) =>
+          h('button.card.symptom', { 'data-test': `diagnosis-${d.id}`, onclick: () => app.start({ diagnosis: d.id }) },
+            h('b.t', d.symptom),
+            h('span.s', 'A few checks to find the cause'),
+          ))),
+        h('p.lead', 'Not sure? Ask the assistant with the sparkle button.'),
+      ),
+      check
         ? h('div.section',
-          h('span.eyebrow', 'To do'),
-          h('ul.list', todos.map(({ b, f }) => {
-            const st = c.inspection(f.inspection)?.states.find((x: any) => x.id === f.state);
-            return row(c.jobTitle(f.job!), [b.name, st?.label].filter(Boolean).join(' · '), () => app.openTodo(b, f), urgencyBadge(f.urgency), `todo-${f.job}`);
+          h('span.eyebrow', 'Check the whole bike'),
+          h('button.card', { 'data-test': 'routine', onclick: () => app.start({ check: check.id }) },
+            h('b.t', check.title),
+            h('span.s', 'Look over the bike. Anything that needs work lands on its to-do list.'),
+          ),
+        )
+        : null,
+      urgent ? null : todoBlock,
+      guides.length
+        ? h('details.guides', { 'data-test': 'guides' },
+          h('summary', h('span', 'All guides'), h('span.badge', String(guides.length))),
+          h('ul.list', guides.map((j) => {
+            const t = c.ix.tutorials.get(j.tutorial);
+            return row(j.title, t?.difficulty ? `Difficulty ${t.difficulty} of 3` : '', () => app.start({ tutorial: j.tutorial }), null, `tutorial-${j.tutorial}`);
           })),
         )
         : null,
-      h('h1.h1', 'What is wrong?'),
-      h('ul.list', c.diagnoses().map((d) => row(d.symptom, 'A few checks to find the cause', () => app.start({ diagnosis: d.id }), null, `diagnosis-${d.id}`))),
-      h('div.section',
-        h('span.eyebrow', 'Guides'),
-        h('ul.list', c.tutorialJobs().map((j) => {
-          const t = c.ix.tutorials.get(j.tutorial);
-          return row(j.title, t?.difficulty ? `Difficulty ${t.difficulty} of 3` : '', () => app.start({ tutorial: j.tutorial }), h('span.badge.ready', 'Guide'), `tutorial-${j.tutorial}`);
-        })),
-      ),
-      c.routineCheck()
-        ? h('div.section',
-          h('span.eyebrow', 'Check the whole bike'),
-          h('ul.list', row(c.routineCheck().title, 'Look over the bike. Anything that needs work lands on its to-do list.', () => app.start({ check: c.routineCheck().id }), null, 'routine')),
-        )
-        : null,
-      h('p.lead', 'Not sure what is wrong? Ask the assistant with the button at the bottom right.'),
     ),
   );
 }
@@ -149,20 +167,58 @@ export function renderShopTab(app: App): HTMLElement {
 
 // ---------------------------------------------------------------- feedback notes
 
+/** Where a note was written: the screen's unit id and title. */
+function screenOf(n: Note): string {
+  return [n.unit ?? n.item ?? n.flow ?? 'general', n.title].filter(Boolean).join(' · ');
+}
+
+/**
+ * The notes as text to send. Each note is short: the screen (unit and title), the bike, the flow
+ * and the last steps. The whole path and the bike's facts follow at the end, under "Details".
+ */
 export function notesText(app: App): string {
   const notes = app.store.data.notes;
   const L = [`Feedback notes (${notes.length}) · content ${app.c.bundle.content_hash}`, ''];
   notes.forEach((n, i) => {
     L.push(`#${i + 1} · ${n.date.slice(0, 16).replace('T', ' ')}`);
+    L.push(`Screen: ${screenOf(n)}`);
     L.push(`Note: ${n.text}`);
-    if (n.flow) L.push(`Flow: ${n.flow}`);
-    if (n.item) L.push(`Step: ${n.item}`);
-    if (n.unit) L.push(`Review unit: ${n.unit}`);
-    if (n.path.length) L.push(`Path: ${n.path.join(' > ')}`);
-    L.push(`Bike: ${n.bike}; ${Object.entries(n.facts).map(([k, v]) => `${k}=${v}`).join(', ') || 'no facts'}`);
+    L.push(`Bike: ${n.bike}${n.flow ? ` · Flow: ${n.flow}` : ''}`);
+    const last = n.last ?? n.path.slice(-3);
+    if (last.length) L.push(`Last steps: ${last.join(' > ')}`);
     L.push('');
   });
+  if (notes.length) {
+    L.push('Details', '');
+    notes.forEach((n, i) => {
+      L.push(`#${i + 1} Path: ${n.path.join(' > ') || '(none)'}`);
+      L.push(`#${i + 1} Facts: ${Object.entries(n.facts).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);
+    });
+    L.push('');
+  }
   return L.join('\n');
+}
+
+/** Notes grouped by the screen they were written on, newest group first. */
+function noteGroups(notes: Note[]): HTMLElement {
+  const groups = new Map<string, Note[]>();
+  for (const n of notes) {
+    const k = n.unit ?? n.item ?? n.flow ?? 'general';
+    groups.set(k, [...(groups.get(k) ?? []), n]);
+  }
+  return h('div.ngroups', [...groups.values()].reverse().map((g) =>
+    h('section.ngroup', { 'data-test': 'note-group' },
+      h('div.ghead', h('b', g[0].title ?? g[0].unit ?? g[0].flow ?? 'General'), h('span.badge', String(g.length))),
+      h('span.s', g[0].unit ?? g[0].flow ?? ''),
+      g.map((n) => h('div.note1', { 'data-test': 'note-item' },
+        h('p', n.text),
+        h('span.s', [n.bike, n.flow, n.date.slice(0, 10)].filter(Boolean).join(' · ')),
+        (n.last ?? n.path.slice(-3)).length ? h('span.s', `Last steps: ${(n.last ?? n.path.slice(-3)).join(' > ')}`) : null,
+        h('details', h('summary.s', 'Details'),
+          h('p.s', `Path: ${n.path.join(' > ') || '(none)'}`),
+          h('p.s', `Facts: ${Object.entries(n.facts).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`)),
+      )),
+    )));
 }
 
 export function renderNotes(app: App): HTMLElement {
@@ -189,9 +245,7 @@ export function renderNotes(app: App): HTMLElement {
     brand(app, 'Notes'),
     h('div.scroll',
       h('p.lead', 'Your feedback on this test build. Tap "Note" on any step to add one. Send them to the team when you are done.'),
-      notes.length
-        ? h('ul.list', notes.map((n) => h('li', h('div.li', h('span.tx', h('b', n.text), h('span', [n.unit ?? n.flow ?? 'general', n.date.slice(0, 10)].join(' · ')))))))
-        : h('div.note', 'No notes yet.'),
+      notes.length ? noteGroups(notes) : h('div.note', 'No notes yet.'),
       notes.length ? h('div.field',
         h('span.lbl', 'Text to send'),
         h('textarea.text', { readonly: true, rows: 8, 'data-test': 'notes-export' }, text),

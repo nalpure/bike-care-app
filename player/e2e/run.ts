@@ -34,7 +34,23 @@ async function view(page: Page): Promise<string> {
 }
 
 async function click(page: Page, test: string): Promise<void> {
+  // The guides sit in a collapsed list on the repair menu.
+  if (test.startsWith('tutorial-')) {
+    const g = page.locator('details.guides');
+    if ((await g.count()) && !(await g.evaluate((d: HTMLDetailsElement) => d.open))) await g.locator('summary').click();
+  }
   await page.locator(`[data-test="${test}"]`).first().click();
+}
+
+/** A one-finger drag by touch (the browser's own touch events, like a thumb), for the swipe tests. */
+async function swipe(page: Page, from: [number, number], to: [number, number]): Promise<void> {
+  const cdp = await page.context().newCDPSession(page);
+  const send = (type: string, p?: [number, number]) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p[0], y: p[1] }] : [] });
+  await send('touchStart', from);
+  for (let i = 1; i <= 8; i++) await send('touchMove', [from[0] + ((to[0] - from[0]) * i) / 8, from[1] + ((to[1] - from[1]) * i) / 8]);
+  await send('touchEnd');
+  await cdp.detach();
+  await page.waitForTimeout(150);
 }
 
 /** The first screen of a flow: the profile's test bike from the garage, or an unknown bike. */
@@ -174,6 +190,11 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     await click(page, 'pick-unknown');
     await shot('02-unknown');
     await click(page, 'unknown-questions');
+    // Help behind the question mark, ending with the line about the assistant.
+    expect(await page.locator('[data-test="help-text"]').isHidden(), 'the help is open before it is asked for');
+    await click(page, 'help');
+    expect(/assistant can help/.test((await page.locator('[data-test="help-text"]').textContent()) ?? ''), 'the help does not mention the assistant');
+    await shot('02b-help');
     await click(page, 'answer-derailleur');
     await click(page, 'answer-mechanical');
     expect(await view(page) === 'journey:keep:', 'no keep screen after the questions');
@@ -182,6 +203,8 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     await shot('03-keep-new');
     await click(page, 'keep-save');
     await click(page, 'choice-stand');
+    expect(await page.locator('[data-test="tier-needed"]').count() === 1, 'the tools screen has no "Needed" tier');
+    await shot('03b-tools');
     await click(page, 'start');
     await click(page, 'note');
     await page.fill('[data-test="note-text"]', 'Which side is behind?');
@@ -194,9 +217,10 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     await shot('06-text-only');
     await click(page, 'close');
     await page.locator('.tabbar button', { hasText: 'Notes' }).click();
+    expect(await page.locator('[data-test="note-group"]').count() === 1, 'the notes are not grouped by screen');
     await shot('07-notes');
     const exported = await page.locator('[data-test="notes-export"]').inputValue();
-    const want = ['Review unit: card:inspection:derailleur-alignment', 'Flow: adjust-rear-shifting', 'drive.gear_type=derailleur', 'Which side is behind?', 'Bike: Blue city bike'];
+    const want = ['Screen: card:inspection:derailleur-alignment', 'Flow: adjust-rear-shifting', 'Last steps:', 'Details', 'drive.gear_type=derailleur', 'Which side is behind?', 'Bike: Blue city bike'];
     const missing = want.filter((w) => !exported.includes(w));
     expect(!missing.length, `notes export lacks: ${missing.join('; ')}`);
 
@@ -362,6 +386,94 @@ async function bikePage(browser: import('playwright').Browser): Promise<Result> 
   }
 }
 
+/** Menu, swipe up for the next step, back by the screen edge and by the browser, and the assistant button. */
+async function navigation(browser: import('playwright').Browser): Promise<Result> {
+  const id = 'extras/navigation';
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const dir = join(SHOTS, 'portrait', 'navigation');
+  mkdirSync(dir, { recursive: true });
+  try {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.goto(URL);
+    await click(page, 'notice-ok');
+    await page.addStyleTag({ content: '.toast { display: none !important; }' });
+    const expect = (ok: boolean, what: string) => ok || errors.push(what);
+    const shot = (name: string) => page.screenshot({ path: join(dir, `${name}.png`) });
+
+    // The repair menu: symptoms first, the check as a card, the guides collapsed.
+    expect(await page.locator('details.guides[open]').count() === 0, 'the guides are open by default');
+    expect(await page.locator('.symptoms [data-test^="diagnosis-"]').count() > 0, 'no symptoms on the repair menu');
+    await shot('01-menu');
+
+    // The assistant button: drag it to the left edge; it stays there on every screen.
+    const fab = page.locator('[data-test="assistant"]');
+    const c0 = (await fab.boundingBox())!;
+    await page.mouse.move(c0.x + c0.width / 2, c0.y + c0.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(60, 300, { steps: 6 });
+    await page.mouse.move(20, 300, { steps: 4 });
+    await page.mouse.up();
+    await page.waitForTimeout(300);
+    expect((await fab.getAttribute('data-side')) === 'left', 'the assistant button did not stick to the left edge');
+    expect(await page.locator('.modal').count() === 0, 'dragging the assistant button opened it');
+    await shot('02-assistant-left');
+    await page.locator('.tabbar button', { hasText: 'Garage' }).click();
+    expect((await fab.getAttribute('data-side')) === 'left', 'the assistant button moved to another side on the garage screen');
+
+    // A card: swipe up for the next step; the 3D view does not count.
+    await page.locator('.tabbar button', { hasText: 'Repair' }).click();
+    await click(page, 'diagnosis-gears-shift-badly');
+    await click(page, 'pick-road-bike-stand');
+    expect((await view(page)).startsWith('journey:card'), `no card after choosing the bike (${await view(page)})`);
+    const first = await view(page);
+    await page.locator('[data-test^="btn-"]').first().click();
+    const guide = (await page.locator('.guide').boundingBox())!;
+    const mid = guide.x + guide.width / 2;
+    const stage = await page.locator('.stage').boundingBox();
+    if (stage) await swipe(page, [stage.x + stage.width / 2, stage.y + stage.height - 20], [stage.x + stage.width / 2, stage.y + 20]);
+    expect(await view(page) === first, 'a swipe on the 3D view went to the next step');
+    expect(await page.locator('.cardside .progress').count() === 1, 'no progress bar beside the text');
+    await swipe(page, [mid, guide.y + guide.height - 30], [mid, guide.y + 20]);
+    const second = await view(page);
+    expect(second !== first && second.startsWith('journey:card'), `a swipe up did not go to the next step (${first} -> ${second})`);
+    // The assistant button keeps clear of Back and Next.
+    const clear = await page.evaluate(() => {
+      const a = document.querySelector('.assist')!.getBoundingClientRect();
+      return [...document.querySelectorAll('.pager .btn')].every((b) => {
+        const r = b.getBoundingClientRect();
+        return a.right <= r.left || a.left >= r.right || a.bottom <= r.top || a.top >= r.bottom;
+      });
+    });
+    expect(clear, 'the assistant button covers Back or Next');
+    await shot('03-card-after-swipe');
+
+    // Back by the left screen edge, as the arrow does.
+    await swipe(page, [4, 400], [280, 410]);
+    expect(await view(page) === first, `the edge swipe did not go back (${await view(page)})`);
+    // Back by the browser's own back (a button, or Safari's edge swipe).
+    await page.waitForTimeout(800); // the app ignores a browser back right after its own edge swipe
+    await page.goBack().catch(() => undefined);
+    await page.waitForTimeout(150);
+    // On a card, Back first undoes the tap, as the arrow does.
+    expect(await page.locator('[data-test="verdict"]').count() === 0, 'the browser back did not undo the tap on the card');
+    await swipe(page, [4, 400], [280, 410]);
+    expect(await view(page) === 'pick:list', `the edge swipe on the first card did not leave it (${await view(page)})`);
+    await swipe(page, [4, 400], [280, 410]);
+    expect(await view(page) === 'home', `the edge swipe on the bike choice did not lead home (${await view(page)})`);
+    // No edge swipe on a main tab: nothing to go back to.
+    await swipe(page, [4, 400], [280, 410]);
+    expect(await view(page) === 'home', 'an edge swipe on the repair menu changed the screen');
+    return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
+  } catch (e: any) {
+    await shot_fail(page, dir);
+    return { id, ending: 'crashed', expected: 'ok', error: String(e?.message ?? e).split('\n')[0] };
+  } finally {
+    await ctx.close();
+  }
+}
+
 async function shot_fail(page: Page, dir: string): Promise<void> {
   await page.screenshot({ path: join(dir, 'failed.png') }).catch(() => undefined);
 }
@@ -418,6 +530,7 @@ async function main(): Promise<void> {
     }
     results.push(await extras(browser));
     results.push(await bikePage(browser));
+    results.push(await navigation(browser));
   } finally {
     await browser.close();
     server.kill();

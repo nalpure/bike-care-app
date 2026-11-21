@@ -187,10 +187,14 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .side { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 .guide { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
 .step { display: flex; flex-direction: column; gap: 9px; padding-block: 2px 12px; }
-.step.in-next { animation: in-next .22s ease-out; }
-.step.in-back { animation: in-back .22s ease-out; }
-@keyframes in-next { from { transform: translateX(28px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes in-back { from { transform: translateX(-28px); opacity: 0; } to { transform: none; opacity: 1; } }
+.step.in-next { animation: in-next .24s ease-out; }
+.step.in-back { animation: in-back .24s ease-out; }
+.step.out-next { animation: out-next .17s ease-in forwards; }
+.step.out-back { animation: out-back .17s ease-in forwards; }
+@keyframes in-next { from { transform: translateY(46px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes in-back { from { transform: translateY(-46px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes out-next { to { transform: translateY(-46px); opacity: 0; } }
+@keyframes out-back { to { transform: translateY(46px); opacity: 0; } }
 .kicker { font: 500 11.5px/1.25 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); display: flex; align-items: center; gap: 8px; }
 .kicker .sp { flex: 1; }
 .step h2 { font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 6.6vw, 33px); line-height: 1.02; letter-spacing: .005em; text-wrap: balance; }
@@ -219,12 +223,10 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .exitapp .scroll { padding-bottom: 12px; }
 
 .fab { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); padding: 0; }
-.assist { position: fixed; z-index: 60; right: var(--gutter-r); bottom: calc(68px + env(safe-area-inset-bottom, 0px)); width: 50px; height: 50px; border-radius: 16px; border: 0; background: var(--ink); color: var(--bg); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
-.assist svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-/* Inside a journey the assistant sits top right, clear of Next and the main buttons. */
-.assist.low { top: calc(4px + env(safe-area-inset-top, 0px)); bottom: auto; width: 44px; height: 44px; border-radius: 12px; box-shadow: none; }
-.assist.low svg { width: 21px; height: 21px; }
-[data-view^="journey"] .gtop, [data-view^="journey"] .wh, [data-view^="pick"] .wh { padding-right: 52px; }
+.assist { position: fixed; z-index: 60; left: auto; top: 70%; width: 52px; height: 52px; border-radius: 18px; border: 2px solid var(--ink); background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; padding: 0; box-shadow: 0 6px 18px rgba(0,0,0,.28); touch-action: none; transition: top .2s ease, left .2s ease; }
+.assist.dragging { transition: none; box-shadow: 0 10px 26px rgba(0,0,0,.38); transform: scale(1.06); }
+.assist svg { width: 28px; height: 28px; stroke: currentColor; fill: currentColor; stroke-width: 1.2; stroke-linejoin: round; }
+.assist .ai { position: absolute; right: -6px; top: -8px; background: var(--ink); color: var(--bg); font: 700 10px/1 var(--f-mono); letter-spacing: .04em; padding: 3px 5px; border-radius: 6px; }
 
 /* Garage rows: swipe left to reveal the delete button behind the card. */
 .swipe { position: relative; border-radius: 14px; overflow: hidden; }
@@ -261,7 +263,7 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
   .screen:has(.exitapp) .wh { max-width: none; margin-inline: -8px 0; }
   .exitapp .scroll, .exitapp .cta { max-width: none; }
 }
-@media (prefers-reduced-motion: reduce) { .step.in-next, .step.in-back { animation: none; } .progress i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .step.in-next, .step.in-back, .step.out-next, .step.out-back { animation: none; } .progress i { transition: none; } .assist { transition: none; } }
 
 /* Garage list: a picture of the bike next to its name. */
 .bikecard { flex-direction: row; align-items: center; gap: 12px; }
@@ -320,3 +322,52 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .dot.red { background: var(--bad); }
 .inl { display: flex; gap: 8px; }
 .inl .text { flex: 1; min-width: 0; }
+
+/* Card: the progress bar runs down the left of the text; the text slides up for the next step. */
+.cardside { flex-direction: row; gap: 10px; }
+.cardside .progress { width: 4px; height: auto; align-self: stretch; margin-block: 2px 4px; }
+.cardside .progress i { width: 100%; transition: height .25s; }
+.cardside .sidemain { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+
+/* Help behind a "?" on a question. */
+.qhead { display: flex; align-items: flex-start; gap: 10px; }
+.qhead .h2q { flex: 1; }
+.helpbtn { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--accent-text); background: var(--panel); color: var(--accent-text); font: 700 20px/1 var(--f-display); }
+.helpbtn[aria-expanded="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.helpbox { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; }
+.helpbox .s { color: var(--ink2); font-size: 14px; border-top: 1px solid var(--line); padding-top: 8px; }
+
+/* Tools: three tiers. */
+.tier { display: flex; flex-direction: column; gap: 6px; }
+.tierhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tierhead b { font-family: var(--f-display); font-size: 22px; line-height: 1.1; }
+.tier > .s { font-size: 14px; color: var(--ink2); }
+.tier .group { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding-inline: 10px; }
+.tier .group > :last-child { border-bottom: 0; }
+.tier.needed .group { border-color: var(--accent-text); }
+.tier.helpful .tierhead b { font-size: 19px; color: var(--ink2); }
+
+/* Repair menu: symptoms big, the check as one card, guides collapsed. */
+.symptoms { display: flex; flex-direction: column; gap: 10px; }
+.card.symptom { padding: 18px 16px; border-width: 2px; border-color: var(--accent-text); }
+.card.symptom b.t { font-size: 28px; }
+.card.symptom .s { font-size: 15px; }
+.section { display: flex; flex-direction: column; gap: 10px; }
+.guides { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 0 12px; }
+.guides summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 600; font-size: 16px; list-style: none; }
+.guides summary::-webkit-details-marker { display: none; }
+.guides summary::after { content: "▾"; margin-left: 10px; color: var(--ink2); }
+.guides[open] summary::after { content: "▴"; }
+.guides summary .badge { margin-left: auto; }
+.guides .li { min-height: 48px; }
+.guides .li .tx b { font-size: 16px; }
+
+/* Notes grouped by screen. */
+.ngroups { display: flex; flex-direction: column; gap: 14px; }
+.ngroup { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.ghead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ghead b { font-size: 17px; }
+.note1 { border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.note1 .s, .ngroup > .s { font-size: 13px; color: var(--ink2); }
+.note1 details p { margin-top: 4px; word-break: break-word; }
+.note1 summary { cursor: pointer; }

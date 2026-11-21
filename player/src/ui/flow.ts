@@ -159,7 +159,19 @@ function renderQuestion(app: App, j: Journey, s: Extract<Screen, { kind: 'questi
   const values = c.factValues(s.key);
   const answer = (v: any) => app.act((x) => x.answerFact(s.key, v), 'next');
   const pic = q?.picture;
-  const body: (HTMLElement | null)[] = [h('h1.h2q', q ? c.t(q) : s.key)];
+  const helpText = f?.help ? c.t(f.help) : '';
+  const box = h('div.helpbox', { hidden: true, 'data-test': 'help-text' },
+    h('p', helpText),
+    h('p.s', 'Still not sure? The assistant can help.'),
+  );
+  const hb = h('button.helpbtn', {
+    'aria-label': 'Help with this question', 'aria-expanded': 'false', 'data-test': 'help',
+    onclick: () => {
+      box.hidden = !box.hidden;
+      hb.setAttribute('aria-expanded', String(!box.hidden));
+    },
+  }, '?');
+  const body: (HTMLElement | null)[] = [h('div.qhead', h('h1.h2q', q ? c.t(q) : s.key), helpText ? hb : null), helpText ? box : null];
   if (values.length) {
     body.push(h('div.qopts', values.map((v) =>
       h('button.opt', { 'data-test': `answer-${v}`, onclick: () => answer(v) },
@@ -198,25 +210,27 @@ function renderTools(app: App, j: Journey, s: Extract<Screen, { kind: 'tools' }>
   const tick = (id: string) => {
     const t = c.tool(id);
     const on = s.ticked.includes(id);
-    const extra: string[] = [];
-    if (t?.substitutes?.length) extra.push(`Or: ${t.substitutes.map((x: any) => x.name).join('; ')}`);
     return h('button.tick', { role: 'checkbox', 'aria-checked': String(on), 'data-test': `tool-${id}`, onclick: () => app.act((x) => x.toggleTool(id)) },
       h('span.box', icon(ICON.check)),
-      h('span.tx', h('b', c.toolName(id)), extra.map((e) => h('span', e))),
+      h('span.tx', h('b', c.toolName(id)), t?.substitutes?.length ? h('span', `Or: ${t.substitutes.map((x: any) => x.name).join('; ')}`) : null),
     );
   };
-  const missing = s.required.filter((x) => !s.ticked.includes(x));
+  // A set the bike's data has decided is one tool that is simply needed.
+  const needed = [...s.required, ...s.oneOf.filter((u) => u.decided).flatMap((u) => u.options)];
+  const open = s.oneOf.filter((u) => !u.decided);
+  const count = (ids: string[]) => `${ids.filter((x) => s.ticked.includes(x)).length} of ${ids.length}`;
+  /** one tier: a heading with what it means, the tools, and how many are ticked */
+  const tier = (cls: string, title: string, sub: string | null, ids: string[]) => h(`section.tier.${cls}`, { 'data-test': `tier-${cls}` },
+    h('div.tierhead', h('b', title), h('span.badge', count(ids))),
+    sub ? h('p.s', sub) : null,
+    h('div.group', ids.map(tick)),
+  );
+  const missing = needed.filter((x) => !s.ticked.includes(x));
   return screenWith(app, top(app, 'Your tools', 'Before you start'), [
     h('p.lead', 'Tick what you have. The guide uses this to pick its steps.'),
-    s.required.length ? h('div.field', h('span.eyebrow', 'You need'), h('div.group', s.required.map(tick))) : null,
-    // Minimal version; session A2 designs this screen.
-    ...s.oneOf.map((u) => {
-      const set = c.ix.tool_sets.get(u.set);
-      return h('div.field', h('span.eyebrow', u.decided ? 'You need' : 'One of these, depending on your bike'),
-        !u.decided && set?.tell_apart ? h('p.s', set.tell_apart) : null,
-        h('div.group', u.options.map(tick)));
-    }),
-    s.helpful.length ? h('div.field', h('span.eyebrow', 'Helpful'), h('div.group', s.helpful.map(tick))) : null,
+    needed.length ? tier('needed', 'Needed', 'The guide cannot be done properly without these.', needed) : null,
+    ...open.map((u) => tier('oneof', 'One of these, depending on your bike', c.ix.tool_sets.get(u.set)?.tell_apart ?? 'Use the one that fits your bike.', u.options)),
+    s.helpful.length ? tier('helpful', 'Helpful', 'Not needed, but they make it easier.', s.helpful) : null,
     missing.length ? h('div.note', h('span', 'Not ticked yet: '), h('strong', missing.map((x) => c.toolName(x)).join('; ')), h('span', '. Some steps need it. You can still start and read along, or take the bike to a shop.')) : null,
   ], [h('button.btn.primary.wide', { 'data-test': 'start', onclick: () => app.act((x) => x.startTutorial(), 'next') }, 'Start the guide')]);
 }
@@ -265,16 +279,18 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   );
 
   const guide = h('div.guide', step);
-  attachSwipe(guide, () => card.nextEnabled && app.act((x) => x.next(), 'next'), () => app.back());
+  attachSwipeUp(guide, () => card.nextEnabled && app.advance((x) => x.next(), 'next'));
 
   const appEl = h(`main.app${textOnly ? '.textonly' : ''}`,
     textOnly ? null : app.stage.el,
-    h('section.side',
-      h('div.progress', { role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(card.progress * 100) }, h('i', { style: `width:${Math.round(card.progress * 100)}%` })),
-      guide,
-      h('div.pager',
-        h('button.btn', { 'data-test': 'back', onclick: () => app.back() }, 'Back'),
-        h('button.btn.primary', { 'data-test': 'next', disabled: !card.nextEnabled, onclick: () => app.act((x) => x.next(), 'next') }, card.nextLabel),
+    h('section.side.cardside',
+      h('div.progress', { role: 'progressbar', 'aria-orientation': 'vertical', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(card.progress * 100) }, h('i', { style: `height:${Math.round(card.progress * 100)}%` })),
+      h('div.sidemain',
+        guide,
+        h('div.pager',
+          h('button.btn', { 'data-test': 'back', onclick: () => app.back() }, 'Back'),
+          h('button.btn.primary', { 'data-test': 'next', disabled: !card.nextEnabled, onclick: () => app.advance((x) => x.next(), 'next') }, card.nextLabel),
+        ),
       ),
     ),
   );
@@ -289,29 +305,35 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   );
 }
 
-/** Horizontal swipe: left goes on, right goes back. Vertical scrolling is left alone. */
-function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): void {
+/**
+ * Swipe up on the text for the next step. Only a swipe that starts when the text is already
+ * scrolled to its end counts, and only if the text did not scroll during it, so reading a long step
+ * never moves on by itself. The 3D view is outside `el`, so dragging it never counts. Touch events,
+ * because the browser takes over a vertical drag as a scroll and then sends no pointer events.
+ */
+function attachSwipeUp(el: HTMLElement, onNext: () => void): void {
   let x0 = 0;
   let y0 = 0;
   let t0 = 0;
-  let active = false;
-  el.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'mouse') return;
-    active = true;
-    x0 = e.clientX;
-    y0 = e.clientY;
+  let top0 = 0;
+  let armed = false;
+  el.addEventListener('touchstart', (e) => {
+    const t = e.touches[0];
+    armed = e.touches.length === 1 && el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+    x0 = t.clientX;
+    y0 = t.clientY;
     t0 = performance.now();
+    top0 = el.scrollTop;
+  }, { passive: true });
+  el.addEventListener('touchend', (e) => {
+    if (!armed) return;
+    armed = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - x0;
+    const dy = t.clientY - y0;
+    if (dy < -60 && Math.abs(dy) > Math.abs(dx) * 1.5 && performance.now() - t0 < 900 && Math.abs(el.scrollTop - top0) < 2) onNext();
   });
-  el.addEventListener('pointerup', (e) => {
-    if (!active) return;
-    active = false;
-    const dx = e.clientX - x0;
-    const dy = e.clientY - y0;
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5 || performance.now() - t0 > 800) return;
-    if (dx < 0) onNext();
-    else onBack();
-  });
-  el.addEventListener('pointercancel', () => (active = false));
+  el.addEventListener('touchcancel', () => (armed = false));
 }
 
 // ---------------------------------------------------------------- exits, job, shop

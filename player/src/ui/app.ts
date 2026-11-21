@@ -10,7 +10,9 @@ import { h, icon, ICON } from './dom.js';
 import { renderJourney } from './flow.js';
 import { endPreview, renderBike } from './bike.js';
 import { renderGarage, renderHome, renderNotes, renderShopTab } from './home.js';
-import { renderPick, type PickStep } from './pick.js';
+import { placeSoon, assistantButton } from './assistant.js';
+import { attachEdgeBack } from './edge.js';
+import { pickBack, renderPick, type PickStep } from './pick.js';
 import type { Stage } from './stage.js';
 
 export type View =
@@ -53,6 +55,62 @@ export class App {
   ) {
     if (!store.data.noticeSeen) this.overlay = { k: 'notice' };
     document.addEventListener('keydown', (e) => this.onKey(e));
+    // The assistant button keeps clear of buttons that scroll under it.
+    document.addEventListener('scroll', () => placeSoon(this), true);
+    window.addEventListener('resize', () => placeSoon(this));
+    attachEdgeBack(this);
+    // The browser's own back (a button, or an edge swipe in Safari) goes back in the app too.
+    window.addEventListener('popstate', () => {
+      this.sentinel = false;
+      if (performance.now() - this.lastEdgeBack < 700) return;
+      this.goBack(true);
+    });
+  }
+
+  /** a history entry the browser's back button can pop instead of leaving the app */
+  private sentinel = false;
+  /** when our own edge swipe last went back, so the browser's gesture is not counted twice */
+  lastEdgeBack = -1e9;
+  /** a card is sliding out; ignore further taps until it is gone */
+  private busy = false;
+
+  /** What Back does on this screen, or null where there is nowhere to go back to (the main tabs). */
+  backTarget(): (() => void) | null {
+    if (this.overlay) return this.overlay.k === 'notice' ? null : () => this.closeOverlay();
+    switch (this.view.k) {
+      case 'journey':
+        return this.journey ? () => this.back() : null;
+      case 'pick':
+        return () => pickBack(this, this.view as Extract<View, { k: 'pick' }>);
+      case 'bike':
+        return () => this.go({ k: 'garage' });
+      default:
+        return null;
+    }
+  }
+
+  /** Does what the back arrow does; false on a main tab. `instant`: the screen has already moved away, so no slide. */
+  goBack(instant = false): boolean {
+    const t = this.backTarget();
+    this.noSlide = instant;
+    t?.();
+    this.noSlide = false;
+    return !!t;
+  }
+
+  private noSlide = false;
+
+  /** Runs a card move after the text has slid out (at once with reduced motion). */
+  advance(fn: (j: Journey) => void, dir: 'next' | 'back'): void {
+    const el = this.root.querySelector<HTMLElement>('.step');
+    if (this.busy) return;
+    if (!el || this.noSlide || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return this.act(fn, dir);
+    this.busy = true;
+    el.classList.add(dir === 'next' ? 'out-next' : 'out-back');
+    window.setTimeout(() => {
+      this.busy = false;
+      this.act(fn, dir);
+    }, 170);
   }
 
   go(view: View): void {
@@ -117,7 +175,7 @@ export class App {
       const s = j.screen();
       return s.kind === 'card' ? s.card.id : null;
     };
-    this.act((j) => {
+    this.advance((j) => {
       const from = cardId(j);
       j.back();
       while (from !== null && j.canBack && cardId(j) === from) j.back();
@@ -178,7 +236,7 @@ export class App {
     if (s.kind !== 'card') return;
     if (e.key === 'ArrowRight' && s.card.nextEnabled) {
       e.preventDefault();
-      this.act((j) => j.next(), 'next');
+      this.advance((j) => j.next(), 'next');
     }
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
@@ -222,8 +280,13 @@ export class App {
     this.root.append(screen);
     const inJourney = this.view.k === 'journey' || this.view.k === 'pick';
     if (!inJourney) this.root.append(this.tabbar());
-    this.root.append(this.assistantButton(inJourney));
+    this.root.append(assistantButton(this));
     if (this.overlay) this.root.append(this.renderOverlay());
+    placeSoon(this);
+    if (this.backTarget() && !this.sentinel) {
+      history.pushState({ bikeApp: 1 }, '');
+      this.sentinel = true;
+    }
     if (sameView) {
       const sc = this.root.querySelector<HTMLElement>('.scroll');
       if (sc) sc.scrollTop = keepScroll;
@@ -248,10 +311,6 @@ export class App {
       tab('shop', 'Shop', ICON.shop),
       tab('notes', 'Notes', ICON.notes),
     );
-  }
-
-  private assistantButton(low: boolean): HTMLElement {
-    return h(`button.assist${low ? '.low' : ''}`, { 'aria-label': 'Ask the assistant', 'data-test': 'assistant', onclick: () => this.openOverlay({ k: 'assistant' }) }, icon(ICON.ask));
   }
 
   openOverlay(o: Overlay): void {
@@ -333,6 +392,8 @@ export class App {
             flow: ctx.flow,
             item: ctx.item,
             unit: ctx.unit,
+            title: ctx.title,
+            last: ctx.path.slice(-3),
             path: ctx.path,
             facts: ctx.facts,
             bike: this.journey?.bikeName ?? '(none chosen)',
