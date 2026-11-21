@@ -633,21 +633,25 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 ### Adjust the rear gears
 
-<sub>Unit `card:job:adjust-rear-shifting` · hash `2f43c0d0343d` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:job:adjust-rear-shifting` · hash `8f20f9c2eb03` · beginner: ⬜ not reviewed</sub>
 
 Shop text: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 
 Price: <range> (<source, date>)
 
+Service: every 1500 km (<source, date>)
+
 Tutorial: `adjust-rear-shifting`
 
 ### Clean and oil the chain
 
-<sub>Unit `card:job:chain-care` · hash `fd09479ae0fb` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:job:chain-care` · hash `df6d8765457e` · beginner: ⬜ not reviewed</sub>
 
 Shop text: "The chain is dry, dirty or rusty. Please clean and oil it, and check it for wear."
 
 Price: <range> (<source, date>)
+
+Service: every 300 km (<source, date>)
 
 Tutorial: none (shop only)
 

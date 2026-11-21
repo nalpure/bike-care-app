@@ -234,6 +234,7 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
   for (const [id, e] of c.jobs) {
     add('job', id, e.def.title, e.def, ['beginner'], [
       `Shop text: "${e.def.shop.tell}"`, '', `Price: ${e.def.shop.price_eur} (${e.def.shop.price_source})`, '',
+      ...(e.def.service ? [`Service: every ${e.def.service.interval_km} km (${e.def.service.source})`, ''] : []),
       `Tutorial: ${e.def.tutorial ? `\`${e.def.tutorial}\`` : 'none (shop only)'}`,
     ]);
   }

@@ -33,6 +33,16 @@
             "required": ["when", "not_covered"],
             "additionalProperties": false
           },
+          "service": {
+            "description": "How often the job is due, for the garage's service light. Until a mechanic confirms the number, source is the placeholder <source, date> and the number is unverified.",
+            "type": "object",
+            "properties": {
+              "interval_km": { "type": "integer", "minimum": 1 },
+              "source": { "type": "string", "description": "Source and date, or the placeholder <source, date>." }
+            },
+            "required": ["interval_km", "source"],
+            "additionalProperties": false
+          },
           "shop": {
             "type": "object",
             "properties": {

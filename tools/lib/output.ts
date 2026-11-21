@@ -95,6 +95,8 @@ export function renderReport(c: Content, flows: Flows, profiles: Map<string, { r
 
   const open: string[] = [];
   for (const j of c.jobs.values()) if (/^<.*>$/.test(j.def.shop.price_eur)) open.push(`- Price for job \`${j.def.id}\` is a placeholder.`);
+  for (const j of c.jobs.values())
+    if (j.def.service && /^<.*>$/.test(j.def.service.source)) open.push(`- Service interval for job \`${j.def.id}\` (${j.def.service.interval_km} km) is an unverified placeholder.`);
   if (open.length) L.push('## Open placeholders', '', ...open, '');
 
   if (issues.list.length) {

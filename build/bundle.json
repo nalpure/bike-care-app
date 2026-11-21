@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "76279c9b30fa35dc",
+  "content_hash": "a5eb5cc6350a8fbb",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -861,6 +861,10 @@
           }
         ]
       },
+      "service": {
+        "interval_km": 1500,
+        "source": "<source, date>"
+      },
       "shop": {
         "tell": "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable.",
         "price_eur": "<range>",
@@ -871,6 +875,10 @@
     {
       "id": "chain-care",
       "title": "Clean and oil the chain",
+      "service": {
+        "interval_km": 300,
+        "source": "<source, date>"
+      },
       "shop": {
         "tell": "The chain is dry, dirty or rusty. Please clean and oil it, and check it for wear.",
         "price_eur": "<range>",

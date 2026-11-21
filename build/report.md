@@ -155,3 +155,5 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 - Price for job `adjust-rear-shifting` is a placeholder.
 - Price for job `chain-care` is a placeholder.
 - Price for job `derailleur-check-at-shop` is a placeholder.
+- Service interval for job `adjust-rear-shifting` (1500 km) is an unverified placeholder.
+- Service interval for job `chain-care` (300 km) is an unverified placeholder.
