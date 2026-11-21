@@ -186,7 +186,7 @@ function runDiagnosis(c: Content, r: Run, d: Entry): { job?: string; urgency?: s
 
 // ---------------------------------------------------------------- tutorial
 
-function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean): string {
+function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
   const reader = r.reader('tutorial');
   const params = r.j.params ?? {};
   const run = resolveTutorial(c, t, reader, params);
@@ -195,9 +195,6 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry, fromFinding: boolean)
   r.L.push('#### Before you start', '');
   const qs = r.questions('tutorial');
   r.L.push(qs.length ? 'Questions:' : 'No questions: everything needed is already known.', '', ...qs);
-  if (def.entry?.requires_finding?.length) {
-    r.L.push(fromFinding ? '"Is this needed?" is skipped: the diagnosis already found it.' : `"Is this needed?" runs ${def.entry.requires_finding.map((x: any) => `\`${x.inspection}\``).join(', ')}.`, '');
-  }
   if (run.exit) {
     if (run.exit.kind === 'not_covered' || run.exit.kind === 'uncovered') {
       r.L.push(...notCovered(run.exit.message));
@@ -413,14 +410,14 @@ export function runProfile(c: Content, p: Entry, issues: Issues): { markdown: st
             r.L.push(`Afterwards, "Did it fix it?" If not, the diagnosis continues with ${res.remaining.map((x) => `\`${x.id}\``).join(', ')}.`, '');
           }
         } else {
-          ending = runTutorial(c, r, t, true);
+          ending = runTutorial(c, r, t);
           if (ending === 'tutorial complete' && res.remaining.length) {
             r.L.push(`"Did it fix it?" If not, the diagnosis continues with ${res.remaining.map((x) => `\`${x.id}\``).join(', ')}.`, '');
           }
         }
       }
     } else if (j.start.tutorial) {
-      ending = runTutorial(c, r, c.tutorials.get(j.start.tutorial)!, false);
+      ending = runTutorial(c, r, c.tutorials.get(j.start.tutorial)!);
     } else if (j.start.check) {
       ending = runRoutine(c, r, j.start.check);
     }

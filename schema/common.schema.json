@@ -190,15 +190,17 @@
         "step": { "$ref": "#/$defs/id" },
         "procedure": { "$ref": "#/$defs/id" },
         "inspect": { "$ref": "#/$defs/id" },
-        "outcomes": {
-          "type": "object",
-          "minProperties": 2,
-          "maxProperties": 3,
-          "additionalProperties": { "$ref": "#/$defs/outcome" }
-        }
+        "outcomes": { "$ref": "#/$defs/outcomes" }
       },
       "minProperties": 1,
       "additionalProperties": false
+    },
+    "outcomes": {
+      "description": "Per state of the inspection: continue, block or exit.",
+      "type": "object",
+      "minProperties": 2,
+      "maxProperties": 3,
+      "additionalProperties": { "$ref": "#/$defs/outcome" }
     }
   }
 }

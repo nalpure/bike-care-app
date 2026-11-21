@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `b609d2fc1b12` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `f3a05e0075a9` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -27,17 +27,22 @@ Evaluated top to bottom; the first match wins.
 - when drive.gear_type is single_speed → **EXIT, not covered**: "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help."
 - when drive.gear_type is unknown → **EXIT, not covered**: "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop."
 
+## Checks before the work, in every case
+
+Not shown again when the user already answered them in this session, for example in a diagnosis.
+
+1. Look at the rear derailleur · `derailleur-alignment` · inspection
+   - `straight` → continue
+   - `crooked` → **EXIT, unsafe**: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+2. Find the barrel adjuster · `barrel-adjuster-present` · inspection
+   - `at-derailleur` → continue
+   - `at-shifter-or-cable` → continue
+   - `none` → **EXIT, not covered**: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+
 ## Case `wheel-free` (stand · hang · upside_down)
 
 Time of the complete path: 28 min (stand), 29 min (hang), 28 min (upside_down)
 
-1. Look at the rear derailleur · `derailleur-alignment` · inspection <sub>apart: nothing</sub>
-   - `straight` → continue
-   - `crooked` → **EXIT, unsafe**: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-2. Find the barrel adjuster · `barrel-adjuster-present` · inspection <sub>apart: nothing</sub>
-   - `at-derailleur` → continue
-   - `at-shifter-or-cable` → continue
-   - `none` → **EXIT, not covered**: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
 3. procedure `hold-bike` <sub>apart: nothing</sub>
    - when choice.hold_bike is stand: Clamp the bike in the stand · `clamp-in-stand` (+bike_in_stand)
    - when choice.hold_bike is hang: Hang the bike up · `hang-bike` (+bike_hung)
@@ -76,13 +81,6 @@ Jump-ahead paths:
 
 Time of the complete path: 31 min (ground)
 
-1. Look at the rear derailleur · `derailleur-alignment` · inspection <sub>apart: nothing</sub>
-   - `straight` → continue
-   - `crooked` → **EXIT, unsafe**: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-2. Find the barrel adjuster · `barrel-adjuster-present` · inspection <sub>apart: nothing</sub>
-   - `at-derailleur` → continue
-   - `at-shifter-or-cable` → continue
-   - `none` → **EXIT, not covered**: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
 3. Park the bike · `park-bike` · action <sub>apart: nothing</sub>
 4. Ride into the hardest gear · `ride-to-smallest-sprocket` · action <sub>apart: nothing</sub>
 5. Set the outer limit (H screw) · `check-high-limit` · safety check <sub>apart: nothing</sub>

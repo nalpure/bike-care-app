@@ -333,9 +333,10 @@ function checkProcedure(x: Ctx, e: Entry): void {
   });
 }
 
-function checkFlowItems(x: Ctx, items: any[], file: YamlFile, list: 'sequence' | 'finish', tid: string): void {
+/** Items of a case file's sequence or finish, or of the tutorial's checks (base ['tutorial', 'checks']). */
+function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list: 'sequence' | 'finish', tid: string): void {
   items.forEach((it, i) => {
-    const loc: Loc = { file, path: [list, i], id: `tutorial ${tid}` };
+    const loc: Loc = { file, path: [...base, i], id: `tutorial ${tid}` };
     const kinds = ['step', 'procedure', 'inspect'].filter((k) => it[k] !== undefined);
     if (kinds.length !== 1) {
       err(x, loc, 'item-kind', `Each item has exactly one of step, procedure, inspect; this one has ${kinds.join(', ') || 'none'}.`);
@@ -390,13 +391,19 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
   (t.choices ?? []).forEach((ch: string, i: number) => {
     if (!x.c.choices.has(ch)) err(x, sub(loc, 'choices', i), 'unknown-choice', `Choice "${ch}" is not in content/choices.yaml.`);
   });
-  for (const rf of t.entry?.requires_finding ?? []) {
-    const insp = x.c.inspections.get(rf.inspection);
-    if (!insp) err(x, sub(loc, 'entry'), 'unknown-inspection', `requires_finding names inspection "${rf.inspection}", which does not exist.`);
-    else for (const s of rf.states) if (!insp.def.states.some((st: any) => st.id === s)) err(x, sub(loc, 'entry'), 'unknown-state', `Inspection ${rf.inspection} has no state "${s}".`);
-    checkCondition(x, rf.when, sub(loc, 'entry'));
-  }
-  for (const p of t.entry?.parts ?? []) if (!x.c.parts.has(p)) err(x, sub(loc, 'entry'), 'unknown-part', `Part "${p}" does not exist.`);
+  (t.parts ?? []).forEach((p: string, i: number) => {
+    if (!x.c.parts.has(p)) err(x, sub(loc, 'parts', i), 'unknown-part', `Part "${p}" does not exist.`);
+  });
+  // The tutorial's checks run before anything is apart, in every case.
+  checkFlowItems(x, t.checks ?? [], e.file, [...e.path, 'checks'], 'sequence', t.id);
+  (t.checks ?? []).forEach((it: any, i: number) => {
+    const l = sub(loc, 'checks', i);
+    const insp = x.c.inspections.get(it.inspect);
+    if (insp && !insp.def.hands_off) err(x, l, 'hands-off-only', `Inspection ${it.inspect} is not hands_off. A tutorial's checks run before the work and use only hands-off inspections.`);
+    for (const [s, o] of Object.entries<any>(it.outcomes ?? {})) {
+      if (o?.exit?.show_how_from) err(x, sub(l, 'outcomes', s), 'exit-jump-outside', "A tutorial's checks run before anything is apart, so their exits cannot jump.");
+    }
+  });
   const checkCase = (cs: any, l: Loc, nested: boolean) => {
     const targets = ['include', 'exit', 'cases'].filter((k) => cs[k] !== undefined);
     if (targets.length !== 1) err(x, l, 'case-target', `A case has exactly one of include, exit${nested ? '' : ', cases'}; this one has ${targets.join(', ') || 'none'}.`);
@@ -411,8 +418,8 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
     (cs.cases ?? []).forEach((leaf: any, j: number) => checkCase(leaf, sub(l, 'cases', j), true));
   });
   for (const [, cf] of e.cases ?? new Map()) {
-    checkFlowItems(x, cf.data.sequence ?? [], cf, 'sequence', t.id);
-    checkFlowItems(x, cf.data.finish ?? [], cf, 'finish', t.id);
+    checkFlowItems(x, cf.data.sequence ?? [], cf, ['sequence'], 'sequence', t.id);
+    checkFlowItems(x, cf.data.finish ?? [], cf, ['finish'], 'finish', t.id);
   }
 }
 
@@ -557,7 +564,7 @@ function checkUnused(x: Ctx): void {
         if (it.procedure) usedProcs.add(it.procedure);
         if (it.inspect) usedInsp.add(it.inspect);
       }
-    for (const rf of t.def.entry?.requires_finding ?? []) usedInsp.add(rf.inspection);
+    for (const it of t.def.checks ?? []) usedInsp.add(it.inspect);
   }
   for (const d of x.c.diagnoses.values()) for (const ch of d.def.checks) usedInsp.add(ch.inspect);
   for (const ch of x.c.checks.values()) for (const it of ch.def.inspections) usedInsp.add(it.inspect);

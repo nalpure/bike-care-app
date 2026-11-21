@@ -38,6 +38,6 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 ## Structure
 
 - Diagnoses and the routine check: `hands_off` inspections only, cheapest and most likely first.
-- Tutorials: one per job. One branch by mechanism, plus at most one nested branch where the order of work differs. In each case: checks with nothing apart, then the work ending with the safety checks, then `finish`.
+- Tutorials: one per job. One branch by mechanism, plus at most one nested branch where the order of work differs. Hands-off checks that every case needs before the work go once in the tutorial's `checks`, not in each case file (hard rule 12 hides them after a diagnosis). In each case: the work ending with the safety checks, then `finish`.
 - Anything not covered ends in `not_covered` with a clear message (hard rule 7).
 - Write each thing once. Shared steps go in `steps/`; a run used by more than one tutorial is a procedure. Never copy a text or a condition into a second file.

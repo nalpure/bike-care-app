@@ -337,9 +337,16 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r, 'placeholder-fallback'), show(r)).toHaveLength(1);
   });
 
+  it("a tutorial's checks use only hands-off inspections", () => {
+    const r = sandbox()
+      .edit('content/inspections.yaml', (d) => (d.inspections.find((i: any) => i.id === 'barrel-adjuster-present').hands_off = false))
+      .run();
+    expect(errorsOf(r, 'hands-off-only').some((e) => e.message.includes("tutorial's checks")), show(r)).toBe(true);
+  });
+
   it('an unknown key, including on: which YAML 1.2 keeps as a string', () => {
     const r = sandbox()
-      .replace('content/tutorials/adjust-rear-shifting/cases/wheel-free.yaml', '    outcomes:\n      straight: continue', '    on:\n      straight: continue')
+      .replace('content/tutorials/adjust-rear-shifting/tutorial.yaml', '      outcomes:\n        straight: continue', '      on:\n        straight: continue')
       .run();
     const e = errorsOf(r, 'unknown-key');
     expect(e.length, show(r)).toBeGreaterThan(0);

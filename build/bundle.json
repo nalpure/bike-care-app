@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "58ea16332f49af05",
+  "content_hash": "74c8e354d2b58a09",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -1229,6 +1229,33 @@
       "choices": [
         "hold_bike"
       ],
+      "checks": [
+        {
+          "inspect": "derailleur-alignment",
+          "outcomes": {
+            "straight": "continue",
+            "crooked": {
+              "exit": {
+                "kind": "unsafe",
+                "text": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+              }
+            }
+          }
+        },
+        {
+          "inspect": "barrel-adjuster-present",
+          "outcomes": {
+            "at-derailleur": "continue",
+            "at-shifter-or-cable": "continue",
+            "none": {
+              "exit": {
+                "kind": "not_covered",
+                "text": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+              }
+            }
+          }
+        }
+      ],
       "cases": [
         {
           "when": {
@@ -1251,31 +1278,6 @@
               "case": {
                 "name": "wheel-free",
                 "sequence": [
-                  {
-                    "inspect": "derailleur-alignment",
-                    "outcomes": {
-                      "straight": "continue",
-                      "crooked": {
-                        "exit": {
-                          "kind": "unsafe",
-                          "text": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "inspect": "barrel-adjuster-present",
-                    "outcomes": {
-                      "at-derailleur": "continue",
-                      "at-shifter-or-cable": "continue",
-                      "none": {
-                        "exit": {
-                          "kind": "not_covered",
-                          "text": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
-                        }
-                      }
-                    }
-                  },
                   {
                     "procedure": "hold-bike"
                   },
@@ -1338,31 +1340,6 @@
               "case": {
                 "name": "test-rides",
                 "sequence": [
-                  {
-                    "inspect": "derailleur-alignment",
-                    "outcomes": {
-                      "straight": "continue",
-                      "crooked": {
-                        "exit": {
-                          "kind": "unsafe",
-                          "text": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "inspect": "barrel-adjuster-present",
-                    "outcomes": {
-                      "at-derailleur": "continue",
-                      "at-shifter-or-cable": "continue",
-                      "none": {
-                        "exit": {
-                          "kind": "not_covered",
-                          "text": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
-                        }
-                      }
-                    }
-                  },
                   {
                     "step": "park-bike"
                   },

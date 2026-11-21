@@ -344,6 +344,9 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
     return run;
   }
   run.caseLabel = cf.name;
+  // The tutorial's checks run first, in every case (declared once, not per case file).
+  const pre: any[] = t.checks ?? [];
+  for (let i = 0; i < pre.length; i++) expandItem(ix, pre[i], 'sequence', loc(t, 'checks', i), r, params, run, t.id, loc);
   for (const list of ['sequence', 'finish'] as const) {
     const items: any[] = cf[list] ?? [];
     for (let i = 0; i < items.length; i++) {

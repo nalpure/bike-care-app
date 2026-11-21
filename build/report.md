@@ -114,7 +114,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `check-needs-buttons` | pass | Every check and safety check on a path shows 2 or 3 buttons. |
 | `unsafe-only-in-safety-checks` | pass | block and unsafe exits only in safety checks and inspection calls. |
 | `no-solution-on-exit` | pass | An exit button offers no solution. |
-| `exit-jump-outside` | pass | Exits on cases and in procedures run before anything is opened and never jump. |
+| `exit-jump-outside` | pass | Exits on cases, in procedures and in a tutorial's checks run before anything is opened and never jump. |
 | `block-needs-fix` | pass | Every block has a good state to tap once fixed. |
 | `button-needs-text` | pass | Every button has text, block or exit. |
 | `generic-needs-text` | pass | if_unknown: generic comes with generic_text. |
@@ -125,7 +125,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `outcome-kind` | pass | An outcome is continue, block or exit. |
 | `jump-in-finish` | pass | No jump-ahead from finish. |
 | `case-target` | pass | A case has exactly one of include, exit, cases. |
-| `hands-off-only` | pass | Diagnoses and the routine check use only hands-off inspections. |
+| `hands-off-only` | pass | Diagnoses, the routine check and a tutorial's checks use only hands-off inspections. |
 | `profile-missing-answer` | pass | Every question a profile journey reaches is answered. |
 | `profile-missing-sees` | pass | Every inspection and safety check a profile journey reaches has an answer. |
 | `profile-missing-choice` | pass | Every run choice a profile journey reaches is chosen. |

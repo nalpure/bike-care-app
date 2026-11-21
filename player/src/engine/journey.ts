@@ -95,7 +95,7 @@ export type Screen =
 
 export type Start =
   | { diagnosis: string; params?: Record<string, string> }
-  | { tutorial: string; params?: Record<string, string>; fromFinding?: boolean }
+  | { tutorial: string; params?: Record<string, string> }
   | { check: string }
   | { job: string; urgency?: string; params?: Record<string, string> };
 
@@ -104,15 +104,11 @@ export type Start =
 interface TutState {
   id: string;
   params: Record<string, string>;
-  fromFinding: boolean;
   choices: Record<string, string>;
   /** confirmed tool selection; null until the tool picker is done */
   tools: string[] | null;
   ticked: string[];
   toolAnswers: Record<string, boolean>;
-  neededDone: boolean;
-  /** the tap on the "is this needed?" card */
-  neededTap?: string;
   partsDone: boolean;
   started: boolean;
   /** visited item indexes into the combined list, in order */
@@ -171,7 +167,7 @@ export class Journey {
   ) {
     this.st = { stage: { k: 'closed' }, found: [], minutes: 0 };
     if ('diagnosis' in start) this.st.stage = { k: 'diag', id: start.diagnosis, params: start.params ?? {}, i: 0, started: false };
-    else if ('tutorial' in start) this.st.stage = { k: 'tut', t: this.newTut(start.tutorial, start.params ?? {}, !!start.fromFinding) };
+    else if ('tutorial' in start) this.st.stage = { k: 'tut', t: this.newTut(start.tutorial, start.params ?? {}) };
     else if ('check' in start) this.st.stage = { k: 'routine', id: start.check, i: 0, made: 0 };
     else this.st.stage = { k: 'job', job: start.job, urgency: start.urgency, params: start.params ?? {} };
   }
@@ -426,9 +422,7 @@ export class Journey {
     if (s.k === 'diag') this.diagNext(s);
     else if (s.k === 'routine') this.routineNext(s);
     else if (s.k === 'tut') {
-      if (!s.t.started) {
-        if (s.t.neededTap !== undefined) this.neededAnswer(s.t, s.t.neededTap);
-      } else this.tutNext(s.t);
+      if (s.t.started) this.tutNext(s.t);
     }
   }
 
@@ -635,7 +629,7 @@ export class Journey {
     const t = this.c.tutorialForJob(s.job);
     if (!t) return;
     this.snapshot();
-    this.st.stage = { k: 'tut', t: this.newTut(t.id, { ...s.params }, true) };
+    this.st.stage = { k: 'tut', t: this.newTut(t.id, { ...s.params }) };
   }
 
   jobShop(): void {
@@ -664,10 +658,10 @@ export class Journey {
 
   // ------------------------------------------------------------ tutorial
 
-  private newTut(id: string, params: Record<string, string>, fromFinding: boolean): TutState {
+  private newTut(id: string, params: Record<string, string>): TutState {
     return {
-      id, params, fromFinding, choices: {}, tools: null, ticked: [...this.store.data.tools], toolAnswers: {},
-      neededDone: false, partsDone: false, started: false, path: [], taps: {}, jumped: false,
+      id, params, choices: {}, tools: null, ticked: [...this.store.data.tools], toolAnswers: {},
+      partsDone: false, started: false, path: [], taps: {}, jumped: false,
     };
   }
 
@@ -842,12 +836,7 @@ export class Journey {
       if (ex.kind === 'not_covered' || ex.kind === 'uncovered') return { kind: 'not-covered', message: ex.message, canBack: this.canBack };
       return { kind: 'exit', exitKind: ex.kind, message: ex.message, canJump: false, putBack: [], labels: [], canBack: this.canBack };
     }
-    // "Is this needed?"
-    if (!t.neededDone) {
-      const need = this.neededCheck(t, def);
-      if (need) return need;
-    }
-    if (!t.partsDone && def.entry?.parts?.length) return { kind: 'parts', parts: def.entry.parts.map((id: string) => this.c.part(id) ?? { id, name: id }), canBack: this.canBack };
+    if (!t.partsDone && def.parts?.length) return { kind: 'parts', parts: def.parts.map((id: string) => this.c.part(id) ?? { id, name: id }), canBack: this.canBack };
     for (const ch of def.choices ?? []) {
       if (!(ch in t.choices)) return { kind: 'choice', choice: this.c.ix.choices.get(ch), canBack: this.canBack };
     }
@@ -865,33 +854,6 @@ export class Journey {
 
   private toolSummary(items: PathItem[]): ToolList {
     return mergeTools(items.map((it) => it.tools));
-  }
-
-  /** The "is this needed?" inspection, unless a finding or this session already answers it. */
-  private neededCheck(t: TutState, def: any): Screen | null {
-    const reqs: any[] = def.entry?.requires_finding ?? [];
-    if (!reqs.length || t.fromFinding) return null;
-    for (const rq of reqs) {
-      const cond = this.tryResolve(() => evaluate(substCondition(rq.when, t.params), this.reader(t).ask));
-      if ('need' in cond) return this.questionScreen(cond.need);
-      if (!cond.ok) continue;
-      const key = substParams(rq.inspection, t.params);
-      const open = this.store.todos(this.bike).some((f) => f.inspection === rq.inspection && (!f.pos || f.pos === t.params.pos) && rq.states.includes(f.state));
-      if (open) return null;
-      const insp = this.c.inspection(key);
-      if (!insp) return null;
-      // Never the same check twice: an answer from earlier in this session decides.
-      const earlier = this.session.answers[key];
-      if (earlier !== undefined) {
-        if (rq.states.includes(earlier)) return null;
-        return { kind: 'exit', exitKind: 'not_needed', message: def.entry.not_needed_message ?? '', canJump: false, putBack: [], labels: [], canBack: this.canBack };
-      }
-      return {
-        kind: 'card',
-        card: this.inspectionCard('tutorial', t.id, insp, key, t.params, t.neededTap, { kindLabel: 'Is this needed?', progress: 0 }),
-      };
-    }
-    return null;
   }
 
   choose(choiceId: string, option: string): void {
@@ -941,24 +903,6 @@ export class Journey {
     this.onArrive(t, all, first.idx);
   }
 
-  /** "Is this needed?" answered: continue, or end with the content's not-needed message. */
-  private neededAnswer(t: TutState, state: string): void {
-    const def = this.c.ix.tutorials.get(t.id);
-    for (const rq of def.entry?.requires_finding ?? []) {
-      const ok = this.tryResolve(() => evaluate(substCondition(rq.when, t.params), this.reader(t).ask));
-      if (!('ok' in ok) || !ok.ok) continue;
-      const key = substParams(rq.inspection, t.params);
-      this.session.answers[key] = state;
-      const insp = this.c.inspection(key);
-      const st = insp?.states.find((x: any) => x.id === state);
-      this.recordFinding(rq.inspection, state, t.params.pos, st?.leads_to ?? null, t.id);
-      if (rq.states.includes(state)) t.neededDone = true;
-      else this.st.stage = { k: 'exit', kind: 'not_needed', message: def.entry.not_needed_message ?? '', job: def.job };
-      return;
-    }
-    t.neededDone = true;
-  }
-
   private applyAuto(t: TutState, auto: Array<{ idx: number; state: string }>): void {
     for (const a of auto) t.taps[String(a.idx)] = a.state;
   }
@@ -976,11 +920,7 @@ export class Journey {
   }
 
   private tutTap(t: TutState, id: string): void {
-    if (!t.started) {
-      // the "is this needed?" card
-      t.neededTap = id;
-      return;
-    }
+    if (!t.started) return;
     const res = this.tutRun(t);
     if (!('ok' in res)) return;
     const all = combined(res.ok);

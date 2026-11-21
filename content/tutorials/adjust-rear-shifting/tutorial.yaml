@@ -12,6 +12,23 @@ tutorial:
   job: adjust-rear-shifting
   difficulty: 2
   choices: [hold_bike]
+  # Run before the work in every case. After a diagnosis that already looked, they are not shown again.
+  checks:
+    - inspect: derailleur-alignment
+      outcomes:
+        straight: continue
+        crooked:
+          exit:
+            kind: unsafe
+            text: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+    - inspect: barrel-adjuster-present
+      outcomes:
+        at-derailleur: continue
+        at-shifter-or-cable: continue
+        none:
+          exit:
+            kind: not_covered
+            text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
   cases:
     - when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
       cases:

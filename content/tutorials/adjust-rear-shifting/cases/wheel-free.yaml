@@ -2,25 +2,8 @@
 # Limit screws by the owner's method (2026-11-20): H at the smallest sprocket, L at the largest,
 # then the hand push towards the spokes double-checks the inner limit.
 
+# The tutorial's checks (tutorial.yaml) run first.
 sequence:
-  # Nothing is apart yet: a stop here has no jump button.
-  - inspect: derailleur-alignment
-    outcomes:
-      straight: continue
-      crooked:
-        exit:
-          kind: unsafe
-          text: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-  - inspect: barrel-adjuster-present
-    outcomes:
-      at-derailleur: continue
-      at-shifter-or-cable: continue
-      none:
-        exit:
-          kind: not_covered
-          text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
-
-  # The work
   - procedure: hold-bike                 # sets bike_in_stand, bike_hung or bike_upside_down
   - step: shift-to-smallest-sprocket
   - step: check-high-limit               # block while the derailleur sits outside the smallest sprocket

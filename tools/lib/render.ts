@@ -262,10 +262,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
   const qs = p.combo.asked.filter((k) => !k.startsWith('choice.') && !k.startsWith('tool.'));
   let n = 1;
   for (const k of qs) L.push(`${n++}. Question, skipped when already known: ${questionLine(c, k, p.combo.assign[k])}`);
-  if (t.entry?.requires_finding?.length) {
-    L.push(`${n++}. "Is this needed?", skipped when opened from a finding: runs ${t.entry.requires_finding.map((r: any) => `\`${r.inspection}\``).join(', ')}.`);
-  }
-  if (qs.length || t.entry?.requires_finding?.length) L.push('');
+  if (qs.length) L.push('');
   for (const chId of t.choices ?? []) L.push(...choiceBlock(c, chId, p.combo.assign[`choice.${chId}`]));
   L.push(`Tools picker. ${toolTiers(c, tools)}.`, '');
 

@@ -306,6 +306,22 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   for (const cs of def.cases) caseLine(cs, '');
   L.push('');
 
+  const outcomeLines = (it: any): string[] =>
+    Object.entries<any>(it.outcomes ?? {}).map(([state, o]) => {
+      const res = o === 'continue' ? 'continue' : o.block ? `**BLOCK**: "${o.block}"` : `${exitTag(o.exit.kind)}: "${o.exit.text}"${o.exit.show_how_from ? ` · jump to \`${o.exit.show_how_from}\`` : ''}`;
+      return `   - \`${state}\` → ${res}`;
+    });
+
+  // The tutorial's checks, once for every case
+  if (def.checks?.length) {
+    L.push('## Checks before the work, in every case', '', 'Not shown again when the user already answered them in this session, for example in a diagnosis.', '');
+    def.checks.forEach((it: any, i: number) => {
+      used.inspections.add(it.inspect);
+      L.push(`${i + 1}. ${itemTitle(c, 'inspect', it.inspect)} · inspection`, ...outcomeLines(it));
+    });
+    L.push('');
+  }
+
   // Each case once
   for (const [inc, cf] of t.cases) {
     const name = inc.replace(/^cases\//, '').replace(/\.yaml$/, '');
@@ -323,7 +339,7 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
       }
       return [...sets].join(' / ') || '?';
     };
-    let n = 1;
+    let n = (def.checks?.length ?? 0) + 1;
     for (const list of ['sequence', 'finish'] as const) {
       const items: any[] = cf.data[list] ?? [];
       if (!items.length) continue;
@@ -356,11 +372,7 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
           }
         } else if (it.inspect) {
           used.inspections.add(it.inspect);
-          L.push(`${n++}. ${itemTitle(c, 'inspect', it.inspect)} · inspection ${apart}`);
-          for (const [state, o] of Object.entries<any>(it.outcomes ?? {})) {
-            const res = o === 'continue' ? 'continue' : o.block ? `**BLOCK**: "${o.block}"` : `${exitTag(o.exit.kind)}: "${o.exit.text}"${o.exit.show_how_from ? ` · jump to \`${o.exit.show_how_from}\`` : ''}`;
-            L.push(`   - \`${state}\` → ${res}`);
-          }
+          L.push(`${n++}. ${itemTitle(c, 'inspect', it.inspect)} · inspection ${apart}`, ...outcomeLines(it));
         }
       });
     }
