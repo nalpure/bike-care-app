@@ -1,0 +1,161 @@
+<!doctype html><html><body style="margin:0;background:#fff">
+<!-- Page for tools/assets/check-library.ts: compares each library part with its source nodes (silhouettes from 6 directions, boxes). -->
+<script type="importmap">{"imports":{"three":"/repo/node_modules/three/build/three.module.js","three/addons/":"/repo/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const S = 512, MM = 500;
+const DIRS = { '+x': [1, 0, 0], '-x': [-1, 0, 0], '+y': [0, 1, 0], '-y': [0, -1, 0], '+z': [0, 0, 1], '-z': [0, 0, -1] };
+
+const renderer = new THREE.WebGLRenderer({ antialias: false, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1); renderer.setSize(S, S);
+document.body.appendChild(renderer.domElement);
+const rt = new THREE.WebGLRenderTarget(S, S);
+
+async function load() {
+  const meta = await (await fetch('/repo/player/public/parts/library.json')).json();
+  const lib = await new GLTFLoader().loadAsync('/repo/player/public/parts/library.glb');
+  const src = await new GLTFLoader().loadAsync('/repo/' + meta.source);
+  return { meta, lib, src };
+}
+
+/** library part as plain float geometry in library space (the loader's job in the app, same few lines) */
+function libGeometry(lib, name) {
+  lib.scene.updateMatrixWorld(true);
+  const o = lib.scene.getObjectByName(name);
+  if (!o || !o.isMesh) throw new Error('library part missing: ' + name);
+  const pa = o.geometry.attributes.position, v = new THREE.Vector3();
+  const pos = new Float32Array(pa.count * 3);
+  for (let i = 0; i < pa.count; i++) { v.fromBufferAttribute(pa, i).applyMatrix4(o.matrixWorld); pos.set([v.x, v.y, v.z], i * 3); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setIndex(Array.from(o.geometry.index.array));
+  return g;
+}
+
+function sourceMatrix(meta, front) {
+  const C = new THREE.Matrix4().set(0, 0, 2, 0, 0, 2, 0, 0, -2, 0, 0, 0, 0, 0, 0, 1);
+  if (!front) return C;
+  const a = new THREE.Vector3(...meta.steering.a), k = new THREE.Vector3(...meta.steering.axisDir);
+  const U = new THREE.Matrix4().makeTranslation(a.x, a.y, a.z)
+    .multiply(new THREE.Matrix4().makeRotationAxis(k, THREE.MathUtils.degToRad(meta.steering.angleDeg)))
+    .multiply(new THREE.Matrix4().makeTranslation(-a.x, -a.y, -a.z));
+  return U.multiply(C);
+}
+
+/** shows only the source meshes of one part, in library space; returns them */
+function showSource(src, meta, part) {
+  const byName = new Map();
+  src.scene.traverse((o) => { if (o.userData.name !== undefined) byName.set(o.userData.name, o); else if (!byName.has(o.name)) byName.set(o.name, o); });
+  src.scene.traverse((o) => { if (o.isMesh) o.visible = false; });
+  const shown = [];
+  for (const n of part.source) {
+    const o = byName.get(n);
+    if (!o) throw new Error('source node missing in page: ' + n);
+    o.traverse((m) => { if (m.isMesh && !part.drop.includes(m.material.name)) { m.visible = true; shown.push(m); } });
+  }
+  src.scene.matrixAutoUpdate = false;
+  src.scene.matrix.copy(sourceMatrix(meta, part.front));
+  src.scene.updateMatrixWorld(true);
+  return shown;
+}
+
+const black = new THREE.MeshBasicMaterial({ color: 0x000000 });
+function frame(box, dir) {
+  const c = box.getCenter(new THREE.Vector3()), d = new THREE.Vector3(...dir);
+  const up = Math.abs(d.y) > 0.5 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.01, 100);
+  cam.position.copy(c).addScaledVector(d, 10); cam.up.copy(up); cam.lookAt(c); cam.updateMatrixWorld(true);
+  const inv = cam.matrixWorldInverse; let ext = 0;
+  for (let i = 0; i < 8; i++) {
+    const p = new THREE.Vector3(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : box.min.y, i & 4 ? box.max.z : box.min.z).applyMatrix4(inv);
+    ext = Math.max(ext, Math.abs(p.x), Math.abs(p.y));
+  }
+  ext *= 1.04;
+  cam.left = -ext; cam.right = ext; cam.top = ext; cam.bottom = -ext; cam.updateProjectionMatrix();
+  return cam;
+}
+
+function pixels(scene, cam) {
+  renderer.setRenderTarget(rt); renderer.render(scene, cam);
+  const buf = new Uint8Array(S * S * 4); renderer.readRenderTargetPixels(rt, 0, 0, S, S, buf); renderer.setRenderTarget(null);
+  const m = new Uint8Array(S * S);
+  for (let i = 0; i < S * S; i++) m[i] = buf[i * 4] < 128 ? 1 : 0;
+  return m;
+}
+function dilate(m) { // 3x3
+  const h = new Uint8Array(S * S), o = new Uint8Array(S * S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { let v = 0; for (let k = -1; k <= 1 && !v; k++) { const xx = x + k; if (xx >= 0 && xx < S && m[y * S + xx]) v = 1; } h[y * S + x] = v; }
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { let v = 0; for (let k = -1; k <= 1 && !v; k++) { const yy = y + k; if (yy >= 0 && yy < S && h[yy * S + x]) v = 1; } o[y * S + x] = v; }
+  return o;
+}
+function overlap(a, b) {
+  const da = dilate(a), db = dilate(b); let uni = 0, mism = 0;
+  for (let i = 0; i < S * S; i++) { if (a[i] || b[i]) uni++; if (a[i] && !db[i]) mism++; if (b[i] && !da[i]) mism++; }
+  return uni ? 1 - mism / uni : 1;
+}
+
+function boxOfGeo(g) { g.computeBoundingBox(); return g.boundingBox.clone(); }
+function boxDiffMm(a, b) {
+  let d = 0; for (const k of ['x', 'y', 'z']) d = Math.max(d, Math.abs(a.min[k] - b.min[k]), Math.abs(a.max[k] - b.max[k]));
+  return d * MM;
+}
+
+function shade(scene) {
+  const l = new THREE.HemisphereLight(0xffffff, 0x777777, 2.4), d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(-1, 2, 1.5);
+  scene.add(l, d); scene.background = new THREE.Color(0xeeeeee);
+}
+
+window.runCheck = async (wantShots) => {
+  const { meta, lib, src } = await load();
+  const res = { parts: [], shots: {} };
+  const geos = {};
+  for (const [name, part] of Object.entries(meta.parts)) {
+    geos[name] = libGeometry(lib, name);
+    const shown = showSource(src, meta, part);
+    const sb = new THREE.Box3(); for (const m of shown) sb.expandByObject(m, true);
+    const lb = boxOfGeo(geos[name]);
+    const libMesh = new THREE.Mesh(geos[name], black);
+    const per = {};
+    // source silhouettes: the loaded scene with every material black
+    const orig = new Map(); for (const m of shown) { orig.set(m, m.material); m.material = black; }
+    const sceneS = new THREE.Scene(); sceneS.background = new THREE.Color(0xffffff); sceneS.add(src.scene);
+    const sceneL = new THREE.Scene(); sceneL.background = new THREE.Color(0xffffff); sceneL.add(libMesh);
+    for (const [dn, d] of Object.entries(DIRS)) {
+      const cam = frame(sb, d);
+      sceneS.add(src.scene); const a = pixels(sceneS, cam);
+      const b = pixels(sceneL, cam);
+      per[dn] = overlap(a, b);
+    }
+    let worst = '+x'; for (const k in per) if (per[k] < per[worst]) worst = k;
+    res.parts.push({ name, worst, overlap: per[worst], per, boxDiffMm: boxDiffMm(sb, lb), sourceMm: sb.getSize(new THREE.Vector3()).toArray().map((v) => v * MM), tris: geos[name].index.count / 3 });
+    if (wantShots) {
+      for (const [m, mat] of orig) m.material = new THREE.MeshStandardMaterial({ color: 0xcfcfcf, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide });
+      const sc = new THREE.Scene(); shade(sc); sc.add(src.scene);
+      const g2 = toCreasedNormals(geos[name].clone(), THREE.MathUtils.degToRad(35));
+      const sl = new THREE.Scene(); shade(sl); sl.add(new THREE.Mesh(g2, new THREE.MeshStandardMaterial({ color: 0xcfcfcf, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide })));
+      const cam = frame(sb, [-0.8, 0.6, 0.9]); // same camera for both
+      const c2 = document.createElement('canvas'); c2.width = S * 2; c2.height = S; const cx = c2.getContext('2d');
+      renderer.render(sc, cam); cx.drawImage(renderer.domElement, 0, 0);
+      renderer.render(sl, cam); cx.drawImage(renderer.domElement, S, 0);
+      res.shots[name] = c2.toDataURL('image/png');
+    }
+    for (const [m, mat] of orig) { if (m.material !== black) m.material.dispose(); m.material = mat; }
+  }
+  // grips: mirror images across the middle plane (z = 0)
+  const gd = boxOfGeo(geos.grip_drive), gn = boxOfGeo(geos.grip_nondrive);
+  res.mirror = {
+    gripDriveZ: [gd.min.z * MM, gd.max.z * MM], gripNondriveZ: [gn.min.z * MM, gn.max.z * MM],
+    diffMm: Math.max(Math.abs(gd.min.x - gn.min.x), Math.abs(gd.max.x - gn.max.x), Math.abs(gd.min.y - gn.min.y), Math.abs(gd.max.y - gn.max.y), Math.abs(gd.min.z + gn.max.z), Math.abs(gd.max.z + gn.min.z)) * MM,
+  };
+  // bar: the two ends at the same height and the same x (level, straight across), and centred on z = 0
+  const bg = geos.bar_flat, p = bg.attributes.position; bg.computeBoundingBox();
+  const end = (sign) => { const z0 = sign > 0 ? bg.boundingBox.max.z : bg.boundingBox.min.z; let sx = 0, sy = 0, n = 0; for (let i = 0; i < p.count; i++) if (Math.abs(p.getZ(i) - z0) < 0.004) { sx += p.getX(i); sy += p.getY(i); n++; } return [sx / n, sy / n]; };
+  const e1 = end(1), e2 = end(-1);
+  res.bar = { endDxMm: Math.abs(e1[0] - e2[0]) * MM, endDyMm: Math.abs(e1[1] - e2[1]) * MM, centreMm: (bg.boundingBox.max.z + bg.boundingBox.min.z) * MM / 2, widthMm: (bg.boundingBox.max.z - bg.boundingBox.min.z) * MM };
+  return res;
+};
+window.ready = true;
+</script></body></html>

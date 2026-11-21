@@ -15,7 +15,9 @@
     "build": "vite build --config player/vite.config.ts",
     "preview": "vite preview --config player/vite.config.ts",
     "test:e2e": "tsx player/e2e/run.ts",
-    "shots": "tsx player/e2e/slow.ts"
+    "shots": "tsx player/e2e/slow.ts",
+    "parts": "tsx tools/assets/build-library.ts",
+    "parts:check": "tsx tools/assets/check-library.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",
@@ -23,8 +25,12 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
     "@types/node": "^26.6.6",
     "@types/three": "^0.187.0",
+    "meshoptimizer": "1.1.1",
     "playwright": "^1.65.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",

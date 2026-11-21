@@ -1,0 +1,65 @@
+# Parts library: which source nodes make which library part. Data only; tools/assets/build-library.ts reads it.
+# A later source model is another file of this shape. Node names are the ORIGINAL glTF names (not three.js names).
+#
+# source:     glTF file, relative to the repo root.
+# error:      default meshoptimizer target error (relative to the part's size); a part may set its own.
+# steering:   the two nodes whose centres define the steering axis. Parts with `front: true` are turned back about it.
+# grips_mirror: the two parts that must come out as mirror images across the bike's middle plane; the angle is chosen for that.
+# pairs:      [drive, nondrive] part names whose sources are swapped if needed so the drive one sits on the drive side (+z in library space).
+# parts.<name>:
+#   nodes:    source nodes merged into the part
+#   drop:     material names of primitives to leave out
+#   front:    true = steered in the source, turned straight before it is stored
+#   ratio:    share of triangles kept (1 = only weld)
+#
+# These are drawing data (shapes only). They say nothing about compatibility (hard rule 3).
+
+source: assets-src/rigid-bike-touring-bike/source/iWwsHSl6/rigid_bike.gltf
+credit: assets-src/rigid-bike-touring-bike/credit.txt
+error: 0.002
+
+steering:
+  cups: [Lower Cup.STEP-1, Lower Cup.STEP-2]
+  mirror: [grip_drive, grip_nondrive]
+
+pairs:
+  - [grip_drive, grip_nondrive]
+  - [pedal_drive, pedal_nondrive]
+
+parts:
+  rd_upper_body: { nodes: ['___B-4___.STEP-1'], ratio: 0.25 }
+  rd_barrel: { nodes: ['___B-5___.STEP-1'], ratio: 0.25 }
+  rd_link_outer: { nodes: ['___B-7___.STEP-1'], ratio: 0.25 }
+  rd_link_inner: { nodes: ['___B-8___.STEP-1'], ratio: 1 }
+  rd_lower_body: { nodes: ['___B-6___.STEP-1'], ratio: 0.25 }
+  rd_cage_outer: { nodes: ['___B-1___.STEP-1'], ratio: 1 }
+  rd_cage_inner: { nodes: ['___B-3___.STEP-1'], ratio: 1 }
+  rd_pulley_upper: { nodes: ['Deraileur Gear-4'], ratio: 0.3 }
+  rd_pulley_lower: { nodes: ['Deraileur Gear-3'], ratio: 0.3 }
+  rd_hanger: { nodes: ['Deraileur Mount-3'], ratio: 1 }
+  crank_arms: { nodes: ['Crank Arms_1.STEP-1'], drop: ['carbon steel-7'], ratio: 0.15 }
+  pedal_drive: { nodes: ['Generic Al Pedal_1.STEP-3'], ratio: 0.15 }
+  pedal_nondrive: { nodes: ['Generic Al Pedal_1.STEP-2'], ratio: 0.15 }
+  saddle: { nodes: ['Bike Saddle_1.STEP-1'], ratio: 0.12 }
+  seat_collar:
+    nodes:
+      - Seat Post Clamp_1.STEP-1
+      - hex nut style 1_am_B18.2.4.1M - Hex nut, Style 1,  M5 x 0.8 --D
+      - socket head cap screw_am_B18.3.1M - 5 x 0.8 x 20 Hex SHCS -- 20
+    ratio: 0.15
+  stem:
+    nodes:
+      - Chunky Stem_Predeterminado.STEP-1
+      - Top Cover.STEP-1
+      - Headset Cap.STEP-1
+      - socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -
+      - socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -- 10
+      - socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -.001
+      - socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -.002
+      - "socket head cap screw_am_B18.3.1M - 8 x 1.25 x 25 Hex SHCS "
+      - socket head cap screw_am_B18.3.1M - 8 x 1.25 x 25 Hex SHCS -- 2
+    front: true
+    ratio: 0.1
+  bar_flat: { nodes: ['Handlebar.STEP-1'], front: true, ratio: 0.4 }
+  grip_drive: { nodes: ['Handlebar Grip.STEP-2'], front: true, ratio: 0.04, error: 0.01 }
+  grip_nondrive: { nodes: ['Handlebar Grip.STEP-1'], front: true, ratio: 0.04, error: 0.01 }

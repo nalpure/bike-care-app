@@ -1,0 +1,559 @@
+{
+ "note": "Library space: scene units (1 unit = 0.5 m), x forward, y up, z to the drive side, origin at the source bottom bracket. Drawing data only.",
+ "source": "assets-src/rigid-bike-touring-bike/source/iWwsHSl6/rigid_bike.gltf",
+ "units": {
+  "mmPerUnit": 500
+ },
+ "steering": {
+  "a": [
+   0.8559289529007308,
+   0.7828759013795529,
+   6.775762751178981e-7
+  ],
+  "b": [
+   0.7493514562545179,
+   1.0923981767933384,
+   6.944678809341728e-8
+  ],
+  "angleDeg": 41.35424022792364,
+  "axisDir": [
+   -0.3255693295767812,
+   0.9455181709705395,
+   -0.0000018576933744621542
+  ],
+  "about": "right-handed rotation about a->b by angleDeg turns the steered source parts straight"
+ },
+ "pairs": {
+  "grip_drive": "as listed",
+  "pedal_drive": "as listed"
+ },
+ "totalTriangles": 32510,
+ "bytes": 355756,
+ "parts": {
+  "rd_upper_body": {
+   "source": [
+    "___B-4___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.25,
+   "trisBefore": 6360,
+   "trisAfter": 1584,
+   "box": {
+    "min": [
+     -0.9421422481536865,
+     -0.06934092193841934,
+     0.11476264148950577
+    ],
+    "max": [
+     -0.8128901720046997,
+     0.03765811771154404,
+     0.1979999989271164
+    ]
+   },
+   "sizeMm": [
+    64.6,
+    53.5,
+    41.6
+   ]
+  },
+  "rd_barrel": {
+   "source": [
+    "___B-5___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.25,
+   "trisBefore": 3418,
+   "trisAfter": 1098,
+   "box": {
+    "min": [
+     -0.9702976942062378,
+     -0.05680470913648605,
+     0.14770027995109558
+    ],
+    "max": [
+     -0.9314695596694946,
+     -0.021473681554198265,
+     0.1752179116010666
+    ]
+   },
+   "sizeMm": [
+    19.4,
+    17.7,
+    13.8
+   ]
+  },
+  "rd_link_outer": {
+   "source": [
+    "___B-7___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.25,
+   "trisBefore": 1932,
+   "trisAfter": 482,
+   "box": {
+    "min": [
+     -0.8879334330558777,
+     -0.07680734992027283,
+     0.14930887520313263
+    ],
+    "max": [
+     -0.7865309715270996,
+     -0.005090021062642336,
+     0.21333931386470795
+    ]
+   },
+   "sizeMm": [
+    50.7,
+    35.9,
+    32
+   ]
+  },
+  "rd_link_inner": {
+   "source": [
+    "___B-8___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 1,
+   "trisBefore": 904,
+   "trisAfter": 904,
+   "box": {
+    "min": [
+     -0.901369035243988,
+     -0.07983913272619247,
+     0.120857834815979
+    ],
+    "max": [
+     -0.8056000471115112,
+     -0.014712570235133171,
+     0.18164204061031342
+    ]
+   },
+   "sizeMm": [
+    47.9,
+    32.6,
+    30.4
+   ]
+  },
+  "rd_lower_body": {
+   "source": [
+    "___B-6___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.25,
+   "trisBefore": 6286,
+   "trisAfter": 1570,
+   "box": {
+    "min": [
+     -0.8444587588310242,
+     -0.09796783328056335,
+     0.12494640052318573
+    ],
+    "max": [
+     -0.7650337219238281,
+     -0.03226366266608238,
+     0.21055713295936584
+    ]
+   },
+   "sizeMm": [
+    39.7,
+    32.9,
+    42.8
+   ]
+  },
+  "rd_cage_outer": {
+   "source": [
+    "___B-1___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 1,
+   "trisBefore": 868,
+   "trisAfter": 868,
+   "box": {
+    "min": [
+     -0.8862981200218201,
+     -0.28540340065956116,
+     0.12001574784517288
+    ],
+    "max": [
+     -0.7660980820655823,
+     -0.028491823002696037,
+     0.12596307694911957
+    ]
+   },
+   "sizeMm": [
+    60.1,
+    128.5,
+    3
+   ]
+  },
+  "rd_cage_inner": {
+   "source": [
+    "___B-3___.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 1,
+   "trisBefore": 1362,
+   "trisAfter": 1358,
+   "box": {
+    "min": [
+     -0.8864777684211731,
+     -0.287111759185791,
+     0.09400752931833267
+    ],
+    "max": [
+     -0.7566394209861755,
+     -0.058402080088853836,
+     0.11478059738874435
+    ]
+   },
+   "sizeMm": [
+    64.9,
+    114.4,
+    10.4
+   ]
+  },
+  "rd_pulley_upper": {
+   "source": [
+    "Deraileur Gear-4"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.3,
+   "trisBefore": 4416,
+   "trisAfter": 1324,
+   "box": {
+    "min": [
+     -0.862289309501648,
+     -0.11300405859947205,
+     0.09747756272554398
+    ],
+    "max": [
+     -0.7789146900177002,
+     -0.029084308072924614,
+     0.1255652904510498
+    ]
+   },
+   "sizeMm": [
+    41.7,
+    42,
+    14
+   ]
+  },
+  "rd_pulley_lower": {
+   "source": [
+    "Deraileur Gear-3"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.3,
+   "trisBefore": 4416,
+   "trisAfter": 1324,
+   "box": {
+    "min": [
+     -0.8708410859107971,
+     -0.277113139629364,
+     0.09637811779975891
+    ],
+    "max": [
+     -0.7870429158210754,
+     -0.19310282170772552,
+     0.12446672469377518
+    ]
+   },
+   "sizeMm": [
+    41.9,
+    42,
+    14
+   ]
+  },
+  "rd_hanger": {
+   "source": [
+    "Deraileur Mount-3"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 1,
+   "trisBefore": 526,
+   "trisAfter": 526,
+   "box": {
+    "min": [
+     -0.8489913940429688,
+     0.002185579389333725,
+     0.13200023770332336
+    ],
+    "max": [
+     -0.7675234079360962,
+     0.0738360583782196,
+     0.1600000113248825
+    ]
+   },
+   "sizeMm": [
+    40.7,
+    35.8,
+    14
+   ]
+  },
+  "crank_arms": {
+   "source": [
+    "Crank Arms_1.STEP-1"
+   ],
+   "drop": [
+    "carbon steel-7"
+   ],
+   "front": false,
+   "ratio": 0.15,
+   "trisBefore": 16562,
+   "trisAfter": 2439,
+   "box": {
+    "min": [
+     -0.15748851001262665,
+     -0.3205219805240631,
+     -0.16185049712657928
+    ],
+    "max": [
+     0.15745143592357635,
+     0.3206022381782532,
+     0.18612831830978394
+    ]
+   },
+   "sizeMm": [
+    157.5,
+    320.6,
+    174
+   ]
+  },
+  "pedal_drive": {
+   "source": [
+    "Generic Al Pedal_1.STEP-3"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.15,
+   "trisBefore": 7468,
+   "trisAfter": 1104,
+   "box": {
+    "min": [
+     -0.21048438549041748,
+     -0.34478050470352173,
+     0.16214951872825623
+    ],
+    "max": [
+     -0.048557788133621216,
+     -0.2404799461364746,
+     0.40226954221725464
+    ]
+   },
+   "sizeMm": [
+    81,
+    52.2,
+    120.1
+   ]
+  },
+  "pedal_nondrive": {
+   "source": [
+    "Generic Al Pedal_1.STEP-2"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.15,
+   "trisBefore": 7468,
+   "trisAfter": 1104,
+   "box": {
+    "min": [
+     0.04260770231485367,
+     0.24318154156208038,
+     -0.37797048687934875
+    ],
+    "max": [
+     0.21639244258403778,
+     0.34205248951911926,
+     -0.13785049319267273
+    ]
+   },
+   "sizeMm": [
+    86.9,
+    49.4,
+    120.1
+   ]
+  },
+  "saddle": {
+   "source": [
+    "Bike Saddle_1.STEP-1"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.12,
+   "trisBefore": 30084,
+   "trisAfter": 3566,
+   "box": {
+    "min": [
+     -0.5853771567344666,
+     0.8272378444671631,
+     -0.1642524152994156
+    ],
+    "max": [
+     -0.07812731713056564,
+     1.3315068483352661,
+     0.16426554322242737
+    ]
+   },
+   "sizeMm": [
+    253.6,
+    252.1,
+    164.3
+   ]
+  },
+  "seat_collar": {
+   "source": [
+    "Seat Post Clamp_1.STEP-1",
+    "hex nut style 1_am_B18.2.4.1M - Hex nut, Style 1,  M5 x 0.8 --D",
+    "socket head cap screw_am_B18.3.1M - 5 x 0.8 x 20 Hex SHCS -- 20"
+   ],
+   "drop": [],
+   "front": false,
+   "ratio": 0.15,
+   "trisBefore": 12756,
+   "trisAfter": 1904,
+   "box": {
+    "min": [
+     -0.33011630177497864,
+     0.9379319548606873,
+     -0.03450155258178711
+    ],
+    "max": [
+     -0.2400227189064026,
+     0.987113356590271,
+     0.03450186550617218
+    ]
+   },
+   "sizeMm": [
+    45,
+    24.6,
+    34.5
+   ]
+  },
+  "stem": {
+   "source": [
+    "Chunky Stem_Predeterminado.STEP-1",
+    "Top Cover.STEP-1",
+    "Headset Cap.STEP-1",
+    "socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -",
+    "socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -- 10",
+    "socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -.001",
+    "socket head cap screw_am_B18.3.1M - 5 x 0.8 x 10 Hex SHCS -.002",
+    "socket head cap screw_am_B18.3.1M - 8 x 1.25 x 25 Hex SHCS ",
+    "socket head cap screw_am_B18.3.1M - 8 x 1.25 x 25 Hex SHCS -- 2"
+   ],
+   "drop": [],
+   "front": true,
+   "ratio": 0.1,
+   "trisBefore": 33964,
+   "trisAfter": 3525,
+   "box": {
+    "min": [
+     0.655251145362854,
+     1.0868816375732422,
+     -0.05100047588348389
+    ],
+    "max": [
+     0.8880597352981567,
+     1.2716104984283447,
+     0.051000192761421204
+    ]
+   },
+   "sizeMm": [
+    116.4,
+    92.4,
+    51
+   ]
+  },
+  "bar_flat": {
+   "source": [
+    "Handlebar.STEP-1"
+   ],
+   "drop": [],
+   "front": true,
+   "ratio": 0.4,
+   "trisBefore": 5142,
+   "trisAfter": 2008,
+   "box": {
+    "min": [
+     0.7962737083435059,
+     1.1798866987228394,
+     -0.783858060836792
+    ],
+    "max": [
+     0.9184735417366028,
+     1.3157708644866943,
+     0.7838566899299622
+    ]
+   },
+   "sizeMm": [
+    61.1,
+    67.9,
+    783.9
+   ]
+  },
+  "grip_drive": {
+   "source": [
+    "Handlebar Grip.STEP-2"
+   ],
+   "drop": [],
+   "front": true,
+   "ratio": 0.04,
+   "trisBefore": 73138,
+   "trisAfter": 2910,
+   "box": {
+    "min": [
+     0.8213756680488586,
+     1.2326020002365112,
+     0.49051862955093384
+    ],
+    "max": [
+     0.9352802634239197,
+     1.3324800729751587,
+     0.8236010670661926
+    ]
+   },
+   "sizeMm": [
+    57,
+    49.9,
+    166.5
+   ]
+  },
+  "grip_nondrive": {
+   "source": [
+    "Handlebar Grip.STEP-1"
+   ],
+   "drop": [],
+   "front": true,
+   "ratio": 0.04,
+   "trisBefore": 73138,
+   "trisAfter": 2912,
+   "box": {
+    "min": [
+     0.8213710188865662,
+     1.2325975894927979,
+     -0.823447585105896
+    ],
+    "max": [
+     0.9352816343307495,
+     1.332481861114502,
+     -0.49051788449287415
+    ]
+   },
+   "sizeMm": [
+    57,
+    49.9,
+    166.5
+   ]
+  }
+ }
+}
