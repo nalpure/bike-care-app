@@ -486,9 +486,11 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Question: bike.category
 
-<sub>Unit `card:fact:bike.category` · hash `d3c999b506c5` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:bike.category` · hash `ecfc6db4d28d` · beginner: ⬜ not reviewed</sub>
 
-"What kind of bike is it?" / "Was für ein Fahrrad ist es?"
+"What type of bike is it?" / "Was für ein Fahrradtyp ist es?"
+
+Help behind "?": A mountain bike has wide, knobbly tyres and a straight handlebar. A road or gravel bike has narrow tyres and often a curved handlebar. A trekking or city bike is made for everyday rides, often with mudguards, lights and a rack. A cargo bike carries loads in a box or on a long rack. / Ein Mountainbike hat breite, grobstollige Reifen und einen geraden Lenker. Ein Rennrad oder Gravelbike hat schmale Reifen und oft einen gebogenen Lenker. Ein Trekking- oder Stadtrad ist für den Alltag gemacht, oft mit Schutzblechen, Licht und Gepäckträger. Ein Lastenrad trägt Lasten in einer Kiste oder auf einem langen Gepäckträger.
 
 - `mtb`: Mountain bike / Mountainbike
 - `road_gravel`: Road or gravel bike / Rennrad oder Gravelbike
@@ -500,36 +502,42 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Question: bike.ebike
 
-<sub>Unit `card:fact:bike.ebike` · hash `d48f8b2a86d4` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:bike.ebike` · hash `e34e7bba111c` · beginner: ⬜ not reviewed</sub>
 
-"Does your bike have a motor?" / "Hat dein Fahrrad einen Motor?"
+"Is your bike an e-bike?" / "Ist dein Fahrrad ein E-Bike?"
 
-- `true`: Yes, it is an e-bike / Ja, es ist ein E-Bike
+Help behind "?": An e-bike has a battery, usually on the frame or behind the seat post, and a motor at the pedals or in a wheel hub. / Ein E-Bike hat einen Akku, meist am Rahmen oder hinter der Sattelstütze, und einen Motor an den Pedalen oder in einer Radnabe.
+
+- `true`: Yes, it has a motor / Ja, es hat einen Motor
 - `false`: No motor / Kein Motor
 - I'll check later (unknown)
 
 ### Question: drive.gear_type
 
-<sub>Unit `card:fact:drive.gear_type` · hash `35420d0ce08d` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:drive.gear_type` · hash `ab61288a1506` · beginner: ⬜ not reviewed</sub>
 
-"Look at the rear wheel. Which picture looks like your bike?" / "Schau dir das Hinterrad an. Welches Bild sieht aus wie dein Fahrrad?"
+"Which gears does your bike have?" / "Welche Schaltung hat dein Fahrrad?"
 
-- `derailleur`: Several sprockets, and a part below them that guides the chain / Mehrere Ritzel und darunter ein Teil, das die Kette führt
-- `hub_gear`: One sprocket, and a thick hub in the middle of the wheel / Ein Ritzel und eine dicke Nabe in der Mitte des Rads
-- `gearbox`: One sprocket, and a box at the pedals / Ein Ritzel und ein Kasten an den Pedalen
-- `single_speed`: One sprocket, and no way to change gear / Ein Ritzel und keine Schaltung
+Help behind "?": Look at the rear wheel. Chain and derailleur: several sprockets, and below them a part that guides the chain. Hub gear: one sprocket, and a thick hub in the middle of the wheel. Gearbox: one sprocket at the rear, and a box at the pedals. One gear only: one sprocket, and no shifter. / Schau dir das Hinterrad an. Kettenschaltung: mehrere Ritzel und darunter ein Teil, das die Kette führt. Nabenschaltung: ein Ritzel und eine dicke Nabe in der Mitte des Rads. Getriebe: hinten ein Ritzel und ein Kasten an den Pedalen. Nur ein Gang: ein Ritzel und kein Schalthebel.
+
+- `derailleur`: Chain and derailleur / Kettenschaltung
+- `hub_gear`: Hub gear / Nabenschaltung
+- `gearbox`: Gearbox at the pedals / Getriebe an den Pedalen
+- `single_speed`: One gear only / Nur ein Gang
 - I'll check later (unknown)
 
 <sub>Picture set: rear-gear-types</sub>
 
 ### Question: drive.shifting
 
-<sub>Unit `card:fact:drive.shifting` · hash `cea207600bc8` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:drive.shifting` · hash `4c224dc8fc8d` · beginner: ⬜ not reviewed</sub>
 
-"Follow the shifter on the right of the handlebar. What connects it to the rear gears?" / "Folge dem Schalthebel rechts am Lenker. Was verbindet ihn mit der hinteren Schaltung?"
+"How is your rear derailleur shifted?" / "Wie wird dein Schaltwerk geschaltet?"
 
-- `mechanical`: A thin cable in a housing / Ein dünner Zug in einer Hülle
-- `electronic`: A wire with a plug, or no wire at all / Ein Kabel mit Stecker, oder gar kein Kabel
+Help behind "?": Follow the shifter on the right of the handlebar to the rear derailleur. A thin cable in a housing means it shifts with a cable. A wire with a plug, or no wire at all, means it shifts electronically. / Folge dem Schalthebel rechts am Lenker bis zum Schaltwerk. Ein dünner Zug in einer Hülle heißt: Es schaltet mit einem Zug. Ein Kabel mit Stecker, oder gar kein Kabel, heißt: Es schaltet elektronisch.
+
+- `mechanical`: With a cable / Mit einem Schaltzug
+- `electronic`: Electronically / Elektronisch
 - I'll check later (unknown)
 
 <sub>Picture set: shifting-types</sub>

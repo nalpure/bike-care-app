@@ -23,6 +23,16 @@
             "required": ["en"],
             "additionalProperties": false
           },
+          "help": {
+            "description": "Optional longer help behind a '?' next to the question: how to tell the answers apart. The app adds its own last line pointing to the assistant; do not write it here.",
+            "type": "object",
+            "properties": {
+              "en": { "$ref": "common.schema.json#/$defs/text" },
+              "de": { "$ref": "common.schema.json#/$defs/text" }
+            },
+            "required": ["en"],
+            "additionalProperties": false
+          },
           "answers": {
             "description": "The answer button for each value, in the user's words.",
             "type": "object",

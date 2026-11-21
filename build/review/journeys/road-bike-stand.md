@@ -6,7 +6,7 @@ Road bike, 11-speed mechanical rear derailleur. The owner has a work stand.
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = road_gravel ("Road or gravel bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_speeds` = 11<br>`drive.rear_derailleur_model` = Shimano 105 RD-R7000 |
+| Known before the first flow | `bike.category` = road_gravel ("Road or gravel bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.rear_speeds` = 11<br>`drive.rear_derailleur_model` = Shimano 105 RD-R7000 |
 | Answers when asked | none |
 | Tools with them | Bike work stand |
 
@@ -228,7 +228,7 @@ Tools: Bike work stand
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: Road bike with a work stand. `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain"); `drive.shifting` = mechanical ("A thin cable in a housing"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
+- Bike: Road bike with a work stand. `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 - Found: Slow or rattling when shifting to harder gears (`shift-test-ride`: slow-to-smaller)
@@ -297,7 +297,7 @@ Buttons: [Find a shop] [Ask the assistant]
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: Road bike with a work stand. `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain"); `drive.shifting` = mechanical ("A thin cable in a housing"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
+- Bike: Road bike with a work stand. `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 - Stopped at: `barrel-adjuster-present`, "none"

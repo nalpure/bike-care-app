@@ -11,9 +11,12 @@ facts:
     values: [mtb, road_gravel, trekking_city, cargo]
     safety: false
     question:
-      en: "What kind of bike is it?"
-      de: "Was für ein Fahrrad ist es?"
+      en: "What type of bike is it?"
+      de: "Was für ein Fahrradtyp ist es?"
       picture: bike-categories
+    help:
+      en: "A mountain bike has wide, knobbly tyres and a straight handlebar. A road or gravel bike has narrow tyres and often a curved handlebar. A trekking or city bike is made for everyday rides, often with mudguards, lights and a rack. A cargo bike carries loads in a box or on a long rack."
+      de: "Ein Mountainbike hat breite, grobstollige Reifen und einen geraden Lenker. Ein Rennrad oder Gravelbike hat schmale Reifen und oft einen gebogenen Lenker. Ein Trekking- oder Stadtrad ist für den Alltag gemacht, oft mit Schutzblechen, Licht und Gepäckträger. Ein Lastenrad trägt Lasten in einer Kiste oder auf einem langen Gepäckträger."
     answers:
       mtb: { en: "Mountain bike", de: "Mountainbike" }
       road_gravel: { en: "Road or gravel bike", de: "Rennrad oder Gravelbike" }
@@ -24,10 +27,13 @@ facts:
     type: boolean
     safety: false
     question:
-      en: "Does your bike have a motor?"
-      de: "Hat dein Fahrrad einen Motor?"
+      en: "Is your bike an e-bike?"
+      de: "Ist dein Fahrrad ein E-Bike?"
+    help:
+      en: "An e-bike has a battery, usually on the frame or behind the seat post, and a motor at the pedals or in a wheel hub."
+      de: "Ein E-Bike hat einen Akku, meist am Rahmen oder hinter der Sattelstütze, und einen Motor an den Pedalen oder in einer Radnabe."
     answers:
-      "true": { en: "Yes, it is an e-bike", de: "Ja, es ist ein E-Bike" }
+      "true": { en: "Yes, it has a motor", de: "Ja, es hat einen Motor" }
       "false": { en: "No motor", de: "Kein Motor" }
 
   - key: drive.gear_type
@@ -35,14 +41,17 @@ facts:
     values: [derailleur, hub_gear, gearbox, single_speed]
     safety: false
     question:
-      en: "Look at the rear wheel. Which picture looks like your bike?"
-      de: "Schau dir das Hinterrad an. Welches Bild sieht aus wie dein Fahrrad?"
+      en: "Which gears does your bike have?"
+      de: "Welche Schaltung hat dein Fahrrad?"
       picture: rear-gear-types
+    help:
+      en: "Look at the rear wheel. Chain and derailleur: several sprockets, and below them a part that guides the chain. Hub gear: one sprocket, and a thick hub in the middle of the wheel. Gearbox: one sprocket at the rear, and a box at the pedals. One gear only: one sprocket, and no shifter."
+      de: "Schau dir das Hinterrad an. Kettenschaltung: mehrere Ritzel und darunter ein Teil, das die Kette führt. Nabenschaltung: ein Ritzel und eine dicke Nabe in der Mitte des Rads. Getriebe: hinten ein Ritzel und ein Kasten an den Pedalen. Nur ein Gang: ein Ritzel und kein Schalthebel."
     answers:
-      derailleur: { en: "Several sprockets, and a part below them that guides the chain", de: "Mehrere Ritzel und darunter ein Teil, das die Kette führt" }
-      hub_gear: { en: "One sprocket, and a thick hub in the middle of the wheel", de: "Ein Ritzel und eine dicke Nabe in der Mitte des Rads" }
-      gearbox: { en: "One sprocket, and a box at the pedals", de: "Ein Ritzel und ein Kasten an den Pedalen" }
-      single_speed: { en: "One sprocket, and no way to change gear", de: "Ein Ritzel und keine Schaltung" }
+      derailleur: { en: "Chain and derailleur", de: "Kettenschaltung" }
+      hub_gear: { en: "Hub gear", de: "Nabenschaltung" }
+      gearbox: { en: "Gearbox at the pedals", de: "Getriebe an den Pedalen" }
+      single_speed: { en: "One gear only", de: "Nur ein Gang" }
 
   - key: drive.shifting
     type: enum
@@ -50,12 +59,15 @@ facts:
     safety: false
     note: "Only asked when drive.gear_type is derailleur, because conditions test it after the gear type."
     question:
-      en: "Follow the shifter on the right of the handlebar. What connects it to the rear gears?"
-      de: "Folge dem Schalthebel rechts am Lenker. Was verbindet ihn mit der hinteren Schaltung?"
+      en: "How is your rear derailleur shifted?"
+      de: "Wie wird dein Schaltwerk geschaltet?"
       picture: shifting-types
+    help:
+      en: "Follow the shifter on the right of the handlebar to the rear derailleur. A thin cable in a housing means it shifts with a cable. A wire with a plug, or no wire at all, means it shifts electronically."
+      de: "Folge dem Schalthebel rechts am Lenker bis zum Schaltwerk. Ein dünner Zug in einer Hülle heißt: Es schaltet mit einem Zug. Ein Kabel mit Stecker, oder gar kein Kabel, heißt: Es schaltet elektronisch."
     answers:
-      mechanical: { en: "A thin cable in a housing", de: "Ein dünner Zug in einer Hülle" }
-      electronic: { en: "A wire with a plug, or no wire at all", de: "Ein Kabel mit Stecker, oder gar kein Kabel" }
+      mechanical: { en: "With a cable", de: "Mit einem Schaltzug" }
+      electronic: { en: "Electronically", de: "Elektronisch" }
 
   - key: drive.rear_derailleur_type
     type: enum

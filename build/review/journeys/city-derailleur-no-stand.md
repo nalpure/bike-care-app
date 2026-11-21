@@ -6,8 +6,8 @@ Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows 
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain") |
-| Answers when asked | `drive.shifting` = mechanical ("A thin cable in a housing") |
+| Known before the first flow | `bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur") |
+| Answers when asked | `drive.shifting` = mechanical ("With a cable") |
 | Tools with them | none |
 
 ## Journey 1: Slow shifting, adjusted at home with the bike upside down
@@ -18,7 +18,7 @@ Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows 
 
 Questions the app asks first:
 
-1. "Follow the shifter on the right of the handlebar. What connects it to the rear gears?" → A thin cable in a housing
+1. "How is your rear derailleur shifted?" → With a cable
 
 #### Checks
 
@@ -244,7 +244,7 @@ Done. Nothing is left apart. Tutorial time: 27 min.
 
 Questions the app asks first:
 
-1. "Follow the shifter on the right of the handlebar. What connects it to the rear gears?" → A thin cable in a housing
+1. "How is your rear derailleur shifted?" → With a cable
 
 #### Checks
 
@@ -268,7 +268,7 @@ The owner chooses: **Take it to a shop**.
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: City bike with derailleur, no stand. `bike.category` = trekking_city ("Trekking or city bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain"); `drive.shifting` = mechanical ("A thin cable in a housing")
+- Bike: City bike with derailleur, no stand. `bike.category` = trekking_city ("Trekking or city bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable")
 - Job: Have the rear gears checked
 - Tell the mechanic: "The rear gears do not work as they should. Please check the rear derailleur, the part that holds it, and the gear cable."
 - Found: It leans towards the spokes, or looks twisted (`derailleur-alignment`: crooked)

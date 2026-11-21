@@ -6,7 +6,7 @@ E-trekking bike with a mid motor and an internal hub gear. The shifting content 
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = true ("Yes, it is an e-bike")<br>`drive.gear_type` = hub_gear ("One sprocket, and a thick hub in the middle of the wheel") |
+| Known before the first flow | `bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = true ("Yes, it has a motor")<br>`drive.gear_type` = hub_gear ("Hub gear") |
 | Answers when asked | none |
 | Tools with them | none |
 

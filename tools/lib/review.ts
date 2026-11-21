@@ -202,6 +202,7 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
     const f = e.def;
     if (!f.question) continue;
     const body = [`"${f.question.en}"${f.question.de ? ` / "${f.question.de}"` : ''}`, ''];
+    if (f.help) body.push(`Help behind "?": ${f.help.en}${f.help.de ? ` / ${f.help.de}` : ''}`, '');
     for (const [v, a] of Object.entries<any>(f.answers ?? {})) body.push(`- \`${v}\`: ${a.en}${a.de ? ` / ${a.de}` : ''}`);
     body.push('- I\'ll check later (unknown)');
     if (f.question.picture) body.push('', `<sub>Picture set: ${f.question.picture}</sub>`);

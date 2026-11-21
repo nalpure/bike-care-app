@@ -6,7 +6,7 @@ Added from a partner's parts list, so the derailleur type is known without a que
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = mtb ("Mountain bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing")<br>`drive.rear_derailleur_type` = low_normal ("Rapid-rise (low-normal) rear derailleur") |
+| Known before the first flow | `bike.category` = mtb ("Mountain bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.rear_derailleur_type` = low_normal ("Rapid-rise (low-normal) rear derailleur") |
 | Answers when asked | none |
 | Tools with them | Bike work stand |
 

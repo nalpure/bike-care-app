@@ -7,7 +7,7 @@ Nothing is stored about this bike. The owner can answer the picture questions. N
 | | |
 | --- | --- |
 | Known before the first flow | nothing known |
-| Answers when asked | `drive.gear_type` = derailleur ("Several sprockets, and a part below them that guides the chain")<br>`drive.shifting` = mechanical ("A thin cable in a housing") |
+| Answers when asked | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable") |
 | Tools with them | none |
 
 ## Journey 1: Slow shifting, adjusted between short test rides
@@ -18,8 +18,8 @@ Nothing is stored about this bike. The owner can answer the picture questions. N
 
 Questions the app asks first:
 
-1. "Look at the rear wheel. Which picture looks like your bike?" → Several sprockets, and a part below them that guides the chain
-2. "Follow the shifter on the right of the handlebar. What connects it to the rear gears?" → A thin cable in a housing
+1. "Which gears does your bike have?" → Chain and derailleur
+2. "How is your rear derailleur shifted?" → With a cable
 
 #### Checks
 
