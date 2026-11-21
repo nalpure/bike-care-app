@@ -12,6 +12,13 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-20 Service intervals** start as unverified placeholder values until a mechanic signs them off.
 - **2026-11-20 Complete-bike lookup** (database, then an AI web search) is a stub in test builds.
 
+## 3D view
+
+- **2026-11-21 Parts library.** Realistic parts come from CC BY models in `assets-src/` (first the "Rigid Bike [Touring Bike]"), split into a parts library. Frame, wheels, sprockets, chainrings and chain stay generated from the facts. The app credits every model it uses (title, creator, link, licence, "modified").
+- **2026-11-21 Real sprocket spacing.** Sprockets sit at their real spacing; closer camera views make up for it.
+- **2026-11-21 Wide cassettes.** Above 36 teeth the same derailleur gets a longer cage, until a source for a mountain bike derailleur exists.
+- **2026-11-21 Source models in git.** Only the touring bike's source is committed; the others stay out of git until they are used.
+
 ## Where approach.md is out of date
 
 - **Ending a flow:** one construct, `exit: { kind: unsafe | not_covered | not_needed | shop_only, text, show_how_from? }`, replaces `stop`, `end`, and `shop` / `not_covered` on cases. `block` is unchanged. The schema is the reference.

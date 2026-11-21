@@ -1,0 +1,28 @@
+<!doctype html><html><body style="margin:0;background:#eee">
+<script type="importmap">{"imports":{"three":"/repo/node_modules/three/build/three.module.js","three/addons/":"/repo/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search);
+const W=900,H=700; const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true}); r.setSize(W,H); document.body.appendChild(r.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xeeeeee);
+scene.add(new THREE.HemisphereLight(0xffffff,0x666666,2.2)); const d=new THREE.DirectionalLight(0xffffff,2); d.position.set(-1,2,1); scene.add(d);
+const cam=new THREE.PerspectiveCamera(30,W/H,0.001,100);
+const gl=await new GLTFLoader().loadAsync('/repo/'+(new URLSearchParams(location.search).get('file')||'assets-src/rigid-bike-touring-bike/source/iWwsHSl6/rigid_bike.gltf'));
+const root=gl.scene; scene.add(root); root.updateMatrixWorld(true);
+const re=new RegExp(q.get('only')||'.'); const pal=[0xe6194b,0x3cb44b,0xffe119,0x4363d8,0xf58231,0x911eb4,0x46f0f0,0xf032e6,0x808000,0x008080,0x9a6324,0x000075];
+let i=0; const box=new THREE.Box3(); const legend=[];
+root.traverse(o=>{ if(!o.isMesh) return; const name=(o.parent&&o.parent.type!=='Scene'&&!/Assembly|STEP-2$/.test(o.parent.name)?o.parent.name:o.name);
+  const nm=o.name; const keep=re.test(nm)||re.test(o.parent?.name||'');
+  if(!keep){o.visible=false;return;}
+  if(q.get('color')){const c=pal[i%pal.length]; o.material=new THREE.MeshStandardMaterial({color:c,roughness:.6,metalness:.1}); legend.push([nm,'#'+c.toString(16).padStart(6,'0')]); i++;}
+  box.expandByObject(o);
+});
+const c=box.getCenter(new THREE.Vector3()), s=box.getSize(new THREE.Vector3()).length();
+const dir=new THREE.Vector3(...(q.get('dir')||'-1,0.2,0').split(',').map(Number)).normalize();
+cam.position.copy(c).addScaledVector(dir, s*(+q.get('dist')||1.9)); cam.lookAt(c); cam.near=s/50; cam.far=s*20; cam.updateProjectionMatrix();
+r.render(scene,cam);
+const L=document.createElement('div'); L.style.cssText='position:fixed;top:4px;left:4px;font:13px sans-serif';
+L.innerHTML=legend.map(([n,c])=>`<div><span style="background:${c};display:inline-block;width:12px;height:12px"></span> ${n}</div>`).join(''); document.body.appendChild(L);
+window.done=true;
+</script></body></html>

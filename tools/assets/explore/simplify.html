@@ -1,0 +1,31 @@
+<!doctype html><html><body style="margin:0;background:#eee">
+<script type="importmap">{"imports":{"three":"/repo/node_modules/three/build/three.module.js","three/addons/":"/repo/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+import { MeshoptSimplifier as MS } from '/repo/node_modules/meshoptimizer/meshopt_simplifier.js';
+await MS.ready;
+const q=new URLSearchParams(location.search); const ratio=+q.get('ratio'); const re=new RegExp(q.get('only'));
+const W=900,H=700; const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true}); r.setSize(W,H); document.body.appendChild(r.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xeeeeee);
+scene.add(new THREE.HemisphereLight(0xffffff,0x666666,2.2)); const d=new THREE.DirectionalLight(0xffffff,2); d.position.set(-1,2,1); scene.add(d);
+const gl=await new GLTFLoader().loadAsync('/repo/'+(new URLSearchParams(location.search).get('file')||'assets-src/rigid-bike-touring-bike/source/iWwsHSl6/rigid_bike.gltf'));
+const root=gl.scene; scene.add(root); root.updateMatrixWorld(true);
+let before=0, after=0; const box=new THREE.Box3();
+root.traverse(o=>{ if(!o.isMesh) return; if(!(re.test(o.name)||re.test(o.parent?.name||''))){o.visible=false;return;}
+  let g=o.geometry; before+=g.index.count/3;
+  if(ratio<1){ g=g.clone(); g.deleteAttribute('normal'); g.deleteAttribute('uv'); g=mergeVertices(g,1e-6);
+    const target=Math.floor(g.index.count*ratio/3)*3;
+    const [idx,err]=MS.simplify(new Uint32Array(g.index.array), new Float32Array(g.attributes.position.array), 3, target, 0.02, ['LockBorder']);
+    g.setIndex(new THREE.BufferAttribute(idx,1)); g.computeVertexNormals(); o.geometry=g; }
+  after+=o.geometry.index.count/3;
+  o.material=new THREE.MeshStandardMaterial({color:0x9aa0a8,roughness:.5,metalness:.2});
+  box.expandByObject(o); });
+// outline-ish: edges help judge silhouette
+const c=box.getCenter(new THREE.Vector3()), s=box.getSize(new THREE.Vector3()).length();
+const cam=new THREE.PerspectiveCamera(30,W/H,s/50,s*20); const dir=new THREE.Vector3(...q.get('dir').split(',').map(Number)).normalize();
+cam.position.copy(c).addScaledVector(dir,s*(+q.get('dist')||1.4)); cam.lookAt(c); r.render(scene,cam);
+const L=document.createElement('div'); L.style.cssText='position:fixed;top:6px;left:6px;font:16px sans-serif'; L.textContent=`triangles ${before} -> ${after}`; document.body.appendChild(L);
+window.done=true;
+</script></body></html>

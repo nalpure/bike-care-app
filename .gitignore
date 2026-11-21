@@ -4,3 +4,7 @@ node_modules/
 build/paths/
 dist/
 player/e2e/shots/
+# source models not used yet (large); only the touring bike's source is committed
+assets-src/roadbike-bicycle-canyon-endurace-cf/
+assets-src/santa-cruz-v10-downhill-mountain-bicycle/
+tools/assets/out/
