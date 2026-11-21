@@ -392,7 +392,7 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 ### Set the outer limit (H screw)
 
-<sub>Unit `card:step:check-high-limit` · hash `f3f55cad07de` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-high-limit` · hash `6c3af08ec7e3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -403,9 +403,9 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
 - [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
-- [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the wheel is in line with the smallest sprocket.
+- [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the toothed wheel is in line with the smallest sprocket.
   - Show solution: "Turn the H screw clockwise a quarter turn" (h_screw rotate, clockwise, a quarter turn)
-- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the wheel is in line with the smallest sprocket and the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
+- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the toothed wheel is in line with the smallest sprocket and the chain runs quietly. If the toothed wheel does not move, stop turning: the cable holds it, and a later step sets the cable.
   - Show solution: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 
 <sub>Appears in:</sub>
@@ -415,7 +415,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Set the inner limit (L screw)
 
-<sub>Unit `card:step:check-low-limit` · hash `f96cb2f86aba` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit` · hash `9419a55eef47` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -426,9 +426,9 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 <sub>3D: focus upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
 
 - [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The L screw is set. Nothing to change.
-- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the wheel is in line with the largest sprocket.
+- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line with the largest sprocket.
   - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
-- [ ] **The chain rattled, or slipped off the largest sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the wheel is in line with the largest sprocket and the chain runs quietly.
+- [ ] **The chain rattled, or slipped off the largest sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the toothed wheel is in line with the largest sprocket and the chain runs quietly.
   - Show solution: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
 
 <sub>Appears in:</sub>

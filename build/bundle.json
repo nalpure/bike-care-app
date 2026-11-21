@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "c247ea74e3ea66d8",
+  "content_hash": "671d6573c26a44b8",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1353,7 +1353,7 @@
         {
           "id": "too-far-out",
           "label": "Further out, away from the spokes",
-          "block": "The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the wheel is in line with the smallest sprocket.",
+          "block": "The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the toothed wheel is in line with the smallest sprocket.",
           "solution": [
             {
               "target": "h_screw",
@@ -1368,7 +1368,7 @@
         {
           "id": "rattles",
           "label": "The chain rattled, or jumped to a bigger sprocket",
-          "text": "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the wheel is in line with the smallest sprocket and the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.",
+          "text": "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the toothed wheel is in line with the smallest sprocket and the chain runs quietly. If the toothed wheel does not move, stop turning: the cable holds it, and a later step sets the cable.",
           "solution": [
             {
               "target": "h_screw",
@@ -1408,7 +1408,7 @@
         {
           "id": "too-far-in",
           "label": "Further in, towards the spokes",
-          "block": "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the wheel is in line with the largest sprocket.",
+          "block": "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line with the largest sprocket.",
           "solution": [
             {
               "target": "l_screw",
@@ -1423,7 +1423,7 @@
         {
           "id": "rattles",
           "label": "The chain rattled, or slipped off the largest sprocket",
-          "text": "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the wheel is in line with the largest sprocket and the chain runs quietly.",
+          "text": "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the toothed wheel is in line with the largest sprocket and the chain runs quietly.",
           "solution": [
             {
               "target": "l_screw",
