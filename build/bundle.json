@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "671d6573c26a44b8",
+  "content_hash": "2d2aaf3c6b455d9a",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1797,7 +1797,7 @@
   "demo_bikes": [
     {
       "id": "city-derailleur-no-stand",
-      "name": "City bike with derailleur, no stand",
+      "name": "Brightwater City 8",
       "facts": {
         "bike.brand": "Brightwater",
         "bike.model": "City 8",
@@ -1812,7 +1812,7 @@
     },
     {
       "id": "e-trekking-hub-gear",
-      "name": "E-trekking bike with hub gear",
+      "name": "Lindholm E-Tour 5",
       "facts": {
         "bike.brand": "Lindholm",
         "bike.model": "E-Tour 5",
@@ -1826,7 +1826,7 @@
     },
     {
       "id": "road-bike-stand",
-      "name": "Road bike with a work stand",
+      "name": "Corvana Strada SL 3",
       "facts": {
         "bike.brand": "Corvana",
         "bike.line": "Strada",

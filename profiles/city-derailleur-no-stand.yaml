@@ -4,6 +4,7 @@ profile:
   id: city-derailleur-no-stand
   name: "City bike with derailleur, no stand"
   description: "Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows the gear type but not how the gears are connected."
+  bike_name: "Brightwater City 8"
   facts:
     bike.brand: "Brightwater"
     bike.model: "City 8"

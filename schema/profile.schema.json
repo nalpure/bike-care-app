@@ -17,6 +17,10 @@
         "id": { "$ref": "common.schema.json#/$defs/id" },
         "name": { "$ref": "common.schema.json#/$defs/text" },
         "description": { "$ref": "common.schema.json#/$defs/text" },
+        "bike_name": {
+          "description": "The name the test bike gets in the garage (demo_bikes). Defaults to name.",
+          "$ref": "common.schema.json#/$defs/text"
+        },
         "facts": {
           "description": "Known on the bike before any flow starts. Never asked.",
           "$ref": "#/$defs/factValues"

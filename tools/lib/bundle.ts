@@ -62,7 +62,7 @@ export function bundleOf(c: Content): BundleView {
     // The garage's test bikes. Only names and facts: the app never reads journeys.
     demo_bikes: [...c.profiles.values()]
       .filter((p) => Object.keys(p.def.facts ?? {}).length)
-      .map((p) => ({ id: p.def.id, name: p.def.name, facts: { ...p.def.facts } })),
+      .map((p) => ({ id: p.def.id, name: p.def.bike_name ?? p.def.name, facts: { ...p.def.facts } })),
   };
   const locate: Locate<Src> = (node, ...sub) => {
     const base = where.get(node);

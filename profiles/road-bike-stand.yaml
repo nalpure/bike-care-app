@@ -4,6 +4,7 @@ profile:
   id: road-bike-stand
   name: "Road bike with a work stand"
   description: "Road bike, 11-speed mechanical rear derailleur. The owner has a work stand."
+  bike_name: "Corvana Strada SL 3"
   facts:
     bike.brand: "Corvana"
     bike.line: "Strada"

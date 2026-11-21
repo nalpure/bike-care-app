@@ -27,6 +27,8 @@ describe('shared resolver on the written bundle', () => {
   const ix = R.indexBundle(bundle);
 
   it('carries the test bikes: names and facts of each profile that knows a fact, no journeys', () => {
+    // bike_name wins over the profile name
+    expect(bundle.demo_bikes.find((b: any) => b.id === 'road-bike-stand').name).toBe('Corvana Strada SL 3');
     expect(bundle.demo_bikes.map((b: any) => b.id)).toEqual(['city-derailleur-no-stand', 'e-trekking-hub-gear', 'road-bike-stand']);
     for (const b of bundle.demo_bikes) {
       expect(Object.keys(b).sort()).toEqual(['facts', 'id', 'name']);

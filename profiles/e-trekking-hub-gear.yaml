@@ -4,6 +4,7 @@ profile:
   id: e-trekking-hub-gear
   name: "E-trekking bike with hub gear"
   description: "E-trekking bike with a mid motor and an internal hub gear. The shifting content does not cover hub gears yet."
+  bike_name: "Lindholm E-Tour 5"
   facts:
     bike.brand: "Lindholm"
     bike.model: "E-Tour 5"
