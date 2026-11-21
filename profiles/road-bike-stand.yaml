@@ -25,8 +25,9 @@ profile:
       choices: { hold_bike: stand }
       tutorial_sees:
         barrel-adjuster-present: at-derailleur
-        check-low-limit-by-hand: in-line
         check-high-limit: too-far-out
+        check-low-limit: in-line
+        check-low-limit-by-hand: in-line
         check-all-gears: chain-off
       after_stop: show_how
 

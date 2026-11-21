@@ -1,6 +1,6 @@
 # Mechanical rear derailleur, rear wheel off the ground (stand, hanging, or upside down).
-# The low limit is checked by hand first, before the chain is ever shifted towards the spokes,
-# and independent of the cable tension (review finding, 2026-11-17).
+# Limit screws by the owner's method (2026-11-20): H at the smallest sprocket, L at the largest,
+# then the hand push towards the spokes double-checks the inner limit.
 
 sequence:
   # Nothing is apart yet: a stop here has no jump button.
@@ -22,10 +22,11 @@ sequence:
 
   # The work
   - procedure: hold-bike                 # sets bike_in_stand, bike_hung or bike_upside_down
-  - step: check-low-limit-by-hand        # block while the derailleur goes past the largest sprocket
   - step: shift-to-smallest-sprocket
   - step: check-high-limit               # block while the derailleur sits outside the smallest sprocket
   - step: shift-to-largest-sprocket
+  - step: check-low-limit                # block while the derailleur sits past the largest sprocket
+  - step: check-low-limit-by-hand        # double-check: block while a push takes it past the largest sprocket
   - step: check-b-gap
   - step: check-cable-tension
   - step: check-all-gears                # its unsafe exit: show_how_from release-bike

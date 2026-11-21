@@ -1,6 +1,8 @@
 # Mechanical rear derailleur, bike on its wheels. The user adjusts while the bike stands
-# and tests with short rides. The low limit is checked by hand before the first ride,
-# because a loose low limit can throw the chain into the spokes while riding.
+# and tests with short rides. Limit screws by the owner's method (2026-11-20): H after a ride
+# into the smallest sprocket, L after a ride into the largest, then the hand push double-checks
+# the inner limit. The ride into the largest sprocket warns to stop pedalling at once if the
+# chain moves towards the spokes.
 
 sequence:
   # Nothing is apart in this case, so no stop has a jump button.
@@ -20,10 +22,11 @@ sequence:
           kind: not_covered
           text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
   - step: park-bike
-  - step: check-low-limit-by-hand        # block while the pulley goes past the largest sprocket
   - step: ride-to-smallest-sprocket
   - step: check-high-limit
   - step: ride-to-largest-sprocket
+  - step: check-low-limit
+  - step: check-low-limit-by-hand        # double-check of the inner limit
   - step: check-b-gap
   - step: check-cable-tension-riding
   - step: check-all-gears-riding

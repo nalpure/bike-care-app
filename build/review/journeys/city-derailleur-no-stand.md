@@ -55,7 +55,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-bigger.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 26 to 29 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 28 to 31 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -82,7 +82,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: none. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: Soft mat or old blanket. (✓ = the owner has it)
 
-Time shown for this bike: 26 to 29 min (depends on how the bike is held).
+Time shown for this bike: 28 to 31 min (depends on how the bike is held).
 
 #### Steps
 
@@ -110,25 +110,7 @@ Tools: Soft mat or old blanket (helpful)
 
 <sub>State: +bike_upside_down → now: bike_upside_down</sub>
 
-##### 3. Check the inner limit (L screw) · `check-low-limit-by-hand` · safety check · 3 min
-
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper of its two small toothed wheels stop? You turn the screws with the small screwdriver or hex key.
-
-<sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
-
-Animation: "Push the derailleur in by hand" (rear_derailleur push, towards_spokes, as far as it goes)
-
-Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
-
-- [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The L screw is set. Let go of the derailleur.
-- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again. ◀ **this path**
-  - Show solution: "Screw in the L screw a quarter turn" (l_screw rotate, clockwise, a quarter turn)
-- [ ] **It stops before the largest sprocket** <sub>`short`</sub> → The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.
-  - Show solution: "Unscrew the L screw a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
-
-Next stays disabled. After the fix, the owner taps "In line with the largest sprocket" and goes on.
-
-##### 4. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
+##### 3. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
 
 Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.
 
@@ -136,55 +118,85 @@ Turn the pedals forward by hand and use the right shifter until the chain sits o
 
 Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
-##### 5. Check the outer limit (H screw) · `check-high-limit` · safety check · 3 min
+##### 4. Set the outer limit (H screw) · `check-high-limit` · safety check · 3 min
 
-Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur. Where is it, compared with the smallest sprocket? You turn the screws with the small screwdriver or hex key.
+The chain is on the smallest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the smallest sprocket?
 
 <sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
-- [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change. ◀ **this path**
-- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
-  - Show solution: "Unscrew the H screw a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
-- [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
-  - Show solution: "Screw in the H screw a quarter turn" (h_screw rotate, clockwise, a quarter turn)
+- [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
+- [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the wheel is in line with the smallest sprocket.
+  - Show solution: "Turn the H screw clockwise a quarter turn" (h_screw rotate, clockwise, a quarter turn)
+- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn, then turn the pedals and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable. ◀ **this path**
+  - Show solution: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 
-##### 6. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
+##### 5. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
 
-Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear.
+Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.
 
 <sub>3D: focus shifter_rear, largest_sprocket, chain · view drive_side</sub>
 
 Animation: "Shift one gear at a time" (clip shift-to-largest)
 
-##### 7. Check the gap to the sprockets · `check-b-gap` · check · 3 min
+##### 6. Set the inner limit (L screw) · `check-low-limit` · safety check · 3 min
 
-Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket. You turn the screws with the small screwdriver or hex key.
+The chain is on the largest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the largest sprocket?
+
+<sub>3D: focus upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
+
+Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
+
+- [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The L screw is set. Nothing to change.
+- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the wheel is in line with the largest sprocket. ◀ **this path**
+  - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
+- [ ] **The chain rattled, or slipped off the largest sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again and listen. Repeat until the chain runs quietly.
+  - Show solution: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
+
+Next stays disabled. After the fix, the owner taps "In line, and the chain ran quietly" and goes on.
+
+##### 7. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
+
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper toothed wheel stop?
+
+<sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
+
+Animation: "Push the derailleur in by hand" (rear_derailleur push, towards_spokes, as far as it goes)
+
+Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
+
+- [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The inner limit is safe. Let go of the derailleur. ◀ **this path**
+- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again.
+  - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
+
+##### 8. Check the gap to the sprockets · `check-b-gap` · check · 3 min
+
+Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
 
 <sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
 - [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
-- [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
-  - Show solution: "Screw in the B screw a little" (b_screw rotate, clockwise, a little)
-- [ ] **A big gap, and shifting here was slow** <sub>`wide-gap`</sub> → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
-  - Show solution: "Unscrew the B screw a little" (b_screw rotate, counterclockwise, a little)
+- [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → With the screwdriver or hex key, turn the B screw at the back of the derailleur clockwise, a little at a time, until there is a small gap.
+  - Show solution: "Turn the B screw clockwise a little" (b_screw rotate, clockwise, a little)
+- [ ] **A big gap, and shifting here was slow** <sub>`wide-gap`</sub> → With the screwdriver or hex key, turn the B screw counterclockwise, a little at a time, until the gap is small but the teeth do not touch.
+  - Show solution: "Turn the B screw counterclockwise a little" (b_screw rotate, counterclockwise, a little)
 
-##### 8. Set the cable tension · `check-cable-tension` · check · 5 min
+##### 9. Set the cable tension · `check-cable-tension` · check · 5 min
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain.
 
 <sub>3D: focus barrel_adjuster, chain, cassette · view drive_side</sub>
 
-- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.
-  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
-- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
+- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
+  - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
+- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
+  - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
 
-##### 9. Test every gear · `check-all-gears` · safety check · 2 min
+##### 10. Test every gear · `check-all-gears` · safety check · 2 min
 
 Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen.
 
@@ -194,7 +206,7 @@ Turn the pedals and shift through every gear, from the hardest to the easiest an
 - [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
 - [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike`
 
-##### 10. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
+##### 11. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
 
 Turn the bike back onto its wheels. With a heavy bike, ask someone to help.
 
@@ -206,7 +218,7 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 ##### Finish
 
-##### 11. Test ride the gears · `shift-test-ride` · inspection · 3 min
+##### 12. Test ride the gears · `shift-test-ride` · inspection · 3 min
 
 Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.
 
@@ -218,9 +230,9 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 #### End
 
-Done. Nothing is left apart. Tutorial time: 25 min.
+Done. Nothing is left apart. Tutorial time: 27 min.
 
-**Journey ends:** tutorial complete. **Time:** 30 min. **Questions asked:** 1.
+**Journey ends:** tutorial complete. **Time:** 32 min. **Questions asked:** 1.
 
 ---
 

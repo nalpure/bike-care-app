@@ -6,7 +6,7 @@
 
 ## Summary
 
-- Result: **passed**, 3 warning(s)
+- Result: **passed**, 0 warning(s)
 - Files validated: 19
 - 3D names checked against: `build/3d-manifest.json`
 - Bundle: `build/bundle.json`
@@ -15,7 +15,7 @@
 
 | Flow | Kind | Paths | Complete paths | Time of complete paths | Stop paths | Exits before the first step |
 | --- | --- | --- | --- | --- | --- | --- |
-| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 25 | 4 | 26 to 29 min | 21 | 7 |
+| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 25 | 4 | 28 to 31 min | 21 | 7 |
 | [gears-shift-badly](review/trees/gears-shift-badly.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 8 |
 | [routine-check](review/trees/routine-check.md) | routine check | - | - | - | - | - |
 
@@ -27,7 +27,7 @@ Details per unit in [review/index.md](review/index.md).
 
 | Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
 | --- | --- | --- | --- | --- |
-| card | 41 | 0 of 32 | 0 of 41 | 0 |
+| card | 42 | 0 of 33 | 0 of 42 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
 | journey | 9 | — | 0 of 9 | 0 |
 
@@ -35,10 +35,10 @@ Details per unit in [review/index.md](review/index.md).
 
 | Flow | Combination | Time |
 | --- | --- | --- |
-| adjust-rear-shifting | `derailleur.mechanical.stand` | 26 min |
-| adjust-rear-shifting | `derailleur.mechanical.hang` | 27 min |
-| adjust-rear-shifting | `derailleur.mechanical.upside-down` | 26 min |
-| adjust-rear-shifting | `derailleur.mechanical.ground` | 29 min |
+| adjust-rear-shifting | `derailleur.mechanical.stand` | 28 min |
+| adjust-rear-shifting | `derailleur.mechanical.hang` | 29 min |
+| adjust-rear-shifting | `derailleur.mechanical.upside-down` | 28 min |
+| adjust-rear-shifting | `derailleur.mechanical.ground` | 31 min |
 
 ## Where bikes end at a shop or not covered
 
@@ -66,15 +66,15 @@ Use this list to decide what to cover next.
 
 | Profile | Journey | Ends | Time | Questions asked |
 | --- | --- | --- | --- | --- |
-| [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 30 min | 1 |
+| [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 32 min | 1 |
 | [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | The derailleur looks bent, so the owner goes to a shop | shop: Have the rear gears checked | 1 min | 1 |
 | [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Routine check finds slow shifting; the to-do item opens the guide | 1 to-do item(s) | 5 min | 0 |
 | [e-trekking-hub-gear](review/journeys/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
 | [mtb-rapid-rise](review/journeys/mtb-rapid-rise.md) | Gears do not shift cleanly on a rapid-rise derailleur | not covered (gears-shift-badly) | 0 min | 0 |
-| [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 27 min | 0 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 29 min | 0 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-present | 2 min | 0 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
-| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 33 min | 2 |
+| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 35 min | 2 |
 
 Journeys that end at a shop, a stop or not covered: 4 of 9.
 
@@ -158,11 +158,3 @@ Journeys that end at a shop, a stop or not covered: 4 of 9.
 - Price for job `adjust-rear-shifting` is a placeholder.
 - Price for job `chain-care` is a placeholder.
 - Price for job `derailleur-check-at-shop` is a placeholder.
-
-## Issues
-
-```
-WARNING content/steps/rear-shifting.yaml:147 | step check-low-limit-by-hand | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
-WARNING content/steps/rear-shifting.yaml:171 | step check-high-limit | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
-WARNING content/steps/rear-shifting.yaml:194 | step check-b-gap | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
-```

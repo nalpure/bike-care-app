@@ -5,7 +5,7 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 41 fully approved
+- Cards: 0 of 42 fully approved
 - Flow trees: 0 of 3 fully approved
 - Journeys: 0 of 9 fully approved
 
@@ -33,8 +33,9 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:step:ride-to-largest-sprocket` | Ride into the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-cable-tension-riding` | Set the cable tension on short rides | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-all-gears-riding` | Test every gear on a ride | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:check-low-limit-by-hand` | Check the inner limit (L screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:check-high-limit` | Check the outer limit (H screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:check-high-limit` | Set the outer limit (H screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:check-low-limit` | Set the inner limit (L screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:check-low-limit-by-hand` | Double-check the inner limit | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-b-gap` | Check the gap to the sprockets | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:bike.category` | Question: bike.category | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:bike.ebike` | Question: bike.ebike | — | ⬜ not reviewed | [cards.md](cards.md) |

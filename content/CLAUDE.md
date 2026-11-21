@@ -13,7 +13,7 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 
 - English, short, plain words, one action per step, easy to translate into German.
 - Name the part and say where it is: "the small screw marked L on the back of the derailleur".
-- **Turning: say which way.** "Turn the screw marked L clockwise a quarter turn." Never "screw in", "screw out", "tighten" or "loosen" on their own.
+- **Turning: say which way.** "Turn the screw marked L clockwise a quarter turn." Never "screw in", "screw out", "tighten" or "loosen" on their own. Clockwise is seen looking at the screw head; where that is unclear (a barrel adjuster), say where to look from. The animation's `direction` uses the same words.
 - Buttons describe what the user sees ("The chain rattles on the largest sprocket"), never a judgement ("L limit too tight"). At most three.
 - **Warnings** go in the step text, and only when they are about safety or a very common mistake. A wrong screwdriver size does not qualify.
 - Facts that are only nice to know appear in text only when known: `{fact.key|fallback wording}` or `details`.
