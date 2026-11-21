@@ -32,10 +32,10 @@ describe('the real content', () => {
       'derailleur.mechanical.ground',
     ]);
     expect(t.paths.filter((p) => p.variant.ending === 'jump')).toHaveLength(3);
-    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(7).fill('not_covered'));
+    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(6).fill('not_covered'));
     const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
     expect(d.paths).toHaveLength(6);
-    expect(d.exits).toHaveLength(8);
+    expect(d.exits).toHaveLength(6);
 
     const endings = Object.fromEntries([...r.profiles.values()].flatMap((p) => p.results.map((x) => [`${x.profile}/${x.journey}`, x.ending])));
     expect(endings).toEqual({
@@ -43,7 +43,6 @@ describe('the real content', () => {
       'city-derailleur-no-stand/bent-derailleur': 'shop: Have the rear gears checked',
       'city-derailleur-no-stand/routine-check-slow-shifting': '1 to-do item(s)',
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
-      'mtb-rapid-rise/rapid-rise-not-supported': 'not covered (gears-shift-badly)',
       'road-bike-stand/chain-touches-spokes': 'stop, jump ahead, bike put back, shop',
       'road-bike-stand/no-barrel-adjuster': 'exit (not_covered) at barrel-adjuster-present',
       'road-bike-stand/routine-check-dirty-chain': '1 to-do item(s)',
@@ -53,12 +52,19 @@ describe('the real content', () => {
 
   it('never asks a fact marked ask: never, and does not double the paths for it', () => {
     const r = runCheck(REPO, { write: false });
-    const unknown = r.profiles.get('unknown-bike')!;
-    expect(unknown.markdown).not.toContain('rear_derailleur_type');
+    // No content branches on an ask: never fact today, so add one: hex screws are "not covered".
+    const r2 = sandbox()
+      .edit('content/tutorials/adjust-rear-shifting/tutorial.yaml', (d) => d.tutorial.cases[0].cases.unshift({ when: { 'drive.rear_derailleur_screws': ['hex'] }, exit: { kind: 'not_covered', text: 'Not covered.' } }))
+      .run();
+    // The diagnosis still leads hex bikes to the tutorial; that coverage error is expected here.
+    expect(r2.issues.errors.filter((e) => e.rule !== 'diagnosis-tutorial-coverage').map(formatIssue)).toEqual([]);
+    const unknown = r2.profiles.get('unknown-bike')!;
+    expect(unknown.markdown).not.toContain('rear_derailleur_screws');
     expect(unknown.results[0].questions).toBe(2);
-    const t = r.flows!.tutorials[0];
+    const t = r2.flows!.tutorials[0];
     const stand = t.paths.find((p) => p.id === 'derailleur.mechanical.stand')!;
-    expect(stand.combo.alt['drive.rear_derailleur_type']).toEqual(['standard', 'unknown']);
+    expect(stand.combo.alt['drive.rear_derailleur_screws']).toEqual(['cross', 'unknown']);
+    expect(r.profiles.get('unknown-bike')!.results[0].questions).toBe(2);
   });
 
   it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {

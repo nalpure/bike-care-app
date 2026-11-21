@@ -5,9 +5,9 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 42 fully approved
+- Cards: 0 of 41 fully approved
 - Flow trees: 0 of 3 fully approved
-- Journeys: 0 of 9 fully approved
+- Journeys: 0 of 8 fully approved
 
 | Unit | Title | Mechanic | Beginner | File |
 | --- | --- | --- | --- | --- |
@@ -41,7 +41,6 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:fact:bike.ebike` | Question: bike.ebike | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.gear_type` | Question: drive.gear_type | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.shifting` | Question: drive.shifting | — | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:fact:drive.rear_derailleur_type` | Bike record: drive.rear_derailleur_type | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.rear_derailleur_screws` | Bike record: drive.rear_derailleur_screws | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:choice:hold_bike` | Run choice: hold_bike | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:job:adjust-rear-shifting` | Adjust the rear gears | — | ⬜ not reviewed | [cards.md](cards.md) |
@@ -60,7 +59,6 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `journey:city-derailleur-no-stand/bent-derailleur` | The derailleur looks bent, so the owner goes to a shop | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:city-derailleur-no-stand/routine-check-slow-shifting` | Routine check finds slow shifting; the to-do item opens the guide | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:e-trekking-hub-gear/hub-gear-not-covered` | Gears do not shift cleanly on a hub gear | — | ⬜ not reviewed | [journeys/e-trekking-hub-gear.md](journeys/e-trekking-hub-gear.md) |
-| `journey:mtb-rapid-rise/rapid-rise-not-supported` | Gears do not shift cleanly on a rapid-rise derailleur | — | ⬜ not reviewed | [journeys/mtb-rapid-rise.md](journeys/mtb-rapid-rise.md) |
 | `journey:road-bike-stand/chain-touches-spokes` | Adjusting in the stand, but the chain touches the spokes at the end | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |
 | `journey:road-bike-stand/no-barrel-adjuster` | Opens the tutorial directly, but finds no barrel adjuster | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |
 | `journey:road-bike-stand/routine-check-dirty-chain` | Routine check finds a dirty chain | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |

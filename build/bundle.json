@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "7649794105247371",
+  "content_hash": "e511ee7498fa97e3",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -129,27 +129,6 @@
         "electronic": {
           "en": "Electronically",
           "de": "Elektronisch"
-        }
-      }
-    },
-    {
-      "key": "drive.rear_derailleur_type",
-      "type": "enum",
-      "values": [
-        "standard",
-        "low_normal"
-      ],
-      "ask": "never",
-      "safety": false,
-      "note": "Low-normal is also sold as rapid rise. Never asked, because a beginner cannot tell. Known from the bike's parts list, a partner, or the derailleur model. Unknown is treated as standard.",
-      "answers": {
-        "standard": {
-          "en": "Standard (high-normal) rear derailleur",
-          "de": "Standard-Schaltwerk (High-Normal)"
-        },
-        "low_normal": {
-          "en": "Rapid-rise (low-normal) rear derailleur",
-          "de": "Rapid-Rise-Schaltwerk (Low-Normal)"
         }
       }
     },
@@ -1263,17 +1242,6 @@
           "cases": [
             {
               "when": {
-                "drive.rear_derailleur_type": [
-                  "low_normal"
-                ]
-              },
-              "exit": {
-                "kind": "not_covered",
-                "text": "Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you."
-              }
-            },
-            {
-              "when": {
                 "choice.hold_bike": [
                   "stand",
                   "hang",
@@ -1514,10 +1482,6 @@
         ],
         "drive.shifting": [
           "mechanical"
-        ],
-        "drive.rear_derailleur_type": [
-          "standard",
-          "unknown"
         ]
       },
       "if_unknown": "ask",
@@ -1575,14 +1539,6 @@
             ]
           },
           "message": "Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant."
-        },
-        {
-          "when": {
-            "drive.rear_derailleur_type": [
-              "low_normal"
-            ]
-          },
-          "message": "Rapid-rise rear derailleurs are not supported yet. A shop can check them. You can also ask the assistant."
         },
         {
           "when": {

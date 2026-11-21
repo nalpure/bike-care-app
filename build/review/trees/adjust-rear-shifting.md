@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `65807c0746b0` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `b609d2fc1b12` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -10,7 +10,6 @@ To read one complete path as the user sees it: `npm run walk -- --list`, then `n
 ## Before the first step
 
 - Questions, only when not yet known: `drive.gear_type`, `drive.shifting`
-- Read from the bike's data, never asked: `drive.rear_derailleur_type`
 - Run choices: `hold_bike`
 - Difficulty 2
 
@@ -19,7 +18,6 @@ To read one complete path as the user sees it: `npm run walk -- --list`, then `n
 Evaluated top to bottom; the first match wins.
 
 - when drive.gear_type is derailleur and drive.shifting is mechanical → nested branch:
-  - when drive.rear_derailleur_type is low_normal → **EXIT, not covered**: "Rapid-rise rear derailleurs work the other way round and are not supported yet. A shop can adjust it for you."
   - when choice.hold_bike is stand or hang or upside_down → case `wheel-free`
   - when choice.hold_bike is ground → case `test-rides`
 - when drive.gear_type is derailleur and drive.shifting is electronic → **EXIT, not covered**: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
@@ -101,7 +99,6 @@ Time of the complete path: 31 min (ground)
 
 ## Exits before the first step
 
-- drive.gear_type = derailleur, drive.shifting = mechanical, drive.rear_derailleur_type = low_normal → **EXIT, not covered**
 - drive.gear_type = derailleur, drive.shifting = electronic → **EXIT, not covered**
 - drive.gear_type = derailleur, drive.shifting = unknown → **EXIT, not covered**
 - drive.gear_type = hub_gear → **EXIT, not covered**

@@ -542,15 +542,6 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 <sub>Picture set: shifting-types</sub>
 
-### Bike record: drive.rear_derailleur_type
-
-<sub>Unit `card:fact:drive.rear_derailleur_type` · hash `3a4bbac67bd0` · beginner: ⬜ not reviewed</sub>
-
-<sub>Never asked. Comes only from the bike's data. Values as shown on the bike record:</sub>
-
-- `standard`: Standard (high-normal) rear derailleur
-- `low_normal`: Rapid-rise (low-normal) rear derailleur
-
 ### Bike record: drive.rear_derailleur_screws
 
 <sub>Unit `card:fact:drive.rear_derailleur_screws` · hash `e4467b90b249` · beginner: ⬜ not reviewed</sub>
