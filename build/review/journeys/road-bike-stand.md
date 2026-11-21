@@ -127,7 +127,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 - [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the wheel is in line with the smallest sprocket. ◀ **this path**
   - Show solution: "Turn the H screw clockwise a quarter turn" (h_screw rotate, clockwise, a quarter turn)
-- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn, then turn the pedals and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
+- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
   - Show solution: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 
 Next stays disabled. After the fix, the owner taps "In line, and the chain ran quietly" and goes on.

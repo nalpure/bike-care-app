@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "e511ee7498fa97e3",
+  "content_hash": "58ea16332f49af05",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -976,7 +976,7 @@
         {
           "id": "rattles",
           "label": "The chain rattled, or jumped to a bigger sprocket",
-          "text": "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn, then turn the pedals and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.",
+          "text": "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.",
           "solution": [
             {
               "target": "h_screw",

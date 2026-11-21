@@ -162,7 +162,7 @@ steps:
           - { target: h_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw clockwise a quarter turn" }
       - id: rattles
         label: "The chain rattled, or jumped to a bigger sprocket"
-        text: "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn, then turn the pedals and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
+        text: "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
         solution:
           - { target: h_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw counterclockwise a quarter turn" }
 
