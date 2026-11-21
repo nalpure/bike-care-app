@@ -14,6 +14,8 @@ It holds no repair text and no bike-specific logic (CLAUDE.md, hard rule 1). Eve
 | `npm test` | Vitest: build tool tests and `player/test/` (engine, all profile journeys, 3D registry). On Windows only through `npm test` |
 | `npm run test:e2e` | Builds the player, clicks every profile journey in headless Chromium (portrait and landscape), compares endings with `build/report.md`. Screenshots in `player/e2e/shots/`. `-- --no-build` reuses `dist/` |
 | `npm run shots` | After `npm run build`: walks the rear-shifting tutorial for a road bike in a stand and a city bike upside down, with one screenshot per card after the camera settles. Use it to look at 3D changes. `-- --only road` limits it to one bike. Output in `player/e2e/shots/slow/` |
+| `npm run parts` | Builds the parts library (`player/public/parts/library.glb`, `library.json`, `CREDITS.txt`) from `tools/assets/library.yaml` and the model in `assets-src/` |
+| `npm run parts:check` | Renders every library part and its source nodes as silhouettes from 6 directions in headless Chromium and prints the overlap and box difference per part; fails on a bad shape or an over-budget library. `-- --shots` writes a PNG per part to `tools/assets/out/` (original left, library right) |
 | `npm run manifest` | Writes `build/3d-manifest.json` from `player/src/stage/registry.ts`; `npm run check` validates content against it |
 
 Before you commit: `npm run check`, `npm test`, `npm run test:e2e`, then look at a few screenshots (in the shots folders, use the Read tool on the PNGs). Run commands from the repo root.
@@ -51,6 +53,7 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 | `spec.ts` | Constants, `BikeSpec` and `bikeSpec(facts)`: which bike to draw. The rules are in the comment above it (category, `bike.handlebar`, gear type, speeds, e-bike, `bike.colour`, `geometry.*`). Its dimensions (axle positions `rx`, `huby`, tyre `rt`, bottom bracket `bby`, frame points) are per bike; `RX`, `HUBY`, `RT`, `BBY` are only the defaults. Also `cassetteFor`, `geometryOf` and the frame-point helpers (`stayPts`, `batteryLine`, `gripOf`) |
 | `bike.ts` | `BikeModel`: builds the meshes (frame, wheels, fork, stand, hook, name decal) and calls the builders below. `add(id, geometry, …)` registers a part under its node id, `anchors` are where tags attach, `turns` are the screws and the barrel adjuster with their axis. `setDer` moves the derailleur and lays the chain. Re-exports the names of `spec.ts`, `geo.ts` (`seg`, `disposeTree`), `derailleur.ts` and `drivetrain.ts` (`rAt`), so other files import from `bike.ts` |
 | `geo.ts` | Geometry helpers: `tubeGeo`, `curveGeo`, `gearGeo`, `slabGeo`, `hullShape`, `seg`, `plate`, `v3` |
+| `library.ts` | The parts library loader: `loadLibrary`, `hasLibrary`, `libGeo(name)` (see "Parts library" below) |
 | `drivetrain.ts` | Chainring, cranks, sprockets (`buildCrankset`), the chain (`buildChain`, `layoutCirc`, `layChain`) and `rAt` |
 | `derailleur.ts` | `derGeom` (hanger, body, links), `derPose` (body angle, cage, links), the turning points (`bodyBarrel`, `barrelTurn`), `buildDerailleur` and `moveDerailleur` (cage, links, cable ends) |
 | `cockpit.ts` | `buildCockpit` (bar, brake levers, shifter) and `buildShiftCable` |
@@ -58,6 +61,18 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 | `views.ts` | Named camera poses. `whole_bike` is in world space; close-ups are in bike space, so they follow a lifted, hung or flipped bike |
 | `anim.ts` | Named clips (`shift-to-smallest`, `limit-screw-align`, `b-gap-adjust`, `cable-tension-shift`, …) and the generic motions. A `rotate` on a screw or the barrel adjuster plays the matching clip in the given direction |
 | `three-stage.ts` | `ThreeStage`: scene, lights and the prototype's r128 look (colour management off, lights × π), the pose for each way of holding the bike (`poseVals`), focus fade, tags (stacked so they don't overlap), caption, explore mode, replay, solutions, and the garage preview (below) |
+
+### Parts library
+
+Real part shapes come from a CC BY model in `assets-src/`, split into pieces and simplified by `npm run parts` into `player/public/parts/library.glb` (one mesh per part, positions and indices only, quantized) with `library.json` (per part: source nodes, triangles before and after, box and size in mm; also the steering axis and angle) and `CREDITS.txt`. The app fetches the file at start (`main.ts` calls `loadLibrary()` before it creates the stage; if that fails it falls back to `PlaceholderStage`). Tests load it from disk in `player/test/setup-library.ts`.
+
+- **Library space:** scene units (1 unit = 0.5 m), x forward, y up, z to the drive side, origin at the source's bottom bracket centre (`lib = 2 x (src.z, src.y, -src.x)`, metres). Parts are not moved to their own origin: measure turning and mounting points in this space and place parts from there. The front parts (stem, bar, grips) are stored turned straight.
+- **API (`stage/library.ts`):** `LIB_NAMES`, `loadLibrary(bytes?)`, `hasLibrary()`, `libGeo(name)`: shared geometry in library space with creased normals (35°), `userData.lib = true`. Never dispose it; `disposeTree` skips it.
+- **Library names are pieces, not registry nodes:** the builder maps pieces to nodes.
+- **Credit:** the app must credit every model it uses (`CREDITS.txt` has the text).
+- **Budgets:** at most 35k triangles and 1.5 MB for the library (`parts:check` fails above that).
+- **Add or change a part:** edit `tools/assets/library.yaml` (source nodes by their original glTF names, materials to drop, `front`, the share of triangles to keep), add the name to `LIB_NAMES`, run `npm run parts`, then `npm run parts:check` (overlap of at least 0.97 and a box within 0.5 mm of the source, from 6 directions). Another source model is another yaml file and another `source:`.
+- The tables in the yaml are drawing data (shapes), not facts about parts (hard rule 3).
 
 ### Garage preview
 

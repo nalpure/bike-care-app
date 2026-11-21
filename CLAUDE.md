@@ -15,7 +15,8 @@ content/         facts.yaml, choices.yaml, states.yaml, tools.yaml, inspections.
                  steps/, procedures.yaml, tutorials/<job>/, diagnoses/, checks/, review/
 profiles/        test bikes (facts, answers, tools, journeys), one YAML each
 reviews/         ledger.yaml: sign-offs of review units (append only, via npm run review -- sign)
-tools/           build tool (tools/check.ts), walk.ts (paths on demand), review.ts (review status and sign-off)
+tools/           build tool (tools/check.ts), walk.ts (paths on demand), review.ts (review status and sign-off),
+                 assets/ (parts library: library.yaml, build-library.ts, check-library.ts, explore/ scripts)
 build/           generated, never edited by hand: bundle.json, report.md, 3d-manifest.json,
                  review/ (index.md, cards.md, trees/, journeys/); paths/ is on demand and not committed
 player/          the web app (Vite, TypeScript, three.js)
@@ -33,6 +34,7 @@ The golden example is the symptom "My gears don't shift cleanly": `content/diagn
 - `npm run review -- status` / `npm run review -- sign <unit> --role <role> --by <name>`   review units and sign-offs.
 - `npm run dev`    start the player locally.
 - `npm run build`  static build of the player for sharing (`dist/`).
+- `npm run parts`  build the 3D parts library (`player/public/parts/`) from `assets-src/`; `npm run parts:check` compares every part with its source model and checks the budget.
 - `npm run manifest`  write `build/3d-manifest.json` (the 3D nodes, views and clips content may use) from the player's registry.
 - `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `player/e2e/shots/`.
 
