@@ -3,7 +3,7 @@
 // Session area: shared; any session may add a helper here.
 
 import * as T from 'three';
-import { TAU, type V2, type V3 } from './spec.js';
+import { DEG, rOf, TAU, type V2, type V3 } from './spec.js';
 
 export const UP = new T.Vector3(0, 1, 0);
 
@@ -125,3 +125,115 @@ export function disposeTree(g: T.Object3D, keep?: T.Material): void {
   });
 }
 
+
+// ------------------------------------------------------------------ sprockets and chainrings
+// Sizes below are drawing values (mm / 500 = scene units), not facts about any part (hard rule 3).
+
+/** Roller seat radius in a tooth gap: a 7.75 mm roller (radius 3.875 mm) with a little play. */
+export const SEAT_R = 0.00806;
+/** How far a tooth tip stands out past the pitch circle (the circle the roller centres run on). */
+export const TIP_OVER = 0.0022;
+
+/**
+ * A sprocket outline on the chain's pitch circle, counterclockwise: 8 points per tooth. Gap k (a
+ * roller seat) is centred on the pitch circle at the angle k * 2 pi / teeth; the tooth tips lie
+ * half way between gaps. Round seats (5 points), straight flanks and a flat, rounded tip (3 points).
+ */
+export function toothOutline(teeth: number): V2[] {
+  const R = rOf(teeth);
+  const a = TAU / teeth;
+  const tipHalf = 0.0016 / (R + TIP_OVER);
+  const pts: V2[] = [];
+  for (let k = 0; k < teeth; k++) {
+    const phi = k * a;
+    const c = Math.cos(phi);
+    const s = Math.sin(phi);
+    for (const deg of [-70, -35, 0, 35, 70]) {
+      const th = deg * DEG;
+      // from the roller centre on the pitch circle: sideways along the circle, and inwards
+      const tx = SEAT_R * Math.sin(th);
+      const ry = -SEAT_R * Math.cos(th);
+      pts.push([(R + ry) * c - tx * s, (R + ry) * s + tx * c]);
+    }
+    for (const d of [-1, 0, 1]) {
+      const ang = phi + a / 2 + d * tipHalf;
+      const rr = R + TIP_OVER + (d === 0 ? 0.0003 : 0);
+      pts.push([rr * Math.cos(ang), rr * Math.sin(ang)]);
+    }
+  }
+  return pts;
+}
+
+const toPath = (pts: V2[], p: T.Path) => {
+  p.setFromPoints(pts.map(([x, y]) => new T.Vector2(x, y)));
+  return p;
+};
+const polar = (r: number, a: number): V2 => [r * Math.cos(a), r * Math.sin(a)];
+
+function extrude(shape: T.Shape, thick: number): T.BufferGeometry {
+  const g = new T.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false, steps: 1 });
+  g.translate(0, 0, -thick / 2);
+  return g;
+}
+
+/**
+ * A rear sprocket in the xy plane, centred on z = 0, thick along z, with its tooth gaps as in
+ * `toothOutline`. From 28 teeth it has a carrier: 4 windows (5 from 36 teeth) between the hub and
+ * the tooth ring. All have a splined hole for the freehub body.
+ */
+export function sprocketGeo(teeth: number, thick: number): T.BufferGeometry {
+  const shape = new T.Shape(toothOutline(teeth).map(([x, y]) => new T.Vector2(x, y)));
+  const hubR = 0.0172;
+  const hole: V2[] = [];
+  for (let j = 0; j < 8; j++) {
+    const a = (j * TAU) / 8;
+    const w = 0.12;
+    hole.push(polar(hubR, a - w), polar(hubR + 0.0014, a - w), polar(hubR + 0.0014, a + w), polar(hubR, a + w));
+  }
+  shape.holes.push(toPath(hole, new T.Path()));
+  if (teeth >= 28) {
+    const n = teeth >= 36 ? 5 : 4;
+    const r0 = 0.032;
+    const r1 = rOf(teeth) - SEAT_R - 0.0075;
+    const web = 0.2;
+    for (let k = 0; k < n; k++) {
+      const a0 = (k * TAU) / n + web / 2 + 0.3;
+      const a1 = ((k + 1) * TAU) / n - web / 2 + 0.3;
+      const w: V2[] = [];
+      for (let i = 0; i <= 6; i++) w.push(polar(r1, a0 + ((a1 - a0) * i) / 6));
+      for (let i = 0; i <= 2; i++) w.push(polar(r0, a1 - ((a1 - a0) * i) / 2));
+      shape.holes.push(toPath(w, new T.Path()));
+    }
+  }
+  return extrude(shape, thick);
+}
+
+/**
+ * A chainring in the xy plane, centred on z = 0: the tooth outline, a narrow ring and `bolts`
+ * tabs (4 or 5) reaching in to the bolt circle `bcdR`, each with a bolt hole. Tab 0 points at
+ * angle `tab0`. One mesh, centred on the axle, so it can sit on a crank's spider.
+ */
+export function chainringGeo(teeth: number, thick: number, bolts: 4 | 5, bcdR: number, tab0: number): T.BufferGeometry {
+  const shape = new T.Shape(toothOutline(teeth).map(([x, y]) => new T.Vector2(x, y)));
+  const ri = rOf(teeth) - SEAT_R - 0.014;
+  const rt = bcdR - 0.012;
+  const half = 0.011;
+  const hole: V2[] = [];
+  for (let k = 0; k < bolts; k++) {
+    const a = tab0 + (k * TAU) / bolts;
+    const next = tab0 + ((k + 1) * TAU) / bolts;
+    // the open part between this tab and the next: an arc on the ring's inside, then down the next tab's side
+    const aEnd = next - half / ri;
+    const aStart = a + half / ri;
+    for (let i = 0; i <= 5; i++) hole.push(polar(ri, aStart + ((aEnd - aStart) * i) / 5));
+    hole.push(polar(rt, next - half / rt), polar(rt, next + half / rt));
+  }
+  shape.holes.push(toPath(hole, new T.Path()));
+  for (let k = 0; k < bolts; k++) {
+    const [cx, cy] = polar(bcdR, tab0 + (k * TAU) / bolts);
+    const b: V2[] = [];
+    for (let i = 0; i < 8; i++) b.push([cx + 0.0045 * Math.cos((i * TAU) / 8), cy + 0.0045 * Math.sin((i * TAU) / 8)]);
+    shape.holes.push(toPath(b, new T.Path()));
+  }
+  return extrude(shape, thick);
+}
