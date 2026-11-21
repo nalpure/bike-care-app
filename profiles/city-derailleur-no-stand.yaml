@@ -5,6 +5,12 @@ profile:
   name: "City bike with derailleur, no stand"
   description: "Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows the gear type but not how the gears are connected."
   facts:
+    bike.brand: "Brightwater"
+    bike.model: "City 8"
+    bike.year: 2021
+    bike.handlebar: flat
+    bike.colour: "#2e7d32"
+    geometry.wheel_bsd_mm: 622
     bike.category: trekking_city
     bike.ebike: false
     drive.gear_type: derailleur

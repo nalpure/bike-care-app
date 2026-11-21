@@ -351,8 +351,9 @@ describe('rules broken on purpose', () => {
       .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'geometry.wheel_bsd_mm').max = 600))
       .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.facts['geometry.stack_mm'] = 900))
       .run();
-    const e = errorsOf(r, 'fact-range');
-    expect(e.length, show(r)).toBe(2); // 622 above max 600, and the profile's stack
+    const e = errorsOf(r, 'fact-range').map((x) => `${x.id} ${x.message}`);
+    expect(e, show(r)).toContain('fact geometry.wheel_bsd_mm Fact geometry.wheel_bsd_mm: 622 is outside … to 600.');
+    expect(e, show(r)).toContain('profile road-bike-stand Fact geometry.stack_mm: 900 is outside 450 to 720.');
   });
 
   it('a placeholder without fallback wording', () => {

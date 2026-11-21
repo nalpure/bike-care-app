@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "a5eb5cc6350a8fbb",
+  "content_hash": "c247ea74e3ea66d8",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1792,6 +1792,66 @@
           "inspect": "shift-test-ride"
         }
       ]
+    }
+  ],
+  "demo_bikes": [
+    {
+      "id": "city-derailleur-no-stand",
+      "name": "City bike with derailleur, no stand",
+      "facts": {
+        "bike.brand": "Brightwater",
+        "bike.model": "City 8",
+        "bike.year": 2021,
+        "bike.handlebar": "flat",
+        "bike.colour": "#2e7d32",
+        "geometry.wheel_bsd_mm": 622,
+        "bike.category": "trekking_city",
+        "bike.ebike": false,
+        "drive.gear_type": "derailleur"
+      }
+    },
+    {
+      "id": "e-trekking-hub-gear",
+      "name": "E-trekking bike with hub gear",
+      "facts": {
+        "bike.brand": "Lindholm",
+        "bike.model": "E-Tour 5",
+        "bike.year": 2023,
+        "bike.handlebar": "riser",
+        "geometry.wheel_bsd_mm": 622,
+        "bike.category": "trekking_city",
+        "bike.ebike": true,
+        "drive.gear_type": "hub_gear"
+      }
+    },
+    {
+      "id": "road-bike-stand",
+      "name": "Road bike with a work stand",
+      "facts": {
+        "bike.brand": "Corvana",
+        "bike.line": "Strada",
+        "bike.model": "SL 3",
+        "bike.year": 2020,
+        "bike.handlebar": "drop",
+        "bike.colour": "#1f4e79",
+        "geometry.stack_mm": 560,
+        "geometry.reach_mm": 385,
+        "geometry.head_tube_mm": 150,
+        "geometry.seat_tube_mm": 520,
+        "geometry.top_tube_mm": 550,
+        "geometry.chainstay_mm": 410,
+        "geometry.wheelbase_mm": 990,
+        "geometry.bb_drop_mm": 72,
+        "geometry.head_angle_deg": 73,
+        "geometry.seat_angle_deg": 73.5,
+        "geometry.wheel_bsd_mm": 622,
+        "bike.category": "road_gravel",
+        "bike.ebike": false,
+        "drive.gear_type": "derailleur",
+        "drive.shifting": "mechanical",
+        "drive.rear_speeds": 11,
+        "drive.rear_derailleur_model": "Shimano 105 RD-R7000"
+      }
     }
   ]
 }

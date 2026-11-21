@@ -6,7 +6,7 @@ Road bike, 11-speed mechanical rear derailleur. The owner has a work stand.
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = road_gravel ("Road or gravel bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.rear_speeds` = 11<br>`drive.rear_derailleur_model` = Shimano 105 RD-R7000 |
+| Known before the first flow | `bike.brand` = Corvana<br>`bike.line` = Strada<br>`bike.model` = SL 3<br>`bike.year` = 2020<br>`bike.handlebar` = drop ("Drop bar, curved down")<br>`bike.colour` = #1f4e79<br>`geometry.stack_mm` = 560<br>`geometry.reach_mm` = 385<br>`geometry.head_tube_mm` = 150<br>`geometry.seat_tube_mm` = 520<br>`geometry.top_tube_mm` = 550<br>`geometry.chainstay_mm` = 410<br>`geometry.wheelbase_mm` = 990<br>`geometry.bb_drop_mm` = 72<br>`geometry.head_angle_deg` = 73<br>`geometry.seat_angle_deg` = 73.5<br>`geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)")<br>`bike.category` = road_gravel ("Road or gravel bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.rear_speeds` = 11<br>`drive.rear_derailleur_model` = Shimano 105 RD-R7000 |
 | Answers when asked | none |
 | Tools with them | Bike work stand |
 
@@ -228,7 +228,7 @@ Tools: Bike work stand
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: Road bike with a work stand. `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
+- Bike: Road bike with a work stand. `bike.brand` = Corvana; `bike.line` = Strada; `bike.model` = SL 3; `bike.year` = 2020; `bike.handlebar` = drop ("Drop bar, curved down"); `bike.colour` = #1f4e79; `geometry.stack_mm` = 560; `geometry.reach_mm` = 385; `geometry.head_tube_mm` = 150; `geometry.seat_tube_mm` = 520; `geometry.top_tube_mm` = 550; `geometry.chainstay_mm` = 410; `geometry.wheelbase_mm` = 990; `geometry.bb_drop_mm` = 72; `geometry.head_angle_deg` = 73; `geometry.seat_angle_deg` = 73.5; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 - Found: Slow or rattling when shifting to harder gears (`shift-test-ride`: slow-to-smaller)
@@ -297,7 +297,7 @@ Buttons: [Find a shop] [Ask the assistant]
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: Road bike with a work stand. `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
+- Bike: Road bike with a work stand. `bike.brand` = Corvana; `bike.line` = Strada; `bike.model` = SL 3; `bike.year` = 2020; `bike.handlebar` = drop ("Drop bar, curved down"); `bike.colour` = #1f4e79; `geometry.stack_mm` = 560; `geometry.reach_mm` = 385; `geometry.head_tube_mm` = 150; `geometry.seat_tube_mm` = 520; `geometry.top_tube_mm` = 550; `geometry.chainstay_mm` = 410; `geometry.wheelbase_mm` = 990; `geometry.bb_drop_mm` = 72; `geometry.head_angle_deg` = 73; `geometry.seat_angle_deg` = 73.5; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 - Stopped at: `barrel-adjuster-present`, "none"

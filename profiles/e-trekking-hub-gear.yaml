@@ -5,6 +5,11 @@ profile:
   name: "E-trekking bike with hub gear"
   description: "E-trekking bike with a mid motor and an internal hub gear. The shifting content does not cover hub gears yet."
   facts:
+    bike.brand: "Lindholm"
+    bike.model: "E-Tour 5"
+    bike.year: 2023
+    bike.handlebar: riser
+    geometry.wheel_bsd_mm: 622
     bike.category: trekking_city
     bike.ebike: true
     drive.gear_type: hub_gear

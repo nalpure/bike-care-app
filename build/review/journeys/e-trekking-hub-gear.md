@@ -6,7 +6,7 @@ E-trekking bike with a mid motor and an internal hub gear. The shifting content 
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = true ("Yes, it has a motor")<br>`drive.gear_type` = hub_gear ("Hub gear") |
+| Known before the first flow | `bike.brand` = Lindholm<br>`bike.model` = E-Tour 5<br>`bike.year` = 2023<br>`bike.handlebar` = riser ("Riser bar, bent up at the ends")<br>`geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)")<br>`bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = true ("Yes, it has a motor")<br>`drive.gear_type` = hub_gear ("Hub gear") |
 | Answers when asked | none |
 | Tools with them | none |
 

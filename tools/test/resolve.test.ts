@@ -26,6 +26,15 @@ describe('shared resolver on the written bundle', () => {
   const bundle = JSON.parse(result.bundle!);
   const ix = R.indexBundle(bundle);
 
+  it('carries the test bikes: names and facts of each profile that knows a fact, no journeys', () => {
+    expect(bundle.demo_bikes.map((b: any) => b.id)).toEqual(['city-derailleur-no-stand', 'e-trekking-hub-gear', 'road-bike-stand']);
+    for (const b of bundle.demo_bikes) {
+      expect(Object.keys(b).sort()).toEqual(['facts', 'id', 'name']);
+      expect(b.facts['bike.brand'], b.id).toBeTruthy();
+      for (const k of Object.keys(b.facts)) expect(ix.facts.has(k), k).toBe(true);
+    }
+  });
+
   it('resolves every tutorial combination like the build tool', () => {
     let n = 0;
     for (const t of c.tutorials.values()) {

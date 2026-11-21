@@ -6,7 +6,7 @@ Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows 
 
 | | |
 | --- | --- |
-| Known before the first flow | `bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur") |
+| Known before the first flow | `bike.brand` = Brightwater<br>`bike.model` = City 8<br>`bike.year` = 2021<br>`bike.handlebar` = flat ("Flat bar")<br>`bike.colour` = #2e7d32<br>`geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)")<br>`bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur") |
 | Answers when asked | `drive.shifting` = mechanical ("With a cable") |
 | Tools with them | none |
 
@@ -268,7 +268,7 @@ The owner chooses: **Take it to a shop**.
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: City bike with derailleur, no stand. `bike.category` = trekking_city ("Trekking or city bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable")
+- Bike: City bike with derailleur, no stand. `bike.brand` = Brightwater; `bike.model` = City 8; `bike.year` = 2021; `bike.handlebar` = flat ("Flat bar"); `bike.colour` = #2e7d32; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = trekking_city ("Trekking or city bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable")
 - Job: Have the rear gears checked
 - Tell the mechanic: "The rear gears do not work as they should. Please check the rear derailleur, the part that holds it, and the gear cable."
 - Found: It leans towards the spokes, or looks twisted (`derailleur-alignment`: crooked)

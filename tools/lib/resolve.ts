@@ -31,6 +31,8 @@ export interface BundleData {
   tutorials: any[];
   diagnoses: any[];
   checks: any[];
+  /** test bikes for the garage: { id, name, facts } from each profile that knows any fact */
+  demo_bikes: { id: string; name: string; facts: Record<string, Value> }[];
 }
 
 export interface Index {

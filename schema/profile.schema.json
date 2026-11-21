@@ -6,7 +6,7 @@
     "factValues": {
       "type": "object",
       "propertyNames": { "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$" },
-      "additionalProperties": { "type": ["string", "boolean", "integer"] }
+      "additionalProperties": { "type": ["string", "boolean", "number"] }
     }
   },
   "type": "object",

@@ -5,6 +5,23 @@ profile:
   name: "Road bike with a work stand"
   description: "Road bike, 11-speed mechanical rear derailleur. The owner has a work stand."
   facts:
+    bike.brand: "Corvana"
+    bike.line: "Strada"
+    bike.model: "SL 3"
+    bike.year: 2020
+    bike.handlebar: drop
+    bike.colour: "#1f4e79"
+    geometry.stack_mm: 560
+    geometry.reach_mm: 385
+    geometry.head_tube_mm: 150
+    geometry.seat_tube_mm: 520
+    geometry.top_tube_mm: 550
+    geometry.chainstay_mm: 410
+    geometry.wheelbase_mm: 990
+    geometry.bb_drop_mm: 72
+    geometry.head_angle_deg: 73
+    geometry.seat_angle_deg: 73.5
+    geometry.wheel_bsd_mm: 622
     bike.category: road_gravel
     bike.ebike: false
     drive.gear_type: derailleur
