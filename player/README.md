@@ -48,7 +48,12 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 | File | Holds |
 | --- | --- |
 | `registry.ts` | Pure data, and the source of 3D names. `NODES` lists every name content may use (tag label, name, aliases, one line on what the part does, and `model_fact`: the text fact(s) with the part's model, shown in the garage preview). `NODE_PARTS` maps a node that stands for several meshes. Also `VIEWS`, `CLIPS`, `MOTIONS`, `LABEL_SCENES` (state label -> how the bike is held, what is hidden), and `previewNode` / `modelOf` for the preview tag |
-| `bike.ts` | `bikeSpec(facts)`: which bike to draw. The rules are in the comment above it (category, `bike.handlebar`, gear type, speeds, e-bike, `bike.colour`, `geometry.*`). Its dimensions (axle positions `rx`, `huby`, tyre `rt`, bottom bracket `bby`, frame points) are per bike; `RX`, `HUBY`, `RT`, `BBY` are only the defaults. `BikeModel`: builds the meshes. `add(id, geometry, …)` registers a part under its node id, `anchors` are where tags attach, `turns` are the screws and the barrel adjuster with their axis. Also the stand, hook and rope, and the derailleur: `derGeom` (hanger, body, links), `layout` (where the upper pulley sits), `setDer` (moves cage, links and chain) |
+| `spec.ts` | Constants, `BikeSpec` and `bikeSpec(facts)`: which bike to draw. The rules are in the comment above it (category, `bike.handlebar`, gear type, speeds, e-bike, `bike.colour`, `geometry.*`). Its dimensions (axle positions `rx`, `huby`, tyre `rt`, bottom bracket `bby`, frame points) are per bike; `RX`, `HUBY`, `RT`, `BBY` are only the defaults. Also `cassetteFor`, `geometryOf` and the frame-point helpers (`stayPts`, `batteryLine`, `gripOf`) |
+| `bike.ts` | `BikeModel`: builds the meshes (frame, wheels, fork, stand, hook, name decal) and calls the builders below. `add(id, geometry, …)` registers a part under its node id, `anchors` are where tags attach, `turns` are the screws and the barrel adjuster with their axis. `setDer` moves the derailleur and lays the chain. Re-exports the names of `spec.ts`, `geo.ts` (`seg`, `disposeTree`), `derailleur.ts` and `drivetrain.ts` (`rAt`), so other files import from `bike.ts` |
+| `geo.ts` | Geometry helpers: `tubeGeo`, `curveGeo`, `gearGeo`, `slabGeo`, `hullShape`, `seg`, `plate`, `v3` |
+| `drivetrain.ts` | Chainring, cranks, sprockets (`buildCrankset`), the chain (`buildChain`, `layoutCirc`, `layChain`) and `rAt` |
+| `derailleur.ts` | `derGeom` (hanger, body, links), `derPose` (body angle, cage, links), the turning points (`bodyBarrel`, `barrelTurn`), `buildDerailleur` and `moveDerailleur` (cage, links, cable ends) |
+| `cockpit.ts` | `buildCockpit` (bar, brake levers, shifter) and `buildShiftCable` |
 | `chain.ts` | The chain path around chainring, sprocket and pulleys; between wheels in different planes the chain bends sideways gently instead of cutting across |
 | `views.ts` | Named camera poses. `whole_bike` is in world space; close-ups are in bike space, so they follow a lifted, hung or flipped bike |
 | `anim.ts` | Named clips (`shift-to-smallest`, `limit-screw-align`, `b-gap-adjust`, `cable-tension-shift`, …) and the generic motions. A `rotate` on a screw or the barrel adjuster plays the matching clip in the given direction |
@@ -73,10 +78,10 @@ stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any 
 
 ### Changing the 3D bike: recipe
 
-1. Shape or proportions of a part: edit `BikeModel` in `bike.ts`. Keep the part id; content refers to it.
-2. A new part that content may name: add it to `NODES` (and `NODE_PARTS` if it groups meshes), build it in `bike.ts` with that id, then run `npm run manifest` and `npm run check`. `player/test/stage.test.ts` fails until every node is built and the manifest matches.
+1. Shape or proportions of a part: edit the builder in `bike.ts`, `drivetrain.ts`, `derailleur.ts` or `cockpit.ts`. Keep the part id; content refers to it.
+2. A new part that content may name: add it to `NODES` (and `NODE_PARTS` if it groups meshes), build it with that id (`bike.ts` or the builder module of its area), then run `npm run manifest` and `npm run check`. `player/test/stage.test.ts` fails until every node is built and the manifest matches.
 3. Renaming a node used by content: rename it in `content/` and `registry.ts` together, then run the manifest and the check.
-4. Which bike the facts produce: `bikeSpec` in `bike.ts`. Write a new rule as a comment there and list it in your handoff file.
+4. Which bike the facts produce: `bikeSpec` in `spec.ts`. Write a new rule as a comment there and list it in your handoff file.
 5. Camera: `views.ts`. Holding poses: `LABEL_SCENES` plus `poseVals` in `three-stage.ts`. Look and lights: `three-stage.ts`.
 6. Check it: `npm run build && npm run shots`, look at the PNGs, then run the full test set above. `stage.test.ts` checks that the derailleur, chain and frame stay off the sprockets in every gear of every kind of bike, and that tyres clear the frame, also with extreme geometry.
 
