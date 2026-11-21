@@ -6,23 +6,9 @@
 diagnosis:
   id: gears-shift-badly
   symptom: "My gears don't shift cleanly"
-  applies_when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
-  if_unknown: ask
+  covers_like: adjust-rear-shifting        # the same bikes as the job, with its not-covered texts
   checks:
     - inspect: derailleur-alignment
     - inspect: chain-condition
     - inspect: shift-test-ride
   no_hit: { job: derailleur-check-at-shop }
-  not_covered:
-    - when: { drive.gear_type: [hub_gear] }
-      message: "Hub gears are not covered yet. A shop can check them. You can also ask the assistant."
-    - when: { drive.gear_type: [gearbox] }
-      message: "Gearboxes at the pedals are not covered yet. A shop can check it. You can also ask the assistant."
-    - when: { drive.gear_type: [single_speed] }
-      message: "Your bike has only one gear, so this check does not fit it. If the chain skips or clunks, a shop can help. You can also ask the assistant."
-    - when: { drive.gear_type: [unknown] }
-      message: "We need to know what kind of gears your bike has. Look at the rear wheel and come back. You can also find a shop or ask the assistant."
-    - when: { drive.shifting: [electronic] }
-      message: "Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant."
-    - when: { drive.shifting: [unknown] }
-      message: "We need to know whether your gears use a cable. Look at the right shifter and come back. You can also find a shop or ask the assistant."

@@ -296,10 +296,12 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   if (silent.size) L.push(`- Read from the bike's data, never asked: ${[...silent].map((k) => `\`${k}\``).join(', ')}`);
   L.push(`- Run choices: ${(def.choices ?? []).map((x: string) => `\`${x}\``).join(', ') || 'none'}`, `- Difficulty ${def.difficulty}`, '');
 
+  L.push(...coverageLines(c, def.job));
+
   // Branches
   L.push('## Branches', '', 'Evaluated top to bottom; the first match wins.', '');
   const caseLine = (cs: any, indent: string) => {
-    const target = cs.include ? `case \`${cs.include.replace(/^cases\//, '').replace(/\.yaml$/, '')}\`` : cs.exit ? `${exitTag(cs.exit.kind)}: "${cs.exit.text}"` : 'nested branch:';
+    const target = cs.include ? `case \`${cs.include.replace(/^cases\//, '').replace(/\.yaml$/, '')}\`` : 'nested branch:';
     L.push(`${indent}- when ${cond(cs.when)} → ${target}`);
     for (const leaf of cs.cases ?? []) caseLine(leaf, `${indent}  `);
   };
@@ -406,18 +408,24 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
     steps: [...used.steps].map((id) => structureOfStep(c.steps.get(id)?.def ?? {})),
     inspections: [...used.inspections].map((id) => structureOfInspection(c.inspections.get(id)?.def ?? { states: [] })),
     states: [...c.states.values()].map((s) => ({ id: s.def.id, safety_checks: s.def.safety_checks })),
+    covers: c.jobs.get(def.job)?.def.covers,
   };
   return { lines: L, structure };
 }
 
+/** The bikes a job covers, and the not-covered texts for the others (jobs.yaml, covers). */
+function coverageLines(c: Content, jobId: string, via?: string): string[] {
+  const cv = c.jobs.get(jobId)?.def.covers;
+  if (!cv) return [];
+  const L = ['## Bikes covered', '', `${via ? `${via} ` : ''}From job \`${jobId}\` (jobs.yaml). Covers bikes where ${cond(cv.when)}. Any other bike ends at the first match:`, ''];
+  for (const nc of cv.not_covered) L.push(`- when ${cond(nc.when)} → ${exitTag('not_covered')}: "${nc.text}"`);
+  L.push('');
+  return L;
+}
+
 function diagnosisTree(c: Content, d: any): { lines: string[]; structure: unknown } {
   const L = [`Symptom: "${d.symptom}"`, ''];
-  if (d.applies_when) L.push(`Covers bikes where ${cond(d.applies_when)}.`, '');
-  if (d.not_covered?.length) {
-    L.push('Not covered, checked in order:', '');
-    for (const nc of d.not_covered) L.push(`- when ${cond(nc.when)} → "${nc.message}"`);
-    L.push('');
-  }
+  if (d.covers_like) L.push(...coverageLines(c, d.covers_like, 'The same bikes as the job (covers_like).'));
   L.push('Checks, in order. The first state that leads to a job ends the diagnosis:', '');
   d.checks.forEach((ch: any, i: number) => {
     const insp = c.inspections.get(ch.inspect)?.def;
@@ -428,7 +436,7 @@ function diagnosisTree(c: Content, d: any): { lines: string[]; structure: unknow
     }
   });
   L.push('', `No hit → job **${c.jobs.get(d.no_hit.job)?.def.title ?? d.no_hit.job}**.`, '');
-  const structure = { diagnosis: d, inspections: d.checks.map((ch: any) => structureOfInspection(c.inspections.get(ch.inspect)?.def ?? { states: [] })) };
+  const structure = { diagnosis: d, covers: d.covers_like ? c.jobs.get(d.covers_like)?.def.covers : undefined, inspections: d.checks.map((ch: any) => structureOfInspection(c.inspections.get(ch.inspect)?.def ?? { states: [] })) };
   return { lines: L, structure };
 }
 

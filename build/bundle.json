@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "74c8e354d2b58a09",
+  "content_hash": "0cc97417bda7bcbd",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -473,6 +473,66 @@
       "id": "adjust-rear-shifting",
       "title": "Adjust the rear gears",
       "tutorial": "adjust-rear-shifting",
+      "covers": {
+        "when": {
+          "drive.gear_type": [
+            "derailleur"
+          ],
+          "drive.shifting": [
+            "mechanical"
+          ]
+        },
+        "not_covered": [
+          {
+            "when": {
+              "drive.gear_type": [
+                "hub_gear"
+              ]
+            },
+            "text": "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+          },
+          {
+            "when": {
+              "drive.gear_type": [
+                "gearbox"
+              ]
+            },
+            "text": "Gearboxes at the pedals are not covered yet."
+          },
+          {
+            "when": {
+              "drive.gear_type": [
+                "single_speed"
+              ]
+            },
+            "text": "Your bike has only one gear, so there are no gears to adjust. If the chain is loose, skips or clunks, a shop can help."
+          },
+          {
+            "when": {
+              "drive.gear_type": [
+                "unknown"
+              ]
+            },
+            "text": "We need to know what kind of gears your bike has. Look at the rear wheel and come back."
+          },
+          {
+            "when": {
+              "drive.shifting": [
+                "electronic"
+              ]
+            },
+            "text": "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+          },
+          {
+            "when": {
+              "drive.shifting": [
+                "unknown"
+              ]
+            },
+            "text": "We need to know whether your gears use a cable. Look at the right shifter and come back."
+          }
+        ]
+      },
       "shop": {
         "tell": "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable.",
         "price_eur": "<range>",
@@ -1259,209 +1319,116 @@
       "cases": [
         {
           "when": {
-            "drive.gear_type": [
-              "derailleur"
-            ],
-            "drive.shifting": [
-              "mechanical"
+            "choice.hold_bike": [
+              "stand",
+              "hang",
+              "upside_down"
             ]
           },
-          "cases": [
-            {
-              "when": {
-                "choice.hold_bike": [
-                  "stand",
-                  "hang",
-                  "upside_down"
-                ]
+          "case": {
+            "name": "wheel-free",
+            "sequence": [
+              {
+                "procedure": "hold-bike"
               },
-              "case": {
-                "name": "wheel-free",
-                "sequence": [
-                  {
-                    "procedure": "hold-bike"
+              {
+                "step": "shift-to-smallest-sprocket"
+              },
+              {
+                "step": "check-high-limit"
+              },
+              {
+                "step": "shift-to-largest-sprocket"
+              },
+              {
+                "step": "check-low-limit"
+              },
+              {
+                "step": "check-low-limit-by-hand"
+              },
+              {
+                "step": "check-b-gap"
+              },
+              {
+                "step": "check-cable-tension"
+              },
+              {
+                "step": "check-all-gears"
+              },
+              {
+                "procedure": "release-bike"
+              }
+            ],
+            "finish": [
+              {
+                "inspect": "shift-test-ride",
+                "outcomes": {
+                  "fine": "continue",
+                  "slow-to-bigger": {
+                    "exit": {
+                      "kind": "shop_only",
+                      "text": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+                    }
                   },
-                  {
-                    "step": "shift-to-smallest-sprocket"
-                  },
-                  {
-                    "step": "check-high-limit"
-                  },
-                  {
-                    "step": "shift-to-largest-sprocket"
-                  },
-                  {
-                    "step": "check-low-limit"
-                  },
-                  {
-                    "step": "check-low-limit-by-hand"
-                  },
-                  {
-                    "step": "check-b-gap"
-                  },
-                  {
-                    "step": "check-cable-tension"
-                  },
-                  {
-                    "step": "check-all-gears"
-                  },
-                  {
-                    "procedure": "release-bike"
-                  }
-                ],
-                "finish": [
-                  {
-                    "inspect": "shift-test-ride",
-                    "outcomes": {
-                      "fine": "continue",
-                      "slow-to-bigger": {
-                        "exit": {
-                          "kind": "shop_only",
-                          "text": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-                        }
-                      },
-                      "slow-to-smaller": {
-                        "exit": {
-                          "kind": "shop_only",
-                          "text": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-                        }
-                      }
+                  "slow-to-smaller": {
+                    "exit": {
+                      "kind": "shop_only",
+                      "text": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
                     }
                   }
-                ]
+                }
               }
-            },
-            {
-              "when": {
-                "choice.hold_bike": [
-                  "ground"
-                ]
+            ]
+          }
+        },
+        {
+          "when": {
+            "choice.hold_bike": [
+              "ground"
+            ]
+          },
+          "case": {
+            "name": "test-rides",
+            "sequence": [
+              {
+                "step": "park-bike"
               },
-              "case": {
-                "name": "test-rides",
-                "sequence": [
-                  {
-                    "step": "park-bike"
-                  },
-                  {
-                    "step": "ride-to-smallest-sprocket"
-                  },
-                  {
-                    "step": "check-high-limit"
-                  },
-                  {
-                    "step": "ride-to-largest-sprocket"
-                  },
-                  {
-                    "step": "check-low-limit"
-                  },
-                  {
-                    "step": "check-low-limit-by-hand"
-                  },
-                  {
-                    "step": "check-b-gap"
-                  },
-                  {
-                    "step": "check-cable-tension-riding"
-                  },
-                  {
-                    "step": "check-all-gears-riding"
-                  }
-                ],
-                "finish": []
+              {
+                "step": "ride-to-smallest-sprocket"
+              },
+              {
+                "step": "check-high-limit"
+              },
+              {
+                "step": "ride-to-largest-sprocket"
+              },
+              {
+                "step": "check-low-limit"
+              },
+              {
+                "step": "check-low-limit-by-hand"
+              },
+              {
+                "step": "check-b-gap"
+              },
+              {
+                "step": "check-cable-tension-riding"
+              },
+              {
+                "step": "check-all-gears-riding"
               }
-            }
-          ]
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "derailleur"
             ],
-            "drive.shifting": [
-              "electronic"
-            ]
-          },
-          "exit": {
-            "kind": "not_covered",
-            "text": "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
-          }
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "derailleur"
-            ],
-            "drive.shifting": [
-              "unknown"
-            ]
-          },
-          "exit": {
-            "kind": "not_covered",
-            "text": "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop."
-          }
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "hub_gear"
-            ]
-          },
-          "exit": {
-            "kind": "not_covered",
-            "text": "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
-          }
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "gearbox"
-            ]
-          },
-          "exit": {
-            "kind": "not_covered",
-            "text": "Gearboxes at the pedals are not covered yet."
-          }
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "single_speed"
-            ]
-          },
-          "exit": {
-            "kind": "not_covered",
-            "text": "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help."
-          }
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "unknown"
-            ]
-          },
-          "exit": {
-            "kind": "not_covered",
-            "text": "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop."
+            "finish": []
           }
         }
-      ],
-      "if_unknown": "ask"
+      ]
     }
   ],
   "diagnoses": [
     {
       "id": "gears-shift-badly",
       "symptom": "My gears don't shift cleanly",
-      "applies_when": {
-        "drive.gear_type": [
-          "derailleur"
-        ],
-        "drive.shifting": [
-          "mechanical"
-        ]
-      },
-      "if_unknown": "ask",
+      "covers_like": "adjust-rear-shifting",
       "checks": [
         {
           "inspect": "derailleur-alignment"
@@ -1475,57 +1442,7 @@
       ],
       "no_hit": {
         "job": "derailleur-check-at-shop"
-      },
-      "not_covered": [
-        {
-          "when": {
-            "drive.gear_type": [
-              "hub_gear"
-            ]
-          },
-          "message": "Hub gears are not covered yet. A shop can check them. You can also ask the assistant."
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "gearbox"
-            ]
-          },
-          "message": "Gearboxes at the pedals are not covered yet. A shop can check it. You can also ask the assistant."
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "single_speed"
-            ]
-          },
-          "message": "Your bike has only one gear, so this check does not fit it. If the chain skips or clunks, a shop can help. You can also ask the assistant."
-        },
-        {
-          "when": {
-            "drive.gear_type": [
-              "unknown"
-            ]
-          },
-          "message": "We need to know what kind of gears your bike has. Look at the rear wheel and come back. You can also find a shop or ask the assistant."
-        },
-        {
-          "when": {
-            "drive.shifting": [
-              "electronic"
-            ]
-          },
-          "message": "Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant."
-        },
-        {
-          "when": {
-            "drive.shifting": [
-              "unknown"
-            ]
-          },
-          "message": "We need to know whether your gears use a cable. Look at the right shifter and come back. You can also find a shop or ask the assistant."
-        }
-      ]
+      }
     }
   ],
   "checks": [

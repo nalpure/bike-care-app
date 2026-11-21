@@ -52,12 +52,15 @@ describe('the real content', () => {
 
   it('never asks a fact marked ask: never, and does not double the paths for it', () => {
     const r = runCheck(REPO, { write: false });
-    // No content branches on an ask: never fact today, so add one: hex screws are "not covered".
+    // No content branches on an ask: never fact today, so add one: the job does not cover hex screws.
     const r2 = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/tutorial.yaml', (d) => d.tutorial.cases[0].cases.unshift({ when: { 'drive.rear_derailleur_screws': ['hex'] }, exit: { kind: 'not_covered', text: 'Not covered.' } }))
+      .edit('content/jobs.yaml', (d) => {
+        const cv = d.jobs.find((j: any) => j.id === 'adjust-rear-shifting').covers;
+        cv.when['drive.rear_derailleur_screws'] = ['cross', 'unknown'];
+        cv.not_covered.push({ when: { 'drive.rear_derailleur_screws': ['hex'] }, text: 'Not covered.' });
+      })
       .run();
-    // The diagnosis still leads hex bikes to the tutorial; that coverage error is expected here.
-    expect(r2.issues.errors.filter((e) => e.rule !== 'diagnosis-tutorial-coverage').map(formatIssue)).toEqual([]);
+    expect(r2.issues.errors.map(formatIssue)).toEqual([]);
     const unknown = r2.profiles.get('unknown-bike')!;
     expect(unknown.markdown).not.toContain('rear_derailleur_screws');
     expect(unknown.results[0].questions).toBe(2);
@@ -94,7 +97,7 @@ describe('the real content', () => {
     expect(existsSync(join(b.root, 'build/walkthroughs'))).toBe(false);
     const bundle = JSON.parse(r.bundle!);
     expect(bundle.unverified).toBe(true);
-    expect(bundle.tutorials[0].cases[0].cases[1].case.sequence.length).toBeGreaterThan(5);
+    expect(bundle.tutorials[0].cases[0].case.sequence.length).toBeGreaterThan(5);
   });
 
   it('is deterministic', () => {
@@ -258,14 +261,16 @@ describe('rules broken on purpose', () => {
 
   it('a combination with no case and no not_covered', () => {
     const r = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/tutorial.yaml', (d) => {
-        d.tutorial.cases = d.tutorial.cases.filter((x: any) => !x.when['drive.gear_type']?.includes('gearbox'));
+      .edit('content/jobs.yaml', (d) => {
+        const cv = d.jobs.find((j: any) => j.id === 'adjust-rear-shifting').covers;
+        cv.not_covered = cv.not_covered.filter((x: any) => !x.when['drive.gear_type']?.includes('gearbox'));
       })
       .run();
+    // Reported once for the tutorial and once for the diagnosis that shares the job's covers.
     const e = errorsOf(r, 'coverage');
-    expect(e, show(r)).toHaveLength(1);
+    expect(e.map((x) => x.id).sort(), show(r)).toEqual(['diagnosis gears-shift-badly', 'tutorial adjust-rear-shifting']);
     expect(e[0].message).toContain('drive.gear_type=gearbox');
-    expect(e[0].file).toBe('content/tutorials/adjust-rear-shifting/tutorial.yaml');
+    expect(e[0].file).toBe('content/jobs.yaml');
   });
 
   it('an unsafe exit in a step that is not a safety check', () => {

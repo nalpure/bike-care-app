@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `f3a05e0075a9` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `55f12dd8fca0` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -13,19 +13,23 @@ To read one complete path as the user sees it: `npm run walk -- --list`, then `n
 - Run choices: `hold_bike`
 - Difficulty 2
 
+## Bikes covered
+
+From job `adjust-rear-shifting` (jobs.yaml). Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical. Any other bike ends at the first match:
+
+- when drive.gear_type is hub_gear → **EXIT, not covered**: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+- when drive.gear_type is gearbox → **EXIT, not covered**: "Gearboxes at the pedals are not covered yet."
+- when drive.gear_type is single_speed → **EXIT, not covered**: "Your bike has only one gear, so there are no gears to adjust. If the chain is loose, skips or clunks, a shop can help."
+- when drive.gear_type is unknown → **EXIT, not covered**: "We need to know what kind of gears your bike has. Look at the rear wheel and come back."
+- when drive.shifting is electronic → **EXIT, not covered**: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+- when drive.shifting is unknown → **EXIT, not covered**: "We need to know whether your gears use a cable. Look at the right shifter and come back."
+
 ## Branches
 
 Evaluated top to bottom; the first match wins.
 
-- when drive.gear_type is derailleur and drive.shifting is mechanical → nested branch:
-  - when choice.hold_bike is stand or hang or upside_down → case `wheel-free`
-  - when choice.hold_bike is ground → case `test-rides`
-- when drive.gear_type is derailleur and drive.shifting is electronic → **EXIT, not covered**: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
-- when drive.gear_type is derailleur and drive.shifting is unknown → **EXIT, not covered**: "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop."
-- when drive.gear_type is hub_gear → **EXIT, not covered**: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
-- when drive.gear_type is gearbox → **EXIT, not covered**: "Gearboxes at the pedals are not covered yet."
-- when drive.gear_type is single_speed → **EXIT, not covered**: "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help."
-- when drive.gear_type is unknown → **EXIT, not covered**: "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop."
+- when choice.hold_bike is stand or hang or upside_down → case `wheel-free`
+- when choice.hold_bike is ground → case `test-rides`
 
 ## Checks before the work, in every case
 

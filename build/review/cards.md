@@ -575,7 +575,7 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 ### Adjust the rear gears
 
-<sub>Unit `card:job:adjust-rear-shifting` · hash `a0d8f0f250e0` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:job:adjust-rear-shifting` · hash `2f43c0d0343d` · beginner: ⬜ not reviewed</sub>
 
 Shop text: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 

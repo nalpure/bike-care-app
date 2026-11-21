@@ -404,18 +404,11 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
       if (o?.exit?.show_how_from) err(x, sub(l, 'outcomes', s), 'exit-jump-outside', "A tutorial's checks run before anything is apart, so their exits cannot jump.");
     }
   });
-  const checkCase = (cs: any, l: Loc, nested: boolean) => {
-    const targets = ['include', 'exit', 'cases'].filter((k) => cs[k] !== undefined);
-    if (targets.length !== 1) err(x, l, 'case-target', `A case has exactly one of include, exit${nested ? '' : ', cases'}; this one has ${targets.join(', ') || 'none'}.`);
-    checkCondition(x, cs.when, sub(l, 'when'));
-    checkText(x, cs.exit?.text, l);
-    if (cs.exit?.show_how_from) err(x, l, 'exit-jump-outside', 'An exit on a case runs before the first step, so it cannot jump.');
-    if (cs.exit?.kind === 'unsafe') err(x, l, 'unsafe-only-in-safety-checks', 'A case cannot exit as unsafe; nothing has been checked yet. Use not_covered or shop_only.');
-  };
   t.cases.forEach((cs: any, i: number) => {
     const l = sub(loc, 'cases', i);
-    checkCase(cs, l, false);
-    (cs.cases ?? []).forEach((leaf: any, j: number) => checkCase(leaf, sub(l, 'cases', j), true));
+    if ((cs.include === undefined) === (cs.cases === undefined)) err(x, l, 'case-target', 'A case has exactly one of include, cases.');
+    checkCondition(x, cs.when, sub(l, 'when'));
+    (cs.cases ?? []).forEach((leaf: any, j: number) => checkCondition(x, leaf.when, sub(l, 'cases', j, 'when')));
   });
   for (const [, cf] of e.cases ?? new Map()) {
     checkFlowItems(x, cf.data.sequence ?? [], cf, ['sequence'], 'sequence', t.id);
@@ -426,7 +419,11 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
 function checkDiagnosis(x: Ctx, e: Entry): void {
   const d = e.def;
   const loc = locOf(e, 'diagnosis');
-  checkCondition(x, d.applies_when, sub(loc, 'applies_when'));
+  if (d.covers_like) {
+    const job = x.c.jobs.get(d.covers_like);
+    if (!job) err(x, sub(loc, 'covers_like'), 'unknown-job', `covers_like names job "${d.covers_like}", which does not exist.`);
+    else if (!job.def.covers) err(x, sub(loc, 'covers_like'), 'unknown-job', `covers_like names job "${d.covers_like}", which has no covers.`);
+  }
   checkText(x, d.symptom, loc);
   d.checks.forEach((ch: any, i: number) => {
     const l = sub(loc, 'checks', i);
@@ -442,10 +439,6 @@ function checkDiagnosis(x: Ctx, e: Entry): void {
     }
   });
   if (!x.c.jobs.has(d.no_hit.job)) err(x, sub(loc, 'no_hit'), 'unknown-job', `no_hit names job "${d.no_hit.job}", which does not exist.`);
-  (d.not_covered ?? []).forEach((nc: any, i: number) => {
-    checkCondition(x, nc.when, sub(loc, 'not_covered', i));
-    checkText(x, nc.message, sub(loc, 'not_covered', i));
-  });
 }
 
 function checkRoutine(x: Ctx, e: Entry): void {
@@ -526,6 +519,14 @@ export function checkStatic(c: Content, issues: Issues): void {
   for (const e of c.jobs.values()) {
     const loc = locOf(e, 'job');
     if (e.def.tutorial && !c.tutorials.has(e.def.tutorial)) err(x, sub(loc, 'tutorial'), 'unknown-tutorial', `Job names tutorial "${e.def.tutorial}", which does not exist in content/tutorials/.`);
+    if (e.def.covers) {
+      const cl = sub(loc, 'covers');
+      checkCondition(x, e.def.covers.when, sub(cl, 'when'));
+      e.def.covers.not_covered.forEach((nc: any, i: number) => {
+        checkCondition(x, nc.when, sub(cl, 'not_covered', i, 'when'));
+        checkText(x, nc.text, sub(cl, 'not_covered', i));
+      });
+    }
     checkText(x, e.def.shop.tell, sub(loc, 'shop'));
   }
   for (const e of c.states.values()) {

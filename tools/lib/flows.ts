@@ -204,7 +204,7 @@ function buildTutorialFlow(c: Content, t: TutorialEntry, agg: Aggregator): Tutor
         flow.exits.push({ combo, exit: run.exit });
         if (run.exit.kind === 'uncovered') {
           const facts = [...res.asked, ...combo.silent].map((k) => `${k}=${res.assign[k]}`).join(', ') || 'any bike';
-          agg.add('coverage', run.exit.src, `tutorial ${t.def.id}`, `${run.exit.message} No path, shop exit or not_covered for ${facts}. Add a case, or a not_covered entry for it.`, baseId);
+          agg.add('coverage', run.exit.src, `tutorial ${t.def.id}`, `${run.exit.message} No path, shop exit or not_covered for ${facts}. Add a case, or a not_covered entry to the job's covers.`, baseId);
         }
         continue;
       }
@@ -330,7 +330,7 @@ function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlo
         flow.exits.push({ combo, exit: run.exit });
         if (run.exit.kind === 'uncovered') {
           const facts = [...res.asked, ...combo.silent].map((k) => `${k}=${res.assign[k]}`).join(', ') || 'any bike';
-          agg.add('coverage', run.exit.src, `diagnosis ${d.def.id}`, `No path or not_covered entry for ${facts}. Add a not_covered entry for it.`, baseId);
+          agg.add('coverage', run.exit.src, `diagnosis ${d.def.id}`, `${run.exit.message} No path or not_covered entry for ${facts}. Add a not_covered entry to the job's covers.`, baseId);
         }
         continue;
       }
@@ -347,7 +347,7 @@ function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlo
           const tres = enumerate(c, (r) => resolveTutorial(c, t, r, params), fixed);
           if (tres.some((x) => x.result.exit && x.result.exit.kind === 'not_covered')) {
             agg.add('diagnosis-tutorial-coverage', run.checks[Math.max(dp.hitIndex, 0)].src, `diagnosis ${d.def.id}`,
-              `This hit leads to job ${dp.job}, but tutorial ${t.def.id} says not covered for the same bike. Narrow applies_when or cover the bike in the tutorial.`, dp.id);
+              `This hit leads to job ${dp.job}, but tutorial ${t.def.id} says not covered for the same bike. Use covers_like for that job, or cover the bike in the tutorial.`, dp.id);
           }
         }
       }

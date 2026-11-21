@@ -4,23 +4,21 @@
   "title": "content/tutorials/<job>/tutorial.yaml: one tutorial per job",
   "$defs": {
     "leafCase": {
-      "description": "when plus exactly one of include, exit.",
+      "description": "when plus include.",
       "type": "object",
       "properties": {
         "when": { "$ref": "common.schema.json#/$defs/condition" },
-        "include": { "type": "string", "pattern": "^cases/[a-z0-9-]+\\.yaml$" },
-        "exit": { "$ref": "common.schema.json#/$defs/exit" }
+        "include": { "type": "string", "pattern": "^cases/[a-z0-9-]+\\.yaml$" }
       },
-      "required": ["when"],
+      "required": ["when", "include"],
       "additionalProperties": false
     },
     "topCase": {
-      "description": "when plus exactly one of include, exit, or cases (one nested branch, only where the order of work differs).",
+      "description": "when plus exactly one of include or cases (one nested branch, only where the order of work differs). Bikes the job does not cover end at the job's covers, before any case.",
       "type": "object",
       "properties": {
         "when": { "$ref": "common.schema.json#/$defs/condition" },
         "include": { "type": "string", "pattern": "^cases/[a-z0-9-]+\\.yaml$" },
-        "exit": { "$ref": "common.schema.json#/$defs/exit" },
         "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/leafCase" } }
       },
       "required": ["when"],
@@ -60,10 +58,9 @@
             "additionalProperties": false
           }
         },
-        "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/topCase" } },
-        "if_unknown": { "enum": ["ask"] }
+        "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/topCase" } }
       },
-      "required": ["id", "job", "difficulty", "cases", "if_unknown"],
+      "required": ["id", "job", "difficulty", "cases"],
       "additionalProperties": false
     }
   },

@@ -2,23 +2,23 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:diagnosis:gears-shift-badly` · hash `0cdeafe3dadb` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:diagnosis:gears-shift-badly` · hash `6dda312c4612` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
 
 Symptom: "My gears don't shift cleanly"
 
-Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical.
+## Bikes covered
 
-Not covered, checked in order:
+The same bikes as the job (covers_like). From job `adjust-rear-shifting` (jobs.yaml). Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical. Any other bike ends at the first match:
 
-- when drive.gear_type is hub_gear → "Hub gears are not covered yet. A shop can check them. You can also ask the assistant."
-- when drive.gear_type is gearbox → "Gearboxes at the pedals are not covered yet. A shop can check it. You can also ask the assistant."
-- when drive.gear_type is single_speed → "Your bike has only one gear, so this check does not fit it. If the chain skips or clunks, a shop can help. You can also ask the assistant."
-- when drive.gear_type is unknown → "We need to know what kind of gears your bike has. Look at the rear wheel and come back. You can also find a shop or ask the assistant."
-- when drive.shifting is electronic → "Electronic shifting is not covered yet. A shop can check it. You can also ask the assistant."
-- when drive.shifting is unknown → "We need to know whether your gears use a cable. Look at the right shifter and come back. You can also find a shop or ask the assistant."
+- when drive.gear_type is hub_gear → **EXIT, not covered**: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+- when drive.gear_type is gearbox → **EXIT, not covered**: "Gearboxes at the pedals are not covered yet."
+- when drive.gear_type is single_speed → **EXIT, not covered**: "Your bike has only one gear, so there are no gears to adjust. If the chain is loose, skips or clunks, a shop can help."
+- when drive.gear_type is unknown → **EXIT, not covered**: "We need to know what kind of gears your bike has. Look at the rear wheel and come back."
+- when drive.shifting is electronic → **EXIT, not covered**: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+- when drive.shifting is unknown → **EXIT, not covered**: "We need to know whether your gears use a cable. Look at the right shifter and come back."
 
 Checks, in order. The first state that leads to a job ends the diagnosis:
 

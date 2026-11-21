@@ -10,8 +10,10 @@
         "id": { "$ref": "common.schema.json#/$defs/id" },
         "symptom": { "$ref": "common.schema.json#/$defs/text" },
         "params": { "$ref": "common.schema.json#/$defs/params" },
-        "applies_when": { "$ref": "common.schema.json#/$defs/condition" },
-        "if_unknown": { "enum": ["ask"] },
+        "covers_like": {
+          "description": "A job whose covers this diagnosis uses: it runs only for the bikes that job covers, and ends with the job's not_covered texts for the others.",
+          "$ref": "common.schema.json#/$defs/id"
+        },
         "checks": {
           "description": "Cheapest and most likely first. The first state that leads to a job ends the diagnosis.",
           "type": "array",
@@ -37,19 +39,6 @@
           "properties": { "job": { "$ref": "common.schema.json#/$defs/id" } },
           "required": ["job"],
           "additionalProperties": false
-        },
-        "not_covered": {
-          "description": "Fact combinations outside applies_when, each with a plain message. Evaluated in order.",
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "when": { "$ref": "common.schema.json#/$defs/condition" },
-              "message": { "$ref": "common.schema.json#/$defs/text" }
-            },
-            "required": ["when", "message"],
-            "additionalProperties": false
-          }
         }
       },
       "required": ["id", "symptom", "checks", "no_hit"],

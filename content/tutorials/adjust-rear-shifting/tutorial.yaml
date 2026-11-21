@@ -2,10 +2,10 @@
 # Golden example for the content format. Mechanics are unverified drafts:
 # see content/review/adjust-rear-shifting.md.
 #
-# Branch 1, by mechanism: only a mechanical derailleur is covered.
-# Branch 2, nested, by how the bike is held: with the rear wheel free the user turns the pedals
-# by hand; on its wheels the user adjusts between short test rides. The order of work differs,
-# which is the one case where approach.md allows a nested branch.
+# Only a mechanical derailleur is covered (the job's covers in jobs.yaml), so there is no branch
+# by mechanism. The cases differ by how the bike is held: with the rear wheel free the user turns
+# the pedals by hand; on its wheels the user adjusts between short test rides. The order of work
+# differs, which is when approach.md allows this branch.
 
 tutorial:
   id: adjust-rear-shifting
@@ -29,23 +29,9 @@ tutorial:
           exit:
             kind: not_covered
             text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+  # Bikes outside the job's covers (jobs.yaml) end there, before any case.
   cases:
-    - when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
-      cases:
-        - when: { choice.hold_bike: [stand, hang, upside_down] }
-          include: cases/wheel-free.yaml
-        - when: { choice.hold_bike: [ground] }
-          include: cases/test-rides.yaml
-    - when: { drive.gear_type: [derailleur], drive.shifting: [electronic] }
-      exit: { kind: not_covered, text: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable." }
-    - when: { drive.gear_type: [derailleur], drive.shifting: [unknown] }
-      exit: { kind: not_covered, text: "We need to know whether your gears use a cable before this guide can help. Look at the right shifter and come back, or find a shop." }
-    - when: { drive.gear_type: [hub_gear] }
-      exit: { kind: not_covered, text: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur." }
-    - when: { drive.gear_type: [gearbox] }
-      exit: { kind: not_covered, text: "Gearboxes at the pedals are not covered yet." }
-    - when: { drive.gear_type: [single_speed] }
-      exit: { kind: not_covered, text: "Your bike has only one gear, so there is nothing to adjust here. If the chain is loose or skips, a shop can help." }
-    - when: { drive.gear_type: [unknown] }
-      exit: { kind: not_covered, text: "We need to know what kind of gears your bike has before this guide can help. Look at the rear wheel and come back, or find a shop." }
-  if_unknown: ask
+    - when: { choice.hold_bike: [stand, hang, upside_down] }
+      include: cases/wheel-free.yaml
+    - when: { choice.hold_bike: [ground] }
+      include: cases/test-rides.yaml

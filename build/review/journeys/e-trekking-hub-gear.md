@@ -18,7 +18,7 @@ E-trekking bike with a mid motor and an internal hub gear. The shifting content 
 
 No questions: the app already knows what it needs.
 
-**Not covered yet:** Hub gears are not covered yet. A shop can check them. You can also ask the assistant.
+**Not covered yet:** Hub gears are not covered yet. They are adjusted differently from gears with a derailleur.
 
 Buttons: [Find a shop] [Ask the assistant]
 

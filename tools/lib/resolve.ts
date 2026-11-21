@@ -313,9 +313,29 @@ export interface TutorialRun<S = unknown> {
   problems: Problem<S>[];
 }
 
+/**
+ * Whether a job covers this bike (its covers, written once): undefined when it does, otherwise the
+ * first matching not_covered text, or 'uncovered' (a build error) when none matches.
+ */
+export function coverageExit<S = unknown>(ix: Index, jobId: string, r: Reader, params: Record<string, string> = {}, loc: Locate<S> = noLocation): Exit<S> | undefined {
+  const job = ix.jobs.get(jobId);
+  const cv = job?.covers;
+  if (!cv || evaluate(substCondition(cv.when, params), r.ask)) return undefined;
+  const ncs: any[] = cv.not_covered;
+  for (let i = 0; i < ncs.length; i++) {
+    if (evaluate(substCondition(ncs[i].when, params), r.ask)) return { kind: 'not_covered', message: ncs[i].text, src: loc(job, 'covers', 'not_covered', i) };
+  }
+  return { kind: 'uncovered', message: `Job ${jobId} does not cover this bike, and none of its not_covered entries matches.`, src: loc(job, 'covers') };
+}
+
 /** Resolves one tutorial (a bundle tutorial) for one bike, choice set and parameter set. */
 export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, params: Record<string, string> = {}, loc: Locate<S> = noLocation): TutorialRun<S> {
   const run: TutorialRun<S> = { caseLabel: '', sequence: [], finish: [], problems: [] };
+  const outside = coverageExit(ix, t.job, r, params, loc);
+  if (outside) {
+    run.exit = outside;
+    return run;
+  }
   const pick = (cases: any[]) => {
     for (const cs of cases) if (evaluate(substCondition(cs.when, params), r.ask)) return cs;
     return null;
@@ -333,10 +353,6 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
       return run;
     }
     target = leaf;
-  }
-  if (target.exit) {
-    run.exit = { kind: target.exit.kind, message: target.exit.text, src: loc(target) };
-    return run;
   }
   const cf = target.case;
   if (!cf) {
@@ -505,15 +521,8 @@ export interface DiagnosisRun<S = unknown> {
 }
 
 export function resolveDiagnosis<S = unknown>(ix: Index, d: any, r: Reader, params: Record<string, string> = {}, loc: Locate<S> = noLocation): DiagnosisRun<S> {
-  if (d.applies_when && !evaluate(substCondition(d.applies_when, params), r.ask)) {
-    const ncs: any[] = d.not_covered ?? [];
-    for (let i = 0; i < ncs.length; i++) {
-      if (evaluate(substCondition(ncs[i].when, params), r.ask)) {
-        return { checks: [], exit: { kind: 'not_covered', message: ncs[i].message, src: loc(d, 'not_covered', i) } };
-      }
-    }
-    return { checks: [], exit: { kind: 'uncovered', message: 'applies_when fails and no not_covered entry matches.', src: loc(d, 'applies_when') } };
-  }
+  const outside = d.covers_like ? coverageExit(ix, d.covers_like, r, params, loc) : undefined;
+  if (outside) return { checks: [], exit: outside };
   const checks: DiagnosisCheck<S>[] = d.checks.map((ch: any, i: number) => {
     const id = substParams(ch.inspect, params);
     const insp = inspectionDef(ix, id);
