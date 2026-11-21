@@ -105,6 +105,7 @@ export class ThreeStage implements Stage {
 
   private COL = { part: new T.Color(), accent: new T.Color(), good: new T.Color(), bad: new T.Color() };
   private tmpCol = new T.Color();
+  private hotTmp = new T.Color();
   private frameCol = new T.Color();
 
   // ghost marker (where the pulley should be) and the turn arrow
@@ -212,11 +213,16 @@ export class ThreeStage implements Stage {
     gl.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     const s = this.scene;
     for (const sc of [s, this.snapScene]) {
-      sc.add(new T.AmbientLight(0xffffff, 0.45 * Math.PI));
-      sc.add(new T.HemisphereLight(0xffffff, 0x5a6b78, 0.7 * Math.PI));
-      const sun = new T.DirectionalLight(0xffffff, 0.85 * Math.PI);
+      // Less even light than the prototype's, so faces turned different ways differ in shade:
+      // a key light from above and the front-left, a weaker fill from behind on the right.
+      sc.add(new T.AmbientLight(0xffffff, 0.24 * Math.PI));
+      sc.add(new T.HemisphereLight(0xffffff, 0x3e4a55, 0.62 * Math.PI));
+      const sun = new T.DirectionalLight(0xffffff, 1.05 * Math.PI);
       sun.position.set(-2, 4, 5);
       sc.add(sun);
+      const fill = new T.DirectionalLight(0xdfe8f0, 0.32 * Math.PI);
+      fill.position.set(3, 1.5, -4);
+      sc.add(fill);
     }
     s.add(this.holder);
     this.holder.add(this.root);
@@ -977,8 +983,15 @@ export class ThreeStage implements Stage {
         }
         if (frameCol && mat.userData.tint === 'frame') this.tmpCol.copy(frameCol);
         else this.tmpCol.copy(COL.part).multiplyScalar(mat.userData.k);
-        mat.color.copy(this.tmpCol).lerp(hotCol, p.hot);
-        mat.emissive.copy(hotCol).multiplyScalar(p.hot * 0.18);
+        // highlighted: the highlight colour, but each piece keeps its own lighter or darker shade
+        const hk = 0.62 + 0.38 * Math.min(1, mat.userData.k / 1.2);
+        mat.color.copy(this.tmpCol).lerp(this.hotTmp.copy(hotCol).multiplyScalar(hk), p.hot);
+        mat.emissive.copy(hotCol).multiplyScalar(p.hot * 0.06);
+      }
+      for (const lm of p.lines) {
+        lm.opacity = op * 0.85;
+        lm.visible = op > 0.05;
+        lm.color.copy(COL.part).multiplyScalar(0.32).lerp(this.hotTmp.copy(hotCol).multiplyScalar(0.38), p.hot);
       }
     }
     const frame = m.parts.get('frame');

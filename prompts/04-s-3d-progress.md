@@ -28,6 +28,15 @@ Choices without the owner: the 1.25 factor and the chain line values; the body's
 
 **Blender?** Not yet. A modelled derailleur (glTF) would look better, but it would have to be rigged so its body, links and cage still move with `derPose`, and the geometry would have to be refit for every cassette. Worth it only once the procedural shapes are the limit; then a modelled body and cage plates on the existing joints would be the cheapest step.
 
+## Owner feedback round 2 (body, screws, gap, contours)
+
+- **Body:** an arch from the bolt knuckle up to an elbow and back to the link pins, with a lighter cover; the links hang down from it on a slanted arc (`derGeom`). The barrel adjuster or cable stop sits on top at the elbow.
+- **Screws:** H and L are small (`SCREW_LEN`) and set into the top of the arch, heads out. The B screw sits in a lug on the knuckle; it slides along its axis as the body turns, so its tip stays on the hanger's tab. The old floating tab cylinder is gone.
+- **Gap:** it used to stay large on the small sprockets and close suddenly near the big ones (the body hit its turning limit). Now the body only turns with the B screw, and the cage turns to keep the gap exact on every sprocket. In the B-screw clip the gap moves with the screw from the start.
+- **Depth:** dark outlines on small mechanical parts, less ambient light, a fill light, and a highlight that keeps each piece's own shade.
+
+Choices without the owner: the cage pivot sits behind and above the upper pulley (`KAPPA` 70°); the cage line runs from -60° (smallest) to -80° (largest) and may swing 30° either way; the outline threshold (35°) and which parts get outlines; the new light levels.
+
 ## Interfaces other sessions rely on
 
 - **Preview** (`player/src/stage/three-stage.ts`, class `ThreeStage`):

@@ -79,7 +79,8 @@ The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. 
 ### Known 3D shortcomings
 
 - The sprockets sit 1.25 times as far apart as on a real cassette, on a realistic chain line, so they still read on a phone; they are smooth discs, without teeth.
-- The derailleur (`derPose`) is a simplified real one: the body turns about the hanger bolt within a fixed range, the parallelogram links swing inwards, and the cage hangs from the P-knuckle. On the small sprockets of a wide-range cassette the gap then opens up, as on a real derailleur.
+- The derailleur (`derGeom`, `derPose`) is a simplified real one: the body turns about the hanger bolt only with the B screw, the parallelogram links swing on a slanted arc fitted to the cassette, and the cage turns about its pivot to keep the gap. On a wide-range cassette the cage swings at most 30° from its usual angle; beyond that the gap would open a little.
+- Small mechanical parts (`OUTLINED` in `bike.ts`) are drawn with dark edge lines, and the lights are less even than the prototype's, so the shapes read with one colour or a highlight.
 - Cargo bikes are drawn as city bikes; hub gears and gearboxes as one sprocket; there is no full-suspension frame, no front derailleur and no brakes at the wheels (only the levers).
 - Geometry facts: top tube and wheelbase are not used (the front wheel follows the head angle with a 45 mm fork offset). An unusual combination moves a wheel away from the frame instead of drawing them touching.
 - The garage preview uses the one shared stage, so only one bike can turn in 3D at a time; other bikes can be shown as `snapshot` pictures.

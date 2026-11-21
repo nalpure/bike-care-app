@@ -138,7 +138,8 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       return {
         duration: 4.4,
         frame: (t) => {
-          const gap = start + (GAP_OK - start) * ramp(t, 0.9, 2.6);
+          // the gap follows the screw as it turns
+          const gap = start + (GAP_OK - start) * ramp(t, 0.2, 2.6);
           return {
             derZ: large,
             gap,
