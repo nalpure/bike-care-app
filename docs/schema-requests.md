@@ -15,13 +15,6 @@ Entry format:
 
 ## Open requests
 
-## SR-02 A short label for every fact
-- 2026-11-17, requested by the agent building the player (prompt 2)
-- Needed for: the bike sheet in the garage, the shop summary
-- What cannot be expressed: a fact has a beginner `question` (long, written for asking) but no short name for a list ("Gears", "Rear derailleur model"). Detail facts have neither.
-- Closest allowed form used meanwhile: the player shows the question, or the fact key made readable (`drive.rear_speeds` -> "Rear speeds").
-- Proposal: optional `label: { en, de }` on every fact; required for facts without a question.
-
 ## SR-03 Pictures for question answers
 - 2026-11-17, requested by the agent building the player (prompt 2)
 - Needed for: `facts.yaml` questions with `picture` (bike-categories, rear-gear-types, shifting-types)

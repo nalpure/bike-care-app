@@ -392,7 +392,7 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 ### Set the outer limit (H screw)
 
-<sub>Unit `card:step:check-high-limit` · hash `8db9c2d73c81` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-high-limit` · hash `f3f55cad07de` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -405,7 +405,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 - [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the wheel is in line with the smallest sprocket.
   - Show solution: "Turn the H screw clockwise a quarter turn" (h_screw rotate, clockwise, a quarter turn)
-- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
+- [ ] **The chain rattled, or jumped to a bigger sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the wheel is in line with the smallest sprocket and the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
   - Show solution: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 
 <sub>Appears in:</sub>
@@ -415,7 +415,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Set the inner limit (L screw)
 
-<sub>Unit `card:step:check-low-limit` · hash `de8e575273f5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit` · hash `f96cb2f86aba` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -428,7 +428,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 - [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The L screw is set. Nothing to change.
 - [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the wheel is in line with the largest sprocket.
   - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
-- [ ] **The chain rattled, or slipped off the largest sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again and listen. Repeat until the chain runs quietly.
+- [ ] **The chain rattled, or slipped off the largest sprocket** <sub>`rattles`</sub> → With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the wheel is in line with the largest sprocket and the chain runs quietly.
   - Show solution: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
 
 <sub>Appears in:</sub>
@@ -482,13 +482,15 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
 - <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
 
-## Questions and bike record
+## Questions
 
 ### Question: bike.category
 
-<sub>Unit `card:fact:bike.category` · hash `ecfc6db4d28d` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:bike.category` · hash `a9d4793040d3` · beginner: ⬜ not reviewed</sub>
 
 "What type of bike is it?" / "Was für ein Fahrradtyp ist es?"
+
+<sub>Label on the bike sheet: Type / Typ</sub>
 
 Help behind "?": A mountain bike has wide, knobbly tyres and a straight handlebar. A road or gravel bike has narrow tyres and often a curved handlebar. A trekking or city bike is made for everyday rides, often with mudguards, lights and a rack. A cargo bike carries loads in a box or on a long rack. / Ein Mountainbike hat breite, grobstollige Reifen und einen geraden Lenker. Ein Rennrad oder Gravelbike hat schmale Reifen und oft einen gebogenen Lenker. Ein Trekking- oder Stadtrad ist für den Alltag gemacht, oft mit Schutzblechen, Licht und Gepäckträger. Ein Lastenrad trägt Lasten in einer Kiste oder auf einem langen Gepäckträger.
 
@@ -502,9 +504,11 @@ Help behind "?": A mountain bike has wide, knobbly tyres and a straight handleba
 
 ### Question: bike.ebike
 
-<sub>Unit `card:fact:bike.ebike` · hash `e34e7bba111c` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:bike.ebike` · hash `7dcf2e2a2e4b` · beginner: ⬜ not reviewed</sub>
 
 "Is your bike an e-bike?" / "Ist dein Fahrrad ein E-Bike?"
+
+<sub>Label on the bike sheet: E-bike / E-Bike</sub>
 
 Help behind "?": An e-bike has a battery, usually on the frame or behind the seat post, and a motor at the pedals or in a wheel hub. / Ein E-Bike hat einen Akku, meist am Rahmen oder hinter der Sattelstütze, und einen Motor an den Pedalen oder in einer Radnabe.
 
@@ -514,9 +518,11 @@ Help behind "?": An e-bike has a battery, usually on the frame or behind the sea
 
 ### Question: drive.gear_type
 
-<sub>Unit `card:fact:drive.gear_type` · hash `ab61288a1506` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:drive.gear_type` · hash `9d033d9585fc` · beginner: ⬜ not reviewed</sub>
 
 "Which gears does your bike have?" / "Welche Schaltung hat dein Fahrrad?"
+
+<sub>Label on the bike sheet: Gears / Schaltung</sub>
 
 Help behind "?": Look at the rear wheel. Chain and derailleur: several sprockets, and below them a part that guides the chain. Hub gear: one sprocket, and a thick hub in the middle of the wheel. Gearbox: one sprocket at the rear, and a box at the pedals. One gear only: one sprocket, and no shifter. / Schau dir das Hinterrad an. Kettenschaltung: mehrere Ritzel und darunter ein Teil, das die Kette führt. Nabenschaltung: ein Ritzel und eine dicke Nabe in der Mitte des Rads. Getriebe: hinten ein Ritzel und ein Kasten an den Pedalen. Nur ein Gang: ein Ritzel und kein Schalthebel.
 
@@ -530,9 +536,11 @@ Help behind "?": Look at the rear wheel. Chain and derailleur: several sprockets
 
 ### Question: drive.shifting
 
-<sub>Unit `card:fact:drive.shifting` · hash `4c224dc8fc8d` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:drive.shifting` · hash `95a38227ad3d` · beginner: ⬜ not reviewed</sub>
 
 "How is your rear derailleur shifted?" / "Wie wird dein Schaltwerk geschaltet?"
+
+<sub>Label on the bike sheet: Shifting / Schaltart</sub>
 
 Help behind "?": Follow the shifter on the right of the handlebar to the rear derailleur. A thin cable in a housing means it shifts with a cable. A wire with a plug, or no wire at all, means it shifts electronically. / Folge dem Schalthebel rechts am Lenker bis zum Schaltwerk. Ein dünner Zug in einer Hülle heißt: Es schaltet mit einem Zug. Ein Kabel mit Stecker, oder gar kein Kabel, heißt: Es schaltet elektronisch.
 
@@ -542,14 +550,64 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 <sub>Picture set: shifting-types</sub>
 
-### Bike record: drive.rear_derailleur_screws
+## Bike sheet
 
-<sub>Unit `card:fact:drive.rear_derailleur_screws` · hash `e4467b90b249` · beginner: ⬜ not reviewed</sub>
+### Bike sheet: Bike / Fahrrad
 
-<sub>Never asked. Comes only from the bike's data. Values as shown on the bike record:</sub>
+<sub>Unit `card:fact-group:bike` · hash `29365e6d18e4` · beginner: ⬜ not reviewed</sub>
 
-- `cross`: Cross-head screws
-- `hex`: Hex screws
+<sub>The bike sheet's group "Bike / Fahrrad", icon `bike`. One line per fact: its label, then what the user can enter.</sub>
+
+- **Type / Typ** <sub>`bike.category`, enum, asked when needed</sub>
+- **E-bike / E-Bike** <sub>`bike.ebike`, boolean, asked when needed</sub>
+- **Brand / Marke** <sub>`bike.brand`, text, never asked</sub>
+- **Model / Modell** <sub>`bike.model`, text, never asked</sub>
+- **Series / Serie** <sub>`bike.line`, text, never asked</sub>
+- **Model year / Modelljahr** <sub>`bike.year`, number, 1970 to 2030, never asked</sub>
+- **Handlebar / Lenker** <sub>`bike.handlebar`, enum, never asked</sub>
+  - `drop`: Drop bar, curved down / Rennlenker, nach unten gebogen
+  - `flat`: Flat bar / Gerader Lenker
+  - `riser`: Riser bar, bent up at the ends / Riser-Lenker, an den Enden nach oben gebogen
+- **Frame colour / Rahmenfarbe** <sub>`bike.colour`, text, never asked</sub>
+
+### Bike sheet: Drivetrain / Antrieb
+
+<sub>Unit `card:fact-group:drive` · hash `e23c6a038210` · beginner: ⬜ not reviewed</sub>
+
+<sub>The bike sheet's group "Drivetrain / Antrieb", icon `drivetrain`. One line per fact: its label, then what the user can enter.</sub>
+
+- **Gears / Schaltung** <sub>`drive.gear_type`, enum, asked when needed</sub>
+- **Shifting / Schaltart** <sub>`drive.shifting`, enum, asked when needed</sub>
+- **Derailleur screw heads / Schraubenköpfe am Schaltwerk** <sub>`drive.rear_derailleur_screws`, enum, never asked, from the bike's data</sub>
+  - `cross`: Cross-head screws / Kreuzschlitzschrauben
+  - `hex`: Hex screws / Innensechskantschrauben
+- **Rear speeds / Gänge hinten** <sub>`drive.rear_speeds`, number, 1 to 13, never asked</sub>
+- **Rear derailleur / Schaltwerk** <sub>`drive.rear_derailleur_model`, text, never asked</sub>
+- **Shifter / Schalthebel** <sub>`drive.shifter_model`, text, never asked</sub>
+- **Sprockets / Kassette** <sub>`drive.cassette_model`, text, never asked</sub>
+- **Chain / Kette** <sub>`drive.chain_model`, text, never asked</sub>
+- **Crankset / Kurbel** <sub>`drive.crankset_model`, text, never asked</sub>
+
+### Bike sheet: Geometry / Geometrie
+
+<sub>Unit `card:fact-group:geometry` · hash `a6a307fe530a` · beginner: ⬜ not reviewed</sub>
+
+<sub>The bike sheet's group "Geometry / Geometrie", icon `geometry`. One line per fact: its label, then what the user can enter.</sub>
+
+- **Stack / Stack** <sub>`geometry.stack_mm`, number in mm, 450 to 720, never asked</sub>
+- **Reach / Reach** <sub>`geometry.reach_mm`, number in mm, 330 to 520, never asked</sub>
+- **Head tube / Steuerrohr** <sub>`geometry.head_tube_mm`, number in mm, 80 to 260, never asked</sub>
+- **Seat tube / Sitzrohr** <sub>`geometry.seat_tube_mm`, number in mm, 330 to 640, never asked</sub>
+- **Top tube (effective) / Oberrohr (effektiv)** <sub>`geometry.top_tube_mm`, number in mm, 480 to 700, never asked</sub>
+- **Chainstay / Kettenstrebe** <sub>`geometry.chainstay_mm`, number in mm, 390 to 520, never asked</sub>
+- **Wheelbase / Radstand** <sub>`geometry.wheelbase_mm`, number in mm, 900 to 1400, never asked</sub>
+- **BB drop / Tretlagerabsenkung** <sub>`geometry.bb_drop_mm`, number in mm, 0 to 90, never asked</sub>
+- **Head angle / Lenkwinkel** <sub>`geometry.head_angle_deg`, number in deg, 62 to 76, never asked</sub>
+- **Seat angle / Sitzwinkel** <sub>`geometry.seat_angle_deg`, number in deg, 68 to 79, never asked</sub>
+- **Wheel size / Laufradgröße** <sub>`geometry.wheel_bsd_mm`, number in mm, never asked</sub>
+  - `559`: 26 inch (559 mm) / 26 Zoll (559 mm)
+  - `584`: 27.5 inch, 650B (584 mm) / 27,5 Zoll, 650B (584 mm)
+  - `622`: 28 or 29 inch, 700C (622 mm) / 28 oder 29 Zoll, 700C (622 mm)
 
 ## Run choices
 

@@ -88,7 +88,7 @@ The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. 
 ## Other known gaps
 
 - Shop search and the Shop tab are placeholders by design. The assistant panel only shows the context it would receive.
-- The bike sheet labels facts by their question until SR-02 is decided; question pictures are grey tiles until SR-03.
+- Question pictures are grey tiles until SR-03. The bike sheet lists all facts in one list; A1 groups them (`fact_groups`).
 - Swipe (`attachSwipe` in `flow.ts`) works for touch only and is not covered by the e2e test.
 - `npm audit` reports a ReDoS in `picomatch` (dev tools only, nothing in `dist/`).
 

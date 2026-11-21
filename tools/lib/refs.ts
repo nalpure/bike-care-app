@@ -31,6 +31,14 @@ export function factDef(c: Content, key: string): Entry | undefined {
   return c.facts.get(generic);
 }
 
+/** A number fact's value is a number between its min and max. */
+function checkNumber(x: Ctx, loc: Loc, key: string, f: any, v: unknown): void {
+  const n = typeof v === 'number' ? v : Number(v);
+  if (!Number.isFinite(n)) err(x, loc, 'fact-range', `Fact ${key} is a number, not "${v}".`);
+  else if ((f.min !== undefined && n < f.min) || (f.max !== undefined && n > f.max))
+    err(x, loc, 'fact-range', `Fact ${key}: ${n} is outside ${f.min ?? '…'} to ${f.max ?? '…'}.`);
+}
+
 /** A fact the app never asks (ask: never): conditions read it, but it stays unknown unless the bike's data has it. */
 export function neverAsked(c: Content, key: string): boolean {
   return factDef(c, key)?.def.ask === 'never';
@@ -72,7 +80,7 @@ export function checkCondition(x: Ctx, cond: Condition | undefined, loc: Loc): v
     }
     const v = String(value);
     if (v === 'unknown') continue;
-    if (f.def.type === 'enum' && !f.def.values.map(String).includes(v))
+    if (f.def.values && !f.def.values.map(String).includes(v))
       err(x, loc, 'condition-value', `Fact ${key} has no value "${v}". Values: ${f.def.values.join(', ')}, unknown.`);
     if (f.def.type === 'boolean' && v !== 'true' && v !== 'false')
       err(x, loc, 'condition-value', `Fact ${key} is true or false, not "${v}".`);
@@ -457,7 +465,8 @@ function checkProfile(x: Ctx, e: Entry): void {
       }
       const s = String(v);
       if (field === 'facts' && s === 'unknown') err(x, l, 'profile-fact', `Leave "${k}" out of facts instead of setting it to unknown.`);
-      if (s !== 'unknown' && f.def.type === 'enum' && !f.def.values.map(String).includes(s)) err(x, l, 'condition-value', `Fact ${k} has no value "${s}".`);
+      if (s !== 'unknown' && f.def.values && !f.def.values.map(String).includes(s)) err(x, l, 'condition-value', `Fact ${k} has no value "${s}".`);
+      if (s !== 'unknown' && f.def.type === 'number') checkNumber(x, l, k, f.def, v);
       if (field === 'answers' && k in (p.facts ?? {})) err(x, l, 'profile-fact', `"${k}" is in both facts and answers. A known fact is never asked.`);
     }
   }
@@ -532,12 +541,21 @@ export function checkStatic(c: Content, issues: Issues): void {
       for (const t of o.requires_tools ?? []) if (!c.tools.has(t)) err(x, sub(locOf(e, 'choice'), 'options', i), 'unknown-tool', `Tool "${t}" is not in content/tools.yaml.`);
     });
   }
+  const groupsUsed = new Set<string>();
   for (const e of c.facts.values()) {
     const f = e.def;
-    if (f.answers && f.type === 'enum') {
-      for (const v of f.values) if (!(String(v) in f.answers)) err(x, locOf(e, 'fact'), 'fact-answers', `Fact ${f.key} has no answer text for value "${v}".`);
+    const loc = locOf(e, 'fact');
+    if (f.answers && f.values) {
+      for (const v of f.values) if (!(String(v) in f.answers)) err(x, loc, 'fact-answers', `Fact ${f.key} has no answer text for value "${v}".`);
     }
+    const group = String(f.key).split('.')[0];
+    groupsUsed.add(group);
+    if (!c.factGroups.has(group)) err(x, loc, 'fact-group', `Fact ${f.key} is in group "${group}", which has no entry in fact_groups. Add one with a label and an icon.`);
+    if (f.min !== undefined && f.max !== undefined && f.min >= f.max) err(x, loc, 'fact-range', `Fact ${f.key}: min ${f.min} must be below max ${f.max}.`);
+    for (const v of f.values ?? []) if (f.type === 'number') checkNumber(x, loc, f.key, f, v);
   }
+  for (const e of c.factGroups.values())
+    if (!groupsUsed.has(e.def.id)) err(x, locOf(e, 'fact group'), 'fact-group', `Fact group "${e.def.id}" has no facts. Remove it.`);
   checkUnused(x);
 }
 

@@ -1,6 +1,6 @@
 // Review units: what humans and agents review, each exactly once, with a content hash.
 //
-//   card:<kind>:<id>    one piece of user-facing text (step, inspection, fact question, run choice,
+//   card:<kind>:<id>    one piece of user-facing text (step, inspection, fact question, bike sheet group, run choice,
 //                       job, state label, tool), shown once with every context it appears in
 //   tree:<kind>:<id>    the structure of one flow (tutorial, diagnosis, routine check): order,
 //                       branches, exits and jumps, without repeating card texts
@@ -201,18 +201,26 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
   for (const [key, e] of c.facts) {
     const f = e.def;
     if (!f.question) continue;
-    const body = [`"${f.question.en}"${f.question.de ? ` / "${f.question.de}"` : ''}`, ''];
+    const body = [`"${f.question.en}"${f.question.de ? ` / "${f.question.de}"` : ''}`, '', `<sub>Label on the bike sheet: ${f.label.en}${f.label.de ? ` / ${f.label.de}` : ''}</sub>`, ''];
     if (f.help) body.push(`Help behind "?": ${f.help.en}${f.help.de ? ` / ${f.help.de}` : ''}`, '');
     for (const [v, a] of Object.entries<any>(f.answers ?? {})) body.push(`- \`${v}\`: ${a.en}${a.de ? ` / ${a.de}` : ''}`);
     body.push('- I\'ll check later (unknown)');
     if (f.question.picture) body.push('', `<sub>Picture set: ${f.question.picture}</sub>`);
     add('fact', key, `Question: ${key}`, f, ['beginner'], body);
   }
-  for (const [key, e] of c.facts) {
-    if (e.def.ask !== 'never' || !e.def.answers) continue;
-    const body = ['<sub>Never asked. Comes only from the bike\'s data. Values as shown on the bike record:</sub>', ''];
-    for (const [v, a] of Object.entries<any>(e.def.answers)) body.push(`- \`${v}\`: ${a.en}`);
-    add('fact', key, `Bike record: ${key}`, e.def, ['beginner'], body);
+  const tr = (t: any) => `${t?.en ?? ''}${t?.de ? ` / ${t.de}` : ''}`;
+  for (const [id, g] of c.factGroups) {
+    const facts = [...c.facts.values()].map((e) => e.def).filter((f) => String(f.key).split('.')[0] === id);
+    const body = [`<sub>The bike sheet's group "${tr(g.def.label)}", icon \`${g.def.icon}\`. One line per fact: its label, then what the user can enter.</sub>`, ''];
+    for (const f of facts) {
+      const range = f.min !== undefined || f.max !== undefined ? `, ${f.min ?? '…'} to ${f.max ?? '…'}` : '';
+      const kind = f.type === 'number' ? `number${f.unit ? ` in ${f.unit}` : ''}${range}` : f.type;
+      const how = f.question ? 'asked when needed' : f.ask === 'never' ? 'never asked, from the bike\'s data' : 'never asked';
+      body.push(`- **${tr(f.label)}** <sub>\`${f.key}\`, ${kind}, ${how}</sub>`);
+      if (!f.question) for (const [v, a] of Object.entries<any>(f.answers ?? {})) body.push(`  - \`${v}\`: ${tr(a)}`);
+    }
+    const def = { group: g.def, facts: facts.map((f) => ({ key: f.key, label: f.label, type: f.type, unit: f.unit, min: f.min, max: f.max, values: f.values, answers: f.question ? undefined : f.answers })) };
+    add('fact-group', id, `Bike sheet: ${tr(g.def.label)}`, def, ['beginner'], body);
   }
   for (const [id, e] of c.choices) {
     const body = [`"${e.def.question}"`, ''];
@@ -530,7 +538,7 @@ export function reviewFiles(statuses: UnitStatus[], journeyMarkdown: Map<string,
   // cards.md
   const cards = statuses.filter((s) => s.unit.kind === 'card');
   const groups: Array<[string, string]> = [
-    ['inspection', 'Inspections'], ['step', 'Steps'], ['fact', 'Questions and bike record'], ['choice', 'Run choices'],
+    ['inspection', 'Inspections'], ['step', 'Steps'], ['fact', 'Questions'], ['fact-group', 'Bike sheet'], ['choice', 'Run choices'],
     ['job', 'Jobs and shop texts'], ['state', 'State labels'], ['tool', 'Tools'], ['tool-set', 'Tool sets (one of these)'],
   ];
   const C = head('Card sheet', [

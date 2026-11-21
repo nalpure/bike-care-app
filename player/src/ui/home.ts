@@ -142,12 +142,7 @@ export function renderBike(app: App, id: string): HTMLElement {
   };
 
   const facts = [...c.ix.facts.values()];
-  // No short fact label in the bundle yet (SR-02): the question, or the key made readable.
-  const label = (f: any) => {
-    if (f.question) return c.t(f.question);
-    const last = String(f.key).split('.').pop()!.replace(/_/g, ' ');
-    return last.charAt(0).toUpperCase() + last.slice(1);
-  };
+  const label = (f: any) => c.t(f.label) || f.key;
   const todos = app.store.todos(b);
   return h('section.screen',
     header(app, isUnknown ? 'Unknown bike' : b.name, 'Garage', () => app.go({ k: 'garage' })),

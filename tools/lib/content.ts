@@ -30,6 +30,8 @@ export interface Content {
   root: string;
   files: YamlFile[];
   facts: Map<string, Entry>;
+  /** fact groups: the part of a fact key before the first dot */
+  factGroups: Map<string, Entry>;
   choices: Map<string, Entry>;
   states: Map<string, Entry>;
   tools: Map<string, Entry>;
@@ -57,7 +59,7 @@ export function loadContent(root: string, issues: Issues): Content | null {
   const c: Content = {
     root,
     files: [],
-    facts: new Map(), choices: new Map(), states: new Map(), tools: new Map(), toolSets: new Map(), parts: new Map(),
+    facts: new Map(), factGroups: new Map(), choices: new Map(), states: new Map(), tools: new Map(), toolSets: new Map(), parts: new Map(),
     inspections: new Map(), jobs: new Map(), steps: new Map(), procedures: new Map(),
     tutorials: new Map(), diagnoses: new Map(), checks: new Map(), profiles: new Map(),
     catalog: { nodes: new Set(), views: new Set(), clips: new Set(), motions: new Set(), source: '' },
@@ -112,7 +114,10 @@ export function loadContent(root: string, issues: Issues): Content | null {
 
   // Catalog files
   const factsF = load('content/facts.yaml', 'facts');
-  if (factsF) register(c.facts, 'fact', factsF, 'facts', 'key');
+  if (factsF) {
+    register(c.factGroups, 'fact group', factsF, 'fact_groups');
+    register(c.facts, 'fact', factsF, 'facts', 'key');
+  }
   const choicesF = load('content/choices.yaml', 'choices');
   if (choicesF) register(c.choices, 'choice', choicesF, 'choices');
   const statesF = load('content/states.yaml', 'states');

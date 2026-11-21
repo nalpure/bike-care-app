@@ -22,6 +22,7 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 
 - Ask by the part's name and offer the types the user can see: "Which gears does your bike have?" with "Chain and derailleur" and "Hub gear". Put the longer explanation, how to tell the answers apart, in the fact's `help: { en, de }`, not in the question. The app adds a last line pointing to the assistant; do not write it.
 - Ask only what changes the steps (hard rule 11). Never ask what a beginner cannot tell; mark it `ask: never`.
+- Every fact has a short `label` for the bike sheet ("Gears", "Rear derailleur"). Its group is the key before the first dot and needs an entry in `fact_groups`. Number facts get `unit`, and `min` and `max` (plausible values, not safety values) or a fixed `values` list.
 
 ## Tools
 

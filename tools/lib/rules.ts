@@ -31,6 +31,8 @@ export const STATIC_RULES: Record<string, string> = {
   'unknown-state': 'Every inspection state referenced exists.',
   'unknown-button': 'Every button a profile taps exists.',
   'fact-needs-question': 'Every fact a condition reads has a beginner question.',
+  'fact-group': "Every fact's group (the key before the first dot) has an entry in fact_groups, and every group has a fact.",
+  'fact-range': 'Number facts: min is below max, and every value in values and in profiles lies between them.',
   'condition-value': 'Conditions use only allowed values (or unknown).',
   'condition-on-text': 'Conditions never test free-text facts.',
   'placeholder-fallback': 'Every placeholder has fallback wording for an unknown value.',

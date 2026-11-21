@@ -45,6 +45,7 @@ export function bundleOf(c: Content): BundleView {
   });
 
   const data: BundleData = {
+    fact_groups: defs(c.factGroups),
     facts: defs(c.facts),
     choices: defs(c.choices),
     states: defs(c.states),

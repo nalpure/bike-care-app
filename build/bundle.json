@@ -1,11 +1,41 @@
 {
   "format": 1,
-  "content_hash": "42d9b7b3f0cf7c38",
+  "content_hash": "76279c9b30fa35dc",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
+  "fact_groups": [
+    {
+      "id": "bike",
+      "label": {
+        "en": "Bike",
+        "de": "Fahrrad"
+      },
+      "icon": "bike"
+    },
+    {
+      "id": "drive",
+      "label": {
+        "en": "Drivetrain",
+        "de": "Antrieb"
+      },
+      "icon": "drivetrain"
+    },
+    {
+      "id": "geometry",
+      "label": {
+        "en": "Geometry",
+        "de": "Geometrie"
+      },
+      "icon": "geometry"
+    }
+  ],
   "facts": [
     {
       "key": "bike.category",
+      "label": {
+        "en": "Type",
+        "de": "Typ"
+      },
       "type": "enum",
       "values": [
         "mtb",
@@ -44,6 +74,10 @@
     },
     {
       "key": "bike.ebike",
+      "label": {
+        "en": "E-bike",
+        "de": "E-Bike"
+      },
       "type": "boolean",
       "safety": false,
       "question": {
@@ -67,6 +101,10 @@
     },
     {
       "key": "drive.gear_type",
+      "label": {
+        "en": "Gears",
+        "de": "Schaltung"
+      },
       "type": "enum",
       "values": [
         "derailleur",
@@ -105,6 +143,10 @@
     },
     {
       "key": "drive.shifting",
+      "label": {
+        "en": "Shifting",
+        "de": "Schaltart"
+      },
       "type": "enum",
       "values": [
         "mechanical",
@@ -134,6 +176,10 @@
     },
     {
       "key": "drive.rear_derailleur_screws",
+      "label": {
+        "en": "Derailleur screw heads",
+        "de": "Schraubenköpfe am Schaltwerk"
+      },
       "type": "enum",
       "values": [
         "cross",
@@ -155,15 +201,298 @@
     },
     {
       "key": "drive.rear_speeds",
+      "label": {
+        "en": "Rear speeds",
+        "de": "Gänge hinten"
+      },
       "type": "number",
+      "min": 1,
+      "max": 13,
       "safety": false,
-      "note": "Detail fact. Never asked. Used in text when known."
+      "note": "Detail fact: the number of rear sprockets. Never asked. Used in text when known."
     },
     {
       "key": "drive.rear_derailleur_model",
+      "label": {
+        "en": "Rear derailleur",
+        "de": "Schaltwerk"
+      },
       "type": "text",
       "safety": false,
       "note": "Detail fact, for example the model printed on the derailleur. Never asked. Used in text when known."
+    },
+    {
+      "key": "drive.shifter_model",
+      "label": {
+        "en": "Shifter",
+        "de": "Schalthebel"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact: the model of the right shifter. Never asked."
+    },
+    {
+      "key": "drive.cassette_model",
+      "label": {
+        "en": "Sprockets",
+        "de": "Kassette"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact: the model of the rear sprockets (cassette). Never asked."
+    },
+    {
+      "key": "drive.chain_model",
+      "label": {
+        "en": "Chain",
+        "de": "Kette"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact. Never asked."
+    },
+    {
+      "key": "drive.crankset_model",
+      "label": {
+        "en": "Crankset",
+        "de": "Kurbel"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact: the model of the cranks and chainrings. Never asked."
+    },
+    {
+      "key": "bike.brand",
+      "label": {
+        "en": "Brand",
+        "de": "Marke"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact, for example the name on the down tube. Entered in the garage."
+    },
+    {
+      "key": "bike.model",
+      "label": {
+        "en": "Model",
+        "de": "Modell"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact. Entered in the garage."
+    },
+    {
+      "key": "bike.line",
+      "label": {
+        "en": "Series",
+        "de": "Serie"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact: the model line or series some brands name between brand and model. Entered in the garage."
+    },
+    {
+      "key": "bike.year",
+      "label": {
+        "en": "Model year",
+        "de": "Modelljahr"
+      },
+      "type": "number",
+      "min": 1970,
+      "max": 2030,
+      "safety": false,
+      "note": "Detail fact. Entered in the garage. Raise max when model years pass 2030."
+    },
+    {
+      "key": "bike.handlebar",
+      "label": {
+        "en": "Handlebar",
+        "de": "Lenker"
+      },
+      "type": "enum",
+      "values": [
+        "drop",
+        "flat",
+        "riser"
+      ],
+      "safety": false,
+      "note": "Detail fact. The 3D view draws the bar from it. Unknown is the general unknown value.",
+      "answers": {
+        "drop": {
+          "en": "Drop bar, curved down",
+          "de": "Rennlenker, nach unten gebogen"
+        },
+        "flat": {
+          "en": "Flat bar",
+          "de": "Gerader Lenker"
+        },
+        "riser": {
+          "en": "Riser bar, bent up at the ends",
+          "de": "Riser-Lenker, an den Enden nach oben gebogen"
+        }
+      }
+    },
+    {
+      "key": "bike.colour",
+      "label": {
+        "en": "Frame colour",
+        "de": "Rahmenfarbe"
+      },
+      "type": "text",
+      "safety": false,
+      "note": "Detail fact: the frame colour as #rrggbb, chosen in the garage. The 3D view paints the frame with it."
+    },
+    {
+      "key": "geometry.stack_mm",
+      "label": {
+        "en": "Stack",
+        "de": "Stack"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 450,
+      "max": 720,
+      "safety": false
+    },
+    {
+      "key": "geometry.reach_mm",
+      "label": {
+        "en": "Reach",
+        "de": "Reach"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 330,
+      "max": 520,
+      "safety": false
+    },
+    {
+      "key": "geometry.head_tube_mm",
+      "label": {
+        "en": "Head tube",
+        "de": "Steuerrohr"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 80,
+      "max": 260,
+      "safety": false
+    },
+    {
+      "key": "geometry.seat_tube_mm",
+      "label": {
+        "en": "Seat tube",
+        "de": "Sitzrohr"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 330,
+      "max": 640,
+      "safety": false
+    },
+    {
+      "key": "geometry.top_tube_mm",
+      "label": {
+        "en": "Top tube (effective)",
+        "de": "Oberrohr (effektiv)"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 480,
+      "max": 700,
+      "safety": false,
+      "note": "Effective (horizontal) top tube length."
+    },
+    {
+      "key": "geometry.chainstay_mm",
+      "label": {
+        "en": "Chainstay",
+        "de": "Kettenstrebe"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 390,
+      "max": 520,
+      "safety": false
+    },
+    {
+      "key": "geometry.wheelbase_mm",
+      "label": {
+        "en": "Wheelbase",
+        "de": "Radstand"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 900,
+      "max": 1400,
+      "safety": false
+    },
+    {
+      "key": "geometry.bb_drop_mm",
+      "label": {
+        "en": "BB drop",
+        "de": "Tretlagerabsenkung"
+      },
+      "type": "number",
+      "unit": "mm",
+      "min": 0,
+      "max": 90,
+      "safety": false,
+      "note": "Bottom bracket drop: how far the bottom bracket sits below the wheel axles."
+    },
+    {
+      "key": "geometry.head_angle_deg",
+      "label": {
+        "en": "Head angle",
+        "de": "Lenkwinkel"
+      },
+      "type": "number",
+      "unit": "deg",
+      "min": 62,
+      "max": 76,
+      "safety": false
+    },
+    {
+      "key": "geometry.seat_angle_deg",
+      "label": {
+        "en": "Seat angle",
+        "de": "Sitzwinkel"
+      },
+      "type": "number",
+      "unit": "deg",
+      "min": 68,
+      "max": 79,
+      "safety": false
+    },
+    {
+      "key": "geometry.wheel_bsd_mm",
+      "label": {
+        "en": "Wheel size",
+        "de": "Laufradgröße"
+      },
+      "type": "number",
+      "unit": "mm",
+      "values": [
+        559,
+        584,
+        622
+      ],
+      "safety": false,
+      "note": "ISO bead seat diameter of the rims.",
+      "answers": {
+        "559": {
+          "en": "26 inch (559 mm)",
+          "de": "26 Zoll (559 mm)"
+        },
+        "584": {
+          "en": "27.5 inch, 650B (584 mm)",
+          "de": "27,5 Zoll, 650B (584 mm)"
+        },
+        "622": {
+          "en": "28 or 29 inch, 700C (622 mm)",
+          "de": "28 oder 29 Zoll, 700C (622 mm)"
+        }
+      }
     }
   ],
   "choices": [
@@ -1031,7 +1360,7 @@
         {
           "id": "rattles",
           "label": "The chain rattled, or jumped to a bigger sprocket",
-          "text": "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.",
+          "text": "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the wheel is in line with the smallest sprocket and the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable.",
           "solution": [
             {
               "target": "h_screw",
@@ -1086,7 +1415,7 @@
         {
           "id": "rattles",
           "label": "The chain rattled, or slipped off the largest sprocket",
-          "text": "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again and listen. Repeat until the chain runs quietly.",
+          "text": "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the wheel is in line with the largest sprocket and the chain runs quietly.",
           "solution": [
             {
               "target": "l_screw",

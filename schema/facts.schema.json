@@ -4,6 +4,28 @@
   "title": "content/facts.yaml: lasting properties of a bike",
   "type": "object",
   "properties": {
+    "fact_groups": {
+      "description": "One entry per group. A fact's group is the part of its key before the first dot (bike, drive, geometry). The garage shows the groups with their icons.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "label": {
+            "type": "object",
+            "properties": {
+              "en": { "$ref": "common.schema.json#/$defs/text" },
+              "de": { "$ref": "common.schema.json#/$defs/text" }
+            },
+            "required": ["en"],
+            "additionalProperties": false
+          },
+          "icon": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "Icon id. The app draws the icon." }
+        },
+        "required": ["id", "label", "icon"],
+        "additionalProperties": false
+      }
+    },
     "facts": {
       "type": "array",
       "items": {
@@ -11,7 +33,20 @@
         "properties": {
           "key": { "$ref": "common.schema.json#/$defs/factKey" },
           "type": { "enum": ["enum", "boolean", "text", "number"] },
-          "values": { "type": "array", "minItems": 2, "items": { "type": ["string", "integer"] } },
+          "label": {
+            "description": "Short name for lists, such as the bike sheet: \"Gears\", \"Rear derailleur\".",
+            "type": "object",
+            "properties": {
+              "en": { "$ref": "common.schema.json#/$defs/text" },
+              "de": { "$ref": "common.schema.json#/$defs/text" }
+            },
+            "required": ["en"],
+            "additionalProperties": false
+          },
+          "values": { "type": "array", "minItems": 2, "items": { "type": ["string", "integer"] }, "description": "enum: the values. number: the only values allowed, when the number comes from a fixed list." },
+          "unit": { "enum": ["mm", "deg"], "description": "number only: unit of the value, shown after it." },
+          "min": { "type": "number", "description": "number only: lowest plausible value. The app refuses values below it." },
+          "max": { "type": "number", "description": "number only: highest plausible value. The app refuses values above it." },
           "question": {
             "description": "Beginner question. Required for every fact that a condition reads, because only those are asked.",
             "type": "object",
@@ -53,13 +88,19 @@
           "safety": { "type": "boolean" },
           "note": { "type": "string", "description": "For authors. Never shown." }
         },
-        "required": ["key", "type", "safety"],
+        "required": ["key", "type", "label", "safety"],
         "additionalProperties": false,
-        "if": { "properties": { "type": { "const": "enum" } } },
-        "then": { "required": ["values"] }
+        "allOf": [
+          { "if": { "properties": { "type": { "const": "enum" } } }, "then": { "required": ["values"] } },
+          {
+            "if": { "properties": { "type": { "const": "number" } } },
+            "then": { "properties": { "values": { "type": "array", "items": { "type": "integer" } } } },
+            "else": { "properties": { "unit": false, "min": false, "max": false } }
+          }
+        ]
       }
     }
   },
-  "required": ["facts"],
+  "required": ["fact_groups", "facts"],
   "additionalProperties": false
 }

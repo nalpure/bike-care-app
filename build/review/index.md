@@ -5,7 +5,7 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 41 fully approved
+- Cards: 0 of 43 fully approved
 - Flow trees: 0 of 3 fully approved
 - Journeys: 0 of 8 fully approved
 
@@ -41,7 +41,9 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:fact:bike.ebike` | Question: bike.ebike | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.gear_type` | Question: drive.gear_type | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.shifting` | Question: drive.shifting | — | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:fact:drive.rear_derailleur_screws` | Bike record: drive.rear_derailleur_screws | — | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:fact-group:bike` | Bike sheet: Bike / Fahrrad | — | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:fact-group:drive` | Bike sheet: Drivetrain / Antrieb | — | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:fact-group:geometry` | Bike sheet: Geometry / Geometrie | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:choice:hold_bike` | Run choice: hold_bike | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:job:adjust-rear-shifting` | Adjust the rear gears | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:job:chain-care` | Clean and oil the chain | — | ⬜ not reviewed | [cards.md](cards.md) |

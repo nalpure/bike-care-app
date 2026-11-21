@@ -71,7 +71,7 @@ export function nearestId(data: any, path: YPath): string {
 
 function singular(c: string): string {
   const map: Record<string, string> = {
-    steps: 'step', inspections: 'inspection', facts: 'fact', tools: 'tool', parts: 'part',
+    steps: 'step', inspections: 'inspection', facts: 'fact', fact_groups: 'fact group', tools: 'tool', parts: 'part',
     jobs: 'job', procedures: 'procedure', states: 'state', choices: 'choice', options: 'option',
     tutorial: 'tutorial', diagnosis: 'diagnosis', check: 'check', profile: 'profile', journeys: 'journey',
   };

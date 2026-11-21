@@ -335,6 +335,26 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r, 'fact-needs-question').length, show(r)).toBeGreaterThan(0);
   });
 
+  it('a fact group without an entry, and a group without facts', () => {
+    const r = sandbox()
+      .edit('content/facts.yaml', (d) => {
+        d.facts.find((x: any) => x.key === 'bike.colour').key = 'frame.colour';
+        d.fact_groups.push({ id: 'brakes', label: { en: 'Brakes' }, icon: 'brake' });
+      })
+      .run();
+    const e = errorsOf(r, 'fact-group');
+    expect(e.map((x) => x.id).sort(), show(r)).toEqual(['fact frame.colour', 'fact group brakes']);
+  });
+
+  it('a number outside its range, in the facts and in a profile', () => {
+    const r = sandbox()
+      .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'geometry.wheel_bsd_mm').max = 600))
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.facts['geometry.stack_mm'] = 900))
+      .run();
+    const e = errorsOf(r, 'fact-range');
+    expect(e.length, show(r)).toBe(2); // 622 above max 600, and the profile's stack
+  });
+
   it('a placeholder without fallback wording', () => {
     const r = sandbox()
       .replace('content/steps/rear-shifting.yaml', '{drive.rear_derailleur_model|your derailleur}', '{drive.rear_derailleur_model}')

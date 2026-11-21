@@ -15,6 +15,8 @@ import { evaluate, substCondition, substParams, UNKNOWN, type Condition, type Va
 
 /** The content lists of build/bundle.json. Tutorials have their case files inlined as `case`. */
 export interface BundleData {
+  /** { id, label, icon }: a fact's group is the part of its key before the first dot */
+  fact_groups: any[];
   facts: any[];
   choices: any[];
   states: any[];
@@ -32,6 +34,7 @@ export interface BundleData {
 }
 
 export interface Index {
+  fact_groups: Map<string, any>;
   facts: Map<string, any>;
   choices: Map<string, any>;
   states: Map<string, any>;
@@ -50,6 +53,7 @@ export interface Index {
 export function indexBundle(b: BundleData): Index {
   const by = (list: any[] | undefined, key = 'id') => new Map<string, any>((list ?? []).map((d) => [d[key], d]));
   return {
+    fact_groups: by(b.fact_groups),
     facts: by(b.facts, 'key'),
     choices: by(b.choices),
     states: by(b.states),

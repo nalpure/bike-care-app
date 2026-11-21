@@ -27,7 +27,7 @@ Details per unit in [review/index.md](review/index.md).
 
 | Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
 | --- | --- | --- | --- | --- |
-| card | 41 | 0 of 33 | 0 of 41 | 0 |
+| card | 43 | 0 of 33 | 0 of 43 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
 | journey | 8 | — | 0 of 8 | 0 |
 
@@ -106,6 +106,8 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `unknown-state` | pass | Every inspection state referenced exists. |
 | `unknown-button` | pass | Every button a profile taps exists. |
 | `fact-needs-question` | pass | Every fact a condition reads has a beginner question. |
+| `fact-group` | pass | Every fact's group (the key before the first dot) has an entry in fact_groups, and every group has a fact. |
+| `fact-range` | pass | Number facts: min is below max, and every value in values and in profiles lies between them. |
 | `condition-value` | pass | Conditions use only allowed values (or unknown). |
 | `condition-on-text` | pass | Conditions never test free-text facts. |
 | `placeholder-fallback` | pass | Every placeholder has fallback wording for an unknown value. |
