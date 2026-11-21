@@ -56,7 +56,7 @@ Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the 
 
 ### Look at the chain
 
-<sub>Unit `card:inspection:chain-condition` · hash `8e9ed0e4f0d0` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:chain-condition` · hash `9e85446a8c95` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
@@ -66,7 +66,7 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 
 <sub>3D: focus chain · view chain_close</sub>
 
-Animation: "Turn the pedals backwards" (crank rotate, backwards, slowly, two full turns)
+Animation: "Turn the pedals backwards" (crank rotate, backward, slowly, two full turns)
 
 - [ ] **Clean, with a thin film of oil** <sub>`clean`</sub> — The chain looks cared for.
 - [ ] **Dry, rusty, or it squeaks** <sub>`dry-or-rusty`</sub> — The chain needs cleaning and oil. If the gears still shift badly afterwards, check again. → usually: **Clean and oil the chain** (soon)
@@ -107,7 +107,7 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 ### Clamp the bike in the stand
 
-<sub>Unit `card:step:clamp-in-stand` · hash `a64a3204f544` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:clamp-in-stand` · hash `2f540ab30e6d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 2 min</sub>
 
@@ -117,7 +117,7 @@ Tools. Needed: Bike work stand. Helpful: none.
 
 <sub>3D: focus stand_clamp, seat_post · view whole_bike</sub>
 
-Animation: "Close the clamp around the seat post" (stand_clamp rotate, tighten, until the bike sits firm)
+Animation: "Close the clamp around the seat post" (stand_clamp rotate, clockwise, until the bike sits firm)
 
 <sub>State: sets bike_in_stand</sub>
 
@@ -127,7 +127,7 @@ Animation: "Close the clamp around the seat post" (stand_clamp rotate, tighten, 
 
 ### Hang the bike up
 
-<sub>Unit `card:step:hang-bike` · hash `7d9d8f8c0fd5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:hang-bike` · hash `9b8735cb982e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 3 min</sub>
 
@@ -137,7 +137,7 @@ Tools. Needed: Strong hook or rope that can carry the bike. Helpful: none.
 
 <sub>3D: focus saddle, rear_wheel · view whole_bike</sub>
 
-Animation: "Lift the rear of the bike onto the hook" (bike pull, up at the saddle, until the rear wheel is off the ground)
+Animation: "Lift the rear of the bike onto the hook" (bike pull, up, until the rear wheel is off the ground)
 
 <sub>State: sets bike_hung</sub>
 
@@ -147,7 +147,7 @@ Animation: "Lift the rear of the bike onto the hook" (bike pull, up at the saddl
 
 ### Turn the bike over
 
-<sub>Unit `card:step:turn-upside-down` · hash `3420bff5b613` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:turn-upside-down` · hash `921c45c5c354` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 2 min</sub>
 
@@ -157,7 +157,7 @@ Tools. Needed: none. Helpful: Soft mat or old blanket.
 
 <sub>3D: focus saddle, handlebar · view whole_bike</sub>
 
-Animation: "Turn the bike over onto the mat" (bike rotate, over, wheels up, half a turn)
+Animation: "Turn the bike over onto the mat" (bike rotate, half a turn)
 
 <sub>State: sets bike_upside_down</sub>
 
@@ -167,7 +167,7 @@ Animation: "Turn the bike over onto the mat" (bike rotate, over, wheels up, half
 
 ### Take the bike out of the stand
 
-<sub>Unit `card:step:unclamp-from-stand` · hash `b2af7fac260f` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:unclamp-from-stand` · hash `13ec6b9b362e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 1 min</sub>
 
@@ -177,7 +177,7 @@ Tools. Needed: Bike work stand. Helpful: none.
 
 <sub>3D: focus stand_clamp · view whole_bike</sub>
 
-Animation: "Open the clamp while you hold the bike" (stand_clamp rotate, loosen, until open)
+Animation: "Open the clamp while you hold the bike" (stand_clamp rotate, counterclockwise, until open)
 
 <sub>State: clears bike_in_stand</sub>
 
@@ -209,7 +209,7 @@ Animation: "Lift the bike off and set it down" (bike push, down, until the rear 
 
 ### Turn the bike back over
 
-<sub>Unit `card:step:turn-bike-upright` · hash `810d84d8fcfe` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:turn-bike-upright` · hash `acf187848562` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 1 min</sub>
 
@@ -217,7 +217,7 @@ Turn the bike back onto its wheels. With a heavy bike, ask someone to help.
 
 <sub>3D: focus bike · view whole_bike</sub>
 
-Animation: "Turn the bike back onto its wheels" (bike rotate, over, wheels down, half a turn)
+Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 <sub>State: clears bike_upside_down</sub>
 
@@ -276,7 +276,7 @@ Animation: "Shift one gear at a time" (clip shift-to-largest)
 
 ### Set the cable tension
 
-<sub>Unit `card:step:check-cable-tension` · hash `b43b0cf76e4c` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension` · hash `f957703f91fd` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 5 min</sub>
 
@@ -285,9 +285,9 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
 <sub>3D: focus barrel_adjuster, chain, cassette · view drive_side</sub>
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Unscrew the barrel adjuster a quarter turn, then shift again. Never unscrew it all the way out.
-  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, unscrew, a quarter turn)
+  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
 - [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Screw in the barrel adjuster a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, screw in, a quarter turn)
+  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
 
 <sub>Appears in:</sub>
@@ -348,7 +348,7 @@ Ride slowly and shift one gear at a time into the easiest gear, the largest spro
 
 ### Set the cable tension on short rides
 
-<sub>Unit `card:step:check-cable-tension-riding` · hash `86248d52739d` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension-riding` · hash `ed1130d979f1` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 10 min</sub>
 
@@ -359,9 +359,9 @@ Ride slowly and shift one gear at a time, through all gears and back. Stop and p
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Park the bike, unscrew the barrel adjuster a quarter turn, then ride and shift again. Never unscrew it all the way out.
-  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, unscrew, a quarter turn)
+  - Show solution: "Unscrew the barrel adjuster a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
 - [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Park the bike, screw in the barrel adjuster a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, screw in, a quarter turn)
+  - Show solution: "Screw in the barrel adjuster a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
 
 <sub>Appears in:</sub>
@@ -392,7 +392,7 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 ### Check the inner limit (L screw)
 
-<sub>Unit `card:step:check-low-limit-by-hand` · hash `3eaf139efb98` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit-by-hand` · hash `1d4cd6039034` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -402,13 +402,13 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 <sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
 
-Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the spokes, as far as it goes)
+Animation: "Push the derailleur in by hand" (rear_derailleur push, towards_spokes, as far as it goes)
 
 - [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The L screw is set. Let go of the derailleur.
 - [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. Screw in the screw marked L a quarter turn, then push and look again.
-  - Show solution: "Screw in the L screw a quarter turn" (l_screw rotate, screw in, a quarter turn)
+  - Show solution: "Screw in the L screw a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 - [ ] **It stops before the largest sprocket** <sub>`short`</sub> → The chain may not reach the largest sprocket. Unscrew the screw marked L a quarter turn, then push and look again.
-  - Show solution: "Unscrew the L screw a quarter turn" (l_screw rotate, unscrew, a quarter turn)
+  - Show solution: "Unscrew the L screw a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
 
 <sub>Appears in:</sub>
 
@@ -417,7 +417,7 @@ Animation: "Push the derailleur in by hand" (rear_derailleur push, towards the s
 
 ### Check the outer limit (H screw)
 
-<sub>Unit `card:step:check-high-limit` · hash `acd9d4441afd` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-high-limit` · hash `30bf2834a2e7` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -429,9 +429,9 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 - [ ] **In line with the smallest sprocket** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
 - [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → Unscrew the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket. If it does not move, stop turning: the cable holds it, and a later step sets the cable.
-  - Show solution: "Unscrew the H screw a quarter turn" (h_screw rotate, unscrew, a quarter turn)
+  - Show solution: "Unscrew the H screw a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. Screw in the screw marked H a quarter turn at a time, until the wheel is in line with the sprocket.
-  - Show solution: "Screw in the H screw a quarter turn" (h_screw rotate, screw in, a quarter turn)
+  - Show solution: "Screw in the H screw a quarter turn" (h_screw rotate, clockwise, a quarter turn)
 
 <sub>Appears in:</sub>
 
@@ -440,7 +440,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Check the gap to the sprockets
 
-<sub>Unit `card:step:check-b-gap` · hash `e66cf606afa4` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-b-gap` · hash `c4a321d91712` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 3 min</sub>
 
@@ -452,9 +452,9 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 - [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for {drive.rear_derailleur_model|your derailleur} gives the exact gap, if you want to check it.
 - [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → Screw in the B screw, at the back of the derailleur, a little at a time until there is a small gap.
-  - Show solution: "Screw in the B screw a little" (b_screw rotate, screw in, a little)
+  - Show solution: "Screw in the B screw a little" (b_screw rotate, clockwise, a little)
 - [ ] **A big gap, and shifting here was slow** <sub>`wide-gap`</sub> → Unscrew the B screw a little at a time, until the gap is small but the teeth do not touch.
-  - Show solution: "Unscrew the B screw a little" (b_screw rotate, unscrew, a little)
+  - Show solution: "Unscrew the B screw a little" (b_screw rotate, counterclockwise, a little)
 
 <sub>Appears in:</sub>
 

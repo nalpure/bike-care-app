@@ -296,6 +296,9 @@ describe('views and animations', () => {
     expect(dirSign('loosen')).toBe(-1);
     expect(dirSign('backwards')).toBe(-1);
     expect(dirSign(undefined)).toBe(1);
+    expect(dirSign('clockwise')).toBe(1);
+    expect(dirSign('counterclockwise')).toBe(-1);
+    expect(dirSign('away_from_spokes')).toBe(-1);
   });
 
   it('limit-screw-align: unscrewing H brings the pulley out from the spokes into line', () => {

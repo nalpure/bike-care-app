@@ -52,7 +52,7 @@ inspections:
     text: "Look at the chain below the pedals. Turn the pedals backwards slowly to see all of it."
     focus: [chain]
     view: chain_close
-    animation: { target: crank, motion: rotate, direction: "backwards", amount: "slowly, two full turns", caption: "Turn the pedals backwards" }
+    animation: { target: crank, motion: rotate, direction: backward, amount: "slowly, two full turns", caption: "Turn the pedals backwards" }
     states:
       - id: clean
         label: "Clean, with a thin film of oil"

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "d040e92dc8001bf8",
+  "content_hash": "c2c65277776d3705",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "facts": [
@@ -400,7 +400,7 @@
       "animation": {
         "target": "crank",
         "motion": "rotate",
-        "direction": "backwards",
+        "direction": "backward",
         "amount": "slowly, two full turns",
         "caption": "Turn the pedals backwards"
       },
@@ -527,7 +527,7 @@
       "animation": {
         "target": "stand_clamp",
         "motion": "rotate",
-        "direction": "tighten",
+        "direction": "clockwise",
         "amount": "until the bike sits firm",
         "caption": "Close the clamp around the seat post"
       }
@@ -555,7 +555,7 @@
       "animation": {
         "target": "bike",
         "motion": "pull",
-        "direction": "up at the saddle",
+        "direction": "up",
         "amount": "until the rear wheel is off the ground",
         "caption": "Lift the rear of the bike onto the hook"
       }
@@ -583,7 +583,6 @@
       "animation": {
         "target": "bike",
         "motion": "rotate",
-        "direction": "over, wheels up",
         "amount": "half a turn",
         "caption": "Turn the bike over onto the mat"
       }
@@ -610,7 +609,7 @@
       "animation": {
         "target": "stand_clamp",
         "motion": "rotate",
-        "direction": "loosen",
+        "direction": "counterclockwise",
         "amount": "until open",
         "caption": "Open the clamp while you hold the bike"
       }
@@ -659,7 +658,6 @@
       "animation": {
         "target": "bike",
         "motion": "rotate",
-        "direction": "over, wheels down",
         "amount": "half a turn",
         "caption": "Turn the bike back onto its wheels"
       }
@@ -736,7 +734,7 @@
             {
               "target": "barrel_adjuster",
               "motion": "rotate",
-              "direction": "unscrew",
+              "direction": "counterclockwise",
               "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Unscrew the barrel adjuster a quarter turn"
@@ -751,7 +749,7 @@
             {
               "target": "barrel_adjuster",
               "motion": "rotate",
-              "direction": "screw in",
+              "direction": "clockwise",
               "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Screw in the barrel adjuster a quarter turn"
@@ -867,7 +865,7 @@
             {
               "target": "barrel_adjuster",
               "motion": "rotate",
-              "direction": "unscrew",
+              "direction": "counterclockwise",
               "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Unscrew the barrel adjuster a quarter turn"
@@ -882,7 +880,7 @@
             {
               "target": "barrel_adjuster",
               "motion": "rotate",
-              "direction": "screw in",
+              "direction": "clockwise",
               "amount": "a quarter turn",
               "view": "barrel_adjuster_close",
               "caption": "Screw in the barrel adjuster a quarter turn"
@@ -963,7 +961,7 @@
       "animation": {
         "target": "rear_derailleur",
         "motion": "push",
-        "direction": "towards the spokes",
+        "direction": "towards_spokes",
         "amount": "as far as it goes",
         "caption": "Push the derailleur in by hand"
       },
@@ -981,7 +979,7 @@
             {
               "target": "l_screw",
               "motion": "rotate",
-              "direction": "screw in",
+              "direction": "clockwise",
               "amount": "a quarter turn",
               "view": "derailleur_from_behind",
               "caption": "Screw in the L screw a quarter turn"
@@ -996,7 +994,7 @@
             {
               "target": "l_screw",
               "motion": "rotate",
-              "direction": "unscrew",
+              "direction": "counterclockwise",
               "amount": "a quarter turn",
               "view": "derailleur_from_behind",
               "caption": "Unscrew the L screw a quarter turn"
@@ -1036,7 +1034,7 @@
             {
               "target": "h_screw",
               "motion": "rotate",
-              "direction": "unscrew",
+              "direction": "counterclockwise",
               "amount": "a quarter turn",
               "view": "derailleur_from_behind",
               "caption": "Unscrew the H screw a quarter turn"
@@ -1051,7 +1049,7 @@
             {
               "target": "h_screw",
               "motion": "rotate",
-              "direction": "screw in",
+              "direction": "clockwise",
               "amount": "a quarter turn",
               "view": "derailleur_from_behind",
               "caption": "Screw in the H screw a quarter turn"
@@ -1091,7 +1089,7 @@
             {
               "target": "b_screw",
               "motion": "rotate",
-              "direction": "screw in",
+              "direction": "clockwise",
               "amount": "a little",
               "view": "derailleur_side_close",
               "caption": "Screw in the B screw a little"
@@ -1106,7 +1104,7 @@
             {
               "target": "b_screw",
               "motion": "rotate",
-              "direction": "unscrew",
+              "direction": "counterclockwise",
               "amount": "a little",
               "view": "derailleur_side_close",
               "caption": "Unscrew the B screw a little"

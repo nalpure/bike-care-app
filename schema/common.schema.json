@@ -79,7 +79,10 @@
       "properties": {
         "target": { "$ref": "#/$defs/nodeName" },
         "motion": { "enum": ["rotate", "push", "pull", "slide", "squeeze", "remove", "insert"] },
-        "direction": { "type": "string", "minLength": 1 },
+        "direction": {
+          "description": "Which way the motion goes. clockwise and counterclockwise are seen looking at the head of the screw or knob; the caption and the text say it in words.",
+          "enum": ["clockwise", "counterclockwise", "forward", "backward", "towards_spokes", "away_from_spokes", "up", "down"]
+        },
         "amount": { "type": "string", "minLength": 1 },
         "clip": { "$ref": "#/$defs/nodeName" },
         "view": { "$ref": "#/$defs/nodeName" },

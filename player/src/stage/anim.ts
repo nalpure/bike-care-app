@@ -66,10 +66,17 @@ export interface AnimCtx {
 }
 
 /**
- * +1 or -1 from the free-text direction of an animation.
- * Screwing in, tightening, forward, up, in and towards are +1; the opposites are -1.
+ * +1 or -1 from the direction of an animation.
+ * Clockwise (screwing in, seen at the screw head), forward, up and towards the spokes are +1;
+ * the opposites are -1.
  */
 export function dirSign(direction?: string): 1 | -1 {
+  // The content's direction enum (schema common.schema.json, animation.direction).
+  const known: Record<string, 1 | -1> = {
+    clockwise: 1, counterclockwise: -1, forward: 1, backward: -1, towards_spokes: 1, away_from_spokes: -1, up: 1, down: -1,
+  };
+  if (direction && direction in known) return known[direction];
+  // Free text, as before the enum.
   const d = (direction ?? '').toLowerCase();
   return /unscrew|loosen|undo|open|backward|anticlockwise|counterclockwise|counter-clockwise|\bout\b|outward|\bdown\b|away/.test(d) ? -1 : 1;
 }

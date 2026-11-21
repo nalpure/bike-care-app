@@ -12,7 +12,7 @@ steps:
     sets: [bike_in_stand]
     focus: [stand_clamp, seat_post]
     view: whole_bike
-    animation: { target: stand_clamp, motion: rotate, direction: "tighten", amount: "until the bike sits firm", caption: "Close the clamp around the seat post" }
+    animation: { target: stand_clamp, motion: rotate, direction: clockwise, amount: "until the bike sits firm", caption: "Close the clamp around the seat post" }
 
   - id: hang-bike
     kind: action
@@ -23,7 +23,7 @@ steps:
     sets: [bike_hung]
     focus: [saddle, rear_wheel]
     view: whole_bike
-    animation: { target: bike, motion: pull, direction: "up at the saddle", amount: "until the rear wheel is off the ground", caption: "Lift the rear of the bike onto the hook" }
+    animation: { target: bike, motion: pull, direction: up, amount: "until the rear wheel is off the ground", caption: "Lift the rear of the bike onto the hook" }
 
   - id: turn-upside-down
     kind: action
@@ -34,7 +34,7 @@ steps:
     sets: [bike_upside_down]
     focus: [saddle, handlebar]
     view: whole_bike
-    animation: { target: bike, motion: rotate, direction: "over, wheels up", amount: "half a turn", caption: "Turn the bike over onto the mat" }
+    animation: { target: bike, motion: rotate, amount: "half a turn", caption: "Turn the bike over onto the mat" }
 
   - id: unclamp-from-stand
     kind: action
@@ -45,7 +45,7 @@ steps:
     clears: [bike_in_stand]
     focus: [stand_clamp]
     view: whole_bike
-    animation: { target: stand_clamp, motion: rotate, direction: "loosen", amount: "until open", caption: "Open the clamp while you hold the bike" }
+    animation: { target: stand_clamp, motion: rotate, direction: counterclockwise, amount: "until open", caption: "Open the clamp while you hold the bike" }
 
   - id: take-bike-down
     kind: action
@@ -56,7 +56,7 @@ steps:
     clears: [bike_hung]
     focus: [saddle, rear_wheel]
     view: whole_bike
-    animation: { target: bike, motion: push, direction: "down", amount: "until the rear wheel is on the ground", caption: "Lift the bike off and set it down" }
+    animation: { target: bike, motion: push, direction: down, amount: "until the rear wheel is on the ground", caption: "Lift the bike off and set it down" }
 
   - id: turn-bike-upright
     kind: action
@@ -66,7 +66,7 @@ steps:
     clears: [bike_upside_down]
     focus: [bike]
     view: whole_bike
-    animation: { target: bike, motion: rotate, direction: "over, wheels down", amount: "half a turn", caption: "Turn the bike back onto its wheels" }
+    animation: { target: bike, motion: rotate, amount: "half a turn", caption: "Turn the bike back onto its wheels" }
 
   - id: park-bike
     kind: action
