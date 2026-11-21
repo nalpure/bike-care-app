@@ -7,7 +7,9 @@
 # because the bike may be upside down.
 # Limit screws, the owner's method: shift to the matching sprocket (H: smallest, L: largest) and
 # turn the screw until the upper toothed wheel is in line with that sprocket. If the chain then
-# rattles or jumps towards the next sprocket, turn the screw counterclockwise until it runs quietly.
+# rattles or jumps towards the next sprocket, turn the screw counterclockwise until the wheel is
+# in line again and the chain runs quietly (owner, 2026-11-20). Clockwise moves the wheel inwards
+# for H and outwards for L, so clockwise always narrows the range and counterclockwise widens it.
 # Gear words: "easier gear" always means a bigger sprocket, "harder gear" a smaller one.
 
 steps:
@@ -162,7 +164,7 @@ steps:
           - { target: h_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw clockwise a quarter turn" }
       - id: rattles
         label: "The chain rattled, or jumped to a bigger sprocket"
-        text: "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and listen again. Repeat until the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
+        text: "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the wheel is in line with the smallest sprocket and the chain runs quietly. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
         solution:
           - { target: h_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw counterclockwise a quarter turn" }
 
@@ -185,7 +187,7 @@ steps:
           - { target: l_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw clockwise a quarter turn" }
       - id: rattles
         label: "The chain rattled, or slipped off the largest sprocket"
-        text: "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again and listen. Repeat until the chain runs quietly."
+        text: "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the wheel is in line with the largest sprocket and the chain runs quietly."
         solution:
           - { target: l_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw counterclockwise a quarter turn" }
 
