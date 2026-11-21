@@ -4,6 +4,7 @@ import { loadBundle } from './engine/content.js';
 import { browserKV, Store } from './engine/store.js';
 import { App } from './ui/app.js';
 import { h } from './ui/dom.js';
+import { loadLibrary } from './stage/library.js';
 import { ThreeStage } from './stage/three-stage.js';
 import { PlaceholderStage, type Stage } from './ui/stage.js';
 
@@ -14,9 +15,10 @@ async function boot(): Promise<void> {
     const store = new Store(browserKV(), content.bundle.demo_bikes ?? []);
     let stage: Stage;
     try {
+      await loadLibrary();
       stage = new ThreeStage();
     } catch (e) {
-      console.warn('[stage] The 3D view could not start; using the text stage.', e);
+      console.warn('[stage] The 3D view could not start (or the parts library did not load); using the text stage.', e);
       stage = new PlaceholderStage();
     }
     const app = new App(content, store, root, stage);

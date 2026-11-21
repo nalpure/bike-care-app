@@ -117,9 +117,10 @@ export function plate(mesh: T.Object3D, a: V3, b: V3, normal: V3): void {
   mesh.scale.set(1, L, 1);
 }
 
+/** Frees a bike's geometry and materials. Library geometry (userData.lib) is shared and survives. */
 export function disposeTree(g: T.Object3D, keep?: T.Material): void {
   g.traverse((o: any) => {
-    if (o.geometry) o.geometry.dispose();
+    if (o.geometry && !o.geometry.userData.lib) o.geometry.dispose();
     if (o.material && o.material !== keep) o.material.dispose();
   });
 }
