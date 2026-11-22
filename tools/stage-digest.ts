@@ -13,8 +13,12 @@ import { dirname, join, resolve } from 'node:path';
 import * as T from 'three';
 import YAML from 'yaml';
 import { BikeModel, bikeSpec, GAP_BIG, GAP_OK, GAP_SMALL, GEOMETRY_RANGES } from '../player/src/stage/bike.js';
+import { loadLibrary } from '../player/src/stage/library.js';
 
 const root = resolve(import.meta.dirname, '..');
+// the parts library, as the app loads it at start (player/test/setup-library.ts does the same)
+const lib = readFileSync(join(root, 'player/public/parts/library.glb'));
+await loadLibrary(lib.buffer.slice(lib.byteOffset, lib.byteOffset + lib.byteLength) as ArrayBuffer);
 const out = process.argv[2];
 if (!out) {
   console.error('usage: npx tsx tools/stage-digest.ts <out.json>');

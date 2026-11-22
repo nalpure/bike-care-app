@@ -6,7 +6,7 @@
 // every bike. The stage widens the field of view on narrow screens; the close-ups below are
 // framed for a phone in portrait (stage about 1.1 : 1) and landscape.
 
-import { barrelTurn, GAP_OK, LC, upperPulley, type BikeSpec } from './bike.js';
+import { barrelTurn, GAP_OK, lowerPulley, upperPulley, type BikeSpec } from './bike.js';
 import type { VIEWS } from './registry.js';
 
 export interface ViewPose {
@@ -29,7 +29,8 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
   derailleur_from_behind: (B) => {
     const us = hasDerailleur(B) ? upperPulley(B, B.zs[0]) : [B.rx, B.huby - 0.1];
     const ul = hasDerailleur(B) ? upperPulley(B, B.zs[B.n - 1]) : us;
-    const low = Math.min(us[1], ul[1]) - LC * 0.6;
+    const lp = hasDerailleur(B) ? lowerPulley(B, B.zs[0]) : [B.rx, B.huby - 0.26];
+    const low = Math.min(us[1], ul[1]) + (lp[1] - us[1]) * 0.6;
     const top = B.huby + B.rs[B.n - 1] * 0.4;
     const ty = (top + low) / 2;
     const zc = B.chainline;

@@ -7,7 +7,10 @@ import * as T from 'three';
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
 import { dirSign, makeAnim, type AnimCtx } from '../src/stage/anim.js';
-import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_OK, GEOMETRY_RANGES, GROUND, PITCH, type BikeSpec } from '../src/stage/bike.js';
+import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_BIG, GAP_OK, GAP_SMALL, GEOMETRY_RANGES, GROUND, PITCH, RP, type BikeSpec } from '../src/stage/bike.js';
+import { chordLength } from '../src/stage/pins.js';
+import { RIG } from '../src/stage/rd-kin.js';
+import { RD_RIG } from '../src/stage/rd-rig.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
 import { CLIPS, LABEL_SCENES, manifest, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS } from '../src/stage/registry.js';
 import { viewPose } from '../src/stage/views.js';
@@ -15,8 +18,12 @@ import { viewPose } from '../src/stage/views.js';
 const REPO = resolve(import.meta.dirname, '../..');
 const mat = new T.MeshStandardMaterial();
 
-/** Points along every edge of every mesh of the given parts, in bike space. */
-function meshPoints(m: BikeModel, ids: string[], steps = 6): Array<{ part: string; p: T.Vector3 }> {
+/**
+ * Points along every edge of every mesh of the given parts, in bike space. Library meshes (and the
+ * derailleur's shared ones, userData.lib) are dense CAD meshes: their vertices only, every `stride`-th.
+ * Pulleys (userData.pulley) are left out with `noPulleys`: the chain runs on them, beside the sprockets.
+ */
+function meshPoints(m: BikeModel, ids: string[], steps = 6, opt: { stride?: number; noPulleys?: boolean } = {}): Array<{ part: string; p: T.Vector3 }> {
   m.bike.updateMatrixWorld(true);
   const out: Array<{ part: string; p: T.Vector3 }> = [];
   const a = new T.Vector3();
@@ -24,7 +31,12 @@ function meshPoints(m: BikeModel, ids: string[], steps = 6): Array<{ part: strin
   for (const id of ids) {
     m.parts.get(id)?.group.traverse((o: any) => {
       if (!o.isMesh || o.isInstancedMesh || o.userData.partId !== id) return;
+      if (opt.noPulleys && o.userData.pulley) return;
       const pos = o.geometry.attributes.position;
+      if (o.geometry.userData.lib) {
+        for (let i = 0; i < pos.count; i += opt.stride ?? 1) out.push({ part: id, p: new T.Vector3().fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld) });
+        return;
+      }
       const idx = o.geometry.index;
       const count = idx ? idx.count : pos.count;
       const v = (i: number, t: T.Vector3) => t.fromBufferAttribute(pos, idx ? idx.getX(i) : i).applyMatrix4(o.matrixWorld);
@@ -51,7 +63,9 @@ function hitsSprocket(B: BikeSpec, p: T.Vector3, halfWidth: number, halfHeight: 
 }
 
 /** Bikes with a derailleur: every kind and number of speeds the builder knows. */
-const DER_BIKES = ['mtb', 'road_gravel', 'trekking_city'].flatMap((cat) => [5, 8, 9, 11, 12, 13].map((n) => ({ 'bike.category': cat, 'drive.gear_type': 'derailleur', 'drive.rear_speeds': n })));
+/** Bikes with a derailleur: every cassette in spec.ts's table, and the spread ones (5 and 13 speeds). */
+const DER_BIKES = ([['road_gravel', [8, 9, 10, 11, 12]], ['trekking_city', [5, 7, 8, 9, 10]], ['mtb', [8, 9, 10, 11, 12, 13]]] as const)
+  .flatMap(([cat, ns]) => ns.map((n) => ({ 'bike.category': cat, 'drive.gear_type': 'derailleur', 'drive.rear_speeds': n })));
 
 function ctxFor(m: BikeModel, focus: string[] = []): AnimCtx {
   return {
@@ -197,6 +211,51 @@ describe('bike builder', () => {
     }
   });
 
+  it('spins the derailleur pulleys with the chain, a tooth gap under every pin on them', () => {
+    const m = new BikeModel(bikeSpec({ 'bike.category': 'mtb', 'drive.rear_speeds': 12 }), mat);
+    const B = m.spec;
+    const d = m.der!;
+    const mod = (v: number, q: number) => ((v % q) + q) % q;
+    const a = (2 * Math.PI) / RD_RIG.pulleys.upper.teeth;
+    const spun = { u: [] as number[], l: [] as number[] };
+    for (const gear of [0, 6, B.n - 1]) {
+      // on the 51-tooth sprocket the chain wraps the upper pulley by only 28 degrees, less than a tooth: count over all steps
+      const on = { upper: 0, lower: 0 };
+      for (let i = 0; i < 12; i++) {
+        m.chainShift = -i * 0.003;
+        m.setDer(m.zOf(gear), GAP_OK);
+        for (const [which, wheel, frame] of [['upper', 2, d.pulleyU], ['lower', 3, d.pulleyL]] as const) {
+          const c = new T.Vector3(...RD_RIG.pulleys[which].c);
+          const ax = new T.Vector3(...RD_RIG.pulleys[which].d).normalize();
+          const e1 = new T.Vector3(1, 0, 0).addScaledVector(ax, -ax.x).normalize();
+          const e2 = new T.Vector3().crossVectors(ax, e1);
+          // from bike space back to the pulley's own (library) frame: the ring's gap k is at k * a from e1
+          const inv = d.cage.matrix.clone().multiply(frame.matrix).invert();
+
+          for (let k = 0; k < m.links; k++) {
+            if (m.pins.wheel[k] !== wheel) continue;
+            const v = new T.Vector3(m.pins.x[k], m.pins.y[k], m.pins.z[k]).applyMatrix4(inv).sub(c);
+            const off = mod(Math.atan2(v.dot(e2), v.dot(e1)), a);
+            expect(Math.min(off, a - off) * RP * 500, `gear ${gear + 1}, step ${i}: pin ${k} on the ${which} pulley`).toBeLessThan(0.3);
+            on[which]++;
+          }
+        }
+        if (gear === 6) {
+          spun.u.push(d.spin.u);
+          spun.l.push(d.spin.l);
+        }
+      }
+      expect(on.upper, `gear ${gear + 1}: pins on the upper pulley`).toBeGreaterThan(0);
+      expect(on.lower, `gear ${gear + 1}: pins on the lower pulley`).toBeGreaterThan(11);
+    }
+    // pedalling forward (chainShift falling) turns the upper pulley one way and the lower the other, steadily
+    for (let i = 1; i < spun.u.length; i++) {
+      expect(spun.u[i]).toBeGreaterThan(spun.u[i - 1]);
+      expect(spun.l[i]).toBeLessThan(spun.l[i - 1]);
+    }
+    m.dispose();
+  });
+
   it('moves the chain smoothly and turns the sprockets the way the chain goes, however fast', () => {
     const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11 }), mat);
     const B = m.spec;
@@ -266,13 +325,17 @@ describe('bike builder', () => {
   });
 
   it('keeps the derailleur, chain and frame off the sprockets in every gear', () => {
+    // every derailleur piece but the pulleys (the chain runs on them) at least 1 mm from every sprocket's
+    // tip circle (hitsSprocket's margin), in every gear of every cassette
+    const DER = ['rear_derailleur', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shift_cable'];
     for (const facts of DER_BIKES) {
       const m = new BikeModel(bikeSpec(facts), mat);
       const B = m.spec;
       const label = `${facts['bike.category']} ${facts['drive.rear_speeds']}-speed`;
       for (let i = 0; i < B.n; i++) {
         m.setDer(m.zOf(i), GAP_OK);
-        const der = meshPoints(m, ['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shift_cable']);
+        const der = meshPoints(m, DER, 3, { stride: 2, noPulleys: true });
+        expect(der.length, label).toBeGreaterThan(5000);
         const bad = der.find(({ p }) => hitsSprocket(B, p, 0, 0) !== undefined);
         expect(bad && `${bad.part} at ${bad.p.toArray().map((v) => v.toFixed(3))}`, `${label}, gear ${i + 1}: derailleur`).toBeUndefined();
         // the chain runs on sprocket i; its plates are chainW wide and 0.016 high
@@ -292,7 +355,55 @@ describe('bike builder', () => {
       expect(frame.find(({ p }) => hitsSprocket(B, p, 0, 0) !== undefined), `${label}: frame`).toBeUndefined();
       m.dispose();
     }
-  });
+  }, 30000);
+
+  it('lines the upper pulley up with every sprocket, sets the gap and keeps the chain length, for every cassette', () => {
+    const mm = (v: number) => v * 500;
+    for (const facts of DER_BIKES) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const B = m.spec;
+      const d = m.der!;
+      const label = `${facts['bike.category']} ${facts['drive.rear_speeds']}-speed ${B.cassette[0]}-${B.cassette[B.n - 1]}`;
+      // where the upper pulley is drawn: its centre through the cage frame and its spin
+      const drawn = () => RIG.Up.clone().applyMatrix4(d.cage.matrix);
+      const gapNow = (i: number) => {
+        const u = drawn();
+        return Math.hypot(u.x - B.rx, u.y - B.huby) - B.rs[i] - RP;
+      };
+      // Plausible gaps on the other sprockets, measured on this derailleur: 3 to 20 mm up to a
+      // 36-tooth sprocket; on wider cassettes (a long hanger, see rd-fit.ts) up to 45 mm on the
+      // smallest ones, as a road derailleur sits far below small sprockets on a wide cassette.
+      const maxGap = B.cassette[B.n - 1] > 36 ? 45 : 20;
+      const zs = B.zs.flatMap((z, i) => (i ? [(B.zs[i - 1] + z) / 2, z] : [z]));
+      for (const z of zs) {
+        m.setDer(z, GAP_OK);
+        const i = B.zs.indexOf(z);
+        const where = i >= 0 ? `gear ${i + 1}` : `between gears at ${mm(z).toFixed(1)}`;
+        // the chain has its one length everywhere, taut around every wheel
+        expect(m.links, `${label}, ${where}: links`).toBe(d.fit.links);
+        expect(mm(Math.abs(chordLength(m.path, PITCH) - d.fit.links * PITCH)), `${label}, ${where}: chain length`).toBeLessThan(0.1);
+        if (i < 0) continue;
+        expect(mm(Math.abs(drawn().z - z)), `${label}, ${where}: upper pulley in line`).toBeLessThan(0.2);
+        const gap = mm(gapNow(i));
+        if (i === B.n - 1) expect(Math.abs(gap - mm(GAP_OK)), `${label}: gap on the largest sprocket`).toBeLessThan(0.5);
+        else expect(gap, `${label}, ${where}: gap`).toBeGreaterThan(2);
+        expect(gap, `${label}, ${where}: gap`).toBeLessThan(maxGap);
+      }
+      // turning the B screw in opens the gap, steadily: the screw goes further in as the gap grows
+      let prev = { gap: -1, s: -Infinity };
+      for (let k = 0; k <= 8; k++) {
+        const target = GAP_SMALL + ((GAP_BIG - GAP_SMALL) * k) / 8;
+        m.setDer(m.zOf(B.n - 1), target);
+        const gap = gapNow(B.n - 1);
+        const s = d.bScrew.group.position.clone().sub(d.bScrew.base).dot(d.bScrew.d);
+        expect(mm(Math.abs(gap - target)), `${label}: gap ${mm(target).toFixed(1)} mm`).toBeLessThan(0.5);
+        expect(gap, `${label}: the gap opens`).toBeGreaterThan(prev.gap);
+        expect(s, `${label}: the B screw goes in`).toBeGreaterThan(prev.s);
+        prev = { gap, s };
+      }
+      m.dispose();
+    }
+  }, 30000);
 
   it('picks the handlebar from bike.handlebar, else from the kind of bike', () => {
     expect(bikeSpec({ 'bike.category': 'road_gravel' }).bar).toBe('drop');
@@ -342,12 +453,12 @@ describe('bike builder', () => {
       const m = new BikeModel(B, mat);
       for (const gear of [0, B.n - 1]) {
         m.setDer(m.zOf(gear), GAP_OK);
-        const bad = meshPoints(m, ['rear_derailleur', 'upper_pulley', 'frame'], 2).find(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) < 0.4 && hitsSprocket(B, p, 0, 0) !== undefined);
+        const bad = meshPoints(m, ['rear_derailleur', 'frame'], 2, { stride: 3, noPulleys: true }).find(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) < 0.4 && hitsSprocket(B, p, 0, 0) !== undefined);
         expect(bad?.part, JSON.stringify(facts)).toBeUndefined();
       }
       m.dispose();
     }
-  });
+  }, 20000);
 
   it('names a tapped part and its model for the garage preview', () => {
     expect(previewNode('upper_pulley')).toBe('rear_derailleur');

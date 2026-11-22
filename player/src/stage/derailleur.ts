@@ -1,166 +1,25 @@
-// The rear derailleur: its dimensions and pose maths (derGeom, derPose, the body angle and the
-// turning points) and its meshes (hanger, body, links, cage, pulleys, screws, barrel adjuster).
-// Session area: D (derailleur).
+// The rear derailleur: the library pieces (rd_*) on the measured rig, placed by rd-fit.ts and moved
+// with rd-kin.ts; the hanger, the H, L and B screws, the barrel adjuster (or a plain cable stop) and the
+// cable ends. Session area: D (derailleur).
+//
+// Every piece is stored where it sits in the source model (library space). Each moving piece hangs in a
+// frame whose matrix is "from the source pose to the pose now" (rdPose), so the piece's own geometry is
+// never moved. The screws and the barrel hang in the upper body's frame, the pulleys in the cage's.
+// All sizes are drawing data, not facts about any part (hard rule 3).
 
 import * as T from 'three';
-import { layoutCirc, rAt } from './drivetrain.js';
-import { gearGeo, hullShape, seg, slabGeo, UP, v3 } from './geo.js';
-import { DEG, GAP_OK, HP, LC, RP, type BikeSpec, type V2, type V3 } from './spec.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { layoutCirc } from './drivetrain.js';
+import { hullShape, seg, SEAT_R, slabGeo, toothOutline, UP } from './geo.js';
+import { libGeo, type LibName } from './library.js';
+import { CAGE_DIR, CAGE_LEN, RdFit, RP_RD, type RdState } from './rd-fit.js';
+import { pulleySpin, RIG } from './rd-kin.js';
+import { RD_RIG, type RigV3 } from './rd-rig.js';
+import { GAP_OK, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
 import type { BikeModel } from './bike.js';
 
-// ------------------------------------------------------------------ derailleur layout
-
-/*
- * The rear derailleur is built like a real one. Its body (B-knuckle) hangs from the hanger bolt,
- * outside the smallest sprocket: an arch from the bolt back to the link pins. Two parallel link
- * plates (the parallelogram) hang down from the pins; their free end (the P-knuckle) carries the
- * cage pivot, and the cage turns about it with the two pulleys.
- *
- * As on a real derailleur, the links swing on a slanted plane: towards the larger sprockets the
- * P-knuckle moves inwards and away from the axle, towards the smaller ones outwards and up to the
- * hanger. The body turns about the bolt only when the B screw is turned (it rests on the hanger's
- * tab); shifting leaves it where it is. The cage turns about its pivot (its spring takes up the
- * chain) so the upper pulley keeps the gap on every sprocket. derPose() solves this; no part
- * stretches, and nothing but the chain and the pulleys comes near the sprockets (stage.test.ts).
- */
-
-/** P-knuckle (outer link's free end) this far outside the chain; link pins to the cage pivot */
-const POFF = 0.05;
-const PIN = 0.018;
-/** cage pivot to upper pulley, and its angle to the cage's line from upper to lower pulley */
-const CO = 0.045;
-const KAPPA = 70 * DEG;
-/** body angle with the gap right; cage line (upper -> lower pulley) on the smallest and largest sprocket */
-const BETA_L = -135 * DEG;
-const CAGE_S = -60 * DEG;
-const CAGE_L = -80 * DEG;
-/** distance between the two link plates; half the links' swing */
-const EZ = 0.022;
-const A0 = 42 * DEG;
-const CAGE_SWING = 30 * DEG;
-
-export interface DerGeom {
-  /** z of the hanger; hanger bolt (x, y) */
-  zH: number;
-  Hb: V2;
-  /** In the body frame (origin at the bolt; the cage pivot lies along -x with the gap right on
-   * the largest sprocket): the arch's elbow, the outer link's pins, and the inner link's offset */
-  elbow: V2;
-  pins: V3;
-  off: V3;
-  /** link length; the links' end runs on pins + L (cos a e1 + sin a e2), a from -A0 (smallest) to A0 (largest) */
-  L: number;
-  e1: V3;
-  e2: V3;
-  /** pin axis (across the link plates) */
-  axis: V3;
-  /** cage pivot's distance from the bolt on the largest sprocket */
-  rhoL: number;
-  /** body z: the arch, from z0 to z1 */
-  z0: number;
-  z1: number;
-}
-
-function reach(w: V2, b: number, need: number): number {
-  const bw = w[0] * Math.cos(b) + w[1] * Math.sin(b);
-  return -bw + Math.sqrt(Math.max(0, bw * bw - (w[0] ** 2 + w[1] ** 2 - need * need)));
-}
-
-export function derGeom(B: BikeSpec): DerGeom {
-  const { zs, rs, n, rx, huby } = B;
-  const zH = B.zDrop;
-  const Hb: V2 = [rx - 0.012, huby - 0.052];
-  const hb: V2 = [Hb[0] - rx, Hb[1] - huby];
-  // the cage pivot on the smallest and on the largest sprocket, with the body at BETA_L
-  const at = (cage: number): V2 => [hb[0] + CO * Math.cos(cage + KAPPA), hb[1] + CO * Math.sin(cage + KAPPA)];
-  const rhoS = Math.max(0.06, reach(at(CAGE_S), BETA_L, rs[0] + GAP_OK + RP));
-  const rhoL = Math.max(rhoS + 0.012, reach(at(CAGE_L), BETA_L, rs[n - 1] + GAP_OK + RP));
-  const PS: V3 = [-rhoS + PIN, 0, zs[0] + POFF];
-  const PL: V3 = [-rhoL + PIN, 0, zs[n - 1] + POFF];
-  const d: V3 = [PL[0] - PS[0], 0, PL[2] - PS[2]];
-  const C = Math.max(1e-3, v3.len(d));
-  const e2 = v3.sc(d, 1 / C);
-  // The pins sit above the middle of that travel (body +y), so the links hang down from them. The
-  // middle sprockets are smaller than halfway between the smallest and largest, so the links'
-  // arc bows towards the bolt (n) by about that much: a wider swing, and a plane tilted towards n.
-  const nb: V3 = [-e2[2], 0, e2[0]];
-  const mid = (zs[0] + zs[n - 1]) / 2;
-  const sag = Math.max(0, 0.85 * ((rs[0] + rs[n - 1]) / 2 - rAt(B, mid)));
-  const a0 = A0;
-  const L = C / (2 * Math.sin(a0));
-  const h = L * Math.cos(a0);
-  // tilted only so far that the links' end still moves steadily inwards over the whole swing
-  const sinNu = Math.min(1, sag / Math.max(1e-6, L * (1 - Math.cos(a0)) * nb[0]), (0.8 * Math.abs(e2[2])) / Math.max(1e-6, Math.abs(nb[2]) * Math.tan(a0)));
-  const cosNu = Math.sqrt(1 - sinNu * sinNu);
-  const e1: V3 = [nb[0] * sinNu, -cosNu, nb[2] * sinNu];
-  const M: V3 = [(PS[0] + PL[0]) / 2, 0, (PS[2] + PL[2]) / 2];
-  const pins = v3.add(M, v3.sc(e1, -h));
-  const axis = v3.cross(e1, e2);
-  const off = v3.sc(e2, EZ);
-  // the arch rises from the bolt to an elbow, then runs back to the pins
-  const elbow: V2 = [Math.max(pins[0] + 0.03, -0.035), Math.max(0.055, Math.min(pins[1], 0.095))];
-  const z0 = zH + 0.004;
-  return { zH, Hb, elbow, pins, off, L, e1, e2, axis, rhoL, z0, z1: z0 + 0.034 };
-}
-
-export interface DerPose {
-  /** body angle (from the bolt towards the cage pivot on the largest sprocket), the cage line (upper -> lower pulley), the links' swing; rad */
-  beta: number;
-  cage: number;
-  alpha: number;
-  /** P-knuckle (outer link's free end) in the body frame */
-  P: V3;
-  /** cage pivot and upper pulley (x, y) */
-  Cv: V2;
-  U: V2;
-}
-
-export const angDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
-
-/** The body angle that gives this gap on the largest sprocket (set by the B screw). */
-function bodyAngle(B: BikeSpec, G: DerGeom, gap: number): number {
-  const hb: V2 = [G.Hb[0] - B.rx, G.Hb[1] - B.huby];
-  const w: V2 = [hb[0] + CO * Math.cos(CAGE_L + KAPPA), hb[1] + CO * Math.sin(CAGE_L + KAPPA)];
-  const need = B.rs[B.n - 1] + gap + RP;
-  const rho = G.rhoL;
-  const lw = Math.hypot(w[0], w[1]);
-  const c = Math.max(-1, Math.min(1, (need * need - rho * rho - lw * lw) / (2 * rho * lw)));
-  const aw = Math.atan2(w[1], w[0]);
-  return [aw + Math.acos(c), aw - Math.acos(c)].sort((p, q) => Math.abs(angDiff(p, BETA_L)) - Math.abs(angDiff(q, BETA_L)))[0];
-}
-
-/** Where the derailleur's parts are for a position z, a gap and the sprocket radius r there. */
-export function derPose(B: BikeSpec, G: DerGeom, z: number, gap: number, r: number): DerPose {
-  // links: their end follows z
-  // L (cos a e1z + sin a e2z) = z + POFF - pins z; the solution nearest the middle of the swing
-  const A = G.L * G.e1[2];
-  const Bz = G.L * G.e2[2];
-  const R = Math.hypot(A, Bz) || 1e-6;
-  const ph = Math.atan2(Bz, A);
-  const ac = Math.acos(Math.max(-1, Math.min(1, (z + POFF - G.pins[2]) / R)));
-  const out = (a: number) => Math.max(0, Math.abs(a) - A0);
-  const alpha = [ph + ac, ph - ac].map((a) => angDiff(a, 0)).sort((p, q) => out(p) - out(q) || Math.abs(p) - Math.abs(q))[0];
-  const P = v3.add(G.pins, v3.add(v3.sc(G.e1, G.L * Math.cos(alpha)), v3.sc(G.e2, G.L * Math.sin(alpha))));
-  // body: set by the B screw
-  const beta = bodyAngle(B, G, gap);
-  const th = beta + Math.PI;
-  const cx = P[0] - PIN;
-  const cy = P[1];
-  const Cv: V2 = [G.Hb[0] + cx * Math.cos(th) - cy * Math.sin(th), G.Hb[1] + cx * Math.sin(th) + cy * Math.cos(th)];
-  // cage: turns so the upper pulley keeps the gap; the nearer solution to its usual angle
-  const t = Math.max(0, Math.min(1, (r - B.rs[0]) / (B.rs[B.n - 1] - B.rs[0] || 1)));
-  const usual = CAGE_S + (CAGE_L - CAGE_S) * t + KAPPA;
-  const q: V2 = [Cv[0] - B.rx, Cv[1] - B.huby];
-  const lq = Math.hypot(q[0], q[1]) || 1e-6;
-  const need = r + gap + RP;
-  const c = Math.max(-1, Math.min(1, (need * need - lq * lq - CO * CO) / (2 * CO * lq)));
-  const aq = Math.atan2(q[1], q[0]);
-  const best = [aq + Math.acos(c), aq - Math.acos(c)].sort((p, q2) => Math.abs(angDiff(p, usual)) - Math.abs(angDiff(q2, usual)))[0];
-  // the cage swings at most CAGE_SWING from its usual angle; beyond that the gap opens a little
-  const u = usual + Math.max(-CAGE_SWING, Math.min(CAGE_SWING, angDiff(best, usual)));
-  const U: V2 = [Cv[0] + CO * Math.cos(u), Cv[1] + CO * Math.sin(u)];
-  return { beta, cage: u - KAPPA, alpha, P, Cv, U };
-}
+const V = (v: RigV3) => new T.Vector3(v[0], v[1], v[2]);
+const D = 'rear_derailleur';
 
 /** A turnable part: screws and the barrel adjuster. `pos` and `axis` are in its parent's frame; `axis` points from the head into the thread. */
 export interface Turn {
@@ -169,37 +28,62 @@ export interface Turn {
   len: number;
 }
 
-/** The derailleur barrel adjuster (or cable stop) on the body, in the body's frame (origin at the bolt, body along -x). */
-export function bodyBarrel(G: DerGeom): Turn {
-  // on top of the arch at its elbow, pointing down into it
-  const u = [0.29, 0.957];
-  const len = 0.03;
-  const d = BODY_R - 0.004 + len / 2;
-  return { pos: [G.elbow[0] + u[0] * d, G.elbow[1] + u[1] * d, (G.z0 + G.z1) / 2], axis: [-u[0], -u[1], 0], len };
+// ------------------------------------------------------------------ fit per bike
+
+const fits = new WeakMap<BikeSpec, RdFit>();
+/** The derailleur fitted to a bike (cached per spec). */
+export function fitFor(B: BikeSpec): RdFit {
+  let f = fits.get(B);
+  if (!f) fits.set(B, (f = new RdFit(B)));
+  return f;
 }
 
-/** The arch's half-width at the bolt (a little less at the elbow and the pins); screw shank length. */
-export const BODY_R = 0.03;
-export const SCREW_LEN = 0.018;
-
-/** Body frame -> bike space, for a body angle beta. */
-export function bodyToBike(G: DerGeom, beta: number, p: V3): V3 {
-  const th = beta + Math.PI;
-  return [G.Hb[0] + p[0] * Math.cos(th) - p[1] * Math.sin(th), G.Hb[1] + p[0] * Math.sin(th) + p[1] * Math.cos(th), p[2]];
+/** The derailleur's pose for z and a gap. Remembers the last few, since the stage asks every frame. */
+function stateFor(fit: RdFit, z: number, gap: number): RdState {
+  const memo = memos.get(fit) ?? [];
+  memos.set(fit, memo);
+  const hit = memo.find((s) => s.z === z && s.gap === gap);
+  if (hit) return hit.st;
+  const st = fit.solve(z, fit.bodyFor(gap));
+  memo.unshift({ z, gap, st });
+  if (memo.length > 4) memo.pop();
+  return st;
 }
+const memos = new WeakMap<RdFit, Array<{ z: number; gap: number; st: RdState }>>();
+
+/** Where the upper pulley sits (x, y) for a derailleur position z and a gap. */
+export function upperPulley(B: BikeSpec, z: number, gap = GAP_OK): V2 {
+  const st = stateFor(fitFor(B), z, gap);
+  return [st.up.x, st.up.y];
+}
+
+/** The lower pulley (x, y) for a derailleur position z and a gap. */
+export function lowerPulley(B: BikeSpec, z: number, gap = GAP_OK): V2 {
+  const st = stateFor(fitFor(B), z, gap);
+  return [st.lp.x, st.lp.y];
+}
+
+/** Everything the chain needs for a derailleur position z and a gap: sprocket radius, pulley centres, the pose. */
+export function derLayout(B: BikeSpec, z: number, gap: number) {
+  const fit = fitFor(B);
+  const st = stateFor(fit, z, gap);
+  return { r: fit.rAt(z), gx: st.up.x, gy: st.up.y, gz: st.up.z, lx: st.lp.x, ly: st.lp.y, lz: st.lp.z, st };
+}
+
+const BARREL = RD_RIG.barrel;
+const BARREL_LEN = V(BARREL.seat).distanceTo(V(BARREL.head));
 
 /**
- * Where the barrel adjuster is on this bike, in bike space (on the derailleur: with the chain on
- * the middle sprocket). `axis` points from its head into the thread.
+ * Where the barrel adjuster is on this bike, in bike space (on the derailleur: with the chain on the
+ * middle sprocket). `axis` points from its head into the thread.
  */
 export function barrelTurn(B: BikeSpec): Turn {
   if (B.barrelAt === 'derailleur') {
-    const G = derGeom(B);
     const mid = Math.floor(B.n / 2);
-    const P = derPose(B, G, B.zs[mid], GAP_OK, B.rs[mid]);
-    const t = bodyBarrel(G);
-    const th = P.beta + Math.PI;
-    return { pos: bodyToBike(G, P.beta, t.pos), axis: [t.axis[0] * Math.cos(th) - t.axis[1] * Math.sin(th), t.axis[0] * Math.sin(th) + t.axis[1] * Math.cos(th), 0], len: t.len };
+    const st = stateFor(fitFor(B), B.zs[mid], GAP_OK);
+    const c = V(BARREL.head).add(V(BARREL.seat)).multiplyScalar(0.5).applyMatrix4(st.pose.upper);
+    const d = V(BARREL.d).transformDirection(st.pose.upper);
+    return { pos: c.toArray() as V3, axis: d.toArray() as V3, len: BARREL_LEN };
   }
   // on the trigger pod's inner end, pointing in and forward where the cable leaves
   const ax: V3 = [0.45, 0, -0.89];
@@ -207,189 +91,343 @@ export function barrelTurn(B: BikeSpec): Turn {
   return { pos: [tip[0] + ax[0] * 0.019, tip[1], tip[2] + ax[2] * 0.019], axis: [-ax[0], 0, -ax[2]], len: 0.038 };
 }
 
-/** The upper pulley's position (x, y) for a derailleur position z and a gap. */
-export function upperPulley(B: BikeSpec, z: number, gap = GAP_OK): V2 {
-  const G = derGeom(B);
-  const r = rAt(B, z);
-  return derPose(B, G, z, gap, r).U;
+// ------------------------------------------------------------------ shared geometry (library space)
+
+/** In-plane basis of an axis d, e1 the projection of world x (as rd-kin's planeBasis). */
+function basis(d: T.Vector3): [T.Vector3, T.Vector3] {
+  const e1 = new T.Vector3(1, 0, 0).addScaledVector(d, -d.x).normalize();
+  return [e1, new T.Vector3().crossVectors(d, e1)];
 }
 
-/** Sprocket radius at a z between the sprockets. */
+const shared = new Map<string, T.BufferGeometry>();
+/** Geometry made once and shared by every bike: marked like library geometry, so disposeTree keeps it. */
+function once(key: string, make: () => T.BufferGeometry): T.BufferGeometry {
+  let g = shared.get(key);
+  if (!g) {
+    g = make();
+    g.userData.lib = true;
+    shared.set(key, g);
+  }
+  return g;
+}
+
+/** Position and normal only, without an index (so pieces can be merged). */
+function plain(g: T.BufferGeometry): T.BufferGeometry {
+  const n = g.index ? g.toNonIndexed() : g.clone();
+  for (const k of Object.keys(n.attributes)) if (k !== 'position' && k !== 'normal') n.deleteAttribute(k);
+  return n;
+}
+
+/**
+ * A pulley: the library piece's hub (its triangles inside the tooth roots) with a generated 11-tooth
+ * ring on the chain's pitch circle (`toothOutline`). The model's own pulleys have 10 generic teeth,
+ * which the chain's rollers would not sit in. Gap k of the ring is at angle k * 2 pi / 11 from e1
+ * (`basis` of the axle) in the pulley's plane.
+ */
+function pulleyGeo(which: 'upper' | 'lower'): T.BufferGeometry {
+  return once(`pulley-${which}`, () => {
+    const r = RD_RIG.pulleys[which];
+    const c = V(r.c);
+    const d = V(r.d).normalize();
+    const [e1, e2] = basis(d);
+    const cut = RP_RD - SEAT_R - 0.0015;
+    const src = plain(libGeo(which === 'upper' ? 'rd_pulley_upper' : 'rd_pulley_lower'));
+    const pos = src.attributes.position;
+    const nor = src.attributes.normal;
+    const keepP: number[] = [];
+    const keepN: number[] = [];
+    const v = new T.Vector3();
+    for (let i = 0; i < pos.count; i += 3) {
+      let inside = true;
+      for (let j = 0; j < 3 && inside; j++) {
+        v.fromBufferAttribute(pos, i + j).sub(c);
+        inside = Math.hypot(v.dot(e1), v.dot(e2)) < cut;
+      }
+      if (!inside) continue;
+      for (let j = 0; j < 3; j++) {
+        keepP.push(pos.getX(i + j), pos.getY(i + j), pos.getZ(i + j));
+        keepN.push(nor.getX(i + j), nor.getY(i + j), nor.getZ(i + j));
+      }
+    }
+    const hub = new T.BufferGeometry();
+    hub.setAttribute('position', new T.Float32BufferAttribute(keepP, 3));
+    hub.setAttribute('normal', new T.Float32BufferAttribute(keepN, 3));
+    // the ring, from inside the hub's edge out to the teeth
+    const shape = new T.Shape(toothOutline(r.teeth).map(([x, y]) => new T.Vector2(x, y)));
+    const hole = new T.Path();
+    hole.absarc(0, 0, cut - 0.003, 0, TAU, true);
+    shape.holes.push(hole);
+    const ring = new T.ExtrudeGeometry(shape, { depth: r.width, bevelEnabled: false, curveSegments: 18 });
+    ring.translate(0, 0, -r.width / 2);
+    ring.applyMatrix4(new T.Matrix4().makeBasis(e1, e2, d).setPosition(c));
+    return mergeGeometries([hub, plain(ring)])!;
+  });
+}
+
+/**
+ * A cage plate, made longer by `stretch` along the line from the upper to the lower pulley. Vertices
+ * up to 13 mm beyond the upper axle stay (the upper boss), those from 13 mm before the lower axle move
+ * the whole stretch (the lower boss), and the straight part between is stretched evenly.
+ */
+function cagePlate(name: LibName, stretch: number): T.BufferGeometry {
+  const src = libGeo(name);
+  if (stretch <= 0) return src;
+  return once(`${name}-${stretch.toFixed(5)}`, () => {
+    const g = src.clone();
+    const pos = g.attributes.position;
+    const t0 = 0.026;
+    const t1 = CAGE_LEN - 0.026;
+    const v = new T.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const t = v.clone().sub(RIG.Up).dot(CAGE_DIR);
+      const k = Math.max(0, Math.min(1, (t - t0) / (t1 - t0)));
+      v.addScaledVector(CAGE_DIR, stretch * k);
+      pos.setXYZ(i, v.x, v.y, v.z);
+    }
+    return g;
+  });
+}
+
+/** The barrel adjuster re-centred on its axis: local y along the axis (head at -y), origin at its middle. */
+function barrelGeo(): T.BufferGeometry {
+  return once('barrel', () => {
+    const c = V(BARREL.head).add(V(BARREL.seat)).multiplyScalar(0.5);
+    const q = new T.Quaternion().setFromUnitVectors(UP, V(BARREL.d).normalize());
+    const toLocal = new T.Matrix4().compose(c, q, new T.Vector3(1, 1, 1)).invert();
+    return libGeo('rd_barrel').clone().applyMatrix4(toLocal);
+  });
+}
+
+// ------------------------------------------------------------------ build
 
 /** What BikeModel keeps of the derailleur it built, for moving it in moveDerailleur. */
 export interface DerParts {
-  G: DerGeom;
-  body: T.Group;
-  links: T.Mesh[];
-  pk: T.Group;
-  wire: T.Mesh | null;
+  fit: RdFit;
+  /** frames from library space to bike space (matrices set from the pose) */
+  upper: T.Group;
+  linkOuter: T.Group;
+  linkInner: T.Group;
+  lower: T.Group;
+  cage: T.Group;
+  pulleyU: T.Group;
+  pulleyL: T.Group;
+  st: RdState | null;
+  /** the cable: housing from housingFrom (bike space) to housingEnd, wire (3 pieces) from wireFrom out along the barrel, then round the body to wireTo (library space) */
   housing: T.Mesh | null;
+  wire: T.Mesh[];
   housingFrom: V3;
-  /** the B screw moves along its axis as the body turns, so its tip stays on the hanger's tab */
-  bScrew: { group: T.Object3D; base: V3; axis: V3; arm: number; beta0: number };
+  housingEnd: T.Vector3;
+  wireFrom: T.Vector3;
+  wireOut: T.Vector3;
+  wireTo: T.Vector3;
+  /** the B screw slides along its axis as the body turns, so its tip stays on the hanger's tab (bike space) */
+  bScrew: { group: T.Object3D; base: T.Vector3; p: T.Vector3; d: T.Vector3; len: number; tab: T.Vector3 };
+  /** the pulleys' spin and the chainShift it belongs to */
+  spin: { u: number; l: number; shift: number };
 }
 
-const tM = new T.Matrix4();
+const frame = (parent: T.Object3D) => {
+  const g = new T.Group();
+  g.matrixAutoUpdate = false;
+  parent.add(g);
+  return g;
+};
 
-/** Hanger; body with the H, L and B screws; parallelogram links; P-knuckle; cage and pulleys. */
+/** Screw lengths: the H and L screws' shanks; the B screw sticks out of its boss this far at the right gap. */
+const HL_LEN = 0.02;
+const B_OUT = 0.006;
+
+/**
+ * An M4 screw with a socket head, turnable: shank `len` long from the head seat `p` along `d`, the
+ * head outside. Made in code (the model's screws are fused into the body).
+ */
+function screw(m: BikeModel, id: string, p: T.Vector3, d: T.Vector3, len: number, parent: T.Object3D): T.Object3D {
+  const at = p.clone().addScaledVector(d, len / 2);
+  const spin = m.turnable(id, { pos: at.toArray() as V3, axis: d.toArray() as V3, len }, parent);
+  const h = len / 2;
+  m.add(id, new T.CylinderGeometry(0.004, 0.004, len, 10), null, null, { parent: spin, k: 1.15 });
+  m.add(id, new T.CylinderGeometry(0.0068, 0.007, 0.006, 18), [0, -h - 0.003, 0], null, { parent: spin, k: 1.25 });
+  m.add(id, new T.CylinderGeometry(0.0029, 0.0029, 0.0008, 6), [0, -h - 0.0062, 0], null, { parent: spin, dark: true });
+  return m.parts.get(id)!.group;
+}
+
+/** Hanger; upper body with the H, L and B screws and the barrel; links; lower body; cage and pulleys. */
 export function buildDerailleur(m: BikeModel): void {
   const B = m.spec;
-  const { rx, huby } = B;
-  const G = derGeom(B);
-  const { zH, Hb, elbow, pins, off, L, z0, z1 } = G;
-  const D = 'rear_derailleur';
-  const pw = B.chainW / 2 + 0.0035;
-  const P0 = derPose(B, G, B.zs[B.n - 1], GAP_OK, B.rs[B.n - 1]);
-
-  m.part(D);
+  const fit = fitFor(B);
+  const dg = m.part(D).group;
   m.part('upper_pulley');
-  const dg = m.parts.get(D)!.group;
-
-  // Body (B-knuckle): turns about the bolt; its frame has the bolt at the origin.
-  const body = new T.Group();
-  body.position.set(Hb[0], Hb[1], 0);
-  dg.add(body);
-  // the bolt's knuckle, with the bolt head on the outside
-  m.add(D, new T.CylinderGeometry(BODY_R, BODY_R, z1 - zH + 0.004, 24), [0, 0, (z1 + zH) / 2], [HP, 0, 0], { parent: body, k: 0.42 });
-  m.add(D, new T.CylinderGeometry(0.013, 0.013, 0.005, 6), [0, 0, z1 + 0.004], [HP, 0, 0], { parent: body, k: 1.25 });
-  // the arch from the knuckle up to the elbow and back to the pins
-  m.add(D, slabGeo(hullShape([[0, 0, BODY_R - 0.002], [elbow[0], elbow[1], BODY_R - 0.003], [pins[0], pins[1], BODY_R - 0.006]]), z0, z1, 0.006), null, null, { parent: body, k: 0.5 });
-  // a lighter cover on the outer face, as on a real derailleur
-  m.add(D, slabGeo(hullShape([[-0.004, 0.01, 0.014], [elbow[0], elbow[1], 0.015], [pins[0] + 0.01, pins[1], 0.012]]), z1 - 0.001, z1 + 0.003, 0.0015), null, null, { parent: body, k: 0.85 });
-  // a boss at the pins end reaching in to the inner link
-  const pinIn = v3.add(pins, off);
-  m.add(D, slabGeo(hullShape([[pins[0], pins[1], 0.017], [pinIn[0], pinIn[1], 0.017]]), Math.min(pins[2], pinIn[2]) - 0.007, z0 + 0.006, 0.004), null, null, { parent: body, k: 0.45 });
-  const pinQ = new T.Quaternion().setFromUnitVectors(UP, new T.Vector3(...G.axis));
-  const pinMesh = (parent: T.Object3D, at: V3) => {
-    const mesh = m.add(D, new T.CylinderGeometry(0.0045, 0.0045, 0.04, 8), at, null, { parent, k: 1.2 });
-    mesh.quaternion.copy(pinQ);
-  };
-  for (const p of [pins, pinIn]) pinMesh(body, p);
-
-  // Links: rigid plates from pins on the body to pins on the P-knuckle (oriented in setDer)
-  const links = [0.02, 0.017].map((hw, i) => {
-    const geo = slabGeo(hullShape([[0, 0, hw], [-L, 0, hw * 0.9]]), -0.003, 0.003, 0.0015);
-    return m.add(D, geo, i ? pinIn : pins, null, { parent: body, k: i ? 0.55 : 0.78 });
-  });
-  // P-knuckle: moves with the links' free end without turning; carries the cage pivot (round cap)
-  const pk = new T.Group();
-  body.add(pk);
-  m.add(D, slabGeo(hullShape([[0, 0, 0.016], [off[0], off[1], 0.016], [-PIN, 0, 0.02]]), Math.min(0, off[2]) - 0.006, 0.008, 0.004), null, null, { parent: pk, k: 0.48 });
-  m.add(D, new T.CylinderGeometry(0.023, 0.023, 0.012, 24), [-PIN, 0, 0.006], [HP, 0, 0], { parent: pk, k: 0.4 });
-  m.add(D, new T.CylinderGeometry(0.011, 0.011, 0.004, 16), [-PIN, 0, 0.013], [HP, 0, 0], { parent: pk, k: 0.95 });
-  for (const p of [[0, 0, 0], off] as V3[]) pinMesh(pk, p);
-
-  // Cage: two plates with the upper and lower pulley; turns about its pivot, which sits behind
-  // and above the upper pulley (local (cx, cy)).
-  const cage = new T.Group();
+  const upper = frame(dg);
+  const linkOuter = frame(dg);
+  const linkInner = frame(dg);
+  const lower = frame(dg);
+  const cage = frame(dg);
+  const pulleyU = frame(cage);
+  const pulleyL = frame(cage);
   m.cage = cage;
-  dg.add(cage);
-  const cx = -CO * Math.sin(KAPPA);
-  const cy = CO * Math.cos(KAPPA);
-  const pulleyW = B.chainW * 0.7;
-  m.add('upper_pulley', gearGeo(RP, 11, pulleyW), null, null, { parent: cage, k: 0.35, flat: true });
-  m.add(D, gearGeo(RP, 11, pulleyW), [0, -LC, 0], null, { parent: cage, k: 0.35, flat: true });
-  m.add(D, slabGeo(hullShape([[cx, cy, 0.019], [0, 0, 0.028], [0, -LC, 0.033]]), pw, pw + 0.006, 0.002), null, null, { parent: cage, k: 0.52 });
-  // the inner plate starts below the upper pulley's axle, so it stays off the next larger sprocket
-  m.add(D, slabGeo(hullShape([[0, -0.068, 0.012], [0, -LC, 0.024]]), -pw - 0.004, -pw, 0.0015), null, null, { parent: cage, k: 0.58 });
-  for (const y of [0, -LC]) m.add(D, new T.CylinderGeometry(0.011, 0.011, 2 * pw + 0.006, 12), [0, y, 0], [HP, 0, 0], { parent: cage, k: 1.25 });
-  // pivot axle from the cage up into the P-knuckle
-  m.add(D, new T.CylinderGeometry(0.009, 0.009, POFF - pw, 10), [cx, cy, (POFF + pw) / 2], [HP, 0, 0], { parent: cage, k: 1.1 });
-  m.anchor('upper_pulley', cage, [0, 0.01, 0.02]);
-  m.anchor(D, body, [(elbow[0] + pins[0]) / 2, (elbow[1] + pins[1]) / 2 + 0.02, z1 + 0.01]);
 
-  // Limit screws H and L in the top of the arch, heads up where you turn them, threads into the body.
-  const top = (k: number, along: number): { at: V3; axis: V3 } => {
-    // a point on the arch's top edge between elbow and pins (k from 0 to 1), screw centre inside it
-    const ex = pins[0] - elbow[0];
-    const ey = pins[1] - elbow[1];
-    const el = Math.hypot(ex, ey) || 1;
-    const nx = -ey / el;
-    const ny = ex / el;
-    const up: V2 = ny >= 0 ? [nx, ny] : [-nx, -ny];
-    const r = BODY_R - 0.003 - 0.006 * k;
-    const c: V2 = [elbow[0] + ex * k + up[0] * (r - along), elbow[1] + ey * k + up[1] * (r - along)];
-    return { at: [c[0], c[1], (z0 + z1) / 2], axis: [-up[0], -up[1], 0] };
-  };
-  const sl = SCREW_LEN / 2 - 0.002;
-  const hs = top(0.3, sl);
-  const ls = top(0.75, sl);
-  m.screw('h_screw', hs.at, hs.axis, body);
-  m.screw('l_screw', ls.at, ls.axis, body);
+  // shading: the bodies lighter, links and cage darker, pulleys dark as before
+  m.add(D, libGeo('rd_upper_body'), null, null, { parent: upper, k: 0.9 });
+  m.add(D, libGeo('rd_link_outer'), null, null, { parent: linkOuter, k: 0.62 });
+  m.add(D, libGeo('rd_link_inner'), null, null, { parent: linkInner, k: 0.55 });
+  m.add(D, libGeo('rd_lower_body'), null, null, { parent: lower, k: 0.85 });
+  m.add(D, cagePlate('rd_cage_outer', fit.stretch), null, null, { parent: cage, k: 0.5 });
+  m.add(D, cagePlate('rd_cage_inner', fit.stretch), null, null, { parent: cage, k: 0.45 });
+  m.add('upper_pulley', pulleyGeo('upper'), null, null, { parent: pulleyU, k: 0.35 });
+  m.add(D, pulleyGeo('lower'), null, null, { parent: pulleyL, k: 0.35 }).userData.pulley = true;
+  m.anchor('upper_pulley', cage, RIG.Up.clone().add(new T.Vector3(0, 0.008, 0.02)).toArray() as V3);
+  m.anchor(D, upper, RIG.B.clone().lerp(RIG.UO, 0.6).add(new T.Vector3(0, 0.012, 0.03)).toArray() as V3);
 
-  // B screw: in a lug on the knuckle, its tip on a tab of the hanger. It points along the way the
-  // body turns, so turning it in turns the body (and opens the gap).
-  const bp: V2 = [0.012, BODY_R + 0.004];
-  const arm = Math.hypot(bp[0], bp[1]);
-  const ba: V3 = [bp[1] / arm, -bp[0] / arm, 0];
-  const bz = zH + 0.014;
-  m.add(D, slabGeo(hullShape([[bp[0] - ba[0] * 0.004, bp[1] - ba[1] * 0.004, 0.007], [0, 0.02, 0.008]]), bz - 0.007, bz + 0.007, 0.002), null, null, { parent: body, k: 0.42 });
-  const bCentre: V3 = [bp[0], bp[1], bz];
-  m.screw('b_screw', bCentre, ba, body);
-  const bGroup = m.parts.get('b_screw')!.group;
+  // the screws, at the spots measured on the upper body
+  const sc = RD_RIG.screws;
+  screw(m, 'h_screw', V(sc.h.p), V(sc.h.d).normalize(), HL_LEN, upper);
+  screw(m, 'l_screw', V(sc.l.p), V(sc.l.d).normalize(), HL_LEN, upper);
+  const bp = V(sc.b.p);
+  const bd = V(sc.b.d).normalize();
+  const bLen = sc.bLen + B_OUT;
+  const bGroup = screw(m, 'b_screw', bp.clone().addScaledVector(bd, -B_OUT), bd, bLen, upper);
+  // the B screw's tip at the right gap, on the middle sprocket: the hanger's tab is there
+  const ref = stateFor(fit, B.zs[Math.floor(B.n / 2)], GAP_OK);
+  const tab = bp.clone().addScaledVector(bd, sc.bLen).applyMatrix4(ref.pose.upper);
 
-  // Hanger: a plate from the axle down to the bolt, with the tab the B screw's tip rests on.
+  // Hanger, in the plane of the source's hanger, from the dropout to the bolt, with the tab the B
+  // screw's tip rests on. Built in code; rd_hanger is for measuring only.
   m.part('derailleur_hanger');
-  const tip = bodyToBike(G, P0.beta, [bp[0] + ba[0] * (SCREW_LEN / 2 + 0.004), bp[1] + ba[1] * (SCREW_LEN / 2 + 0.004), 0]);
-  m.add('derailleur_hanger', slabGeo(hullShape([[rx, huby, 0.03], [Hb[0], Hb[1], 0.024], [tip[0], tip[1], 0.008]]), zH - 0.0045, zH + 0.0045, 0.002), null, null, { k: 0.8 });
-  m.add('derailleur_hanger', new T.BoxGeometry(0.012, 0.012, bz - zH + 0.006), [tip[0], tip[1], (zH + bz) / 2 + 0.002], null, { k: 0.8 });
-  m.anchor('derailleur_hanger', m.bike, [(rx + Hb[0]) / 2, (huby + Hb[1]) / 2, zH + 0.01]);
+  const z0 = B.zDrop - 0.0055;
+  const z1 = B.zDrop + 0.0035;
+  const bolt = fit.bolt;
+  m.add('derailleur_hanger', slabGeo(hullShape([[B.rx, B.huby, 0.022], [bolt.x, bolt.y, 0.019], [tab.x, tab.y, 0.006]]), z0, z1, 0.0015), null, null, { k: 0.8 });
+  m.anchor('derailleur_hanger', m.bike, [(B.rx + bolt.x) / 2, (B.huby + bolt.y) / 2, z1 + 0.008]);
 
-  // Barrel adjuster: on the body where the housing comes in, or on the trigger shifter
-  const bt = B.barrelAt === 'derailleur' ? bodyBarrel(G) : barrelTurn(B);
-  const spin = m.turnable('barrel_adjuster', bt, B.barrelAt === 'derailleur' ? body : m.bike);
-  const br = 0.011;
-  m.add('barrel_adjuster', new T.CylinderGeometry(br, br, bt.len * 0.75, 12), [0, -bt.len * 0.125, 0], null, { parent: spin, flat: true });
-  for (const y of [-0.3, 0, 0.3]) m.add('barrel_adjuster', new T.CylinderGeometry(br + 0.0018, br + 0.0018, 0.003, 12), [0, -bt.len * 0.125 + y * bt.len * 0.75, 0], null, { parent: spin, k: 0.8, flat: true });
-  m.add('barrel_adjuster', new T.CylinderGeometry(br * 0.55, br * 0.55, bt.len * 0.25, 8), [0, bt.len * 0.375, 0], null, { parent: spin, k: 1.2 });
-  m.add('barrel_adjuster', new T.BoxGeometry(0.005, 0.003, br * 2.1), [0, -bt.len / 2, 0], null, { parent: spin, dark: true });
-  if (B.barrelAt !== 'derailleur') {
-    // a plain cable stop where the barrel would be
-    const st = bodyBarrel(G);
-    const stop = m.add(D, new T.CylinderGeometry(0.009, 0.009, 0.018, 10), null, null, { parent: body, k: 1.1 });
-    stop.position.set(st.pos[0] - st.axis[0] * 0.004, st.pos[1] - st.axis[1] * 0.004, st.pos[2]);
-    stop.quaternion.setFromUnitVectors(UP, new T.Vector3(...st.axis));
+  // Barrel adjuster on the body where the housing comes in, or a plain cable stop there when the
+  // barrel is on the shifter (the user never sees two).
+  const head = V(BARREL.head);
+  const seat = V(BARREL.seat);
+  const bdir = V(BARREL.d).normalize();
+  let housingEnd = head.clone();
+  if (B.barrelAt === 'derailleur') {
+    const spin = m.turnable('barrel_adjuster', { pos: head.clone().add(seat).multiplyScalar(0.5).toArray() as V3, axis: bdir.toArray() as V3, len: BARREL_LEN }, upper);
+    m.add('barrel_adjuster', barrelGeo(), null, null, { parent: spin, k: 1.0 });
+  } else {
+    const len = 0.014;
+    const stop = m.add(D, new T.CylinderGeometry(BARREL.r * 0.85, BARREL.r, len, 14), null, null, { parent: upper, k: 1.05 });
+    stop.position.copy(seat).addScaledVector(bdir, -len / 2);
+    stop.quaternion.setFromUnitVectors(UP, bdir);
+    housingEnd = seat.clone().addScaledVector(bdir, -len);
+    const bt = barrelTurn(B);
+    const spin = m.turnable('barrel_adjuster', bt, m.bike);
+    const br = 0.011;
+    m.add('barrel_adjuster', new T.CylinderGeometry(br, br, bt.len * 0.75, 12), [0, -bt.len * 0.125, 0], null, { parent: spin, flat: true });
+    for (const y of [-0.3, 0, 0.3]) m.add('barrel_adjuster', new T.CylinderGeometry(br + 0.0018, br + 0.0018, 0.003, 12), [0, -bt.len * 0.125 + y * bt.len * 0.75, 0], null, { parent: spin, k: 0.8, flat: true });
+    m.add('barrel_adjuster', new T.CylinderGeometry(br * 0.55, br * 0.55, bt.len * 0.25, 8), [0, bt.len * 0.375, 0], null, { parent: spin, k: 1.2 });
   }
-  // the housing loop ends here; its last bit to the body is placed in setDer
-  const head = bodyToBike(G, P0.beta, bodyBarrel(G).pos);
+  // the housing comes in along the barrel's axis from behind; cockpit.ts loops it there from the stay
+  const hb = housingEnd.clone().addScaledVector(bdir, -0.04).applyMatrix4(ref.pose.upper);
+  const clamp = V(RD_RIG.clamp.p).addScaledVector(V(RD_RIG.clamp.d).normalize(), -0.0015);
   m.der = {
-    G, body, links, pk, wire: null, housing: null,
-    housingFrom: [head[0] - 0.03, head[1] + 0.07, head[2] + 0.03],
-    bScrew: { group: bGroup, base: bCentre, axis: ba, arm, beta0: P0.beta },
+    fit, upper, linkOuter, linkInner, lower, cage, pulleyU, pulleyL, st: null,
+    housing: null, wire: [],
+    housingFrom: [hb.x, hb.y + 0.01, hb.z],
+    housingEnd, wireFrom: seat.clone(), wireOut: seat.clone().addScaledVector(bdir, WIRE_EXIT), wireTo: clamp,
+    bScrew: { group: bGroup, base: bGroup.position.clone(), p: bp, d: bd, len: bLen, tab },
+    spin: { u: 0, l: 0, shift: 0 },
   };
 }
 
-/** Turns cage, body and links for the derailleur at z with the given gap, and moves the cable ends. */
+// ------------------------------------------------------------------ move
+
+const tV = new T.Vector3();
+const tA = new T.Vector3();
+const tB = new T.Vector3();
+const tM = new T.Matrix4();
+const tInv = new T.Matrix4();
+
+/** Poses the derailleur for z and a gap, puts the chain's pulley circles there, and moves the cable ends. */
 export function moveDerailleur(m: BikeModel, z: number, gap: number): void {
   const d = m.der;
-  if (m.cage && d) {
-    const { G } = d;
-    const Lo = layoutCirc(m, z, gap);
-    const P = Lo.pose;
-    m.cage.position.set(Lo.gx, Lo.gy, z);
-    m.cage.rotation.z = Lo.a;
-    d.body.rotation.z = P.beta + Math.PI;
-    // links: local -x along the link, local y along the pin axis
-    const dir = new T.Vector3(P.P[0] - G.pins[0], P.P[1] - G.pins[1], P.P[2] - G.pins[2]).normalize();
-    const X = dir.clone().negate();
-    const Y = new T.Vector3(...G.axis).normalize();
-    const Z = new T.Vector3().crossVectors(X, Y).normalize();
-    Y.crossVectors(Z, X);
-    const q = new T.Quaternion().setFromRotationMatrix(tM.makeBasis(X, Y, Z));
-    for (const m of d.links) m.quaternion.copy(q);
-    d.pk.position.set(...P.P);
-    const bs = d.bScrew;
-    const sh = bs.arm * angDiff(P.beta, bs.beta0);
-    bs.group.position.set(bs.base[0] + bs.axis[0] * sh, bs.base[1] + bs.axis[1] * sh, bs.base[2]);
-    const bb = bodyBarrel(G);
-    if (d.wire) {
-      // from the barrel down to its clamp on the outer link
-      const k = 0.4;
-      seg(d.wire, [bb.pos[0] + bb.axis[0] * bb.len * 0.5, bb.pos[1] + bb.axis[1] * bb.len * 0.5, bb.pos[2]], [G.pins[0] + dir.x * G.L * k, G.pins[1] + dir.y * G.L * k, G.pins[2] + dir.z * G.L * k + 0.006]);
+  if (!d) return;
+  const st = layoutCirc(m, z, gap).st;
+  d.st = st;
+  const p = st.pose;
+  const set = (g: T.Group, mat: T.Matrix4) => {
+    g.matrix.copy(mat);
+    g.matrixWorldNeedsUpdate = true;
+  };
+  set(d.upper, p.upper);
+  set(d.linkOuter, p.linkOuter);
+  set(d.linkInner, p.linkInner);
+  set(d.lower, p.lower);
+  set(d.cage, p.cage);
+  // B screw: its tip stays on the tab as the body turns
+  const bs = d.bScrew;
+  tV.copy(bs.tab).applyMatrix4(tM.copy(p.upper).invert());
+  const s = tV.sub(bs.p).dot(bs.d) - RD_RIG.screws.bLen;
+  bs.group.position.copy(bs.base).addScaledVector(bs.d, s);
+  // cable
+  if (d.housing) seg(d.housing, d.housingFrom, tA.copy(d.housingEnd).applyMatrix4(p.upper));
+  if (d.wire.length === 3) {
+    // through the barrel and the body's arm, out where it leaves the body, then to the clamp by a bend
+    // point on the upper body (the straight way cuts through the body and the outer link)
+    tA.copy(d.wireFrom).applyMatrix4(p.upper);
+    tB.copy(d.wireOut).applyMatrix4(p.upper);
+    seg(d.wire[0], tA, tB);
+    tA.copy(d.wireTo).applyMatrix4(p.lower);
+    tC.copy(WIRE_BEND).applyMatrix4(p.upper);
+    seg(d.wire[1], tB, tC);
+    seg(d.wire[2], tC, tA);
+  }
+}
+
+/**
+ * The inner wire, in library space (upper body frame). It leaves the body's arm WIRE_EXIT along the barrel's
+ * axis past its seat (9.5 mm, measured by ray parity on the source mesh, plus 1 mm). WIRE_BEND was found
+ * by a grid search (tools/assets/out, not kept) as the shortest bend for which both pieces of the wire stay
+ * outside the upper body, the links and the lower body over the links' whole swing. Drawing data.
+ */
+const WIRE_EXIT = 0.021;
+const WIRE_BEND = new T.Vector3(-0.87537, -0.04933, 0.1256);
+const tC = new T.Vector3();
+
+/** One pin of a wheel: its index, or -1. */
+function firstOn(m: BikeModel, wheel: number): number {
+  for (let k = 0; k < m.links; k++) if (m.pins.wheel[k] === wheel) return k;
+  return -1;
+}
+
+const BAS = { upper: basis(V(RD_RIG.pulleys.upper.d).normalize()), lower: basis(V(RD_RIG.pulleys.lower.d).normalize()) };
+const PULLEY_C = { upper: V(RD_RIG.pulleys.upper.c), lower: V(RD_RIG.pulleys.lower.c) };
+
+/**
+ * Spins the pulleys with the chain (after layChain): a tooth gap under the pins on each pulley, the
+ * whole number of teeth taken from how far the chain moved since the last frame, as layChain does
+ * for the sprockets. The chain wraps the upper pulley clockwise, the lower one counterclockwise.
+ */
+export function spinPulleys(m: BikeModel): void {
+  const d = m.der;
+  if (!d?.st) return;
+  const a = TAU / RD_RIG.pulleys.upper.teeth;
+  const inv = tInv.copy(d.st.pose.cage).invert();
+  const travel = m.chainShift - d.spin.shift;
+  d.spin.shift = m.chainShift;
+  for (const [which, wheel, sgn] of [['upper', 2, -1], ['lower', 3, 1]] as const) {
+    const key = which === 'upper' ? 'u' : 'l';
+    const expected = d.spin[key] + (sgn * travel) / RP_RD;
+    const k = firstOn(m, wheel);
+    let spin = expected;
+    if (k >= 0) {
+      tV.set(m.pins.x[k], m.pins.y[k], m.pins.z[k]).applyMatrix4(inv);
+      if (which === 'lower') tV.addScaledVector(CAGE_DIR, -d.fit.stretch);
+      tV.sub(PULLEY_C[which]);
+      const [e1, e2] = BAS[which];
+      const phi = Math.atan2(tV.dot(e2), tV.dot(e1));
+      const base = ((phi % a) + a) % a;
+      spin = base + Math.round((expected - base) / a) * a;
     }
-    if (d.housing) {
-      const head = bodyToBike(G, P.beta, [bb.pos[0] - bb.axis[0] * bb.len * 0.5, bb.pos[1] - bb.axis[1] * bb.len * 0.5, bb.pos[2]]);
-      seg(d.housing, d.housingFrom, head);
-    }
+    d.spin[key] = spin;
+    const g = which === 'upper' ? d.pulleyU : d.pulleyL;
+    g.matrix.copy(pulleySpin(which, spin));
+    if (which === 'lower') g.matrix.premultiply(tM.makeTranslation(CAGE_DIR.x * d.fit.stretch, CAGE_DIR.y * d.fit.stretch, CAGE_DIR.z * d.fit.stretch));
+    g.matrixWorldNeedsUpdate = true;
   }
 }

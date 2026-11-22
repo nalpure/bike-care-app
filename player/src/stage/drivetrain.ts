@@ -8,7 +8,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { buildPath } from './chain.js';
 import { chainringGeo, sprocketGeo, tubeGeo } from './geo.js';
 import { chordLength, layPins, newPins, pitchAngle } from './pins.js';
-import { GAP_BIG, GAP_OK, GAP_SMALL, HP, PITCH, RP, TAU, type BikeSpec } from './spec.js';
+import { HP, PITCH, RP, TAU, type BikeSpec } from './spec.js';
 import type { BikeModel } from './bike.js';
 
 /** Sprocket radius at a z between the sprockets. */
@@ -142,23 +142,15 @@ export function buildChain(m: BikeModel): void {
       { x: rx, y: huby, z: B.zs[0], r: B.rs[0], s: 1 },
     ];
   m.part('chain');
-  // The most links the chain can have: the longest taut length over every gear, halfway position and
-  // gap, plus a little sag. layChain uses as many as the taut chain needs in the current pose.
-  let longest = 0;
-  if (B.gears === 'derailleur') {
-    const zsAll = B.zs.flatMap((z, i) => (i ? [(B.zs[i - 1] + z) / 2, z] : [z]));
-    for (const z of zsAll) {
-      for (const gap of [GAP_SMALL, GAP_OK, GAP_BIG]) {
-        layoutCirc(m, z, gap);
-        buildPath(m.circ, m.path);
-        longest = Math.max(longest, chordLength(m.path, PITCH));
-      }
-    }
+  // The chain has a fixed length on a derailleur bike (rd-fit.ts: big-big plus two links); the cage
+  // takes up the rest. Room for two more links, in case the cage cannot (an extreme gap). Without a
+  // derailleur, the taut length around chainring and sprocket plus a little sag.
+  if (B.gears === 'derailleur' && m.der) {
+    m.N = m.der.fit.links + 2;
   } else {
     buildPath(m.circ, m.path);
-    longest = chordLength(m.path, PITCH);
+    m.N = Math.ceil(chordLength(m.path, PITCH) / PITCH + SLACK_LINKS);
   }
-  m.N = Math.ceil(longest / PITCH + SLACK_LINKS);
   m.pins = newPins(m.N);
   const { inner, outer } = linkGeometries(B);
   const chain = m.parts.get('chain')!;
@@ -186,10 +178,10 @@ export function layoutCirc(m: BikeModel, z: number, gap: number) {
   c[1].z = z;
   c[2].x = L.gx;
   c[2].y = L.gy;
-  c[2].z = z;
+  c[2].z = L.gz;
   c[3].x = L.lx;
   c[3].y = L.ly;
-  c[3].z = z;
+  c[3].z = L.lz;
   return L;
 }
 
@@ -212,8 +204,10 @@ export function layChain(m: BikeModel): void {
   const theta = m.chainShift / B.rc;
   m.crankset.rotation.z = theta;
   const pins = m.pins;
-  // as many links as the taut chain needs here (the allowance for sag is in the rounding)
-  const N = Math.min(m.N, Math.max(2, Math.round(chordLength(m.path, PITCH) / PITCH)));
+  // a derailleur bike's chain has its fixed length (more only if the cage cannot take it up); else as
+  // many links as the taut chain needs here (the allowance for sag is in the rounding)
+  const want = Math.round(chordLength(m.path, PITCH) / PITCH);
+  const N = Math.min(m.N, m.der ? Math.max(m.der.fit.links, want) : Math.max(2, want));
   m.links = N;
   layPins(m.path, N, PITCH, theta, pitchAngle(B.rc, PITCH), pins);
   // Sprockets: the nearest sprocket's gaps are at the block's angle plus whole teeth. Which whole

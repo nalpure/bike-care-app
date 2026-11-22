@@ -11,15 +11,15 @@
 import * as T from 'three';
 import { buildCockpit, buildShiftCable } from './cockpit.js';
 import { buildChain, buildCrankset, layChain, rAt } from './drivetrain.js';
-import { buildDerailleur, derGeom, derPose, moveDerailleur, SCREW_LEN, type DerParts, type DerPose, type Turn } from './derailleur.js';
+import { buildDerailleur, derLayout, moveDerailleur, spinPulleys, type DerParts, type Turn } from './derailleur.js';
 import { curveGeo, disposeTree, hullShape, slabGeo, tubeGeo, UP } from './geo.js';
-import { batteryLine, GAP_OK, GROUND, HP, LC, LIFT, stayPts, stayZ, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
+import { batteryLine, GAP_OK, GROUND, HP, LIFT, stayPts, stayZ, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
 import { newPath, type Circle } from './chain.js';
 import type { Pins } from './pins.js';
 
 export * from './spec.js';
 export { disposeTree, seg } from './geo.js';
-export { barrelTurn, derGeom, derPose, upperPulley, type DerGeom, type DerPose, type Turn } from './derailleur.js';
+export { barrelTurn, fitFor, lowerPulley, upperPulley, type Turn } from './derailleur.js';
 export { rAt } from './drivetrain.js';
 
 // ------------------------------------------------------------------ parts
@@ -236,16 +236,6 @@ export class BikeModel {
     this.turns.set(id, { ...t, spin });
     this.anchors.set(id, p.group);
     return spin;
-  }
-
-  /** A small screw: shank SCREW_LEN long centred on `at`, head on the -axis side. */
-  /** @internal builder helper */
-  screw(id: string, at: V3, axis: V3, parent: T.Object3D): void {
-    const spin = this.turnable(id, { pos: at, axis, len: SCREW_LEN }, parent);
-    const h = SCREW_LEN / 2;
-    this.add(id, new T.CylinderGeometry(0.0042, 0.0042, SCREW_LEN, 10), null, null, { parent: spin, k: 1.15 });
-    this.add(id, new T.CylinderGeometry(0.0072, 0.0072, 0.005, 16), [0, -h - 0.0025, 0], null, { parent: spin, k: 1.25 });
-    this.add(id, new T.BoxGeometry(0.011, 0.003, 0.0022), [0, -h - 0.005, 0], null, { parent: spin, dark: true });
   }
 
   // ---------------------------------------------------------------- build
@@ -471,22 +461,18 @@ export class BikeModel {
     return rAt(this.spec, z);
   }
 
-  /** Where the upper pulley sits for a derailleur position z and a gap (see derPose), with the cage angle and the lower pulley. */
-  layout(z: number, gap: number): { r: number; a: number; gx: number; gy: number; lx: number; ly: number; pose: DerPose } {
-    const B = this.spec;
-    const r = this.rAtZ(z);
-    const G = this.der?.G ?? derGeom(B);
-    const pose = derPose(B, G, z, gap, r);
-    const [gx, gy] = pose.U;
-    return { r, a: pose.cage + HP, gx, gy, lx: gx + LC * Math.cos(pose.cage), ly: gy + LC * Math.sin(pose.cage), pose };
+  /** Where the pulleys sit for a derailleur position z and a gap (rd-fit.ts), with the sprocket radius there and the derailleur's state. */
+  layout(z: number, gap: number): ReturnType<typeof derLayout> {
+    return derLayout(this.spec, z, gap);
   }
 
-  /** Moves the derailleur to z with the given gap, and lays the chain along the new path. */
+  /** Moves the derailleur to z with the given gap, lays the chain along the new path and spins the pulleys with it. */
   setDer(z: number, gap: number): void {
     this.derZ = z;
     this.gap = gap;
     moveDerailleur(this, z, gap);
     layChain(this);
+    spinPulleys(this);
   }
 
   /** z of the derailleur for sprocket i. */

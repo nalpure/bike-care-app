@@ -103,8 +103,9 @@ export function buildShiftCable(m: BikeModel): void {
   m.add('shift_cable', curveGeo(path, 0.006, 96), null, null, { k: 0.6 });
   m.anchor('shift_cable', m.bike, B.bar === 'drop' ? along(cs[2], cs[4], 0.3, 0.05, 0.02) : tt(-0.05, 0.08));
   if (m.der) {
-    // the housing's last bit, and the inner wire from the barrel down to its clamp on the outer link
+    // the housing's last bit, and the inner wire out of the barrel and down to its clamp on the lower body
+    // (placed by moveDerailleur, in bike space)
     m.der.housing = m.add('shift_cable', new T.CylinderGeometry(0.006, 0.006, 1, 8), null, null, { k: 0.6 });
-    m.der.wire = m.add('shift_cable', new T.CylinderGeometry(0.0028, 0.0028, 1, 6), null, null, { parent: m.der.body, k: 1.3 });
+    m.der.wire = [0, 1, 2].map(() => m.add('shift_cable', new T.CylinderGeometry(0.002, 0.002, 1, 6), null, null, { k: 1.3 }));
   }
 }

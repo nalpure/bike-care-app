@@ -12,13 +12,15 @@ export const RX = -0.9;
 export const RT = 0.73;
 export const LIFT = 0.3;
 export const GROUND = -0.03;
-/** gap between the upper pulley and the sprocket: right, too big, too small */
+/**
+ * B gap on the largest sprocket (pitch circle to pitch circle), set by the B screw: right (5.5 mm),
+ * too big (11 mm, twice the right one), too small (2 mm). Drawing values, not a setting to rely on.
+ */
 export const GAP_OK = 0.011;
-export const GAP_BIG = 0.036;
+export const GAP_BIG = 0.022;
 export const GAP_SMALL = 0.004;
-/** pulley radius (where the chain runs) and cage length */
-export const RP = 0.04;
-export const LC = 0.13;
+/** the derailleur pulleys' pitch radius (where the chain's pins run): 11 teeth (rd-rig.ts) */
+export const RP = rOf(11);
 /** default bottom bracket height (a city bike: 65 mm below the axles) */
 export const BBY = HUBY - 0.13;
 export const DEG = Math.PI / 180;
