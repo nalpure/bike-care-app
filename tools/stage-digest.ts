@@ -6,6 +6,11 @@
 //   (change code)
 //   npx tsx tools/stage-digest.ts scratch/digest-after.json
 //   and compare the two files: the per-bike, per-step hashes must be identical.
+//
+// `geo` (per bike: initial and big-gap) is a second hash that survives splitting a part into two: it
+// is the sorted set of world-space triangles per part, with split parts counted as their parent
+// (PARENT below). Use it to prove that splitting a mesh changed no vertex: the `steps` hashes then
+// differ (more meshes), the `geo` hashes must not.
 
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -51,6 +56,9 @@ bikes.push(
   { name: 'extreme-high', facts: extreme(1) },
 );
 
+/** split parts count as the part they were cut from */
+const PARENT: Record<string, string> = { frame_dropout: 'frame', rear_hub: 'rear_wheel' };
+
 const hash = (s: string | Uint8Array) => createHash('sha1').update(s).digest('hex').slice(0, 16);
 const mat = new T.MeshStandardMaterial();
 
@@ -83,7 +91,40 @@ function snapshot(m: BikeModel): { text: string; meshes: number; tris: number } 
   return { text: lines.join('\n'), meshes, tris };
 }
 
-const result: Record<string, { steps: Record<string, string>; meshes: number; tris: number }> = {};
+/** order- and split-independent hash of every triangle in the scene, per part */
+function canon(m: BikeModel): string {
+  m.bike.updateMatrixWorld(true);
+  m.standG.updateMatrixWorld(true);
+  m.hookG.updateMatrixWorld(true);
+  const by = new Map<string, string[]>();
+  const v = new T.Vector3();
+  const r = (n: number) => Math.round(n * 1e5);
+  for (const root of [m.bike, m.standG, m.hookG]) {
+    root.traverse((o: any) => {
+      if (!o.isMesh) return;
+      const id0: string = o.userData.partId ?? '-';
+      const id = PARENT[id0] ?? id0;
+      const list = by.get(id) ?? by.set(id, []).get(id)!;
+      const g = o.geometry as T.BufferGeometry;
+      const pos = g.attributes.position;
+      if (o.isInstancedMesh) {
+        const a = new Float32Array(o.instanceMatrix.array.buffer, 0, o.count * 16);
+        list.push(`inst|${o.count}|${hash(new Uint8Array(a.buffer, a.byteOffset, a.byteLength))}`);
+        return;
+      }
+      const idx = g.index;
+      const n = idx ? idx.count : pos.count;
+      const w = (i: number) => {
+        v.fromBufferAttribute(pos, idx ? idx.getX(i) : i).applyMatrix4(o.matrixWorld);
+        return `${r(v.x)},${r(v.y)},${r(v.z)}`;
+      };
+      for (let i = 0; i + 2 < n; i += 3) list.push(`${w(i)}|${w(i + 1)}|${w(i + 2)}`);
+    });
+  }
+  return [...by.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([id, l]) => `${id}:${hash(l.sort().join('\n'))}`).join(' ');
+}
+
+const result: Record<string, { steps: Record<string, string>; geo: Record<string, string>; meshes: number; tris: number }> = {};
 let count = 0;
 for (const { name, facts } of bikes) {
   const B = bikeSpec(facts);
@@ -91,6 +132,7 @@ for (const { name, facts } of bikes) {
   const steps: Record<string, string> = {};
   const first = snapshot(m);
   steps['initial'] = hash(first.text);
+  const geo: Record<string, string> = { initial: canon(m) };
   for (let i = 0; i < B.n; i++) {
     m.setDer(m.zOf(i), GAP_OK);
     steps[`gear${i}`] = hash(snapshot(m).text);
@@ -99,8 +141,9 @@ for (const { name, facts } of bikes) {
   for (const [label, gap] of [['big', GAP_BIG], ['small', GAP_SMALL]] as const) {
     m.setDer(m.zOf(last), gap);
     steps[`${label}-gap`] = hash(snapshot(m).text);
+    if (label === 'big') geo['big-gap'] = canon(m);
   }
-  result[name] = { steps, meshes: first.meshes, tris: Math.round(first.tris) };
+  result[name] = { steps, geo, meshes: first.meshes, tris: Math.round(first.tris) };
   count += Object.keys(steps).length;
   m.dispose();
 }

@@ -30,6 +30,40 @@ export function curveGeo(pts: V3[], r: number, seg = 48): T.BufferGeometry {
   return new T.TubeGeometry(new T.CatmullRomCurve3(pts.map((p) => new T.Vector3(...p))), seg, r, 8, false);
 }
 
+/**
+ * `curveGeo` cut in two at a ring of the tube: [the rest, the end within `cut` (in xy) of `at`].
+ * Both geometries keep the very same vertices and triangles as `curveGeo` (they share the
+ * attributes and differ only in their index), so drawing both is drawing the whole tube.
+ * Either one is null when the tube has no triangle on that side.
+ */
+export function curveGeoSplit(pts: V3[], r: number, seg: number, at: V2, cut: number): [T.BufferGeometry | null, T.BufferGeometry | null] {
+  const RADIAL = 8;
+  const curve = new T.CatmullRomCurve3(pts.map((p) => new T.Vector3(...p)));
+  const whole = new T.TubeGeometry(curve, seg, r, RADIAL, false);
+  // the rings from `first` on are near; getPointAt is what TubeGeometry places its rings by
+  let first = seg + 1;
+  for (let j = seg; j >= 0; j--) {
+    const c = curve.getPointAt(j / seg);
+    if (Math.hypot(c.x - at[0], c.y - at[1]) >= cut) break;
+    first = j;
+  }
+  const idx = whole.index!;
+  const rest: number[] = [];
+  const near: number[] = [];
+  for (let i = 0; i < idx.count; i += 3) {
+    const ring = Math.max(...[0, 1, 2].map((k) => Math.floor(idx.getX(i + k) / (RADIAL + 1))));
+    (ring >= first ? near : rest).push(idx.getX(i), idx.getX(i + 1), idx.getX(i + 2));
+  }
+  const make = (list: number[]): T.BufferGeometry | null => {
+    if (!list.length) return null;
+    const g = new T.BufferGeometry();
+    for (const name of ['position', 'normal', 'uv']) g.setAttribute(name, whole.getAttribute(name));
+    g.setIndex(list);
+    return g;
+  };
+  return [make(rest), make(near)];
+}
+
 /** A toothed wheel in the xy plane, centred on z = 0: chainring and pulleys. */
 export function gearGeo(r: number, teeth: number, thick: number, depth = 0.006): T.BufferGeometry {
   const s = new T.Shape();

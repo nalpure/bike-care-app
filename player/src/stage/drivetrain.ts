@@ -77,7 +77,7 @@ export function buildCrankset(m: BikeModel): void {
   // the freehub body the sprockets sit on: part of the wheel, it turns with it
   const zEnd = B.zs[0] + B.sprT / 2;
   const zIn = B.zs[B.n - 1] - 0.012;
-  m.add('rear_wheel', new T.CylinderGeometry(0.0165, 0.0165, zEnd - zIn, 14), [0, 0, (zEnd + zIn) / 2], [HP, 0, 0], { k: 0.8 });
+  m.add('rear_hub', new T.CylinderGeometry(0.0165, 0.0165, zEnd - zIn, 14), [0, 0, (zEnd + zIn) / 2], [HP, 0, 0], { k: 0.8 });
   const mid = Math.floor(B.n / 2);
   if (B.n > 1) {
     m.anchor('smallest_sprocket', m.bike, [rx, huby + B.rs[0] + 0.015, B.zs[0]]);

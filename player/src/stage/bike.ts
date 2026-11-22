@@ -12,10 +12,11 @@ import * as T from 'three';
 import { buildCockpit, buildShiftCable } from './cockpit.js';
 import { buildChain, buildCrankset, layChain, rAt } from './drivetrain.js';
 import { buildDerailleur, derLayout, moveDerailleur, spinPulleys, type DerParts, type Turn } from './derailleur.js';
-import { curveGeo, disposeTree, hullShape, slabGeo, tubeGeo, UP } from './geo.js';
+import { curveGeoSplit, disposeTree, hullShape, slabGeo, tubeGeo, UP } from './geo.js';
 import { libGeo } from './library.js';
 import { MOUNTS as M } from './mounts.js';
 import { batteryLine, GAP_OK, GROUND, HP, LIFT, stayPts, stayZ, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
+import { SPLIT_PARTS } from './registry.js';
 import { newPath, type Circle } from './chain.js';
 import type { Pins } from './pins.js';
 
@@ -46,12 +47,17 @@ export interface Part {
   center: T.Vector3;
 }
 
+/** How far from the rear axle the stays belong to the part `frame_dropout`: 13 cm (1 unit = 0.5 m). */
+const STAY_END = 0.26;
+
 /** Context groups: focus on one part keeps the others of its group visible. */
 const CTX: Record<string, string[]> = {
   frame: ['frame'],
+  frame_dropout: ['frame'],
   fork: ['front', 'frame'],
   front_wheel: ['front'],
   rear_wheel: ['drive', 'rear'],
+  rear_hub: ['drive', 'rear'],
   saddle: ['seat'],
   seat_post: ['seat'],
   handlebar: ['cockpit', 'cable', 'front'],
@@ -148,10 +154,17 @@ export class BikeModel {
     this.setDer(this.derZ, this.gap);
     this.bike.updateMatrixWorld(true);
     this.standG.updateMatrixWorld(true);
+    // A part cut out of another (SPLIT_PARTS) shares the centre of the whole, so that a motion on the
+    // whole node moves all its pieces about the same point, as before the cut.
+    const whole = new Map<string, T.Box3>();
+    for (const p of this.parts.values()) {
+      const root = SPLIT_PARTS[p.id] ?? p.id;
+      whole.set(root, (whole.get(root) ?? new T.Box3()).union(new T.Box3().setFromObject(p.group)));
+    }
     for (const p of this.parts.values()) {
       // A part whose meshes live elsewhere (the upper pulley sits in the cage) has an empty box;
       // it has its own anchor and is never moved by a generic motion.
-      const box = new T.Box3().setFromObject(p.group);
+      const box = whole.get(SPLIT_PARTS[p.id] ?? p.id)!;
       const c = box.isEmpty() ? new T.Vector3() : box.getCenter(new T.Vector3());
       p.center.copy(p.group.parent ? p.group.parent.worldToLocal(c) : c);
       if (!this.anchors.has(p.id)) {
@@ -264,18 +277,21 @@ export class BikeModel {
       hub.position.set(cx, huby, 0);
       this.bike.add(hub);
       this.part(id, hub);
+      // the rear hub is a part of its own (node rear_end); it turns with the wheel
+      const rear = id === 'rear_wheel';
+      const hubId = rear ? 'rear_hub' : id;
+      if (rear) this.part(hubId, hub);
       const rm = B.rt - B.tt;
       const rim = B.rt - 2 * B.tt - 0.012;
       this.add(id, new T.TorusGeometry(rm, B.tt, 12, 56), null, null, { k: 0.45 });
       this.add(id, new T.TorusGeometry(rim, 0.02, 8, 56), null, null, { k: 1, tint: 'rims' });
-      const rear = id === 'rear_wheel';
       // axle from dropout to dropout, and the hub shell between the spoke flanges (inside the sprockets)
       const za = rear ? zD + 0.02 : 0.1;
-      this.add(id, new T.CylinderGeometry(0.011, 0.011, 2 * za, 10), null, [HP, 0, 0], { k: 1.2 });
+      this.add(hubId, new T.CylinderGeometry(0.011, 0.011, 2 * za, 10), null, [HP, 0, 0], { k: 1.2 });
       const s1 = rear ? B.zs[B.n - 1] - 0.012 : 0.05;
-      this.add(id, new T.CylinderGeometry(0.026, 0.026, s1 + 0.05, 16), [0, 0, (s1 - 0.05) / 2], [HP, 0, 0], { k: 0.9 });
-      for (const fz of [0.03, -0.03]) this.add(id, new T.CylinderGeometry(0.034, 0.034, 0.006, 16), [0, 0, fz], [HP, 0, 0], { k: 0.9 });
-      if (rear && B.gears === 'hub') this.add(id, new T.CylinderGeometry(0.075, 0.075, 0.13, 20), null, [HP, 0, 0], { k: 0.8 });
+      this.add(hubId, new T.CylinderGeometry(0.026, 0.026, s1 + 0.05, 16), [0, 0, (s1 - 0.05) / 2], [HP, 0, 0], { k: 0.9 });
+      for (const fz of [0.03, -0.03]) this.add(hubId, new T.CylinderGeometry(0.034, 0.034, 0.006, 16), [0, 0, fz], [HP, 0, 0], { k: 0.9 });
+      if (rear && B.gears === 'hub') this.add(hubId, new T.CylinderGeometry(0.075, 0.075, 0.13, 20), null, [HP, 0, 0], { k: 0.8 });
       for (let i = 0; i < 18; i++) {
         const a = (i / 18) * TAU;
         this.add(id, tubeGeo([0, 0, i % 2 ? 0.03 : -0.03], [(rim - 0.01) * Math.cos(a), (rim - 0.01) * Math.sin(a), 0], 0.004), null, null, { k: 1.2 });
@@ -287,6 +303,8 @@ export class BikeModel {
 
     // Frame
     this.part('frame');
+    // the dropout end of the stays and the dropout plates are a part of their own (node rear_end)
+    this.part('frame_dropout');
     const ft = (a: V3, b: V3, r: number) => this.add('frame', tubeGeo(a, b, r), null, null, { tint: 'frame' });
     const fr = B.kind === 'mountain' ? 0.03 : road ? 0.02 : 0.024;
     const dtR = fr + 0.004;
@@ -298,11 +316,14 @@ export class BikeModel {
     ft([0, bby, 0], [HB[0], HB[1], 0], fr + 0.004);
     // rear triangle on both sides; the dropouts sit just outside the sprockets
     for (const sd of [1, -1] as const) {
-      this.add('frame', curveGeo(stayPts(B, 'chain', sd), 0.016, 48), null, null, { tint: 'frame' });
-      this.add('frame', curveGeo(stayPts(B, 'seat', sd), 0.012, 40), null, null, { tint: 'frame' });
+      for (const [which, r, seg] of [['chain', 0.016, 48], ['seat', 0.012, 40]] as const) {
+        const [rest, end] = curveGeoSplit(stayPts(B, which, sd), r, seg, [rx, huby], STAY_END);
+        if (rest) this.add('frame', rest, null, null, { tint: 'frame' });
+        if (end) this.add('frame_dropout', end, null, null, { tint: 'frame' });
+      }
       // dropout plate; on the drive side the hanger sits on its outside
       const dz = sd > 0 ? zD - 0.0095 : -zD;
-      this.add('frame', slabGeo(hullShape([[rx, huby, 0.03], [rx + 0.045, huby - 0.012, 0.02], [rx + 0.02, huby + 0.04, 0.018]]), dz - 0.004, dz + 0.004, 0.002), null, null, { tint: 'frame' });
+      this.add('frame_dropout', slabGeo(hullShape([[rx, huby, 0.03], [rx + 0.045, huby - 0.012, 0.02], [rx + 0.02, huby + 0.04, 0.018]]), dz - 0.004, dz + 0.004, 0.002), null, null, { tint: 'frame' });
     }
     this.add('frame', new T.CylinderGeometry(0.045, 0.045, 0.15, 18), [0, bby, 0], [HP, 0, 0], { tint: 'frame' });
     this.makeDecal([0, bby], HB, dtR);

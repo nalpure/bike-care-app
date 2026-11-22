@@ -52,17 +52,37 @@ export const NODES: Record<string, NodeInfo> = {
   b_screw: { label: 'B screw', name: 'B screw', aliases: 'Also called the B-tension screw', about: 'Sets the gap between the upper wheel and the sprockets.' },
   barrel_adjuster: { label: 'Barrel adjuster', name: 'Barrel adjuster', aliases: 'Also called the cable adjuster', about: 'Changes the cable tension in small steps.' },
   shift_cable: { label: 'Cable', name: 'Gear cable', aliases: 'Inner wire in its housing', about: 'Carries the pull from the shifter to the derailleur.' },
+  drivetrain: { label: 'Drivetrain', name: 'Drivetrain', aliases: 'Chainring, chain, sprockets and derailleur', about: 'Everything that turns pedalling into driving the rear wheel.' },
+  rear_end: { label: 'Rear end', name: 'Rear end of the frame', aliases: 'Stay ends, dropouts and rear hub', about: 'Where the rear wheel and the derailleur hanger are held.' },
   shifter_rear: { label: 'Shifter', name: 'Right shifter', aliases: 'Also called the shift lever', about: 'Pulls or releases the gear cable.', model_fact: 'drive.shifter_model' },
 };
 
 /**
  * Which atomic parts a node stands for. A node not listed here is one part of the same name.
  * `bike` stands for every part of the bike.
+ *
+ * `frame_dropout` (the last 13 cm of both stays and the dropout plates) and `rear_hub` (axle, hub
+ * shell, flanges, freehub body) are parts of their own so that `rear_end` can show them without the
+ * rest of the frame and the wheel. They are not nodes: `frame` and `rear_wheel` still stand for
+ * the whole frame and the whole wheel.
  */
 export const NODE_PARTS: Record<string, string[]> = {
+  frame: ['frame', 'frame_dropout'],
+  rear_wheel: ['rear_wheel', 'rear_hub'],
   cassette: ['cassette', 'smallest_sprocket', 'largest_sprocket'],
   rear_derailleur: ['rear_derailleur', 'upper_pulley'],
+  drivetrain: [
+    'chainring', 'crank', 'chain', 'cassette', 'smallest_sprocket', 'largest_sprocket',
+    'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster',
+  ],
+  rear_end: ['frame_dropout', 'rear_hub'],
 };
+
+/** Nodes that only group parts for `show` and `focus`: no part is "its own" one, so a tap never means them. */
+export const GROUP_NODES: readonly string[] = ['drivetrain', 'rear_end'];
+
+/** The parts that are cut out of another part, and the part they are cut from. */
+export const SPLIT_PARTS: Record<string, string> = { frame_dropout: 'frame', rear_hub: 'rear_wheel' };
 
 /** Named camera positions. */
 export const VIEWS = [
@@ -107,7 +127,7 @@ export function partsOf(node: string): string[] {
 
 /** The node a tapped part is shown as in the garage preview: a sprocket as the sprockets, the upper wheel as the derailleur. */
 export function previewNode(part: string): string {
-  for (const [node, parts] of Object.entries(NODE_PARTS)) if (node !== part && parts.includes(part)) return node;
+  for (const [node, parts] of Object.entries(NODE_PARTS)) if (node !== part && !GROUP_NODES.includes(node) && parts.includes(part)) return node;
   return part;
 }
 
