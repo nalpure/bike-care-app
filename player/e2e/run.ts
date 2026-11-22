@@ -4,9 +4,17 @@
 //
 //   npm run test:e2e                  all journeys, portrait, plus landscape screenshots
 //   npm run test:e2e -- --no-build    reuse dist/
+//   npm run test:e2e -- --only nav    only the journeys whose id contains one of the comma-separated
+//                                     words (e.g. `navigation`, `road-bike-stand/`), for re-runs while fixing
+//
+// The 3D view is drawn in software here (no graphics card), which is what makes this slow and
+// keeps the machine busy. So the profile journeys run in text-only mode, except the ones in
+// WITH_3D; the extras test the 3D view and keep it. The whole run has below-normal priority
+// (Chromium inherits it), so other work on the machine comes first.
 
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { constants, setPriority } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium, type Page } from 'playwright';
 import YAML from 'yaml';
@@ -17,6 +25,9 @@ const PORT = 4179;
 const URL = `http://localhost:${PORT}/`;
 
 interface Result { id: string; ending: string; expected: string; error?: string }
+
+/** Profile journeys that keep the 3D view (both orientations): a bike held in a stand, a jump ahead and putting it back. */
+const WITH_3D = new Set(['road-bike-stand/chain-touches-spokes']);
 
 function expectedEndings(): Map<string, string> {
   const md = readFileSync(join(REPO, 'build/report.md'), 'utf8');
@@ -501,6 +512,16 @@ async function shot_fail(page: Page, dir: string): Promise<void> {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  try {
+    setPriority(constants.priority.PRIORITY_BELOW_NORMAL);
+  } catch { /* not allowed here: run at normal priority */ }
+  const oi = args.indexOf('--only');
+  const only = oi >= 0 ? (args[oi + 1] ?? '').split(',').filter(Boolean) : null;
+  if (only && !only.length) {
+    console.error('--only needs a word, e.g. --only navigation');
+    process.exit(2);
+  }
+  const wanted = (id: string) => !only || only.some((w) => id.includes(w));
   if (!args.includes('--no-build')) {
     const b = spawnSync(process.execPath, [join(REPO, 'node_modules/vite/bin/vite.js'), 'build', '--config', 'player/vite.config.ts', '--logLevel', 'warn'], { cwd: REPO, stdio: 'inherit' });
     if (b.status) process.exit(b.status);
@@ -510,7 +531,7 @@ async function main(): Promise<void> {
   const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader'] });
   const expected = expectedEndings();
   const results: Result[] = [];
-  rmSync(SHOTS, { recursive: true, force: true });
+  if (!only) rmSync(SHOTS, { recursive: true, force: true });
   try {
     for (let i = 0; i < 50; i++) {
       try {
@@ -523,6 +544,8 @@ async function main(): Promise<void> {
     for (const f of profiles) {
       const p = YAML.parse(readFileSync(join(REPO, 'profiles', f), 'utf8')).profile;
       for (const j of p.journeys) {
+        const jid = `${p.id}/${j.id}`;
+        if (!wanted(jid)) continue;
         for (const orient of ['portrait', 'landscape'] as const) {
           const size = orient === 'portrait' ? { width: 390, height: 844 } : { width: 844, height: 390 };
           const ctx = await browser.newContext({ viewport: size, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
@@ -532,11 +555,13 @@ async function main(): Promise<void> {
           page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
           await page.goto(URL);
           const dir = join(SHOTS, orient, `${p.id}__${j.id}`);
+          rmSync(dir, { recursive: true, force: true });
           mkdirSync(dir, { recursive: true });
           await page.screenshot({ path: join(dir, '00-notice.png') });
           await click(page, 'notice-ok');
           // Toasts would cover the next screens in these fast clicks.
           await page.addStyleTag({ content: '.toast { display: none !important; }' });
+          if (!WITH_3D.has(jid)) await page.evaluate(() => (window as any).__app.setTextOnly(true));
           await page.screenshot({ path: join(dir, '00-home.png') });
           const r = await walk(page, p, j, dir, demoIds).catch((e) => ({ ending: 'crashed', error: String(e?.message ?? e).split('\n')[0] }));
           if (orient === 'portrait') {
@@ -549,9 +574,9 @@ async function main(): Promise<void> {
         }
       }
     }
-    results.push(await extras(browser));
-    results.push(await bikePage(browser));
-    results.push(await navigation(browser));
+    if (wanted('extras/feedback-assistant-garage')) results.push(await extras(browser));
+    if (wanted('extras/bike-page')) results.push(await bikePage(browser));
+    if (wanted('extras/navigation')) results.push(await navigation(browser));
   } finally {
     await browser.close();
     server.kill();
@@ -563,6 +588,11 @@ async function main(): Promise<void> {
     console.log(`${ok ? 'ok  ' : 'FAIL'} ${r.id}: ${r.ending}${ok ? '' : ` (expected: ${r.expected})${r.error ? ` error: ${r.error}` : ''}`}`);
   }
   console.log(`\n${results.length - failed} of ${results.length} journeys end as in build/report.md. Screenshots in player/e2e/shots/.`);
+  if (only) console.log(`Only the journeys matching ${only.join(', ')}: run the whole set once before you commit.`);
+  if (!results.length) {
+    console.log('No journey matched.');
+    process.exit(1);
+  }
   process.exit(failed ? 1 : 0);
 }
 

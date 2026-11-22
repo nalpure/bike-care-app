@@ -11,9 +11,14 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { mkdirSync, rmSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
+import { constants, setPriority } from 'node:os';
 import { chromium } from 'playwright';
 
 const REPO = resolve(import.meta.dirname, '../..');
+// Software 3D keeps the machine busy: below-normal priority (Chromium inherits it), so other work comes first.
+try {
+  setPriority(constants.priority.PRIORITY_BELOW_NORMAL);
+} catch { /* not allowed here: run at normal priority */ }
 const OUT = join(REPO, 'player/e2e/shots/slow');
 const PORT = 4189;
 const SUB = '/sub/';

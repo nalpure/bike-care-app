@@ -38,7 +38,7 @@ The golden example is the symptom "My gears don't shift cleanly": `content/diagn
 - `npm run parts:mounts`  measure where the crank, saddle, collar, stem, bar and grips mount on the built library and write `player/src/stage/mounts.ts`.
 - `npm run parts:rig`  measure the derailleur rig on the source model and write `player/src/stage/rd-rig.ts`.
 - `npm run manifest`  write `build/3d-manifest.json` (the 3D nodes, views and clips content may use) from the player's registry.
-- `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `player/e2e/shots/`.
+- `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `player/e2e/shots/`. Slow: run the full set once before a commit; while fixing, `-- --no-build --only <id>` re-runs one journey.
 
 Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fix them from the message; you should not need to read the build tool. Use the `verify` skill before you commit and the `handoff` skill at the end of a session part.
 
