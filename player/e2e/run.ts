@@ -461,6 +461,14 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     });
     expect(clear, 'the assistant button covers Back or Next');
     await shot('03-card-after-swipe');
+    // Swipe down for the previous step: back to the first card, with its answer still there.
+    const g2 = (await page.locator('.guide').boundingBox())!;
+    await swipe(page, [mid, g2.y + 20], [mid, g2.y + g2.height - 30]);
+    expect(await view(page) === first, `a swipe down did not go to the previous step (${second} -> ${await view(page)})`);
+    expect(await page.locator('[data-test="verdict"]').count() === 1, 'the swipe down did not keep the answer on the previous card');
+    await shot('04-card-after-swipe-down');
+    await swipe(page, [mid, g2.y + g2.height - 30], [mid, g2.y + 20]);
+    expect(await view(page) === second, `a second swipe up did not go to the next step (${await view(page)})`);
 
     // Back by the left screen edge, as the arrow does.
     await swipe(page, [4, 400], [280, 410]);

@@ -279,7 +279,8 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   );
 
   const guide = h('div.guide', step);
-  attachSwipeUp(guide, () => card.nextEnabled && app.advance((x) => x.next(), 'next'));
+  // Swipe down does what Back does, but never leaves the flow from its first screen.
+  attachSwipe(guide, () => card.nextEnabled && app.advance((x) => x.next(), 'next'), () => j.canBack && app.back());
 
   const appEl = h(`main.app${textOnly ? '.textonly' : ''}`,
     textOnly ? null : app.stage.el,
@@ -306,36 +307,44 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
 }
 
 /**
- * Swipe up on the text for the next step. Only a swipe that starts when the text is already
- * scrolled to its end counts, and only if the text did not scroll during it, so reading a long step
- * never moves on by itself. The 3D view is outside `el`, so dragging it never counts. Touch events,
- * because the browser takes over a vertical drag as a scroll and then sends no pointer events.
+ * Swipe up on the text for the next step, swipe down for the previous one. A swipe up counts only
+ * if it starts when the text is already scrolled to its end, a swipe down only if it starts at the
+ * top, and neither if the text scrolled during it, so reading or scrolling back never changes the
+ * step by itself. The 3D view is outside `el`, so dragging it never counts. Touch events, because
+ * the browser takes over a vertical drag as a scroll and then sends no pointer events.
  * The swipe is timed by the events' own time stamps (when the finger moved), not by when a busy
  * page got round to handling them, so a quick swipe still counts while the 3D view is slow.
  */
-function attachSwipeUp(el: HTMLElement, onNext: () => void): void {
+function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): void {
   let x0 = 0;
   let y0 = 0;
   let t0 = 0;
   let top0 = 0;
-  let armed = false;
+  let atEnd = false;
+  let atTop = false;
   el.addEventListener('touchstart', (e) => {
     const t = e.touches[0];
-    armed = e.touches.length === 1 && el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+    const one = e.touches.length === 1;
+    atEnd = one && el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+    atTop = one && el.scrollTop <= 2;
     x0 = t.clientX;
     y0 = t.clientY;
     t0 = e.timeStamp;
     top0 = el.scrollTop;
   }, { passive: true });
   el.addEventListener('touchend', (e) => {
-    if (!armed) return;
-    armed = false;
+    const up = atEnd;
+    const down = atTop;
+    atEnd = atTop = false;
+    if (!up && !down) return;
     const t = e.changedTouches[0];
     const dx = t.clientX - x0;
     const dy = t.clientY - y0;
-    if (dy < -60 && Math.abs(dy) > Math.abs(dx) * 1.5 && e.timeStamp - t0 < 900 && Math.abs(el.scrollTop - top0) < 2) onNext();
+    if (Math.abs(dy) <= Math.abs(dx) * 1.5 || e.timeStamp - t0 >= 900 || Math.abs(el.scrollTop - top0) >= 2) return;
+    if (up && dy < -60) onNext();
+    else if (down && dy > 60) onBack();
   });
-  el.addEventListener('touchcancel', () => (armed = false));
+  el.addEventListener('touchcancel', () => (atEnd = atTop = false));
 }
 
 // ---------------------------------------------------------------- exits, job, shop
