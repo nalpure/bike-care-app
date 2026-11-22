@@ -21,6 +21,18 @@ tools/assets/
     simplify.html, rig-view.html   helpers used by the scripts above
 ```
 
+## Commands
+
+| Command | What it does |
+| --- | --- |
+| `npm run parts` | build the library from `library.yaml` and the source model |
+| `npm run parts:check` | render every part and its source nodes as silhouettes from 6 directions, print overlap and box difference, check the budget (35k triangles, 1.5 MB); fails on a bad shape. `-- --shots` writes a PNG per part to `scratch/` |
+| `npm run parts:mounts` | measure the crank, pedals, saddle, seat collar, stem, bar and grips mounting points on the built library; run `parts` first |
+| `npm run parts:rig` | measure the derailleur rig on the source model (about 25 s); only when the derailleur pieces or their source change |
+| `npm run manifest` | write `build/3d-manifest.json` from the player's registry |
+
+Read first: `docs/decisions.md`, section "3D view". How the player uses the library (names, space, what is library and what is generated): `player/src/stage/library.md`. To add a part: the `new-part` skill.
+
 ## Rules
 
 - **Check before you write.** Need a node list, a size, a view, a bounding box? Use `explore/`. Need a new measurement? Read `measure/rd.ts` first: it already finds axes, pins and pulleys. Add to these files instead of writing a new script next to them.

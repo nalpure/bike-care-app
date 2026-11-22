@@ -1,29 +1,42 @@
 # Bike maintenance app: repo guide for agents
 
-Before any task, read `docs/idea.md` (what the app should be) and `docs/decisions.md` (owner decisions since then, and where `approach.md` is out of date). For work on content or the build tool, also read `docs/approach.md`, sections "Building blocks" to "Build tool". These win over anything in `legacy/`.
+A phone app that helps a beginner diagnose and fix their bike step by step, with a 3D view of the part. All repair knowledge is YAML in `content/`; `npm run check` validates it and writes `build/bundle.json`; the web app in `player/` plays the bundle. The 3D parts come from source models in `assets-src/` via `tools/assets/`. Mechanics are unverified drafts.
 
-Each area has its own guide, loaded when you work there: `content/CLAUDE.md` (writing content), `tools/CLAUDE.md` (build tool and what else is in `tools/`), `tools/assets/CLAUDE.md` (3D parts library, measuring and inspecting source models), `player/CLAUDE.md` (the app and the 3D view). `docs/open.md` lists what is still undecided; read it before changing something it mentions.
+## Which task are you doing?
+
+Load only the guide for your task. Each area has its own `CLAUDE.md` that loads when you work in that folder; the "read first" docs are listed there, not here. Do not read the other areas.
+
+| Task | Go to |
+| --- | --- |
+| Write or change tutorials, diagnoses, facts, steps, profiles | `content/CLAUDE.md` (also `schema/` for fields) |
+| Change the build tool, checks, review output | `tools/CLAUDE.md` |
+| Change app behaviour: screens, navigation, journeys, storage | `player/CLAUDE.md`, then `player/src/engine/` or `player/src/ui/` |
+| Change the 3D view: bike drawing, camera, animations | `player/src/stage/CLAUDE.md` |
+| Change the 3D parts library, or measure or inspect a source model | `tools/assets/CLAUDE.md` |
+| Add a part to the 3D library | the `new-part` skill |
+
+One task per session. If your task needs a second area (say a new 3D node that content uses), do the first part, commit, and say in your final message what the next part is.
+
+`docs/open.md` lists what is undecided; read it before changing something it mentions. The product background is `docs/idea.md`, the owner's decisions `docs/decisions.md`; `docs/approach.md` is partly out of date (decisions.md says where). Read them only when your area guide says so or the task is about what the app should do.
 
 ## Layout
 
-```
-docs/            idea.md, approach.md, decisions.md (owner decisions), open.md (agent choices and owner questions,
-                 undecided), schema-requests.md, sharing.md (publishing test builds)
-legacy/          old prototype HTML and the brake pad YAML drafts. Reference only, never imported.
-assets-src/      source 3D models (CC BY, see each credit.txt); the parts library is built from them by tools/assets/
-schema/          JSON Schema for every content file (*.schema.json). The reference for every field.
-content/         facts.yaml, choices.yaml, states.yaml, tools.yaml, inspections.yaml, jobs.yaml,
-                 steps/, procedures.yaml, tutorials/<job>/, diagnoses/, checks/, review/
-profiles/        test bikes (facts, answers, tools, journeys), one YAML each
-reviews/         ledger.yaml: sign-offs of review units (append only, via npm run review -- sign)
-tools/           build tool (check.ts, lib/), walk.ts, review.ts, clean.mjs, stage-digest.ts, run-tests.mjs;
-                 assets/{library,measure,explore}/ for the 3D parts. Index in tools/CLAUDE.md.
-build/           generated, never edited by hand: bundle.json, report.md, 3d-manifest.json,
-                 review/ (index.md, cards.md, trees/, journeys/); paths/ is on demand and not committed
-player/          the web app (Vite, TypeScript, three.js)
-scratch/         git-ignored, created on demand: your throw-away scripts, screenshots, probe output. npm run clean wipes it.
-.claude/skills/  verify (check, tests, e2e, screenshots)
-```
+Folder map: `README.md`. Generated, never edited by hand: `build/`, `player/public/parts/`, `player/src/stage/mounts.ts`, `player/src/stage/rd-rig.ts`. `scratch/` is git-ignored and yours. `legacy/` is reference only, never imported.
+
+## Commands
+
+- `npm run check`  validate, expand, simulate, write `build/`. Must pass before any task is done. Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`; fix them from the message, you should not need to read the build tool.
+- `npm test`       automated tests of the build tool (`tools/test/`) and the player (`player/test/`).
+- `npm run dev` / `npm run build`  run the player locally / static build in `dist/`.
+- `npm run clean`  delete `scratch/` and `dist/`.
+- More, by area: content (`walk`, `review`) in `content/CLAUDE.md`; player (`test:e2e`, `shots`) in `player/CLAUDE.md`; 3D parts (`parts*`, `manifest`) in `tools/assets/CLAUDE.md`.
+
+Use the `verify` skill before you commit.
+
+## Environment (Windows)
+
+- In the Bash tool, Node is not on PATH: prefix commands with `export PATH="/c/Program Files/nodejs:$PATH" &&`.
+- Run tests only through `npm test`, never `npx vitest` (Vitest fails on the lower-case drive letter VS Code uses; `tools/run-tests.mjs` fixes it).
 
 ## Before you write a script or a helper
 
@@ -54,34 +67,6 @@ There are no session prompt files and no handoff files. The state of the work li
 
 A large task: read, then propose the plan in a few lines and the split into parts; the owner answers, and each part ends in commits that leave `npm run check` and `npm test` passing, so a fresh session can start from `git log` and this file.
 
-The golden example is the symptom "My gears don't shift cleanly": `content/diagnoses/gears-shift-badly.yaml`, `content/tutorials/adjust-rear-shifting/`, and what it produces in `build/review/`.
-
-## Commands
-
-- `npm run check`  validate, expand, simulate, write `build/`. Must pass before any task is done.
-- `npm test`       automated tests of the build tool (`tools/test/`) and the player (`player/test/`).
-- `npm run walk -- --list` / `npm run walk -- <path-id>`   render paths on demand.
-- `npm run review -- status` / `npm run review -- sign <unit> --role <role> --by <name>`   review units and sign-offs.
-- `npm run dev`    start the player locally.
-- `npm run build`  static build of the player for sharing (`dist/`).
-- `npm run parts`  build the 3D parts library (`player/public/parts/`) from `assets-src/`; `npm run parts:check` compares every part with its source model and checks the budget.
-- `npm run parts:mounts`  measure where the crank, saddle, collar, stem, bar and grips mount on the built library and write `player/src/stage/mounts.ts`.
-- `npm run parts:rig`  measure the derailleur rig on the source model and write `player/src/stage/rd-rig.ts`.
-- `npm run clean`  delete `scratch/` and `dist/`.
-- `npm run manifest`  write `build/3d-manifest.json` (the 3D nodes, views and clips content may use) from the player's registry.
-- `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `scratch/shots/`. Slow: run the full set once before a commit; while fixing, `-- --no-build --only <id>` re-runs one journey.
-
-Errors print one per line: `ERROR <file>:<line> | <id> | <rule> | <message>`. Fix them from the message; you should not need to read the build tool. Use the `verify` skill before you commit.
-
-## Environment (Windows)
-
-- In the Bash tool, Node is not on PATH: prefix commands with `export PATH="/c/Program Files/nodejs:$PATH" &&`.
-- Run tests only through `npm test`, never `npx vitest` (Vitest fails on the lower-case drive letter VS Code uses; `tools/run-tests.mjs` fixes it).
-
-## Reviewing content
-
-Review units, not paths: cards (`build/review/cards.md`), flow trees (`build/review/trees/`) and profile journeys (`build/review/journeys/`). Each has a hash; a sign-off in `reviews/ledger.yaml` holds while the hash is unchanged. Findings name the unit id, and the path id when it came from a single path. Never edit the ledger by hand except to append; never sign a unit you did not read.
-
 ## Decisions
 
 - **Your own choices are not decisions.** When you choose something without the owner, take the cautious default, carry on, and add it to "Choices made without the owner" in `docs/open.md` (what, the default, where, two lines) and to your final message. Questions you could not settle go under "Questions for the owner" with a recommended answer. Never write your own choice into `decisions.md`, `idea.md` or `approach.md`. Keep `open.md` short: remove an item once the owner has answered it.
@@ -97,15 +82,12 @@ Two sessions may run at the same time in separate checkouts (a git worktree on i
 
 ## Hard rules
 
+These apply to every task. The numbering is the repo's: rules 4, 5, 6, 11 and 12 are about writing content and live in `content/CLAUDE.md`.
+
 1. Repair content lives in `content/` only. The player contains no repair text and no bike-specific logic.
 2. Do not invent schema constructs. If the schema cannot express something, add an entry to `docs/schema-requests.md` and use the closest allowed form. A schema change the owner asks for is not inventing.
-3. Never invent safety values (torque, fluid, wear limits, part compatibility). Use a placeholder with wording that sends the user to the part.
-4. At most three state buttons per screen. Labels describe what the user sees, never a technical judgement.
-5. `block` and `exit: { kind: unsafe }` only in safety checks and inspection calls. Any exit (unsafe, not_covered, not_needed, shop_only) reached with something apart (or the bike not ready to ride) names what to put back and has `show_how_from`.
-6. Diagnoses and the routine check use only `hands_off` inspections.
+3. Never invent safety values (torque, fluid, wear limits, part compatibility). Use a placeholder with wording that sends the user to the part. Dimensions used only to draw (tooth shape, chain width) are drawing data, never presented as facts about a part.
 7. Not everything is covered. Any bike, part or symptom outside the content ends on a clear "not covered yet" screen that offers a shop and the assistant. Never show a guess.
 8. Do not stop to ask the owner in the middle of a task. Take the cautious default, continue, and report the choice (see Decisions). Questions you have before starting go to the owner in one batch.
 9. Mechanics in this repo are unverified drafts. The test build shows a notice saying so.
 10. Texts are written in English, short, one action per step, easy to translate into German.
-11. Ask only what changes the steps. A fact read by a condition must have a question, unless it is `ask: never` (a beginner cannot tell; it comes only from the bike's data). Any other fact is only used in text when it is known (`{fact.key|fallback}` or `details`).
-12. Never the same check twice in a session. An inspection the user already answered is not shown again before the work starts; after the work, a check is a re-check and is shown.
