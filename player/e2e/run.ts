@@ -42,10 +42,18 @@ async function click(page: Page, test: string): Promise<void> {
   await page.locator(`[data-test="${test}"]`).first().click();
 }
 
-/** A one-finger drag by touch (the browser's own touch events, like a thumb), for the swipe tests. */
+/**
+ * A one-finger drag by touch (the browser's own touch events, like a thumb), for the swipe tests.
+ * Each event carries its own time stamp, 16 ms apart (one frame), as a thumb's would. Without them
+ * the events are stamped when CDP delivers them, one per rendered frame, and with software WebGL
+ * the swipe took up to 1.5 s and missed the app's 900 ms limit.
+ */
 async function swipe(page: Page, from: [number, number], to: [number, number]): Promise<void> {
   const cdp = await page.context().newCDPSession(page);
-  const send = (type: string, p?: [number, number]) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p[0], y: p[1] }] : [] });
+  const t0 = Date.now() / 1000;
+  let k = 0;
+  const send = (type: string, p?: [number, number]) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p[0], y: p[1] }] : [], timestamp: t0 + 0.016 * k++ });
   await send('touchStart', from);
   for (let i = 1; i <= 8; i++) await send('touchMove', [from[0] + ((to[0] - from[0]) * i) / 8, from[1] + ((to[1] - from[1]) * i) / 8]);
   await send('touchEnd');

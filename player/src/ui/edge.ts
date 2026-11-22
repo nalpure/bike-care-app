@@ -5,6 +5,7 @@
 // edge, Chrome on Android from either edge (a system gesture the page never sees). The app keeps
 // one history entry per level (see App.sentinel), so the browser's back also goes back in the app,
 // and `lastEdgeBack` stops the two from counting twice when both fire. Our zone is the first 24 px.
+// The flick speed uses the events' own time stamps, so a busy page does not make a flick look slow.
 
 import type { App } from './app.js';
 
@@ -41,7 +42,7 @@ export function attachEdgeBack(app: App): void {
     if (e.touches.length !== 1 || t.clientX > ZONE || !app.backTarget()) return;
     x0 = t.clientX;
     y0 = t.clientY;
-    t0 = performance.now();
+    t0 = e.timeStamp;
     screen = app.root.querySelector<HTMLElement>(':scope > .screen');
     on = 'maybe';
   }, { passive: true });
@@ -72,7 +73,7 @@ export function attachEdgeBack(app: App): void {
     }
     on = null;
     const dx = (e.changedTouches[0]?.clientX ?? x0) - x0;
-    const fast = dx / Math.max(1, performance.now() - t0) > 0.5;
+    const fast = dx / Math.max(1, e.timeStamp - t0) > 0.5;
     if (dx > window.innerWidth / 3 || (fast && dx > 60)) {
       app.lastEdgeBack = performance.now();
       settle(window.innerWidth, () => {

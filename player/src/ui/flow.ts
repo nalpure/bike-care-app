@@ -310,6 +310,8 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
  * scrolled to its end counts, and only if the text did not scroll during it, so reading a long step
  * never moves on by itself. The 3D view is outside `el`, so dragging it never counts. Touch events,
  * because the browser takes over a vertical drag as a scroll and then sends no pointer events.
+ * The swipe is timed by the events' own time stamps (when the finger moved), not by when a busy
+ * page got round to handling them, so a quick swipe still counts while the 3D view is slow.
  */
 function attachSwipeUp(el: HTMLElement, onNext: () => void): void {
   let x0 = 0;
@@ -322,7 +324,7 @@ function attachSwipeUp(el: HTMLElement, onNext: () => void): void {
     armed = e.touches.length === 1 && el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
     x0 = t.clientX;
     y0 = t.clientY;
-    t0 = performance.now();
+    t0 = e.timeStamp;
     top0 = el.scrollTop;
   }, { passive: true });
   el.addEventListener('touchend', (e) => {
@@ -331,7 +333,7 @@ function attachSwipeUp(el: HTMLElement, onNext: () => void): void {
     const t = e.changedTouches[0];
     const dx = t.clientX - x0;
     const dy = t.clientY - y0;
-    if (dy < -60 && Math.abs(dy) > Math.abs(dx) * 1.5 && performance.now() - t0 < 900 && Math.abs(el.scrollTop - top0) < 2) onNext();
+    if (dy < -60 && Math.abs(dy) > Math.abs(dx) * 1.5 && e.timeStamp - t0 < 900 && Math.abs(el.scrollTop - top0) < 2) onNext();
   });
   el.addEventListener('touchcancel', () => (armed = false));
 }
