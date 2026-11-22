@@ -31,4 +31,4 @@ Each with the recommended answer.
 2. A mountain bike derailleur (Eagle style); the library's is a touring/road one and the 10-51 cage is a stretched copy.
 3. Disc brakes, a suspension fork, a full-suspension frame, the electronic derailleur.
 4. Small shape fixes: frame tube ends and dropouts, hubs (no flanges), tyres (round section), the shifter, generated levers.
-5. Second variants of a slot (clipless pedals, other saddles): recipe in `player/README.md`.
+5. Second variants of a slot (clipless pedals, other saddles): recipe in `player/src/stage/library.md`.

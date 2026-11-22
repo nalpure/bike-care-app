@@ -22,7 +22,7 @@ The rule behind it: **all repair knowledge lives in `content/`; the player has n
 | `content/`, `profiles/`, `schema/` | repair content, test bikes, the JSON Schema for every field | `content/CLAUDE.md` |
 | `tools/` | the build tool, review sign-off, path viewer, clean-up | `tools/CLAUDE.md` |
 | `tools/assets/` | turns source 3D models into the parts library | `tools/assets/CLAUDE.md` |
-| `player/` | the web app (Vite, TypeScript, three.js) | `player/README.md`, `player/CLAUDE.md` |
+| `player/` | the web app (Vite, TypeScript, three.js) | `player/CLAUDE.md`, and one per part: `src/engine/`, `src/ui/`, `src/stage/` |
 | `build/` | generated, committed, never edited by hand | |
 | `reviews/` | sign-offs of review units | |
 | `assets-src/` | source 3D models (CC BY) | `assets-src/overview.md` |

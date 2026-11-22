@@ -1,0 +1,14 @@
+# Known 3D shortcomings
+
+Read this before you promise a visual change, or when you wonder why something looks generated. What is still undecided is in `docs/open.md`.
+
+- **One look per part.** Every derailleur, crank, saddle, stem and bar looks like the one library part (a touring bike's; 784 mm flat bar on every flat and riser bike). The bike's model and brand facts are not drawn.
+- **Not from a real source yet:** drop bar, hoods and brake levers, the shifter, disc brakes (no brakes at the wheels at all, only the levers), suspension fork, front derailleur, an MTB derailleur and the electronic derailleur. The next sources to find: a road bike model for drop bar, levers, rim brakes and front derailleur; an MTB derailleur (the library's one is a touring/road design).
+- Sprockets, chainring and chain are drawn at real size, with real tooth shapes and links; the chain's pins sit in the tooth gaps of the chainring, the sprocket it is on and both derailleur pulleys. The sizes (spacing, chain width, tooth counts of the common cassettes in `spec.ts`, the 5-tab ring on a 96 mm bolt circle) are drawing values, not facts about parts. The sprockets are generated for each bike from its tooth counts. There is no narrow-wide tooth profile and no tooth chamfer (triangle budget). One chain line for every bike (the crank's).
+- The rear derailleur is the library's real one on its measured rig: the body turns about the hanger bolt only with the B screw, the links swing as the four-bar they are, and the cage turns until the chain (big-big plus two links, a fixed length) is taut. The gap is right on the largest sprocket; on the others it follows from the geometry, up to about 19 mm on an 11-36. On wide cassettes the same derailleur gets a long hanger (about 64 mm on 10-51) and a longer cage, so the upper pulley sits far below the smallest sprockets (about 40 mm on 10-51; owner decision 2026-11-21).
+- Small mechanical parts (`OUTLINED` in `bike.ts`) are drawn with dark edge lines (35 deg, also on the library pieces), and the lights are less even than the prototype's, so the shapes read with one colour or a highlight.
+- The pedals turn at about half the speed of the first version and the rear wheel's drawn turn is capped (see `anim.ts`), so neither looks like it runs backwards at 60 pictures a second. Chain and sprockets are exact at any speed.
+- Cargo bikes are drawn as city bikes; hub gears and gearboxes as one sprocket; there is no full-suspension frame.
+- Geometry facts: top tube and wheelbase are not used (the front wheel follows the head angle with a 45 mm fork offset). An unusual combination moves a wheel away from the frame instead of drawing them touching.
+- The garage preview uses the one shared stage, so only one bike can turn in 3D at a time; other bikes can be shown as `snapshot` pictures.
+- With reduced motion the camera and the pose jump; animations still loop.
