@@ -35,6 +35,7 @@ The golden example is the symptom "My gears don't shift cleanly": `content/diagn
 - `npm run dev`    start the player locally.
 - `npm run build`  static build of the player for sharing (`dist/`).
 - `npm run parts`  build the 3D parts library (`player/public/parts/`) from `assets-src/`; `npm run parts:check` compares every part with its source model and checks the budget.
+- `npm run parts:mounts`  measure where the crank, saddle, collar, stem, bar and grips mount on the built library and write `player/src/stage/mounts.ts`.
 - `npm run parts:rig`  measure the derailleur rig on the source model and write `player/src/stage/rd-rig.ts`.
 - `npm run manifest`  write `build/3d-manifest.json` (the 3D nodes, views and clips content may use) from the player's registry.
 - `npm run test:e2e`  build the player and click through every profile journey in a phone-sized browser; screenshots in `player/e2e/shots/`.
