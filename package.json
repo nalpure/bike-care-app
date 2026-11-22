@@ -33,6 +33,7 @@
     "@types/node": "^26.6.6",
     "@types/three": "^0.187.0",
     "meshoptimizer": "1.1.1",
+    "occt-import-js": "^0.0.23",
     "playwright": "^1.65.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
