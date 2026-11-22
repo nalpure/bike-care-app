@@ -2,47 +2,51 @@
 
 ## Status
 
-Part 1 of 3 done (tasks 1 to 3: rig, closure, round trip). Part 2: tasks 4, 5, 8 (Opus). Part 3: tasks 6, 7, 9, 10 (Sonnet will do; owner's call).
+Part 2 of 3 done (tasks 4, 5, 8). Part 3: tasks 6, 7, 9 (rest of the README), 10 (Sonnet is fine; owner's call).
 
 ## Done
 
-- `344e8a4` `tools/assets/measure-rd.ts` (`npm run parts:rig`, about 25 s; `-- --explore` lists every cylinder per piece and the coaxial pairs; `-- --shots` writes `tools/assets/out/rig-{drive,behind,above}.png` through `explore/rig-view.html`). Writes `player/src/stage/rd-rig.ts` (`RD_RIG`, generated, scene units, library space). `player/src/stage/rd-kin.ts` (kinematics). `player/test/derailleur.test.ts` (4 tests). `docs/decisions.md`: long cage line clarified (owner).
-- Verified: `npm run check`, `npm test` (109 tests, 11.9 s; 11.5 s at session C's end), `npm run typecheck`, `npm run test:e2e` (11 of 11). No shots: the app does not use the new modules yet.
-- Marker renders looked at once from 3 sides: every axis sits on its feature.
+- Part 1 (`344e8a4`, `f35d3f6`): `npm run parts:rig` (`tools/assets/measure-rd.ts`) writes `rd-rig.ts`; `rd-kin.ts` (four-bar, `rdPose`); `player/test/derailleur.test.ts` (closure, round trip).
+- Part 2 (`eeae3cb`, `0007619`): `rd-fit.ts` (fit per bike), `derailleur.ts` rewritten on the library pieces (old `derGeom`/`derPose`/constants gone), chain of fixed length, pulleys spin with the chain, screws, barrel/stop, cable; 2 new tests in `stage.test.ts` plus the clearance test rewritten (all 16 cassettes: road 8-12, city 5/7-10, MTB 8-13); README file table and the two derailleur "Known shortcomings" lines.
+- Verified: `npm run check`, `npm test` 111 passed, 14.8 s (12.5 s at the start), typecheck, `test:e2e` 11 of 11, road shots (looked at 4).
+- Budgets (`npx tsx tools/stage-digest.ts <out.json>`, now loads the library): road 11 130 meshes / 53.9k triangles, city 8 138 / 48.3k, MTB 12 147 / 54.9k (before the round 148/152/161 meshes; limit 150k triangles).
 
-### Measured (mm; all from the exact source meshes)
+### Measured per cassette (GAP_OK; mm)
 
-Trusted (two pieces agree within 0.04 mm and 0.2 deg): B-axis = hanger hole (r 5) = body bolt, exactly along z. Four pins all along `pinDir` (0.533, 0.683, -0.500), spread 0.01 deg. Links 38.50 / 38.50, upper pins 16.03 apart, lower pins 15.00: **not a parallelogram**, solved as a four-bar. P-axis: lower body boss r 11.0 / outer cage plate, 0.04 mm / 0.19 deg apart (direction taken from the cage plates). Pulley axles in both plates: 0.00 mm. Pulley centres 82.14 apart. Barrel: 18 mm long, r 4.5, housing socket at the rear end. Hanger plate z 66 to 72.
-
-Less sure: **H and L** are two fused r 2.5 shanks with r 3 counterbores on the back of the upper body, 14 mm apart, parallel to the barrel; which is H is not marked. **B screw**: a fused r 1.5 shank in the B-knuckle behind the bolt, 23.3 mm long, lever arm 12.6 mm about the bolt, tip in the hanger's plane. **Clamp**: r 3 bolt boss on the lower body, square to the link plates; the barrel's axis passes about 45 mm from it, so the wire cannot run straight out of the barrel to it. **Pulleys**: the model's are generic gears, 10 teeth with seats 36 deg apart on a 22.5 mm circle (tip r 21, tooth 1.84 mm wide). Chain-true at 22.5 mm is 11 teeth (pitch radius 22.54).
+Gap on the largest is 5.5 everywhere. Largest gap on the other sprockets: 11-28 9.7, 11-32 15.6, 11-34 19, 11-36 19, 14-28 8, 11-42 26, 10-51 40-43. Hanger bolt 30 mm from the axle (11-36: 33, 11-42: 45, 10-51: 64). Cage stretch 0 except 10-51: 21 mm (82 -> 103). Chain 106-116 links, taut in every gear. Upper-pulley wrap 112 deg (road, 11T) down to 28 deg (MTB, 51T). Solve about 0.5 ms; a new gap about 3 ms.
 
 ## Interfaces other sessions rely on
 
-- `rd-rig.ts`: `RD_RIG.{bAxis{p,d}, hangerZ, pinDir, pins{upperOuter,upperInner,lowerOuter,lowerInner}, pAxis, pulleys.{upper,lower}{c,d,teeth,rPitch,teethModel,rSeat,rTip,width}, barrel{p,d,head,seat,r}, clamp{p,d}, screws{h,l,b{p,d},bLen}}`. Screw `p` = head seat, `d` = head into thread. Barrel `d` = head into thread.
-- `rd-kin.ts`: `RIG` (Vector3s, `src` angles), `rdPose(bolt, {body, link, cage})` gives `{upper, linkOuter, linkInner, lower, cage, ok}` (Matrix4 from each piece's library pose to bike space; the B-axis keeps its direction), `pulleySpin(which, ang)` (multiply after `cage`), `anglesOf(pose)`, `rotAbout`, `LINK_SWING {min,max}` (src -30 to +80 deg; folds at about -33).
-- Angles are absolute (see the file header). Source pose: link angle near the smallest sprocket; **raising the link angle moves the P-knuckle inwards** (37 mm over 70 deg), down 15 mm and back 12 mm. Lower body turns up to 3 deg at +40 (four-bar).
+- `derailleur.ts`: `fitFor(B)` (cached `RdFit` per spec), `upperPulley(B, z, gap?)`, `lowerPulley(B, z, gap?)` ([x, y]), `derLayout(B, z, gap)` -> `{r, gx, gy, gz, lx, ly, lz, st}`, `barrelTurn(B)`, `buildDerailleur`, `moveDerailleur`, `spinPulleys`, type `Turn`, `DerParts` (`fit`, frames `upper linkOuter linkInner lower cage pulleyU pulleyL`, `st`, `housing`, `wire[3]`, `housingFrom`, `bScrew`, `spin`). Library meshes hang in frames with `matrixAutoUpdate = false`; their geometry stays in library space.
+- `rd-fit.ts`: `RdFit` (`bolt`, `links`, `stretch`, `solve(z, body)`, `bodyFor(gap)`, `gapOf`, `rAt`), `RP_RD`, `CAGE_LEN`, `CAGE_DIR`, `cageStretch(B)`, `CAGE_PER_TOOTH`, `BOLT_DIR`, `BOLT_MIN`, `RdFit.CAGE_STOP`.
+- `BikeModel.layout(z, gap)` returns `derLayout`; `setDer` = move, `layChain`, `spinPulleys`. On derailleur bikes `m.N = fit.links + 2` and `layChain` lays `fit.links` links.
+- `spec.ts`: `RP = rOf(11)`; `LC` removed; `GAP_BIG = 0.022`. Shared derailleur geometry (pulleys, stretched cage, barrel) has `userData.lib = true`, so `disposeTree` keeps it; the lower pulley mesh has `userData.pulley`.
+- Test helper `meshPoints(m, ids, steps, { stride, noPulleys })`: vertices only for `userData.lib` geometry.
 
 ## Choices made without the owner
 
-- **H is the upper of the two limit screws** (`measure-rd.ts`, `hlScrews.sort`).
-- **Pulleys drawn with 11 teeth** at the model's seat circle (`RD_RIG.pulleys.*.teeth`, `rPitch`); the model's 10-tooth mesh is not chain-true. Part 2 decides how to draw them (see next steps).
-- **P-axis direction from the cage plates**, point from the lower body's boss.
-- Kinematics in a new file `rd-kin.ts` (pure maths, like `pins.ts`), not inside `derailleur.ts`.
+- **GAP_BIG 11 mm** (was 18; twice GAP_OK). 18 mm needed a hanger long enough to push the right gap into a fold of the geometry, where the chain went slack. `spec.ts`.
+- **Bolt** 105 deg (below, slightly behind the axle), at least 30 mm, longer when the largest sprocket needs it (rule in `rd-fit.ts`). 10-51 gets a 64 mm hanger.
+- **Gap range in the test:** 2-20 mm up to 36 teeth, 2-45 mm above (`stage.test.ts`). The source derailleur's slant cannot follow a wide cassette.
+- **Cage stops** -55/+60 deg from the source angle (about 36 teeth of wrap at 3.1 deg per tooth); long cage 4.25 mm per tooth of wrap beyond 36, only when the largest is above 36. 11-42 (wrap 31) keeps the 82 mm cage. `rd-fit.ts`.
+- **Pulleys:** library hub plus a generated 11-tooth ring (`pulleyGeo`). **Hanger** plate from the axle to the bolt and the tab, 4.5 mm, outside the dropout. **Wire** exits the body 9.5 mm past the barrel seat and bends at a searched point (`WIRE_BEND`) to stay outside the pieces; it still grazes the inner link by 1-2 mm in some gears. **Housing** comes in 20 mm along the barrel's axis.
+- **H/L shanks 10 mm, B screw sticks out 3 mm** at the right gap; tab placed at the B screw's tip on the middle sprocket at GAP_OK.
+- New file `rd-fit.ts` (pure maths) instead of putting the solver into `derailleur.ts`.
 
 ## Questions for the owner
 
-None open.
+1. On 11-42 and 10-51 the upper pulley sits 26-43 mm below the small sprockets, and 10-51 needs a 64 mm hanger. Accept until a mountain bike derailleur source exists? Recommended: yes, and look for a CC BY MTB derailleur (Eagle-style) as the next library source.
 
 ## Next steps
 
-1. Part 2 (tasks 4, 5, 8), same prompt. Build `derailleur.ts` on `rdPose`: each `rd_*` piece is one mesh with `libGeo`, its matrix set from the pose (put `matrixAutoUpdate = false` or decompose). Library space has its origin at the source BB: map to bike space with the bike's own BB (check `bby` in `spec.ts`) when choosing the bolt.
-2. Bolt below and slightly behind the axle; hanger built in code in the hanger plane (`hangerZ` width) at `zDrop`, with a tab under the B screw's tip (`screws.b.p + d * bLen`). Lateral: solve `link` (bisection over `LINK_SWING`) for the upper pulley's centre plane at the sprocket z. Body angle from `gap` on the largest sprocket. Cage angle from fixed chain length (`chordLength`), N = big-big plus 2 links.
-3. Pulleys: set `RP` (spec.ts) and `circ[2]`, `circ[3]` to `rPitch` 0.04508; suggested: generated 11-tooth ring (`sprocketGeo`) about the library's hub, or scale nothing and accept the 10-tooth mesh only if rollers clear it. Spin them from `pins.wheel === 2 / 3`.
-4. Long cage when the largest sprocket is above 36 (owner): stretch the plates beyond the upper axle along upper to lower pulley.
-5. Screws (`m.screw`, M4), barrel (`rd_barrel` re-centred on `barrel.p/d`), cable stop when `barrelAt === 'shifter'`, wire from `barrel.seat` to `clamp.p` (check it clears the links). Then task 8 tests per cassette.
+1. Part 3, same prompt: task 6 (shading `k` is set in `buildDerailleur`; tune the outline angle for library meshes: `add()` in `bike.ts` uses `EdgesGeometry(geo, 35)` for every OUTLINED part).
+2. Task 7: `views.ts` close-ups for the real size (use `upperPulley`, `lowerPulley`, `barrelTurn`, `fitFor(B).bolt`); check upside down and the MTB 12 in portrait. The housing loop in `cockpit.ts` now ends at `housingFrom` (20 mm behind the barrel along its axis): check it looks right.
+3. `limit-screw-align` with L on MTB 12: the links reach only about 5 of the clip's 8 mm beyond the largest sprocket (`LINK_SWING.max`); the clip still plays. Consider `o` per bike in `anim.ts`.
+4. Task 9 README rest, task 10 shots (MTB 12 needs a bike in `player/e2e/slow.ts`), verify, handoff.
 
 ## Gotchas
 
-- Scratch scripts that import `three` must live inside the repo: put them in `tools/assets/out/` (git-ignored, and left out of `tsc`).
-- `measure-rd.ts` RANSAC is seeded, so its output is stable; about 25 s. Its feature picks are filters on the cylinder list (`pick`): if a change to the finder moves a value, check `--explore` before trusting it (the clamp once jumped to another boss).
-- `stage.test.ts` "keeps the derailleur, chain and frame off the sprockets" takes about 5 s alone and timed out once (6.3 s) under load. Part 2 rewrites it; keep it fast or give it its own timeout.
+- The chain length jumps where the chain's wrap flips (cage far forward): a root finder lands on the jump. `cageFor` only accepts a crossing where |length - chain| < 1e-5 and scans from the slack end otherwise.
+- `npm run shots` names each PNG after the previous card (off by one).
+- Scratch scripts that import `three` go in `tools/assets/out/` (git-ignored); `explore-*.ts` there are part 2's probes (bolt scan, cage swing, wire search).
+- `measure-rd.ts` output is seeded and stable (about 25 s); check `--explore` before trusting a moved value.
