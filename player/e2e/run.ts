@@ -1,6 +1,6 @@
 // Browser walk: builds the player, serves dist/ and clicks through every profile journey on a
 // phone-sized screen, the way the profile's owner would. Saves a screenshot of every screen to
-// scratch/shots/ and checks that each journey ends where build/report.md says it ends.
+// scratch/shots/e2e/ (npm run shots uses scratch/shots/slow/) and checks that each journey ends where build/report.md says it ends.
 //
 //   npm run test:e2e                  all journeys, portrait, plus landscape screenshots
 //   npm run test:e2e -- --no-build    reuse dist/
@@ -18,7 +18,7 @@ import { chromium, type Page } from 'playwright';
 import YAML from 'yaml';
 
 const REPO = resolve(import.meta.dirname, '../..');
-const SHOTS = join(REPO, 'scratch/shots');
+const SHOTS = join(REPO, 'scratch/shots/e2e');
 const PORT = 4179;
 const URL = `http://localhost:${PORT}/`;
 
@@ -588,7 +588,7 @@ async function main(): Promise<void> {
     if (!ok) failed++;
     console.log(`${ok ? 'ok  ' : 'FAIL'} ${r.id}: ${r.ending}${ok ? '' : ` (expected: ${r.expected})${r.error ? ` error: ${r.error}` : ''}`}`);
   }
-  console.log(`\n${results.length - failed} of ${results.length} journeys end as in build/report.md. Screenshots in scratch/shots/.`);
+  console.log(`\n${results.length - failed} of ${results.length} journeys end as in build/report.md. Screenshots in scratch/shots/e2e/.`);
   if (only) console.log(`Only the journeys matching ${only.join(', ')}: run the whole set once before you commit.`);
   if (!results.length) {
     console.log('No journey matched.');

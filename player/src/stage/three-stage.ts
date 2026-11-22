@@ -537,9 +537,8 @@ export class ThreeStage implements Stage {
    * Corners of the box of every mesh of a drawn part, in bike space. A mesh in the crank set is
    * also taken turned about the bottom bracket, so the pedals' circle fits whatever the crank angle.
    */
-  private shownPoints(): Array<[number, number, number]> {
+  private shownPoints(shown: Set<string> = this.shown!): Array<[number, number, number]> {
     const m = this.model!;
-    const shown = this.shown!;
     m.bike.updateMatrixWorld(true);
     const inv = m.bike.matrixWorld.clone().invert();
     const pts: Array<[number, number, number]> = [];
@@ -571,6 +570,38 @@ export class ThreeStage implements Stage {
       }
     });
     return pts;
+  }
+
+  /**
+   * For checks without pictures (`npm run shots` prints it): the parts drawn now, and how far the
+   * card's subject (the focus parts, and the show parts on a card with `show`) sits from each edge
+   * of the 3D view, as a fraction of its width or height (negative: cut off). Corners behind the
+   * camera are counted in `behind`, not in the box; no subject gives an empty `subject` and zeros.
+   * Uses the camera as it is now, so call it once the camera has settled.
+   */
+  framing(): { parts: string[]; subject: string[]; left: number; right: number; top: number; bottom: number; behind: number } | null {
+    const m = this.model;
+    if (!m) return null;
+    const parts = [...m.parts.values()].filter((p) => p.visT > 0.5).map((p) => p.id);
+    const subject = this.shown ? parts : parts.filter((id) => this.hotParts.has(id));
+    const pts = this.shownPoints(new Set(subject));
+    if (!pts.length) return { parts, subject: [], left: 0, right: 0, top: 0, bottom: 0, behind: 0 };
+    m.bike.updateMatrixWorld(true);
+    this.camera.updateMatrixWorld(true);
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, behind = 0;
+    const v = new T.Vector3();
+    const toCam = new T.Vector3();
+    for (const p of pts) {
+      v.set(...p).applyMatrix4(m.bike.matrixWorld);
+      if (toCam.copy(v).applyMatrix4(this.camera.matrixWorldInverse).z > -this.camera.near) {
+        behind++;
+        continue;
+      }
+      v.project(this.camera);
+      x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x);
+      y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
+    }
+    return { parts, subject, left: (x0 + 1) / 2, right: (1 - x1) / 2, top: (1 - y1) / 2, bottom: (y0 + 1) / 2, behind };
   }
 
   private camDest(vp0: ViewPose): { p: T.Vector3; t: T.Vector3 } {

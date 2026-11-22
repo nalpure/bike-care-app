@@ -2,7 +2,7 @@
 
 `player/src/stage/` is the 3D view. Its element is created once and moved into each card, so the canvas carries on while the text changes. On an exit reached while something is still apart, the stage shows how the bike is held. Without WebGL it shows a text box; if three.js can't start at all, `main.ts` falls back to `PlaceholderStage` (`ui/stage.ts`).
 
-Read first: `docs/decisions.md`, section "3D view". Then only what you need: `library.md` (library parts, how to add one), `gaps.md` (what still looks generated). Commands for the parts library are in `tools/assets/CLAUDE.md`. `npm run manifest` writes `build/3d-manifest.json` from `registry.ts`; `npm run check` validates content against it. `npm run shots -- --only road` (after `npm run build`) walks the rear-shifting tutorial and writes one screenshot per card to `scratch/shots/slow/`; look at 2 to 4 of them.
+Read first: `docs/decisions.md`, section "3D view". Then only what you need: `library.md` (library parts, how to add one), `gaps.md` (what still looks generated). Commands for the parts library are in `tools/assets/CLAUDE.md`. `npm run manifest` writes `build/3d-manifest.json` from `registry.ts`; `npm run check` validates content against it. `npm run shots -- --only road` (after `npm run build`) walks the rear-shifting tutorial and writes one screenshot per card to `scratch/shots/slow/NN-<card>.png`, and prints per card how far the drawn parts sit from each edge of the 3D view (`ThreeStage.framing()`); `-- --card <words>` limits it to some cards and also lists the parts drawn. Judge framing from those numbers; look at 2 to 4 pictures only to confirm.
 
 ## Files
 
@@ -60,6 +60,7 @@ stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any 
 - `frame_dropout` and `rear_hub` are parts cut out of `frame` and `rear_wheel` (`SPLIT_PARTS`, `NODE_PARTS`), not nodes: use `partsOf('frame')` and `partsOf('rear_wheel')` whenever you need the whole. They share the parent's `center` and `ctx`. `curveGeoSplit` cuts a tube by index, so the vertices are those of `curveGeo`. `drivetrain` and `rear_end` are group nodes (`GROUP_NODES`): `previewNode` never maps a part to them.
 - Framing: on a card with `show`, a view in `FIT_VIEWS` (`drive_side`) keeps its direction but is re-aimed and moved (`fitPose`, pure, every frame, so it follows the picture's size) to fit the corners of every drawn mesh, with the crank's circle. Close-ups are authored; do not add them to `FIT_VIEWS`.
 - `npx tsx tools/stage-digest.ts` also writes `geo` per bike, a hash of every triangle per part that does not change when a part is split; compare that, not `steps`, after a split.
-- `npm run shots` names each PNG after the card before the one it shows (the file `05-shift-to-smallest-sprocket.png` shows card 5, "check-high-limit"); read the card number in the picture.
+- Software WebGL (shots, e2e) draws few pictures a second and `tick` caps its step at 0.05 s, so a 1.5 s camera move takes several seconds there; `shots` waits until `framing()` stops changing. A fixed wait gives pictures taken mid-move.
+- Put new stage rules in pure modules (`visibility.ts`, `fitPose` in `views.ts`) and test them in `stage.test.ts`: `ThreeStage` itself needs WebGL and has no unit tests.
 
 The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. Keep its look.
