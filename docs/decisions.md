@@ -18,6 +18,9 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-21 Real sprocket spacing.** Sprockets sit at their real spacing; closer camera views make up for it.
 - **2026-11-21 Wide cassettes.** Above 36 teeth the same derailleur gets a longer cage, until a source for a mountain bike derailleur exists. The trigger is the largest sprocket only; the wrap only sets the cage's length.
 - **2026-11-21 Source models in git.** Only the touring bike's source is committed; the others stay out of git until they are used.
+- **2026-11-22 Shown, marked, hidden.** A step's `focus` lists only the small parts it marks in colour; a new `show` lists the parts drawn plain; every other part is hidden completely (no grey). Steps without `show` keep the old behaviour until they get one. When the frame is hidden, so are stand and hook.
+- **2026-11-22 Clips own the scene.** A named clip decides how the scene looks while it plays: red marking (a part that is bent or wrong), and contours of the correct or starting position. Generic motions (push, rotate, …) add no contours.
+- **2026-11-22 Hanger check.** `derailleur-alignment` gets a clip that bends the hanger in and out (hanger red) with the straight derailleur's contour; shown: hanger, derailleur, sprockets, rear end of the frame with the hub. The chain is left out at first.
 
 ## Where approach.md is out of date
 
