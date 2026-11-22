@@ -14,7 +14,7 @@ import { RD_RIG } from '../src/stage/rd-rig.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
 import { CLIPS, GROUP_NODES, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, SPLIT_PARTS, VIEWS } from '../src/stage/registry.js';
 import { FADED, shownParts, visTargets, type VisCard } from '../src/stage/visibility.js';
-import { viewPose } from '../src/stage/views.js';
+import { fitPose, FIT_VIEWS, viewPose } from '../src/stage/views.js';
 
 const REPO = resolve(import.meta.dirname, '../..');
 const mat = new T.MeshStandardMaterial();
@@ -86,6 +86,51 @@ function card(m: BikeModel, focus: string[], show: string[] | null, more: Partia
     context: () => false, exploring: false, showAll: false, selected: null, ...more,
   };
 }
+
+describe('framing what a card draws (fitPose)', () => {
+  const B = bikeSpec({ 'bike.category': 'road_gravel', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 });
+  const vp = viewPose('drive_side', B)!;
+  const tanV = Math.tan((17.5 * Math.PI) / 180);
+
+  /** where points land on the picture: x / tanH and y / tanV, -1 to 1 inside */
+  function onScreen(pose: { p: number[]; t: number[] }, pts: Array<[number, number, number]>, aspect: number) {
+    const cam = new T.PerspectiveCamera(2 * 17.5, aspect, 0.1, 100);
+    cam.position.set(...(pose.p as [number, number, number]));
+    cam.lookAt(...(pose.t as [number, number, number]));
+    cam.updateMatrixWorld(true);
+    const xs = pts.map((p) => new T.Vector3(...p).project(cam));
+    return { minX: Math.min(...xs.map((v) => v.x)), maxX: Math.max(...xs.map((v) => v.x)), minY: Math.min(...xs.map((v) => v.y)), maxY: Math.max(...xs.map((v) => v.y)) };
+  }
+
+  it('centres the points, fills the picture on one side and keeps them all inside', () => {
+    const pts: Array<[number, number, number]> = [[-0.9, 0.3, 0.1], [-0.9, 0.0, -0.1], [0.4, 0.5, 0.1], [0.4, -0.2, -0.1], [-0.2, 0.9, 0], [-0.2, -0.4, 0]];
+    for (const aspect of [0.9, 1.78]) {
+      const s = onScreen(fitPose(vp, pts, tanV, aspect), pts, aspect);
+      expect(s.minX, `aspect ${aspect}`).toBeGreaterThan(-1);
+      expect(s.maxX).toBeLessThan(1);
+      expect(s.minY).toBeGreaterThan(-1);
+      expect(s.maxY).toBeLessThan(1);
+      // centred
+      expect(Math.abs(s.minX + s.maxX)).toBeLessThan(0.03);
+      expect(Math.abs(s.minY + s.maxY)).toBeLessThan(0.03);
+      // filling: the larger side takes at least 80 % of the picture
+      expect(Math.max(s.maxX - s.minX, s.maxY - s.minY)).toBeGreaterThan(1.6);
+    }
+  });
+
+  it('keeps the view direction and does nothing without points', () => {
+    expect(fitPose(vp, [], tanV, 1)).toBe(vp);
+    const f = fitPose(vp, [[0, 0, 0], [0.3, 0.2, 0]], tanV, 1);
+    const dir = (a: number[], b: number[]) => { const d = [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; const l = Math.hypot(...d); return d.map((x) => x / l); };
+    const d0 = dir(vp.p, vp.t);
+    const d1 = dir(f.p, f.t);
+    for (let i = 0; i < 3; i++) expect(d1[i]).toBeCloseTo(d0[i], 6);
+  });
+
+  it('only wide views are framed', () => {
+    expect(FIT_VIEWS).toEqual(['drive_side']);
+  });
+});
 
 describe('which parts a card draws (visibility.ts)', () => {
   const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 }), mat);

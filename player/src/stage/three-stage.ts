@@ -15,7 +15,7 @@ import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, 
 import { shownParts, visTargets } from './visibility.js';
 import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
 import { mixPose, poseVals, type PoseVals } from './pose.js';
-import { previewPose, viewPose, type ViewPose } from './views.js';
+import { fitPose, FIT_VIEWS, previewPose, viewPose, type ViewPose } from './views.js';
 
 const nowS = () => performance.now() / 1000;
 const reduceMotion = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -374,7 +374,7 @@ export class ThreeStage implements Stage {
 
     this.stepAnim = !fallback && a ? { anim: makeAnim(a, this.animCtx()), caption: a.caption ?? '', view: a.view } : null;
     this.t0 = nowS();
-    this.cardView = viewPose(viewName, m.spec);
+    this.cardView = this.poseFor(viewName);
     if (!this.exploring) this.goCam(this.stepAnim?.view ? viewPose(this.stepAnim.view, m.spec) : this.cardView, this.first);
     this.buildTags(focus);
     this.setNote();
@@ -526,7 +526,55 @@ export class ThreeStage implements Stage {
     this.tw = { p0: this.camera.position.clone(), t0: this.look.clone(), vp, k: 0, dur: 1.5 };
   }
 
-  private camDest(vp: ViewPose): { p: T.Vector3; t: T.Vector3 } {
+  /** The named view for this card; on a card with `show`, a wide view also frames what is drawn (FIT_VIEWS). */
+  private poseFor(name: string): ViewPose | undefined {
+    const vp = viewPose(name, this.model!.spec);
+    if (!vp || !this.shown || vp.space !== 'bike' || !FIT_VIEWS.includes(name)) return vp;
+    return { ...vp, fit: this.shownPoints() };
+  }
+
+  /**
+   * Corners of the box of every mesh of a drawn part, in bike space. A mesh in the crank set is
+   * also taken turned about the bottom bracket, so the pedals' circle fits whatever the crank angle.
+   */
+  private shownPoints(): Array<[number, number, number]> {
+    const m = this.model!;
+    const shown = this.shown!;
+    m.bike.updateMatrixWorld(true);
+    const inv = m.bike.matrixWorld.clone().invert();
+    const pts: Array<[number, number, number]> = [];
+    const mat = new T.Matrix4();
+    const v = new T.Vector3();
+    const turn = new T.Matrix4();
+    const bb = m.crankset.position;
+    m.bike.traverse((o: any) => {
+      if (!o.isMesh || !shown.has(o.userData.partId)) return;
+      const g = o.geometry as T.BufferGeometry;
+      if (!g.boundingBox) g.computeBoundingBox();
+      const b = g.boundingBox!;
+      let inCranks = false;
+      for (let a: T.Object3D | null = o; a; a = a.parent) if (a === m.crankset) inCranks = true;
+      const turns = inCranks ? 8 : 1;
+      const n = o.isInstancedMesh ? o.count : 1;
+      for (let i = 0; i < n; i++) {
+        if (o.isInstancedMesh) o.getMatrixAt(i, mat);
+        else mat.identity();
+        mat.premultiply(o.matrixWorld).premultiply(inv);
+        for (let k = 0; k < turns; k++) {
+          if (inCranks) turn.makeTranslation(bb.x, bb.y, 0).multiply(new T.Matrix4().makeRotationZ((k / turns) * 2 * Math.PI)).multiply(new T.Matrix4().makeTranslation(-bb.x, -bb.y, 0));
+          for (let c = 0; c < 8; c++) {
+            v.set(c & 1 ? b.max.x : b.min.x, c & 2 ? b.max.y : b.min.y, c & 4 ? b.max.z : b.min.z).applyMatrix4(mat);
+            if (inCranks) v.applyMatrix4(turn);
+            pts.push([v.x, v.y, v.z]);
+          }
+        }
+      }
+    });
+    return pts;
+  }
+
+  private camDest(vp0: ViewPose): { p: T.Vector3; t: T.Vector3 } {
+    const vp = vp0.fit ? fitPose(vp0, vp0.fit, Math.tan((this.camera.fov * Math.PI) / 360), this.camera.aspect) : vp0;
     const p = new T.Vector3(...vp.p);
     const t = new T.Vector3(...vp.t);
     if (vp.space === 'bike') {

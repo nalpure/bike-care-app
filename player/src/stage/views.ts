@@ -14,6 +14,64 @@ export interface ViewPose {
   p: [number, number, number];
   t: [number, number, number];
   space: 'world' | 'bike';
+  /**
+   * Points in bike space (the corners of every drawn part's box) that must fill the picture:
+   * the camera keeps this pose's direction and looks at their middle from as near as lets them all in.
+   * Set by the stage on a card with `show`, for the views in FIT_VIEWS.
+   */
+  fit?: V3[];
+}
+
+type V3 = [number, number, number];
+
+/** The wide views that frame what a card with `show` draws; close-ups keep their own framing. */
+export const FIT_VIEWS: readonly string[] = ['drive_side'];
+
+/**
+ * `vp` moved along its own viewing direction and re-aimed so that `pts` (bike space) fill the
+ * picture, centred, with `margin` around them. `tanV` is tan(half the vertical field of view),
+ * `aspect` width / height of the picture. Pure.
+ */
+export function fitPose(vp: ViewPose, pts: V3[], tanV: number, aspect: number, margin = 1.1): ViewPose {
+  if (!pts.length) return vp;
+  const sub = (a: V3, b: V3): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const dot = (a: V3, b: V3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const norm = (a: V3): V3 => {
+    const l = Math.hypot(...a) || 1;
+    return [a[0] / l, a[1] / l, a[2] / l];
+  };
+  const d = norm(sub(vp.p, vp.t)); // from the target to the camera
+  const f: V3 = [-d[0], -d[1], -d[2]]; // viewing direction
+  const right = norm([-f[2], 0, f[0]]); // f x up, up = (0, 1, 0)
+  const up: V3 = [right[1] * f[2] - right[2] * f[1], right[2] * f[0] - right[0] * f[2], right[0] * f[1] - right[1] * f[0]];
+  const tanH = tanV * aspect;
+  const lo: V3 = [Infinity, Infinity, Infinity];
+  const hi: V3 = [-Infinity, -Infinity, -Infinity];
+  for (const p of pts) for (let i = 0; i < 3; i++) {
+    lo[i] = Math.min(lo[i], p[i]);
+    hi[i] = Math.max(hi[i], p[i]);
+  }
+  let c: V3 = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2];
+  let D = 1;
+  for (let it = 0; it < 6; it++) {
+    const rel = pts.map((p) => {
+      const r = sub(p, c);
+      return { x: dot(r, right), y: dot(r, up), z: dot(r, f) };
+    });
+    // the distance from c at which every point is inside the picture, with the margin
+    D = Math.max(0.2, ...rel.map((r) => Math.max((Math.abs(r.x) * margin) / tanH, (Math.abs(r.y) * margin) / tanV) - r.z));
+    // then move c so that what is drawn sits in the middle of the picture (perspective shifts it a little)
+    let nx0 = Infinity, nx1 = -Infinity, ny0 = Infinity, ny1 = -Infinity;
+    for (const r of rel) {
+      const k = D + r.z;
+      nx0 = Math.min(nx0, r.x / k); nx1 = Math.max(nx1, r.x / k);
+      ny0 = Math.min(ny0, r.y / k); ny1 = Math.max(ny1, r.y / k);
+    }
+    const sx = ((nx0 + nx1) / 2) * D;
+    const sy = ((ny0 + ny1) / 2) * D;
+    c = [c[0] + right[0] * sx + up[0] * sy, c[1] + right[1] * sx + up[1] * sy, c[2] + right[2] * sx + up[2] * sy];
+  }
+  return { p: [c[0] + d[0] * D, c[1] + d[1] * D, c[2] + d[2] * D], t: c, space: vp.space };
 }
 
 type ViewName = (typeof VIEWS)[number];

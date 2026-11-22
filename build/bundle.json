@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "3afea71b9123ca7d",
+  "content_hash": "36bfebbb1da8b29a",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1345,7 +1345,11 @@
         "h_screw"
       ],
       "show": [
-        "drivetrain"
+        "rear_derailleur",
+        "derailleur_hanger",
+        "cassette",
+        "chain",
+        "chainring"
       ],
       "view": "derailleur_from_behind",
       "buttons": [

@@ -153,7 +153,7 @@ steps:
     text: "The chain is on the smallest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the smallest sprocket?"
     tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, smallest_sprocket, h_screw]
-    show: [drivetrain]
+    show: [rear_derailleur, derailleur_hanger, cassette, chain, chainring]
     view: derailleur_from_behind
     buttons:
       - id: in-line

@@ -15,6 +15,7 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Rear end split:** the dropout end is the last 13 cm (0.26 units) of both stays, cut at a ring of the tube, plus the dropout plates (part `frame_dropout`). The rear hub (part `rear_hub`) is the axle, hub shell, flanges, hub-gear shell and the freehub body; spokes, rim and tyre stay with `rear_wheel`. `player/src/stage/bike.ts`, `geo.ts`.
 - **`drivetrain` and `rear_end` are nodes with tap texts** (`NODES`), though a tap never means them (`GROUP_NODES`). `registry.ts`.
 - **The stand, rope and hook fade out with the frame** (shared material opacity, about 0.4 s); the stand clamp part is forced hidden. `three-stage.ts`, `visibility.ts`.
+- **Framing on a card with `show`:** only the wide `drive_side` view is re-aimed to fill the picture with what is drawn (10 % margin; the crank's full circle counts). Close-ups keep their authored framing, and so does `whole_bike` (world space). `check-high-limit` now shows rear_derailleur, derailleur_hanger, cassette, chain, chainring (no crank, no screws other than H, no cable). `views.ts` (`FIT_VIEWS`, `fitPose`), `three-stage.ts`.
 - **`shift-to-smallest-sprocket` has focus [chain] only** (as asked), so its tags are just "Chain"; the shifter and the sprocket are no longer marked. `content/steps/rear-shifting.yaml`.
 
 ## Questions for the owner

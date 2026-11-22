@@ -392,7 +392,7 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 ### Set the outer limit (H screw)
 
-<sub>Unit `card:step:check-high-limit` · hash `26916c52652f` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-high-limit` · hash `4388c91fccb4` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -400,7 +400,7 @@ The chain is on the smallest sprocket. Look from directly behind the bike at the
 
 Tools. Needed: none. One of these, depending on your part: A tool for the small screws on the rear derailleur. Helpful: none.
 
-<sub>3D: focus upper_pulley, smallest_sprocket, h_screw · show drivetrain · view derailleur_from_behind</sub>
+<sub>3D: focus upper_pulley, smallest_sprocket, h_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 
 - [ ] **In line, and the chain ran quietly** <sub>`in-line`</sub> → The H screw is set. Nothing to change.
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → **BLOCK** (Next stays disabled): The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the toothed wheel is in line with the smallest sprocket.
