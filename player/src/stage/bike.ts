@@ -85,7 +85,7 @@ interface MatOpt {
 }
 
 /** Parts drawn with outlines: the small mechanical ones a step points at. */
-const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shifter_rear', 'brake_lever', 'crank', 'cassette', 'smallest_sprocket', 'largest_sprocket', 'kickstand', 'stand_clamp']);
+const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shifter_rear', 'brake_lever', 'crank', 'chainring', 'cassette', 'smallest_sprocket', 'largest_sprocket', 'kickstand', 'stand_clamp']);
 
 
 /** One generated bike, with the work stand and the hook it can be held by. */
@@ -201,7 +201,7 @@ export class BikeModel {
 
   /** @internal builder helper */
   add(id: string, geo: T.BufferGeometry, pos?: V3 | null, rot?: V3 | null, opt: MatOpt = {}): T.Mesh {
-    const m = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.15, transparent: true, flatShading: !!opt.flat });
+    const m = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.15, transparent: true, flatShading: !!opt.flat, vertexColors: !!geo.getAttribute('color') });
     m.userData.k = opt.k ?? 1;
     m.userData.dark = !!opt.dark;
     m.userData.tint = opt.tint ?? null;
@@ -293,7 +293,8 @@ export class BikeModel {
     // the seat tube is as wide as the library collar's bore (a fixed size, like every library part)
     ft([0, bby, 0], [ST[0], ST[1], 0], M.seat.boreR);
     ft([ST[0], ST[1], 0], [HT[0], HT[1], 0], fr - 0.002);
-    ft([HT[0], HT[1], 0], [HB[0], HB[1], 0], 0.03);
+    // head tube: 40 mm across, wide enough for the library stem's foot (a drawing value)
+    ft([HT[0], HT[1], 0], [HB[0], HB[1], 0], 0.04);
     ft([0, bby, 0], [HB[0], HB[1], 0], fr + 0.004);
     // rear triangle on both sides; the dropouts sit just outside the sprockets
     for (const sd of [1, -1] as const) {

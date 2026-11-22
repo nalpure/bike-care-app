@@ -8,6 +8,7 @@ import { BikeModel, bikeSpec, GEOMETRY_RANGES, GROUND } from '../src/stage/bike.
 import { MOUNTS as M } from '../src/stage/mounts.js';
 import { poseVals, type PoseVals } from '../src/stage/pose.js';
 import { RING_T, xfPt } from '../src/stage/spec.js';
+import { chainringGeo, sprocketGeo } from '../src/stage/geo.js';
 
 const mat = new T.MeshStandardMaterial();
 
@@ -189,6 +190,18 @@ describe('budgets of the whole bike (05-plan.md)', () => {
       }
       expect(count, JSON.stringify(facts)).toBeLessThanOrEqual(meshes);
       expect(tris, JSON.stringify(facts)).toBeLessThanOrEqual(150_000);
+    }
+  });
+});
+
+describe('look: toothed plates have depth', () => {
+  it('sprockets and the chainring carry vertex shade, dark at hole edges and gaps, full on tooth tips', () => {
+    for (const g of [sprocketGeo(11, 0.004), sprocketGeo(34, 0.004), chainringGeo(50, 0.0025, 5, 0.048, 0)]) {
+      const c = g.getAttribute('color');
+      expect(c).toBeTruthy();
+      const vals = Array.from({ length: c.count }, (_, i) => c.getX(i));
+      expect(Math.min(...vals)).toBeLessThan(0.75);
+      expect(Math.max(...vals)).toBeGreaterThan(0.99);
     }
   });
 });

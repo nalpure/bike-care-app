@@ -170,9 +170,36 @@ const toPath = (pts: V2[], p: T.Path) => {
 };
 const polar = (r: number, a: number): V2 => [r * Math.cos(a), r * Math.sin(a)];
 
-function extrude(shape: T.Shape, thick: number): T.BufferGeometry {
+/**
+ * Vertex colours for a flat toothed plate: dark on the edges of its holes and in the tooth gaps, light on the tooth tips,
+ * so the plate reads as a shape although all its faces point the same way. Drawing only: no extra draw calls.
+ */
+function shadeEdges(g: T.BufferGeometry, shape: T.Shape, teeth: number): void {
+  const key = (x: number, y: number) => `${Math.round(x * 1e6)},${Math.round(y * 1e6)}`;
+  const inHole = new Set<string>();
+  for (const h of shape.holes) for (const p of h.getPoints()) inHole.add(key(p.x, p.y));
+  const root = rOf(teeth) - SEAT_R;
+  const pos = g.getAttribute('position');
+  const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const y = pos.getY(i);
+    let v = inHole.has(key(x, y)) ? EDGE_DARK : 1;
+    if (v === 1) {
+      const t = Math.min(1, Math.max(0, (Math.hypot(x, y) - root) / (SEAT_R + TIP_OVER)));
+      v = EDGE_DARK + (1 - EDGE_DARK) * t * t * (3 - 2 * t);
+    }
+    col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = v;
+  }
+  g.setAttribute('color', new T.BufferAttribute(col, 3));
+}
+/** How dark the shade gets (1 = none). A drawing value. */
+const EDGE_DARK = 0.7;
+
+function extrude(shape: T.Shape, thick: number, teeth: number): T.BufferGeometry {
   const g = new T.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false, steps: 1 });
   g.translate(0, 0, -thick / 2);
+  shadeEdges(g, shape, teeth);
   return g;
 }
 
@@ -205,7 +232,7 @@ export function sprocketGeo(teeth: number, thick: number): T.BufferGeometry {
       shape.holes.push(toPath(w, new T.Path()));
     }
   }
-  return extrude(shape, thick);
+  return extrude(shape, thick, teeth);
 }
 
 /**
@@ -235,5 +262,5 @@ export function chainringGeo(teeth: number, thick: number, bolts: 4 | 5, bcdR: n
     for (let i = 0; i < 8; i++) b.push([cx + 0.0045 * Math.cos((i * TAU) / 8), cy + 0.0045 * Math.sin((i * TAU) / 8)]);
     shape.holes.push(toPath(b, new T.Path()));
   }
-  return extrude(shape, thick);
+  return extrude(shape, thick, teeth);
 }
