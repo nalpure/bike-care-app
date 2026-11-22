@@ -205,3 +205,19 @@ describe('look: toothed plates have depth', () => {
     }
   });
 });
+
+describe('look: the chain has pins and shade', () => {
+  it('draws outer links with pin holes and every link piece with vertex shade, in two instanced meshes', () => {
+    const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 }), mat);
+    for (const mesh of [m.chainInner, m.chainOuter]) {
+      const c = mesh.geometry.getAttribute('color');
+      expect(c).toBeTruthy();
+      const vals = Array.from({ length: c.count }, (_, i) => c.getX(i));
+      expect(Math.min(...vals)).toBeLessThan(0.6);
+      expect(Math.max(...vals)).toBeGreaterThan(0.69);
+    }
+    // the outer link has more triangles than the inner one: holes in its plates
+    expect(m.chainOuter.geometry.getAttribute('position').count).toBeGreaterThan(m.chainInner.geometry.getAttribute('position').count);
+    m.dispose();
+  });
+});

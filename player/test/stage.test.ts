@@ -307,7 +307,7 @@ describe('bike builder', () => {
       // the longest chain: every link its capacity
       m.chainInner.count = Math.ceil(m.N / 2);
       m.chainOuter.count = Math.floor(m.N / 2);
-      expect(tris(m.parts.get('chain')!.group), `${label}: chain`).toBeLessThanOrEqual(20000);
+      expect(tris(m.parts.get('chain')!.group), `${label}: chain`).toBeLessThanOrEqual(25000);
       let calls = 0;
       m.parts.get('chain')!.group.traverse((c: any) => { if (c.isMesh) calls++; });
       expect(calls, `${label}: chain meshes`).toBeLessThanOrEqual(4);

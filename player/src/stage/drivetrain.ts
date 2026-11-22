@@ -86,8 +86,8 @@ export function buildCrankset(m: BikeModel): void {
   m.anchor('cassette', m.bike, [rx, huby + B.rs[mid] + 0.015, B.zs[mid]]);
 }
 
-/** A figure-eight link plate in the xy plane, one pitch long, as a flat shape. */
-function plateShape(): T.Shape {
+/** A figure-eight link plate in the xy plane, one pitch long, as a flat shape; `holes`: with a hole at each pin. */
+function plateShape(holes: boolean): T.Shape {
   const c = PITCH / 2;
   const rE = mm(3.95);
   const waist = mm(3.3);
@@ -96,7 +96,49 @@ function plateShape(): T.Shape {
   pts.push([0, waist]);
   for (const d of [80, 147, 213, 280]) pts.push([-c + rE * Math.cos((d * Math.PI) / 180), rE * Math.sin((d * Math.PI) / 180)]);
   pts.push([0, -waist]);
-  return new T.Shape(pts.map(([x, y]) => new T.Vector2(x, y)));
+  const shape = new T.Shape(pts.map(([x, y]) => new T.Vector2(x, y)));
+  if (holes) {
+    for (const x of [-c, c]) {
+      const h: T.Vector2[] = [];
+      for (let i = 0; i < PIN_SIDES; i++) h.push(new T.Vector2(x + PIN_HOLE * Math.cos((i * TAU) / PIN_SIDES), PIN_HOLE * Math.sin((i * TAU) / PIN_SIDES)));
+      shape.holes.push(new T.Path(h));
+    }
+  }
+  return shape;
+}
+
+// Chain drawing values (not facts about any chain): the pin's size and how dark each part of a link is drawn.
+const PIN_SIDES = 6;
+const PIN_HOLE = mm(2.0);
+const PIN_R = mm(2.7);
+/**
+ * Vertex shade (1 = full colour). The plate is bright round its pin holes and darker towards its rim, like a bevel; the pin
+ * heads are dark discs on it; edge walls and the pins' sides are darker still. (The triangles between the two holes have
+ * only hole vertices, so a dark ring round the holes would fill the middle of the plate with a dark slot.)
+ */
+const SHADE = { rim: 0.7, hole: 1, wall: 0.5, cap: 0.55, side: 0.38 };
+
+/**
+ * Vertex colours for one piece of a link. The links are one grey and every plate face points the same way, so shade is
+ * what shows the shape: the face fades dark towards its rim, and the edge walls and the pins are dark. No extra draw
+ * calls (the holes only cost triangles).
+ */
+function shadeLink(g: T.BufferGeometry, kind: 'plate' | 'round'): T.BufferGeometry {
+  const pos = g.getAttribute('position');
+  const nor = g.getAttribute('normal');
+  const col = new Float32Array(pos.count * 3);
+  const c = PITCH / 2;
+  for (let i = 0; i < pos.count; i++) {
+    const flat = Math.abs(nor.getZ(i)) > 0.5; // a face (or a cap) and not a wall
+    let v: number;
+    if (kind === 'plate') {
+      const onHole = Math.min(Math.hypot(pos.getX(i) - c, pos.getY(i)), Math.hypot(pos.getX(i) + c, pos.getY(i))) < PIN_HOLE + 1e-6;
+      v = !flat ? SHADE.wall : onHole ? SHADE.hole : SHADE.rim;
+    } else v = flat ? SHADE.cap : SHADE.side;
+    col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = v;
+  }
+  g.setAttribute('color', new T.BufferAttribute(col, 3));
+  return g;
 }
 
 /** The two kinds of link, centred on the middle of the link, x along the chain, z across the bike. */
@@ -106,23 +148,23 @@ function linkGeometries(B: BikeSpec): { inner: T.BufferGeometry; outer: T.Buffer
   const gap = mm(0.1);
   const gi = B.sprT + mm(0.25); // between the inner plates: the sprocket's tooth runs here
   const t = Math.min(mm(0.9), (W / 2 - head - gi / 2 - gap) / 2);
-  const plate = (z0: number, z1: number) => {
-    const g = new T.ExtrudeGeometry(plateShape(), { depth: z1 - z0, bevelEnabled: false, steps: 1 });
+  const plate = (z0: number, z1: number, holes: boolean) => {
+    const g = new T.ExtrudeGeometry(plateShape(holes), { depth: z1 - z0, bevelEnabled: false, steps: 1 });
     g.translate(0, 0, z0);
-    return g;
+    return shadeLink(g, 'plate');
   };
   const cyl = (r: number, len: number, sides: number, x: number, z: number) => {
     const g = new T.CylinderGeometry(r, r, len, sides).toNonIndexed();
     g.rotateX(HP);
     g.translate(x, 0, z);
-    return g;
+    return shadeLink(g, 'round');
   };
   const xs = [-PITCH / 2, PITCH / 2];
   const zi = gi / 2;
   const zo = zi + t + gap;
-  const inner = [plate(zi, zi + t), plate(-zi - t, -zi), ...xs.map((x) => cyl(mm(3.875), gi, 8, x, 0))];
-  const hl = W / 2 - (zo + t);
-  const outer = [plate(zo, zo + t), plate(-zo - t, -zo), ...xs.flatMap((x) => [1, -1].map((s) => cyl(mm(1.9), hl, 5, x, s * (zo + t + hl / 2))))];
+  const inner = [plate(zi, zi + t, false), plate(-zi - t, -zi, false), ...xs.map((x) => cyl(mm(3.875), gi, 8, x, 0))];
+  // the outer link's pins run through its plates' holes and stand out by a head's height on both sides
+  const outer = [plate(zo, zo + t, true), plate(-zo - t, -zo, true), ...xs.map((x) => cyl(PIN_R, W, PIN_SIDES, x, 0))];
   const merge = (list: T.BufferGeometry[]) => {
     const parts = list.map((g) => {
       const n = g.index ? g.toNonIndexed() : g;
@@ -165,7 +207,7 @@ export function buildChain(m: BikeModel): void {
   const { inner, outer } = linkGeometries(B);
   const chain = m.parts.get('chain')!;
   const mk = (geo: T.BufferGeometry, k: number) => {
-    const mat = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.15, transparent: true, flatShading: true });
+    const mat = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.15, transparent: true, flatShading: true, vertexColors: true });
     mat.userData.k = k;
     const mesh = new T.InstancedMesh(geo, mat, Math.ceil(m.N / 2));
     mesh.frustumCulled = false;
@@ -175,8 +217,8 @@ export function buildChain(m: BikeModel): void {
     chain.mats.push(mat);
     return mesh;
   };
-  m.chainInner = mk(inner, 0.55);
-  m.chainOuter = mk(outer, 0.8);
+  m.chainInner = mk(inner, 0.72);
+  m.chainOuter = mk(outer, 1);
   m.anchor('chain', m.bike, [-0.45, (bby + B.rc + huby + B.rs[mid]) / 2 + 0.03, zc]);
 }
 
