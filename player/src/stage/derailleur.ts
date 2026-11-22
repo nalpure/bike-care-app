@@ -10,7 +10,7 @@
 import * as T from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { layoutCirc } from './drivetrain.js';
-import { hullShape, seg, SEAT_R, slabGeo, toothOutline, UP } from './geo.js';
+import { curveGeo, hullShape, seg, SEAT_R, slabGeo, toothOutline, UP } from './geo.js';
 import { libGeo, type LibName } from './library.js';
 import { CAGE_DIR, CAGE_LEN, RdFit, RP_RD, type RdState } from './rd-fit.js';
 import { pulleySpin, RIG } from './rd-kin.js';
@@ -73,6 +73,87 @@ export function derLayout(B: BikeSpec, z: number, gap: number) {
 const BARREL = RD_RIG.barrel;
 const BARREL_LEN = V(BARREL.seat).distanceTo(V(BARREL.head));
 
+// ------------------------------------------------------------------ barrel bracket and cable clamp
+//
+// The model has no cable clamp the wire can reach: its barrel points about 10 deg down, past the lower body,
+// and the boss on the lower body's top (RD_RIG.clamp) lies under the outer link in most gears. So the
+// barrel's bracket (the bottom of the upper body, below the L screw) is turned up about its root until the
+// barrel points at a clamp bolt made here under the lower body's back end; the wire runs straight from the
+// barrel to the bolt and is pinched between the bolt's washer and the body (owner request 2026-11-22).
+// Found with scratch scripts in tools/assets/out (not kept). Drawing data, not facts about any part.
+//
+// The lower body travels about 38 mm inwards over the gears, so the wire leaves the barrel straight in the
+// middle gears and up to about 26 deg off its axis on the smallest and the largest sprocket.
+
+/** The bracket's turn: about the hinge (its root), by the quaternion. Library space. */
+const BRACKET_HINGE = new T.Vector3(-0.920416, -0.038573, 0.161665);
+const BRACKET_TURN = new T.Quaternion(0.04888, 0.066113, 0.082942, 0.993157).normalize();
+const BRACKET_M = new T.Matrix4()
+  .makeTranslation(BRACKET_HINGE.x, BRACKET_HINGE.y, BRACKET_HINGE.z)
+  .multiply(new T.Matrix4().makeRotationFromQuaternion(BRACKET_TURN))
+  .multiply(new T.Matrix4().makeTranslation(-BRACKET_HINGE.x, -BRACKET_HINGE.y, -BRACKET_HINGE.z));
+/**
+ * Which vertices of the upper body are the bracket: below and behind its root, measured in the upper body's
+ * frame turned 27.7 deg as the derailleur hangs on the bike (U up, X forward). The weight goes from 0 to 1
+ * over 4 mm at the root, so the mesh stays closed where the bracket bends.
+ */
+const BR_U = new T.Vector3(0.464842, 0.885394, 0);
+const BR_X = new T.Vector3(0.885394, -0.464842, 0);
+const bracketWeight = (p: T.Vector3) => {
+  const wu = Math.max(0, Math.min(1, (-0.462 - p.dot(BR_U)) / 0.008));
+  const wx = Math.max(0, Math.min(1, (-0.78 - p.dot(BR_X)) / 0.004));
+  return wu * wx;
+};
+
+/** The barrel where the turned bracket holds it (library space, upper body's frame). */
+const BAR = {
+  head: V(BARREL.head).applyMatrix4(BRACKET_M),
+  seat: V(BARREL.seat).applyMatrix4(BRACKET_M),
+  d: V(BARREL.d).normalize().applyQuaternion(BRACKET_TURN),
+};
+
+/**
+ * The clamp bolt under the lower body (library space, lower body's frame): its centre on the body's face
+ * and its axis out of the face; the wire enters under the washer at WIRE_IN, beside the shank, and leaves
+ * past the bolt at WIRE_TAIL.
+ */
+const CLAMP = {
+  p: new T.Vector3(-0.829789, -0.084916, 0.175834),
+  d: new T.Vector3(-0.382574, -0.912791, 0.143001).normalize(),
+};
+/** The inner wire's drawn radius (cockpit.ts draws it). */
+export const WIRE_R = 0.0014;
+// measured with the wire's centre 2 mm off the face; moved to one radius off it
+const WIRE_IN = new T.Vector3(-0.840865, -0.081107, 0.183532).addScaledVector(CLAMP.d, WIRE_R - 0.002);
+const WIRE_TAIL = new T.Vector3(-0.820661, -0.089745, 0.182448).addScaledVector(CLAMP.d, WIRE_R - 0.002);
+
+/** The upper body with its bracket turned (see BRACKET_M). */
+function upperBodyGeo(): T.BufferGeometry {
+  return once('upper-body', () => {
+    const g = libGeo('rd_upper_body').clone();
+    const pos = g.attributes.position;
+    const nor = g.attributes.normal;
+    const v = new T.Vector3();
+    const t = new T.Vector3();
+    const n = new T.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i);
+      const w = bracketWeight(v);
+      if (w === 0) continue;
+      t.copy(v).applyMatrix4(BRACKET_M);
+      v.lerp(t, w);
+      pos.setXYZ(i, v.x, v.y, v.z);
+      if (nor) {
+        n.fromBufferAttribute(nor, i);
+        t.copy(n).applyQuaternion(BRACKET_TURN);
+        n.lerp(t, w).normalize();
+        nor.setXYZ(i, n.x, n.y, n.z);
+      }
+    }
+    return g;
+  });
+}
+
 /**
  * Where the barrel adjuster is on this bike, in bike space (on the derailleur: with the chain on the
  * middle sprocket). `axis` points from its head into the thread.
@@ -81,8 +162,8 @@ export function barrelTurn(B: BikeSpec): Turn {
   if (B.barrelAt === 'derailleur') {
     const mid = Math.floor(B.n / 2);
     const st = stateFor(fitFor(B), B.zs[mid], GAP_OK);
-    const c = V(BARREL.head).add(V(BARREL.seat)).multiplyScalar(0.5).applyMatrix4(st.pose.upper);
-    const d = V(BARREL.d).transformDirection(st.pose.upper);
+    const c = BAR.head.clone().add(BAR.seat).multiplyScalar(0.5).applyMatrix4(st.pose.upper);
+    const d = BAR.d.clone().transformDirection(st.pose.upper);
     return { pos: c.toArray() as V3, axis: d.toArray() as V3, len: BARREL_LEN };
   }
   // on the trigger pod's inner end, pointing in and forward where the cable leaves
@@ -213,14 +294,15 @@ export interface DerParts {
   pulleyU: T.Group;
   pulleyL: T.Group;
   st: RdState | null;
-  /** the cable: housing from housingFrom (bike space) to housingEnd, wire (3 pieces) from wireFrom out along the barrel, then round the body to wireTo (library space) */
+  /** the housing's last bend into the barrel (bike space, at the middle sprocket), ending at housingFrom along the barrel's axis */
+  housingIn: V3[];
+  /** the cable: housing from housingFrom (bike space) to housingEnd; wire (3 pieces) from wireFrom out along the barrel to wireOut (upper body), straight to WIRE_IN under the clamp bolt and on to WIRE_TAIL (lower body) */
   housing: T.Mesh | null;
   wire: T.Mesh[];
   housingFrom: V3;
   housingEnd: T.Vector3;
   wireFrom: T.Vector3;
   wireOut: T.Vector3;
-  wireTo: T.Vector3;
   /** the B screw slides along its axis as the body turns, so its tip stays on the hanger's tab (bike space) */
   bScrew: { group: T.Object3D; base: T.Vector3; p: T.Vector3; d: T.Vector3; len: number; tab: T.Vector3 };
   /** the pulleys' spin and the chainShift it belongs to */
@@ -252,6 +334,47 @@ function screw(m: BikeModel, id: string, p: T.Vector3, d: T.Vector3, len: number
   return m.parts.get(id)!.group;
 }
 
+/**
+ * The clamp bolt under the lower body (CLAMP): shank, washer and an M4 socket head, made in code. The washer
+ * stands one wire's thickness off the body's face, so the wire is pinched between them, beside the shank.
+ */
+function cableClamp(m: BikeModel, lower: T.Object3D): void {
+  const q = new T.Quaternion().setFromUnitVectors(UP, CLAMP.d);
+  // a cylinder on the bolt axis, from `from` to `from + h` out of the face
+  const disc = (r: number, h: number, from: number, k: number, dark = false) => {
+    const mesh = m.add(D, new T.CylinderGeometry(r, r, h, 18), null, null, { parent: lower, k, dark });
+    mesh.position.copy(CLAMP.p).addScaledVector(CLAMP.d, from + h / 2);
+    mesh.quaternion.copy(q);
+  };
+  const washer = 2 * WIRE_R;
+  disc(0.004, washer + 0.001, -0.001, 1.15); // shank, from inside the face to the washer
+  disc(0.0085, 0.001, washer, 1.2); // washer
+  disc(0.0068, 0.006, washer + 0.001, 1.25); // head
+  disc(0.0029, 0.0008, washer + 0.007, 1, true); // hex socket
+}
+
+/**
+ * The wire's loose end past the clamp, in the lower body's frame: on straight out of the washer, then bent
+ * away from the body and out to the side, with a crimped end cap. Drawing data.
+ */
+export function buildWireTail(m: BikeModel): void {
+  const d = m.der;
+  if (!d) return;
+  const along = WIRE_TAIL.clone().sub(WIRE_IN).normalize();
+  const out = new T.Vector3(0, 0, 1).addScaledVector(along, -along.z).normalize();
+  const p0 = WIRE_TAIL.clone();
+  const p1 = p0.clone().addScaledVector(along, 0.006);
+  const p2 = p1.clone().addScaledVector(along, 0.01).addScaledVector(out, 0.008).addScaledVector(CLAMP.d, 0.004);
+  const p3 = p2.clone().addScaledVector(out, 0.03).addScaledVector(along, 0.006).addScaledVector(CLAMP.d, 0.004);
+  const pts = [p0, p1, p2, p3].map((p) => p.toArray() as V3);
+  m.add('shift_cable', curveGeo(pts, WIRE_R, 24), null, null, { parent: d.lower, k: 1.3 });
+  const dir = p3.clone().sub(p2).normalize();
+  const CAP = 0.01;
+  const cap = m.add('shift_cable', new T.CylinderGeometry(WIRE_R * 1.7, WIRE_R * 1.7, CAP, 10), null, null, { parent: d.lower, k: 0.95 });
+  cap.position.copy(p3).addScaledVector(dir, CAP / 2 - 0.002);
+  cap.quaternion.setFromUnitVectors(UP, dir);
+}
+
 /** Hanger; upper body with the H, L and B screws and the barrel; links; lower body; cage and pulleys. */
 export function buildDerailleur(m: BikeModel): void {
   const B = m.spec;
@@ -268,7 +391,7 @@ export function buildDerailleur(m: BikeModel): void {
   m.cage = cage;
 
   // shading: the bodies lighter, links and cage darker, pulleys dark as before
-  m.add(D, libGeo('rd_upper_body'), null, null, { parent: upper, k: 0.9 });
+  m.add(D, upperBodyGeo(), null, null, { parent: upper, k: 0.9 });
   m.add(D, libGeo('rd_link_outer'), null, null, { parent: linkOuter, k: 0.62 });
   m.add(D, libGeo('rd_link_inner'), null, null, { parent: linkInner, k: 0.55 });
   m.add(D, libGeo('rd_lower_body'), null, null, { parent: lower, k: 0.85 });
@@ -302,9 +425,9 @@ export function buildDerailleur(m: BikeModel): void {
 
   // Barrel adjuster on the body where the housing comes in, or a plain cable stop there when the
   // barrel is on the shifter (the user never sees two).
-  const head = V(BARREL.head);
-  const seat = V(BARREL.seat);
-  const bdir = V(BARREL.d).normalize();
+  const head = BAR.head.clone();
+  const seat = BAR.seat.clone();
+  const bdir = BAR.d.clone();
   let housingEnd = head.clone();
   if (B.barrelAt === 'derailleur') {
     const spin = m.turnable('barrel_adjuster', { pos: head.clone().add(seat).multiplyScalar(0.5).toArray() as V3, axis: bdir.toArray() as V3, len: BARREL_LEN }, upper);
@@ -322,14 +445,27 @@ export function buildDerailleur(m: BikeModel): void {
     for (const y of [-0.3, 0, 0.3]) m.add('barrel_adjuster', new T.CylinderGeometry(br + 0.0018, br + 0.0018, 0.003, 12), [0, -bt.len * 0.125 + y * bt.len * 0.75, 0], null, { parent: spin, k: 0.8, flat: true });
     m.add('barrel_adjuster', new T.CylinderGeometry(br * 0.55, br * 0.55, bt.len * 0.25, 8), [0, bt.len * 0.375, 0], null, { parent: spin, k: 1.2 });
   }
-  // the housing comes in along the barrel's axis from behind; cockpit.ts loops it there from the stay
-  const hb = housingEnd.clone().addScaledVector(bdir, -0.04).applyMatrix4(ref.pose.upper);
-  const clamp = V(RD_RIG.clamp.p).addScaledVector(V(RD_RIG.clamp.d).normalize(), -0.0015);
+  // the housing comes in along the barrel's axis from behind: cockpit.ts loops it down from the stay through
+  // housingIn, which bends it round onto the axis; the short straight piece to the barrel moves with the body
+  const onAxis = (t: number) => housingEnd.clone().addScaledVector(bdir, -t).applyMatrix4(ref.pose.upper);
+  const hb = onAxis(0.012);
+  // a circular arc (radius 4 cm) in the upright plane through the barrel's axis: back along the axis, then up
+  const e0 = onAxis(0.03);
+  const back = bdir.clone().transformDirection(ref.pose.upper).negate();
+  const up = new T.Vector3(0, 1, 0).addScaledVector(back, -back.y).normalize();
+  const R = 0.08;
+  const arc = (deg: number) => {
+    const t = (deg * Math.PI) / 180;
+    return e0.clone().addScaledVector(back, R * Math.sin(t)).addScaledVector(up, R * (1 - Math.cos(t)));
+  };
+  const housingIn = [arc(115), arc(90), arc(60), arc(30), e0].map((p) => p.toArray() as V3);
+  cableClamp(m, lower);
   m.der = {
     fit, upper, linkOuter, linkInner, lower, cage, pulleyU, pulleyL, st: null,
     housing: null, wire: [],
-    housingFrom: [hb.x, hb.y + 0.01, hb.z],
-    housingEnd, wireFrom: seat.clone(), wireOut: seat.clone().addScaledVector(bdir, WIRE_EXIT), wireTo: clamp,
+    housingFrom: [hb.x, hb.y, hb.z],
+    housingIn,
+    housingEnd, wireFrom: seat.clone(), wireOut: seat.clone().addScaledVector(bdir, WIRE_EXIT),
     bScrew: { group: bGroup, base: bGroup.position.clone(), p: bp, d: bd, len: bLen, tab },
     spin: { u: 0, l: 0, shift: 0 },
   };
@@ -367,26 +503,22 @@ export function moveDerailleur(m: BikeModel, z: number, gap: number): void {
   // cable
   if (d.housing) seg(d.housing, d.housingFrom, tA.copy(d.housingEnd).applyMatrix4(p.upper));
   if (d.wire.length === 3) {
-    // through the barrel and the body's arm, out where it leaves the body, then to the clamp by a bend
-    // point on the upper body (the straight way cuts through the body and the outer link)
+    // through the barrel and the bracket's bore, straight to the clamp bolt, under its washer and past it
     tA.copy(d.wireFrom).applyMatrix4(p.upper);
     tB.copy(d.wireOut).applyMatrix4(p.upper);
     seg(d.wire[0], tA, tB);
-    tA.copy(d.wireTo).applyMatrix4(p.lower);
-    tC.copy(WIRE_BEND).applyMatrix4(p.upper);
-    seg(d.wire[1], tB, tC);
-    seg(d.wire[2], tC, tA);
+    tA.copy(WIRE_IN).applyMatrix4(p.lower);
+    seg(d.wire[1], tB, tA);
+    tC.copy(WIRE_TAIL).applyMatrix4(p.lower);
+    seg(d.wire[2], tA, tC);
   }
 }
 
 /**
- * The inner wire, in library space (upper body frame). It leaves the body's arm WIRE_EXIT along the barrel's
- * axis past its seat (9.5 mm, measured by ray parity on the source mesh, plus 1 mm). WIRE_BEND was found
- * by a grid search (tools/assets/out, not kept) as the shortest bend for which both pieces of the wire stay
- * outside the upper body, the links and the lower body over the links' whole swing. Drawing data.
+ * The inner wire leaves the bracket WIRE_EXIT along the barrel's axis past its seat (9.5 mm, measured by ray
+ * parity on the source mesh, plus 1 mm). Drawing data.
  */
 const WIRE_EXIT = 0.021;
-const WIRE_BEND = new T.Vector3(-0.87537, -0.04933, 0.1256);
 const tC = new T.Vector3();
 
 /** One pin of a wheel: its index, or -1. */

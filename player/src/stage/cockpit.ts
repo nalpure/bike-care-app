@@ -5,7 +5,7 @@
 // Session area: E (other parts).
 
 import * as T from 'three';
-import { barrelTurn } from './derailleur.js';
+import { barrelTurn, buildWireTail, WIRE_R } from './derailleur.js';
 import { curveGeo, plate, tubeGeo } from './geo.js';
 import { libGeo, type LibName } from './library.js';
 import { MOUNTS as M } from './mounts.js';
@@ -87,7 +87,7 @@ export function buildShiftCable(m: BikeModel): void {
   // derailleur (which turns about its bolt), is placed in setDer.
   const derEnd: V3 | null = m.der ? m.der.housingFrom : null;
   const end: V3 = derEnd ?? (B.gears === 'hub' ? [rx + 0.035, huby - 0.02, zD + 0.02] : [0.05, bby + 0.1, zc - 0.01]);
-  const loop: V3[] = derEnd ? [[rx + 0.1, huby + 0.03, zD + 0.04], [rx + 0.01, huby + 0.06, zD + 0.06]] : [];
+  const loop: V3[] = derEnd ? [[rx + 0.1, huby + 0.03, zD + 0.04], [rx + 0.01, huby + 0.06, zD + 0.06], ...m.der!.housingIn] : [];
   // along the down tube (u from the bottom bracket) or just above the top tube (at x)
   const dt = (u: number): V3 => [HB[0] * (1 - u), bby + (HB[1] - bby) * u, 0.06];
   const tt = (x: number, z: number): V3 => [x, ST[1] + ((x - ST[0]) / (HT[0] - ST[0])) * (HT[1] - ST[1]) + 0.04, z];
@@ -106,12 +106,13 @@ export function buildShiftCable(m: BikeModel): void {
     : B.gears === 'gearbox'
       ? [...start, [HB[0] - 0.08, HB[1] - 0.05, 0.07], dt(0.4), end]
       : [...start, tt(HT[0] - 0.25, 0.08), tt(HT[0] - 0.45, 0.05), tt(-0.05, 0.05), tt(ST[0] + 0.02, 0.06), along(ss[0], ss[1], 0.4, 0.03, 0.02), along(ss[0], ss[1], 0.75, 0.03, 0.022), ...loop, end];
-  m.add('shift_cable', curveGeo(path, 0.006, 96), null, null, { k: 0.6 });
+  m.add('shift_cable', curveGeo(path, 0.006, 360), null, null, { k: 0.6 });
   m.anchor('shift_cable', m.bike, B.bar === 'drop' ? along(cs[2], cs[4], 0.3, 0.05, 0.02) : tt(-0.05, 0.08));
   if (m.der) {
     // the housing's last bit, and the inner wire out of the barrel and down to its clamp on the lower body
     // (placed by moveDerailleur, in bike space)
     m.der.housing = m.add('shift_cable', new T.CylinderGeometry(0.006, 0.006, 1, 8), null, null, { k: 0.6 });
-    m.der.wire = [0, 1, 2].map(() => m.add('shift_cable', new T.CylinderGeometry(0.002, 0.002, 1, 6), null, null, { k: 1.3 }));
+    m.der.wire = [0, 1, 2].map(() => m.add('shift_cable', new T.CylinderGeometry(WIRE_R, WIRE_R, 1, 6), null, null, { k: 1.3 }));
+    buildWireTail(m);
   }
 }
