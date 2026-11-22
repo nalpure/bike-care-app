@@ -24,17 +24,18 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
   whole_bike: () => ({ p: [-1.45, 1.65, 5.7], t: [0.2, 1.1, 0.05], space: 'world' }),
   drive_side: (B) => ({ p: [-0.5, B.bby + 0.95, 3.6], t: [-0.1, B.bby + 0.37, 0.12], space: 'bike' }),
   // From straight behind, a little outside the sprockets: the upper pulley reads against the
-  // sprockets, with the bike upright or upside down. The frame runs from the sprockets' top
-  // down past the lower pulley.
+  // sprockets' lowest teeth, with the bike upright or upside down. The frame runs from just above
+  // the upper pulley down past the lower pulley, in the first and the last gear.
   derailleur_from_behind: (B) => {
-    const us = hasDerailleur(B) ? upperPulley(B, B.zs[0]) : [B.rx, B.huby - 0.1];
-    const ul = hasDerailleur(B) ? upperPulley(B, B.zs[B.n - 1]) : us;
-    const lp = hasDerailleur(B) ? lowerPulley(B, B.zs[0]) : [B.rx, B.huby - 0.26];
-    const low = Math.min(us[1], ul[1]) + (lp[1] - us[1]) * 0.6;
-    const top = B.huby + B.rs[B.n - 1] * 0.4;
+    const ends = hasDerailleur(B) ? [B.zs[0], B.zs[B.n - 1]] : [B.chainline];
+    const ups = ends.map((z) => (hasDerailleur(B) ? upperPulley(B, z) : [B.rx, B.huby - 0.1]));
+    const lps = ends.map((z) => (hasDerailleur(B) ? lowerPulley(B, z) : [B.rx, B.huby - 0.26]));
+    const top = Math.max(...ups.map((u) => u[1])) + 0.07;
+    const low = Math.min(...lps.map((l) => l[1])) - 0.02;
     const ty = (top + low) / 2;
     const zc = B.chainline;
-    return { p: [B.rx - 0.75, ty + 0.03, zc + 0.1], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
+    const d = Math.max(0.5, (top - low) * 1.75);
+    return { p: [B.rx - d, ty + 0.02, zc + 0.07], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
   },
   // The gap between the upper pulley and the largest sprocket, seen along the sprocket's edge
   // from behind, above and outside: the derailleur's body and links stay out of the way.
@@ -49,14 +50,14 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
     // along the sprocket's edge, towards the back and up
     const tx = ry;
     const ty = -rx;
-    return { p: [g[0] + tx * 0.42, g[1] + ty * 0.42, zN + 0.4], t: g, space: 'bike' };
+    return { p: [g[0] + tx * 0.3, g[1] + ty * 0.3, zN + 0.28], t: g, space: 'bike' };
   },
   barrel_adjuster_close: (B) => {
     const bt = barrelTurn(B);
     const t: [number, number, number] = [bt.pos[0], bt.pos[1], bt.pos[2]];
     // at the derailleur: from behind, above and outside; on the trigger shifter it points
     // forward and in, so look at its head from the front and inside
-    if (B.barrelAt === 'derailleur') return { p: [t[0] - 0.42, t[1] + 0.28, t[2] + 0.6], t: [t[0], t[1] - 0.03, t[2]], space: 'bike' };
+    if (B.barrelAt === 'derailleur') return { p: [t[0] - 0.2, t[1] + 0.13, t[2] + 0.3], t: [t[0], t[1] - 0.01, t[2]], space: 'bike' };
     return { p: [t[0] + 0.5, t[1] + 0.42, t[2] - 0.5], t, space: 'bike' };
   },
   handlebar_from_above: (B) => {

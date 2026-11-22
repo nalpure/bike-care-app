@@ -203,7 +203,9 @@ export class BikeModel {
     const part = this.parts.get(id)!;
     part.mats.push(m);
     if (OUTLINED.has(id) && !opt.dark) {
-      // dark edges where faces meet at a sharp angle: they show the shape when the colour is even
+      // dark edges where faces meet at a sharp angle: they show the shape when the colour is even.
+      // 35 deg is also the crease angle of the library meshes; their edge counts barely change from 35 to 75 deg
+      // (about 200-650 segments a piece), so there is no noise to tune away.
       if (!part.lines.length) part.lines.push(new T.LineBasicMaterial({ color: 0x2a323a, transparent: true }));
       const edges = new T.LineSegments(new T.EdgesGeometry(geo, 35), part.lines[0]);
       edges.raycast = () => {};
