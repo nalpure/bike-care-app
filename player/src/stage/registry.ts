@@ -102,6 +102,7 @@ export const CLIPS = [
   'limit-screw-align',
   'b-gap-adjust',
   'cable-tension-shift',
+  'hanger-bend',
 ] as const;
 
 /** Generic motions on any node. */

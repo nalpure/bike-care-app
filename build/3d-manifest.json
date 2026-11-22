@@ -44,7 +44,8 @@
     "shift-to-largest",
     "limit-screw-align",
     "b-gap-adjust",
-    "cable-tension-shift"
+    "cable-tension-shift",
+    "hanger-bend"
   ],
   "motions": [
     "rotate",

@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import * as T from 'three';
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
-import { dirSign, makeAnim, type AnimCtx } from '../src/stage/anim.js';
+import { dirSign, makeAnim, partStatus, placeMoved, type AnimCtx } from '../src/stage/anim.js';
 import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_BIG, GAP_OK, GAP_SMALL, GEOMETRY_RANGES, GROUND, PITCH, RP, type BikeSpec } from '../src/stage/bike.js';
 import { chordLength } from '../src/stage/pins.js';
 import { RIG } from '../src/stage/rd-kin.js';
@@ -692,6 +692,84 @@ describe('views and animations', () => {
     expect(end.derZ!).toBeCloseTo(m.zOf(0));
     expect(start.status).toBe('bad');
     expect(end.status).toBe('good');
+  });
+
+  it('generic motions never mark parts or draw contours; only clips do', () => {
+    for (const target of Object.keys(NODES)) {
+      for (const motion of MOTIONS) {
+        const an = makeAnim({ target, motion, caption: 'x' }, ctxFor(m))!;
+        for (let t = 0; t <= an.duration; t += 0.5) {
+          const f = an.frame(t);
+          expect(f.marks, `${target} ${motion}`).toBeUndefined();
+          expect(f.contour, `${target} ${motion}`).toBeUndefined();
+        }
+      }
+    }
+  });
+
+  it('colours marked parts bad, and the derailleur by status', () => {
+    expect(partStatus({ marks: ['derailleur_hanger'] }, 'derailleur_hanger')).toBe('bad');
+    expect(partStatus({ marks: ['cassette'] }, 'largest_sprocket')).toBe('bad');
+    expect(partStatus({ marks: ['derailleur_hanger'], status: 'good' }, 'upper_pulley')).toBe('good');
+    expect(partStatus({ status: 'good' }, 'derailleur_hanger')).toBeUndefined();
+    expect(partStatus({}, 'rear_derailleur')).toBeUndefined();
+  });
+
+  it('hanger-bend: on every kind of bike the hanger and derailleur tilt in, out and back to rest as one, hanger red while bent', () => {
+    for (const cat of ['mtb', 'road_gravel', 'trekking_city', 'cargo', 'unknown']) {
+      for (const gt of ['derailleur', 'hub_gear', 'single_speed', 'gearbox', 'unknown']) {
+        const label = `${cat} ${gt}`;
+        const mb = new BikeModel(bikeSpec({ 'bike.category': cat, 'drive.gear_type': gt, 'drive.rear_speeds': 11 }), mat);
+        const an = makeAnim({ clip: 'hanger-bend', caption: 'x' }, ctxFor(mb))!;
+        expect(an, label).toBeDefined();
+        const der = mb.parts.get('rear_derailleur');
+        const hanger = mb.parts.get('derailleur_hanger');
+        // where the lower pulley's centre is, in bike space, after the frame's motion (or at rest); the derailleur's
+        // frames are posed in its group, which sits at the bike's origin at rest
+        mb.setDer(mb.derZ, GAP_OK);
+        const pulley = (f?: ReturnType<typeof an.frame>) => {
+          for (const p of [der, hanger]) {
+            if (!p) continue;
+            if (f?.node?.parts.includes(p.id)) placeMoved(f.node, p.basePos, p.center, p.group.position, p.group.quaternion);
+            else {
+              p.group.position.copy(p.basePos);
+              p.group.quaternion.identity();
+            }
+          }
+          mb.bike.updateMatrixWorld(true);
+          return mb.der?.st && der ? mb.der.st.lp.clone().applyMatrix4(der.group.matrix) : null;
+        };
+        const rest = pulley();
+        let minDz = 0, maxDz = 0;
+        for (let t = 0; t <= an.duration + 1e-9; t += 0.05) {
+          const f = an.frame(t);
+          expect(f.contour, label).toEqual(['derailleur_hanger', 'rear_derailleur']);
+          const p = pulley(f);
+          if (p && rest) {
+            minDz = Math.min(minDz, p.z - rest.z);
+            maxDz = Math.max(maxDz, p.z - rest.z);
+            // one rigid tilt about the hanger's root: both groups have the same transform, the root stays put
+            expect(der!.group.matrixWorld.equals(hanger!.group.matrixWorld), `${label} t=${t}`).toBe(true);
+            const root = new T.Vector3(...f.node!.about!);
+            expect(root.clone().applyMatrix4(hanger!.group.matrix).distanceTo(root), label).toBeLessThan(1e-9);
+          }
+          const bent = Math.abs(f.node!.rot[0]) > 0.02;
+          if (bent) expect(partStatus(f, 'derailleur_hanger'), `${label} t=${t}`).toBe('bad');
+          if (Math.abs(f.node!.rot[0]) < 0.005) expect(partStatus(f, 'derailleur_hanger'), `${label} t=${t}`).toBeUndefined();
+          expect(partStatus(f, 'rear_derailleur')).toBeUndefined();
+        }
+        if (rest) {
+          // z grows away from the spokes: first in by a few millimetres or more, then out as far
+          expect(minDz, label).toBeLessThan(-0.005);
+          expect(maxDz, label).toBeGreaterThan(0.005);
+          for (const t of [0, an.duration - 1e-6]) {
+            const p = pulley(an.frame(t))!;
+            expect(p.distanceTo(rest), `${label} back at rest at t=${t}`).toBeLessThan(1e-6);
+          }
+        }
+        mb.dispose();
+      }
+    }
   });
 
   it('a motion on the whole bike goes from how it was held to how it is held now', () => {

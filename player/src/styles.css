@@ -13,6 +13,7 @@
   --stage: #DCE3E8;
   --stage2: #C9D4DB;
   --part: #5C6D7B;
+  --contour: #1F5FBF; /* 3D view: the rest outline a clip draws; neither the highlight nor --bad */
   --f-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", sans-serif;
   --f-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -25,7 +26,7 @@
     --bg: #0E151B; --panel: #151E26; --ink: #E8EEF2; --ink2: #9AA9B5; --line: #28343E;
     --accent: #FFC71F; --accent-ink: #1A1500; --accent-text: #FFC71F;
     --good: #34C77B; --bad: #FF6B5E;
-    --stage: #0A1015; --stage2: #18232C; --part: #8998A5;
+    --stage: #0A1015; --stage2: #18232C; --part: #8998A5; --contour: #6FC3FF;
     color-scheme: dark;
   }
 }
@@ -33,7 +34,7 @@
   --bg: #0E151B; --panel: #151E26; --ink: #E8EEF2; --ink2: #9AA9B5; --line: #28343E;
   --accent: #FFC71F; --accent-ink: #1A1500; --accent-text: #FFC71F;
   --good: #34C77B; --bad: #FF6B5E;
-  --stage: #0A1015; --stage2: #18232C; --part: #8998A5;
+  --stage: #0A1015; --stage2: #18232C; --part: #8998A5; --contour: #6FC3FF;
   color-scheme: dark;
 }
 

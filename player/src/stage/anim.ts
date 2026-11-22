@@ -3,8 +3,9 @@
 // Frame: what the derailleur, screws, cranks and the bike's pose should do at that moment.
 // The stage applies frames; nothing here touches three.js objects.
 
+import * as T from 'three';
 import { GAP_BIG, GAP_OK, GAP_SMALL, type BikeSpec } from './bike.js';
-import { derLayout } from './derailleur.js';
+import { derLayout, fitFor } from './derailleur.js';
 import { CLIPS, MOTIONS, NODES, partsOf, type Pose } from './registry.js';
 
 export const ease = (x: number) => {
@@ -22,6 +23,20 @@ export interface NodeMotion {
   move: [number, number, number];
   scale: number;
   fade: number;
+  /** turn and scale about this point (in the parts' parent space, bike space for parts on the bike) instead of each part's centre: the parts move as one */
+  about?: [number, number, number];
+}
+
+const tE = new T.Euler();
+const tPivot = new T.Vector3();
+/**
+ * Where a moved part's group goes: turned and scaled about the pivot (`about`, else the part's centre), then moved.
+ * Writes into pos and quat; the group's scale is nm.scale. Pure maths, used by the stage and the tests.
+ */
+export function placeMoved(nm: NodeMotion, basePos: T.Vector3, center: T.Vector3, pos: T.Vector3, quat: T.Quaternion): void {
+  quat.setFromEuler(tE.set(...nm.rot));
+  const c = nm.about ? tPivot.set(...nm.about) : tPivot.copy(center);
+  pos.copy(basePos).sub(c).multiplyScalar(nm.scale).applyQuaternion(quat).add(c).add(tPivot.set(...nm.move));
 }
 
 export interface Frame {
@@ -36,6 +51,10 @@ export interface Frame {
   wheelSpeed?: { rear_wheel?: number; front_wheel?: number };
   /** colours the derailleur: still wrong, or right now */
   status?: 'good' | 'bad';
+  /** nodes drawn in the "bad" colour while the frame says so: a bent or wrong part (clips only) */
+  marks?: string[];
+  /** nodes whose outline is drawn where they rest (the correct or starting pose) while the clip moves them (clips only) */
+  contour?: string[];
   /** a marker for where the pulley should be */
   ghost?: { kind: 'align'; z: number } | { kind: 'gap' };
   /** a turning arrow on a screw; dir 1 = screw in */
@@ -46,6 +65,22 @@ export interface Frame {
   lever?: number;
   node?: NodeMotion;
 }
+
+/** The parts a frame's `status` colours. */
+const STATUS_PARTS = partsOf('rear_derailleur');
+
+/** The status colour of one part in a frame: marked parts are 'bad'; `status` colours the derailleur. */
+export function partStatus(fr: Frame, part: string): 'good' | 'bad' | undefined {
+  if (fr.marks?.some((n) => partsOf(n).includes(part))) return 'bad';
+  return fr.status && STATUS_PARTS.includes(part) ? fr.status : undefined;
+}
+
+/**
+ * The hanger-bend clip's tilt, in rad (drawing data, exaggerated so it reads on a phone; not how far a real hanger
+ * bends). And where the hanger bends: this far along it from the axle to the derailleur's bolt.
+ */
+export const HANGER_TILT = 0.2;
+const HANGER_ROOT = 0.4;
 
 export interface Anim {
   /** one loop, in seconds */
@@ -191,6 +226,27 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
           status: t < 3.9 ? 'bad' : 'good',
           arrow: t > 1.2 && t < 3.0 ? { node: 'barrel_adjuster', dir: sign } : undefined,
         }),
+      };
+    }
+
+    case 'hanger-bend': {
+      // The hanger, and with it the whole derailleur (screws, pulleys, cable stop), tilts about the bike's length
+      // axis where the hanger leaves the dropout: towards the spokes, back through straight, outwards, back.
+      // The hanger is red while it is off straight; the straight hanger and derailleur stay drawn as an outline.
+      const bolt = fitFor(spec).bolt;
+      const root: [number, number, number] = [
+        spec.rx + (bolt.x - spec.rx) * HANGER_ROOT, spec.huby + (bolt.y - spec.huby) * HANGER_ROOT, spec.zDrop,
+      ];
+      // a positive turn about x moves a point below the root towards -z; the drive side is +z, so that is inwards
+      const inward = Math.sign(spec.zDrop || 1) * Math.sign(root[1] - bolt.y || 1);
+      const contour = ['derailleur_hanger', 'rear_derailleur'];
+      return {
+        duration: 5.6,
+        frame: (t) => {
+          const k = ramp(t, 0.6, 1.4) - 2 * ramp(t, 2.0, 3.0) + ramp(t, 3.6, 4.4);
+          const nm: NodeMotion = { parts: ['derailleur_hanger', 'rear_derailleur'], rot: [inward * HANGER_TILT * k, 0, 0], move: [0, 0, 0], scale: 1, fade: 1, about: root };
+          return { node: nm, contour, marks: Math.abs(k) > 0.12 ? ['derailleur_hanger'] : undefined };
+        },
       };
     }
   }

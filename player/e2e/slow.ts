@@ -5,6 +5,8 @@
 //   npm run build && npm run shots          portrait 390x844 and short landscape 667x375
 //   npm run shots -- --only road            only bikes whose id contains "road"
 //   npm run shots -- --card high,low        only cards whose id contains one of the words (faster)
+//   npm run shots -- --at 1.2,3.2           also one picture per card with the step's clip held at each time (s),
+//                                           NN-<card id>-at<time>.png (stage.holdClip)
 //
 // Screenshots: scratch/shots/slow/<bike>-<width>x<height>/NN-<card id>.png (npm run test:e2e writes
 // to scratch/shots/e2e/, so neither wipes the other). Page errors are printed.
@@ -36,6 +38,7 @@ const arg = (name: string) => (process.argv.includes(name) ? process.argv[proces
 const only = arg('--only');
 const cards = arg('--card').split(',').filter(Boolean);
 const wantCard = (id: string) => !cards.length || cards.some((w) => id.includes(w));
+const atTimes = arg('--at').split(',').filter(Boolean).map(Number).filter((x) => Number.isFinite(x));
 
 const server = createServer(async (req, res) => {
   let p = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
@@ -115,6 +118,13 @@ try {
             }
           }
           await shot(id);
+          for (const at of atTimes) {
+            // the parts jump to the held moment; colours and outlines ease in over a few pictures
+            await page.evaluate((t) => (window as any).__app.stage.holdClip?.(t), at);
+            await page.waitForTimeout(2000);
+            await shot(`${id}-at${at}`);
+          }
+          if (atTimes.length) await page.evaluate(() => (window as any).__app.stage.holdClip?.(null));
           const where = f && !f.subject.length ? `no focus parts  ${f.parts.length} parts drawn` : f ? `left${pct(f.left)}  right${pct(f.right)}  top${pct(f.top)}  bottom${pct(f.bottom)}${f.behind ? `  ${f.behind} corners behind the camera` : ''}  ${f.parts.length} parts drawn` : 'no 3D view';
           console.log(`  ${String(n).padStart(2, '0')} ${id.padEnd(32)} ${where}`);
           if (f && cards.length) console.log(`     subject: ${f.subject.join(' ')}\n     drawn:   ${f.parts.join(' ')}`);

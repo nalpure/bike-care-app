@@ -10,7 +10,8 @@ import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { h, icon } from '../ui/dom.js';
 import type { Stage, StageView } from '../ui/stage.js';
-import { ease, makeAnim, wheelStep, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
+import { ease, makeAnim, partStatus, placeMoved, wheelStep, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
+import { Contours } from './contour.js';
 import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
 import { shownParts, visTargets } from './visibility.js';
 import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
@@ -81,7 +82,7 @@ export class ThreeStage implements Stage {
   private model: BikeModel | null = null;
   private specKey = '';
 
-  private COL = { part: new T.Color(), accent: new T.Color(), good: new T.Color(), bad: new T.Color() };
+  private COL = { part: new T.Color(), accent: new T.Color(), good: new T.Color(), bad: new T.Color(), contour: new T.Color() };
   private tmpCol = new T.Color();
   private hotTmp = new T.Color();
   private frameCol = new T.Color();
@@ -128,6 +129,10 @@ export class ThreeStage implements Stage {
   private poseNow: PoseVals = poseVals('ground', bikeSpec({}));
   private poseK = 1;
   private moved = new Set<string>();
+  /** rest outlines a clip asks for (Frame.contour), one per model */
+  private contours: Contours | null = null;
+  /** a clip time held for pictures (holdClip), else null */
+  private heldT: number | null = null;
 
   // camera
   private look = new T.Vector3(0, 0.9, 0.1);
@@ -265,6 +270,7 @@ export class ThreeStage implements Stage {
     this.COL.accent.set(g('--accent', '#F2B600'));
     this.COL.good.set(g('--good', '#1E9E5A'));
     this.COL.bad.set(g('--bad', '#D6453D'));
+    this.COL.contour.set(g('--contour', '#1F5FBF'));
     (this.grid.material as T.LineBasicMaterial).color.copy(this.COL.part);
     this.standMat.color.copy(this.COL.part).multiplyScalar(0.7);
   }
@@ -282,6 +288,7 @@ export class ThreeStage implements Stage {
     this.scene.add(m.standG, m.hookG);
     this.derTarget = m.derZ;
     this.moved.clear();
+    this.contours = new Contours(m);
     this.clearPick();
   }
 
@@ -978,7 +985,16 @@ export class ThreeStage implements Stage {
     const p = this.stepAnim;
     if (!p?.anim) return { play: p, t: 0 };
     const d = p.anim.duration;
-    return { play: p, t: (((now - this.t0) % d) + d) % d };
+    const t = this.heldT ?? now - this.t0;
+    return { play: p, t: ((t % d) + d) % d };
+  }
+
+  /**
+   * For pictures (`npm run shots -- --at`): holds the step's clip at t seconds, or lets it run again (null).
+   * Not used by the app.
+   */
+  holdClip(t: number | null): void {
+    this.heldT = t;
   }
 
   private applyPose(fr: Frame, dt: number): void {
@@ -1030,14 +1046,11 @@ export class ThreeStage implements Stage {
     }
     this.moved = now;
     if (!nm) return;
-    const q = new T.Quaternion().setFromEuler(new T.Euler(...nm.rot));
     for (const id of nm.parts) {
       const p = m.parts.get(id);
       if (!p) continue;
-      // rotate and scale about the centre of the part, then move
-      const off = p.basePos.clone().sub(p.center).multiplyScalar(nm.scale).applyQuaternion(q);
-      p.group.position.copy(p.center).add(off).add(new T.Vector3(...nm.move));
-      p.group.quaternion.copy(q);
+      // rotate and scale about the centre of the part (or the motion's pivot), then move
+      placeMoved(nm, p.basePos, p.center, p.group.position, p.group.quaternion);
       p.group.scale.setScalar(nm.scale);
       p.fade = nm.fade;
     }
@@ -1051,9 +1064,10 @@ export class ThreeStage implements Stage {
     for (const p of m.parts.values()) {
       let hotT = p.hotT;
       let hotCol = COL.accent;
-      if ((p.id === 'rear_derailleur' || p.id === 'upper_pulley') && fr.status && !this.exploring) {
+      const status = this.exploring ? undefined : partStatus(fr, p.id);
+      if (status) {
         hotT = 1;
-        hotCol = fr.status === 'good' ? COL.good : COL.bad;
+        hotCol = status === 'good' ? COL.good : COL.bad;
       }
       p.vis += (p.visT - p.vis) * f;
       p.hot += (hotT - p.hot) * f;
@@ -1124,6 +1138,7 @@ export class ThreeStage implements Stage {
     const lever = m.parts.get('stand_clamp')?.group.userData.lever as T.Object3D | undefined;
     if (lever) lever.rotation.z = fr.lever ?? 0;
     this.applyNodeMotion(fr);
+    this.contours?.update(this.exploring ? undefined : fr.contour, dt, this.COL.contour);
 
     this.placeGhost(this.exploring ? undefined : fr.ghost);
     this.placeArrow(this.exploring ? undefined : fr.arrow);
