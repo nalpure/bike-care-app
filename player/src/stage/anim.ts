@@ -4,6 +4,7 @@
 // The stage applies frames; nothing here touches three.js objects.
 
 import { GAP_BIG, GAP_OK, GAP_SMALL, type BikeSpec } from './bike.js';
+import { derLayout } from './derailleur.js';
 import { CLIPS, MOTIONS, NODES, partsOf, type Pose } from './registry.js';
 
 export const ease = (x: number) => {
@@ -114,9 +115,13 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       const screw: ScrewNode = a.target === 'l_screw' || a.target === 'h_screw' ? a.target : ctx.focus.includes('l_screw') && !ctx.focus.includes('h_screw') ? 'l_screw' : 'h_screw';
       const base = screw === 'h_screw' ? small : large;
       // H limits the way out, L the way in; screwing in moves the pulley away from that limit.
-      // Out of line by about two sprockets, so the difference reads but stays plausible.
-      const o = Math.max(0.016, spec.sp * 2);
-      const off = screw === 'h_screw' ? (sign > 0 ? o : -o) : sign > 0 ? -o : o;
+      // Out of line by about two sprockets, so the difference reads but stays plausible; the links
+      // only swing so far (on a wide cassette not even two sprockets past the largest), so the
+      // offset is cut to what the derailleur can reach.
+      const o0 = Math.max(0.016, spec.sp * 2);
+      const want = screw === 'h_screw' ? (sign > 0 ? o0 : -o0) : sign > 0 ? -o0 : o0;
+      const o = Math.min(o0, Math.abs(derLayout(spec, base + want, GAP_OK).gz - base));
+      const off = Math.sign(want) * o;
       return {
         duration: 4.4,
         frame: (t) => {
