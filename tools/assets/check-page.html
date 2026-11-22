@@ -63,6 +63,20 @@ function showSource(src, meta, part) {
 }
 
 const black = new THREE.MeshBasicMaterial({ color: 0x000000 });
+/** black, but without what the library clips away (see `clip` and `cut` in library.yaml): outside a circle about the z axis inside a z slab, behind a plane */
+function clippedBlack(part) {
+  const c = part.clip, p = part.cut;
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      R: { value: c ? c.r / MM : 1e9 }, z0: { value: c ? c.z[0] / MM : 0 }, z1: { value: c ? c.z[1] / MM : 0 },
+      P: { value: new THREE.Vector3(...(p ? p.point : [0, 0, 0])).divideScalar(MM) },
+      N: { value: new THREE.Vector3(...(p ? p.normal : [0, 0, 0])).normalize() }, useCut: { value: p ? 1 : 0 },
+    },
+    vertexShader: 'varying vec3 w; void main() { w = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0); }',
+    fragmentShader: 'uniform float R; uniform float z0; uniform float z1; uniform vec3 P; uniform vec3 N; uniform float useCut; varying vec3 w; void main() { if (length(w.xy) > R && w.z > z0 && w.z < z1) discard; if (useCut > 0.5 && dot(w - P, N) < 0.0) discard; gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0); }',
+  });
+}
+
 function frame(box, dir) {
   const c = box.getCenter(new THREE.Vector3()), d = new THREE.Vector3(...dir);
   const up = Math.abs(d.y) > 0.5 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
@@ -120,7 +134,8 @@ window.runCheck = async (wantShots) => {
     const libMesh = new THREE.Mesh(geos[name], black);
     const per = {};
     // source silhouettes: the loaded scene with every material black
-    const orig = new Map(); for (const m of shown) { orig.set(m, m.material); m.material = black; }
+    const srcBlack = part.clip || part.cut ? clippedBlack(part) : black;
+    const orig = new Map(); for (const m of shown) { orig.set(m, m.material); m.material = srcBlack; }
     const sceneS = new THREE.Scene(); sceneS.background = new THREE.Color(0xffffff); sceneS.add(src.scene);
     const sceneL = new THREE.Scene(); sceneL.background = new THREE.Color(0xffffff); sceneL.add(libMesh);
     for (const [dn, d] of Object.entries(DIRS)) {
@@ -130,7 +145,7 @@ window.runCheck = async (wantShots) => {
       per[dn] = overlap(a, b);
     }
     let worst = '+x'; for (const k in per) if (per[k] < per[worst]) worst = k;
-    res.parts.push({ name, worst, overlap: per[worst], per, boxDiffMm: boxDiffMm(sb, lb), sourceMm: sb.getSize(new THREE.Vector3()).toArray().map((v) => v * MM), tris: geos[name].index.count / 3 });
+    res.parts.push({ name, worst, overlap: per[worst], per, boxDiffMm: part.cut ? 0 : boxDiffMm(sb, lb) /* a cut part has a smaller box on purpose; the silhouettes (clipped the same way) still have to match */, sourceMm: sb.getSize(new THREE.Vector3()).toArray().map((v) => v * MM), tris: geos[name].index.count / 3 });
     if (wantShots) {
       for (const [m, mat] of orig) m.material = new THREE.MeshStandardMaterial({ color: 0xcfcfcf, roughness: 0.6, metalness: 0.1, side: THREE.DoubleSide });
       const sc = new THREE.Scene(); shade(sc); sc.add(src.scene);
@@ -142,7 +157,7 @@ window.runCheck = async (wantShots) => {
       renderer.render(sl, cam); cx.drawImage(renderer.domElement, S, 0);
       res.shots[name] = c2.toDataURL('image/png');
     }
-    for (const [m, mat] of orig) { if (m.material !== black) m.material.dispose(); m.material = mat; }
+    for (const [m, mat] of orig) { if (m.material !== srcBlack) m.material.dispose(); m.material = mat; }
   }
   // grips: mirror images across the middle plane (z = 0)
   const gd = boxOfGeo(geos.grip_drive), gn = boxOfGeo(geos.grip_nondrive);

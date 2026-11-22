@@ -37,10 +37,12 @@ parts:
   rd_pulley_upper: { nodes: ['Deraileur Gear-4'], ratio: 0.3 }
   rd_pulley_lower: { nodes: ['Deraileur Gear-3'], ratio: 0.3 }
   rd_hanger: { nodes: ['Deraileur Mount-3'], ratio: 1 }
-  crank_arms: { nodes: ['Crank Arms_1.STEP-1'], drop: ['carbon steel-7'], ratio: 0.15 }
+  crank_arms: { nodes: ['Crank Arms_1.STEP-1'], drop: ['carbon steel-7'], clip: { r: 52, z: [40, 60.5] }, ratio: 0.15 }
   pedal_drive: { nodes: ['Generic Al Pedal_1.STEP-3'], ratio: 0.15 }
   pedal_nondrive: { nodes: ['Generic Al Pedal_1.STEP-2'], ratio: 0.15 }
-  saddle: { nodes: ['Bike Saddle_1.STEP-1'], ratio: 0.12 }
+  # The saddle node includes a seat post (a tube 12.3 mm radius along the seat tube, 72.2 deg). The cut removes it below the
+  # clamp barrel: point = 189.5 mm along the post axis from its lower end (-115.2, 418.4), normal = the axis direction up.
+  saddle: { nodes: ['Bike Saddle_1.STEP-1'], cut: { point: [-173.0, 598.9, 0], normal: [-0.3050, 0.9522, 0] }, ratio: 0.12 }
   seat_collar:
     nodes:
       - Seat Post Clamp_1.STEP-1

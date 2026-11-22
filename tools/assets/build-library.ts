@@ -18,7 +18,9 @@ const cfg = YAML.parse(fs.readFileSync(path.join(root, 'tools/assets/library.yam
 const MM = 500; // one scene unit in mm
 
 type V3 = [number, number, number];
-interface PartCfg { nodes: string[]; drop?: string[]; front?: boolean; ratio: number; error?: number }
+/** clip: removes what lies outside a circle (about the library's z axis, radius in mm) from the triangles inside a z slab (mm). Cuts the triangles that straddle the circle. */
+/** cut: removes what lies behind a plane (kept: normal . (p - point) >= 0; point and normal in mm / unit, library axes). */
+interface PartCfg { nodes: string[]; drop?: string[]; clip?: { r: number; z: [number, number] }; cut?: { point: V3; normal: V3 }; front?: boolean; ratio: number; error?: number }
 const parts: Record<string, PartCfg> = cfg.parts;
 
 // ---- read the source ----
@@ -67,6 +69,67 @@ function bake(names: string[], drop: string[] = []): Raw {
     }
   }
   return { pos: Float32Array.from(P), idx: Uint32Array.from(I), trisBefore: I.length / 3 };
+}
+
+/** Keeps the part of each triangle inside the circle of radius r (mm) for triangles wholly inside the slab z0..z1 (mm); other triangles stay. The circle is a 96-gon. */
+function clipCircle(raw: Raw, r: number, z0: number, z1: number): Raw {
+  const SIDES = 96;
+  const ap = (r / MM) * Math.cos(Math.PI / SIDES);
+  const planes = Array.from({ length: SIDES }, (_, k) => [Math.cos(((k + 0.5) * 2 * Math.PI) / SIDES), Math.sin(((k + 0.5) * 2 * Math.PI) / SIDES)]);
+  const P: number[] = [];
+  const I: number[] = [];
+  const push = (poly: V3[]) => {
+    for (let i = 1; i + 1 < poly.length; i++) {
+      const base = P.length / 3;
+      for (const v of [poly[0], poly[i], poly[i + 1]]) P.push(...v);
+      I.push(base, base + 1, base + 2);
+    }
+  };
+  for (let t = 0; t < raw.idx.length; t += 3) {
+    let poly: V3[] = [0, 1, 2].map((k) => { const j = raw.idx[t + k] * 3; return [raw.pos[j], raw.pos[j + 1], raw.pos[j + 2]] as V3; });
+    const zs = poly.map((p) => p[2] * MM);
+    if (Math.min(...zs) < z0 || Math.max(...zs) > z1) { push(poly); continue; }
+    for (const [nx, ny] of planes) {
+      const d = (p: V3) => p[0] * nx + p[1] * ny - ap;
+      const next: V3[] = [];
+      for (let i = 0; i < poly.length && poly.length; i++) {
+        const a = poly[i], b = poly[(i + 1) % poly.length];
+        const da = d(a), db = d(b);
+        if (da <= 0) next.push(a);
+        if ((da < 0 && db > 0) || (da > 0 && db < 0)) { const u = da / (da - db); next.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]); }
+      }
+      poly = next;
+      if (poly.length < 3) break;
+    }
+    if (poly.length >= 3) push(poly);
+  }
+  return { pos: Float32Array.from(P), idx: Uint32Array.from(I), trisBefore: raw.trisBefore };
+}
+
+/** Keeps the part of each triangle on the normal's side of the plane through point (mm); triangles across the plane are cut. */
+function cutPlane(raw: Raw, point: V3, normal: V3): Raw {
+  const nl = Math.hypot(...normal);
+  const n = normal.map((v) => v / nl);
+  const d0 = (point[0] * n[0] + point[1] * n[1] + point[2] * n[2]) / MM;
+  const P: number[] = [];
+  const I: number[] = [];
+  for (let t = 0; t < raw.idx.length; t += 3) {
+    const poly: V3[] = [0, 1, 2].map((k) => { const j = raw.idx[t + k] * 3; return [raw.pos[j], raw.pos[j + 1], raw.pos[j + 2]] as V3; });
+    const d = (p: V3) => p[0] * n[0] + p[1] * n[1] + p[2] * n[2] - d0;
+    const out: V3[] = [];
+    for (let i = 0; i < 3; i++) {
+      const a = poly[i], b = poly[(i + 1) % 3];
+      const da = d(a), db = d(b);
+      if (da >= 0) out.push(a);
+      if ((da < 0 && db > 0) || (da > 0 && db < 0)) { const u = da / (da - db); out.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u]); }
+    }
+    for (let i = 1; i + 1 < out.length; i++) {
+      const base = P.length / 3;
+      for (const v of [out[0], out[i], out[i + 1]]) P.push(...v);
+      I.push(base, base + 1, base + 2);
+    }
+  }
+  return { pos: Float32Array.from(P), idx: Uint32Array.from(I), trisBefore: raw.trisBefore };
 }
 
 const mean = (pos: Float32Array): V3 => {
@@ -137,7 +200,9 @@ let totalTris = 0;
 
 for (const [name, p] of Object.entries(parts)) {
   const srcNames = names.get(name)!;
-  const raw = bake(srcNames, p.drop);
+  let raw = bake(srcNames, p.drop);
+  if (p.clip) raw = clipCircle(raw, p.clip.r, p.clip.z[0], p.clip.z[1]);
+  if (p.cut) raw = cutPlane(raw, p.cut.point, p.cut.normal);
   if (p.front) {
     const t = (angleDeg * Math.PI) / 180;
     for (let i = 0; i < raw.pos.length; i += 3) {
@@ -184,6 +249,8 @@ for (const [name, p] of Object.entries(parts)) {
   info[name] = {
     source: srcNames,
     drop: p.drop ?? [],
+    clip: p.clip ?? null,
+    cut: p.cut ?? null,
     front: !!p.front,
     ratio: p.ratio,
     trisBefore: raw.trisBefore,

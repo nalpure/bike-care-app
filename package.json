@@ -18,6 +18,7 @@
     "shots": "tsx player/e2e/slow.ts",
     "parts": "tsx tools/assets/build-library.ts",
     "parts:check": "tsx tools/assets/check-library.ts",
+    "parts:mounts": "tsx tools/assets/measure-mounts.ts",
     "parts:rig": "tsx tools/assets/measure-rd.ts"
   },
   "dependencies": {

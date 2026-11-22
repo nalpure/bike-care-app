@@ -27,14 +27,16 @@
   "grip_drive": "as listed",
   "pedal_drive": "as listed"
  },
- "totalTriangles": 32510,
- "bytes": 355756,
+ "totalTriangles": 31876,
+ "bytes": 349428,
  "parts": {
   "rd_upper_body": {
    "source": [
     "___B-4___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.25,
    "trisBefore": 6360,
@@ -62,6 +64,8 @@
     "___B-5___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.25,
    "trisBefore": 3418,
@@ -89,6 +93,8 @@
     "___B-7___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.25,
    "trisBefore": 1932,
@@ -116,6 +122,8 @@
     "___B-8___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 1,
    "trisBefore": 904,
@@ -143,6 +151,8 @@
     "___B-6___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.25,
    "trisBefore": 6286,
@@ -170,6 +180,8 @@
     "___B-1___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 1,
    "trisBefore": 868,
@@ -197,6 +209,8 @@
     "___B-3___.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 1,
    "trisBefore": 1362,
@@ -224,6 +238,8 @@
     "Deraileur Gear-4"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.3,
    "trisBefore": 4416,
@@ -251,6 +267,8 @@
     "Deraileur Gear-3"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.3,
    "trisBefore": 4416,
@@ -278,6 +296,8 @@
     "Deraileur Mount-3"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 1,
    "trisBefore": 526,
@@ -307,10 +327,18 @@
    "drop": [
     "carbon steel-7"
    ],
+   "clip": {
+    "r": 52,
+    "z": [
+     40,
+     60.5
+    ]
+   },
+   "cut": null,
    "front": false,
    "ratio": 0.15,
    "trisBefore": 16562,
-   "trisAfter": 2439,
+   "trisAfter": 1934,
    "box": {
     "min": [
      -0.15748851001262665,
@@ -334,6 +362,8 @@
     "Generic Al Pedal_1.STEP-3"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.15,
    "trisBefore": 7468,
@@ -361,6 +391,8 @@
     "Generic Al Pedal_1.STEP-2"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.15,
    "trisBefore": 7468,
@@ -388,26 +420,39 @@
     "Bike Saddle_1.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": {
+    "point": [
+     -173,
+     598.9,
+     0
+    ],
+    "normal": [
+     -0.305,
+     0.9522,
+     0
+    ]
+   },
    "front": false,
    "ratio": 0.12,
    "trisBefore": 30084,
-   "trisAfter": 3566,
+   "trisAfter": 3437,
    "box": {
     "min": [
-     -0.5853771567344666,
-     0.8272378444671631,
+     -0.5853582620620728,
+     1.190690517425537,
      -0.1642524152994156
     ],
     "max": [
-     -0.07812731713056564,
-     1.3315068483352661,
-     0.16426554322242737
+     -0.07848156988620758,
+     1.3314833641052246,
+     0.1642036885023117
     ]
    },
    "sizeMm": [
-    253.6,
-    252.1,
-    164.3
+    253.4,
+    70.4,
+    164.2
    ]
   },
   "seat_collar": {
@@ -417,6 +462,8 @@
     "socket head cap screw_am_B18.3.1M - 5 x 0.8 x 20 Hex SHCS -- 20"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": false,
    "ratio": 0.15,
    "trisBefore": 12756,
@@ -452,6 +499,8 @@
     "socket head cap screw_am_B18.3.1M - 8 x 1.25 x 25 Hex SHCS -- 2"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": true,
    "ratio": 0.1,
    "trisBefore": 33964,
@@ -479,6 +528,8 @@
     "Handlebar.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": true,
    "ratio": 0.4,
    "trisBefore": 5142,
@@ -506,6 +557,8 @@
     "Handlebar Grip.STEP-2"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": true,
    "ratio": 0.04,
    "trisBefore": 73138,
@@ -533,6 +586,8 @@
     "Handlebar Grip.STEP-1"
    ],
    "drop": [],
+   "clip": null,
+   "cut": null,
    "front": true,
    "ratio": 0.04,
    "trisBefore": 73138,
