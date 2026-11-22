@@ -7,7 +7,7 @@
 //   crank: pedal axles (-64.8,-146.3) and (64.8,146.3) mm, arm length 160.0 mm
 //   seat: axis through (-173, 598.9) mm up 72.24 deg from horizontal (backwards); collar t -129.8..-114.0 mm, bore radius 13.9, outer 17.3
 //   saddle: clamp barrel t -0.0..13.9 mm from the cut (537 vertices), head at 6.9
-//   saddle: head (-175.1,605.5), top above the head y 652.6 (47.0 mm above), highest point (-289.0,665.7,19.3), x -293,-39
+//   saddle: hook at (-75.1, 623.4), head (-175.1,605.5), top above the head y 652.6 (47.0 mm above), highest point (-289.0,665.7,19.3), x -293,-39
 //   stem: steering axis from (428.0, 391.4) up 71.00 deg (head angle); stem t 168.8,237.2 mm, foot radius 23.5; bar clamp (414.0,605.9), bar radius 15.91 (603 vertices)
 //   bar: half width 391.9 mm; grips z 245.3..411.8, axis 431.0,634.2 -> 451.8,648.3; bar ring at z 60 414.0,606.0, 160 423.1,625.4; highest grip point (449.3,666.2,405.4)
 
@@ -44,6 +44,8 @@ export const MOUNTS = {
     head: [-0.35023, 1.21101] as M2,
     /** the highest point of the shell above the clamp (y), and the highest point of all (x, y, z): the saddle's rest when the bike is flipped */
     topY: 1.30511,
+    /** the underside of the rails in front of the clamp (x, y): where the hook catches */
+    hook: [-0.15023, 1.24688] as M2,
     rest: [-0.57805, 1.33149, 0.03853] as M3,
   },
   /** the steering axis (a point on it, the direction up and backwards), the stem's foot and top along it, and the bar clamp */

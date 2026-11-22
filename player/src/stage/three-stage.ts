@@ -10,9 +10,10 @@ import * as T from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { h, icon } from '../ui/dom.js';
 import type { Stage, StageView } from '../ui/stage.js';
-import { ease, makeAnim, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
+import { ease, makeAnim, wheelStep, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
 import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
 import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
+import { mixPose, poseVals, type PoseVals } from './pose.js';
 import { previewPose, viewPose, type ViewPose } from './views.js';
 
 const nowS = () => performance.now() / 1000;
@@ -22,30 +23,6 @@ const ICON_EXPAND = 'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5';
 const ICON_CLOSE = 'M6 6l12 12|M18 6L6 18';
 /** vertical field of view for a wide stage; narrower stages widen it so the bike fits */
 const BASE_TAN = Math.tan((17.5 * Math.PI) / 180);
-
-interface PoseVals { hx: number; hy: number; hrz: number; rx: number; ry: number; rrx: number }
-
-function poseVals(p: Pose, B: BikeSpec): PoseVals {
-  if (p === 'stand') return { hx: 0, hy: 0, hrz: 0, rx: 0, ry: LIFT, rrx: 0 };
-  if (p === 'flipped') {
-    // resting on saddle and handlebar
-    const xs = B.saddleX;
-    const ys = B.saddleY + 0.025;
-    const by = B.barTop;
-    return { hx: xs, hy: GROUND, hrz: -Math.atan((ys - by[1]) / (by[0] - xs)), rx: -xs, ry: ys, rrx: Math.PI };
-  }
-  if (p === 'hung') {
-    // hanging by the saddle: the rear wheel lifts, the front wheel stays on the ground
-    return { hx: B.FX, hy: GROUND, hrz: -0.17, rx: -B.FX, ry: -GROUND, rrx: 0 };
-  }
-  return { hx: 0, hy: 0, hrz: 0, rx: 0, ry: 0, rrx: 0 };
-}
-
-function mixPose(a: PoseVals, b: PoseVals, k: number): PoseVals {
-  const m = (x: number, y: number) => x + (y - x) * k;
-  const arc = a.rrx !== b.rrx ? Math.sin(Math.PI * k) * 0.45 : 0;
-  return { hx: m(a.hx, b.hx), hy: m(a.hy, b.hy) + arc, hrz: m(a.hrz, b.hrz), rx: m(a.rx, b.rx), ry: m(a.ry, b.ry), rrx: m(a.rrx, b.rrx) };
-}
 
 interface Playing { anim?: Anim; caption: string; view?: string }
 
@@ -1029,10 +1006,10 @@ export class ThreeStage implements Stage {
     this.crankAngle += crank * dt;
     m.chainShift = -this.crankAngle * m.spec.rc;
     // a freewheel: the rear wheel only turns with the pedals going forward
-    this.wheelAngle.rear_wheel += (Math.max(0, crank) * m.spec.rc / m.rAtZ(derZ) + (fr.wheelSpeed?.rear_wheel ?? 0)) * dt;
-    this.wheelAngle.front_wheel += (fr.wheelSpeed?.front_wheel ?? 0) * dt;
+    this.wheelAngle.rear_wheel += wheelStep(Math.max(0, crank) * m.spec.rc / m.rAtZ(derZ) + (fr.wheelSpeed?.rear_wheel ?? 0), dt);
+    this.wheelAngle.front_wheel += wheelStep(fr.wheelSpeed?.front_wheel ?? 0, dt);
     m.setDer(derZ, this.gapNow);
-    m.crankset.rotation.z = -this.crankAngle;
+    m.setCrank(-this.crankAngle);
     m.rearHub.rotation.z = -this.wheelAngle.rear_wheel;
     m.frontHub.rotation.z = -this.wheelAngle.front_wheel;
     for (const [id, t] of m.turns) t.spin.rotation.y = fr.screws?.[id as ScrewNode] ?? 0;

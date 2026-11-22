@@ -6,9 +6,11 @@
 import * as T from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { buildPath } from './chain.js';
-import { chainringGeo, sprocketGeo, tubeGeo } from './geo.js';
+import { chainringGeo, sprocketGeo } from './geo.js';
+import { libGeo } from './library.js';
+import { MOUNTS as M } from './mounts.js';
 import { chordLength, layPins, newPins, pitchAngle } from './pins.js';
-import { HP, PITCH, RP, TAU, type BikeSpec } from './spec.js';
+import { HP, PITCH, RING_T, RP, TAU, type BikeSpec } from './spec.js';
 import type { BikeModel } from './bike.js';
 
 /** Sprocket radius at a z between the sprockets. */
@@ -31,9 +33,13 @@ export function nearestSprocket(B: BikeSpec, z: number): number {
 
 /** mm to scene units (1 unit = 0.5 m). */
 const mm = (v: number) => v / 500;
-/** Chainring thickness, and the direction of its first bolt tab (the crank arm's, so the spider lines up). */
-const RING_T = mm(1.8);
-const TAB0 = Math.atan2(-0.3, 0.14);
+/**
+ * The chainring is bolted to the library crank's spider: 5 tabs on the 5 arms (the first on the first arm), on a circle
+ * 4 mm inside the arms' ends. Its back face lies on the spider's outer face (spec.ts: chain line). One look for every
+ * tooth count; the bolt circle is a drawing value, not a fact about any chainring.
+ */
+const TAB0 = M.crank.armAngles[0];
+const BOLT_R = M.crank.spiderR - mm(4);
 /** Links beyond the longest taut length that the chain may have: room for the sag (layChain rounds to the taut length). */
 const SLACK_LINKS = 1;
 
@@ -45,17 +51,21 @@ export function buildCrankset(m: BikeModel): void {
   m.crankset.position.set(0, bby, 0);
   m.bike.add(m.crankset);
   m.part('chainring', m.crankset);
-  const bolts = B.chainring <= 34 ? 4 : 5;
-  m.add('chainring', chainringGeo(B.chainring, RING_T, bolts, bolts === 4 ? 0.104 : 0.11, TAB0), [0, 0, zc], null, { flat: true });
+  m.add('chainring', chainringGeo(B.chainring, RING_T, 5, BOLT_R, TAB0), [0, 0, zc], null, { flat: true });
   m.anchor('chainring', m.bike, [0, bby + B.rc + 0.01, zc]);
   m.part('crank', m.crankset);
-  const zr = zc + 0.035;
-  m.add('crank', tubeGeo([0, 0, zr], [0.14, -0.3, zr + 0.02], 0.02));
-  m.add('crank', new T.BoxGeometry(0.1, 0.025, 0.08), [0.14, -0.3, zr + 0.07], null, { k: 0.5 });
-  m.add('crank', tubeGeo([0, 0, -zr], [-0.14, 0.3, -zr - 0.02], 0.02));
-  m.add('crank', new T.BoxGeometry(0.1, 0.025, 0.08), [-0.14, 0.3, -zr - 0.07], null, { k: 0.5 });
-  m.add('crank', new T.CylinderGeometry(0.02, 0.02, 2 * zr, 10), null, [HP, 0, 0]);
-  m.anchor('crank', m.crankset, [0.14, -0.3, zr + 0.07]);
+  // The library's crank arms (the spider without its ring), the spindle between them, and the pedals: each pedal
+  // hangs on its arm's end, so setCrank turns it back by the crank's angle and it stays level.
+  m.add('crank', libGeo('crank_arms'));
+  m.add('crank', new T.CylinderGeometry(0.02, 0.02, 0.178, 10), null, [HP, 0, 0]);
+  for (const [lib, axle] of [['pedal_drive', M.crank.pedalDrive], ['pedal_nondrive', M.crank.pedalNon]] as const) {
+    const hang = new T.Group();
+    hang.position.set(axle[0], axle[1], 0);
+    m.parts.get('crank')!.group.add(hang);
+    m.pedals.push(hang);
+    m.add('crank', libGeo(lib), [-axle[0], -axle[1], 0], null, { k: 0.5, parent: hang });
+  }
+  m.anchor('crank', m.crankset, [M.crank.pedalDrive[0], M.crank.pedalDrive[1], (M.crank.pedalDriveZ[0] + M.crank.pedalDriveZ[1]) / 2]);
 
   // Sprockets: one block on the freehub. The block turns with the chain (layChain sets its angle so
   // the tooth gaps sit under the pins), not with the wheel: a wheel spun by hand freewheels.
@@ -202,7 +212,7 @@ export function layChain(m: BikeModel): void {
   const B = m.spec;
   buildPath(m.circ, m.path);
   const theta = m.chainShift / B.rc;
-  m.crankset.rotation.z = theta;
+  m.setCrank(theta);
   const pins = m.pins;
   // a derailleur bike's chain has its fixed length (more only if the cage cannot take it up); else as
   // many links as the taut chain needs here (the allowance for sag is in the rounding)

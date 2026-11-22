@@ -333,6 +333,13 @@ export class App {
         h('p', this.c.notice),
         h('p.s', 'Do not rely on these steps for brakes, wheels or anything else that keeps you safe. When in doubt, ask a bike shop.'),
         h('p.s', 'Spotted something odd? Tap "Note" on any step to leave feedback. You find all notes in the Notes tab.'),
+        // The licence of the 3D parts (CC BY 4.0) requires this credit while library parts are in use; never drop it.
+        h('p.s', { 'data-test': 'credits' },
+          '3D parts based on "Rigid Bike [Touring Bike]" (',
+          h('a', { href: 'https://skfb.ly/pAzTT', target: '_blank', rel: 'noopener' }, 'https://skfb.ly/pAzTT'),
+          ') by Mohamed Farhan, licensed under CC BY 4.0 (',
+          h('a', { href: 'http://creativecommons.org/licenses/by/4.0/', target: '_blank', rel: 'noopener' }, 'http://creativecommons.org/licenses/by/4.0/'),
+          '). Changed: split into parts, simplified, re-oriented.'),
         h('button.btn.primary.wide', { 'data-test': 'notice-ok', onclick: () => {
           this.store.data.noticeSeen = true;
           this.store.save();

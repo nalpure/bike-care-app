@@ -177,10 +177,15 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
   mkdirSync(dir, { recursive: true });
   try {
     await page.goto(URL);
-    await click(page, 'notice-ok');
-    await page.addStyleTag({ content: '.toast { display: none !important; }' });
     const errors: string[] = [];
     const expect = (ok: boolean, what: string) => ok || errors.push(what);
+    // the 3D parts' licence (CC BY 4.0) needs this credit in the test build notice, with both links
+    const credits = (await page.textContent('[data-test="credits"]')) ?? '';
+    expect(credits.includes('3D parts based on "Rigid Bike [Touring Bike]"') && credits.includes('by Mohamed Farhan') && credits.includes('CC BY 4.0') && credits.includes('Changed: split into parts, simplified, re-oriented.'), `credits line is wrong: ${credits}`);
+    const hrefs = await page.$$eval('[data-test="credits"] a', (as) => as.map((a) => a.getAttribute('href')));
+    expect(hrefs.join(' ') === 'https://skfb.ly/pAzTT http://creativecommons.org/licenses/by/4.0/', `credits links are wrong: ${hrefs.join(' ')}`);
+    await click(page, 'notice-ok');
+    await page.addStyleTag({ content: '.toast { display: none !important; }' });
     const shot = (name: string) => page.screenshot({ path: join(dir, `${name}.png`) });
     const repair = () => page.locator('.tabbar button', { hasText: 'Repair' }).click();
 

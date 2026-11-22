@@ -1,31 +1,43 @@
-// The cockpit: handlebar, brake levers, the right shifter, and the gear cable that runs from the
-// shifter to the derailleur (or hub, or gearbox).
+// The cockpit: the library stem, the bar (the library's flat bar with grips, or a generated drop bar with levers),
+// brake levers, the right shifter, and the gear cable that runs from the shifter to the derailleur (or hub, or gearbox).
+// Stem, bar and grips are one rigid piece placed by BikeSpec.xf (spec.ts: cockpitXf); the levers and the shifter sit at the
+// spots measured on the bar (mounts.ts).
 // Session area: E (other parts).
 
 import * as T from 'three';
 import { barrelTurn } from './derailleur.js';
 import { curveGeo, plate, tubeGeo } from './geo.js';
-import { gripOf, HP, stayPts, type V3 } from './spec.js';
+import { libGeo, type LibName } from './library.js';
+import { MOUNTS as M } from './mounts.js';
+import { HP, stayPts, xfPt, type V3 } from './spec.js';
 import type { BikeModel } from './bike.js';
 
-/** Handlebar, brake levers and the right shifter. */
+/** Stem, bar, levers and the right shifter. */
 export function buildCockpit(m: BikeModel): void {
   const B = m.spec;
-  const { HT, C, S } = B;
-  const [hx, hy] = HT;
+  const { HT, C, S, xf } = B;
   const hasShifter = B.gears !== 'single';
   m.part('handlebar');
   m.part('brake_lever');
   if (hasShifter) m.part('shifter_rear');
+  const turn = Math.atan2(xf.s, xf.c);
+  /** a library part of the cockpit, in the cockpit's place */
+  const put = (lib: LibName, opt: { k?: number; dark?: boolean }) => m.add('handlebar', libGeo(lib), [xf.tx, xf.ty, 0], [0, 0, turn], opt);
+  put('stem', { k: 1 });
+  if (B.spacer > 0) {
+    // spacers under the stem (a riser bar): a stack on the steering axis, up to the stem's foot
+    const foot = xfPt(xf, [M.stem.axisP[0] + M.stem.axisD[0] * M.stem.footT, M.stem.axisP[1] + M.stem.axisD[1] * M.stem.footT]);
+    m.add('handlebar', tubeGeo([HT[0], HT[1], 0], [foot[0], foot[1], 0], 0.036), null, null, { k: 0.8 });
+  }
 
   if (B.bar === 'drop') {
     // Drop bar: the hoods hold combined brake and shift levers. The brake lever hangs in front
-    // of the curve; on the right, the shift paddle sits behind it.
-    m.add('handlebar', tubeGeo([HT[0], HT[1], 0], [C[0], C[1], 0], 0.02));
+    // of the curve; on the right, the shift paddle sits behind it. The middle is as thick as the stem's clamp.
     for (const sd of [1, -1]) {
       const z = sd * 0.21;
-      m.add('handlebar', tubeGeo([C[0], C[1], 0], [C[0], C[1], z], 0.014));
-      m.add('handlebar', curveGeo([[C[0], C[1], z], [C[0] + 0.1, C[1] + 0.01, z], [C[0] + 0.18, C[1] - 0.08, z], [C[0] + 0.16, C[1] - 0.19, z], [C[0] + 0.05, C[1] - 0.23, z]], 0.013));
+      m.add('handlebar', tubeGeo([C[0], C[1], 0], [C[0], C[1], sd * 0.1], M.bar.radius));
+      m.add('handlebar', tubeGeo([C[0], C[1], sd * 0.1], [C[0], C[1], z], 0.0238));
+      m.add('handlebar', curveGeo([[C[0], C[1], z], [C[0] + 0.1, C[1] + 0.01, z], [C[0] + 0.18, C[1] - 0.08, z], [C[0] + 0.16, C[1] - 0.19, z], [C[0] + 0.05, C[1] - 0.23, z]], 0.0238));
       const hood = sd > 0 && hasShifter ? 'shifter_rear' : 'brake_lever';
       m.add(hood, new T.BoxGeometry(0.08, 0.038, 0.034), [C[0] + 0.162, C[1] + 0.012, z], [0, 0, 0.28], { k: 0.42 });
       m.add(hood, new T.BoxGeometry(0.022, 0.03, 0.028), [C[0] + 0.198, C[1] + 0.036, z], [0, 0, 0.5], { k: 0.42 });
@@ -36,29 +48,23 @@ export function buildCockpit(m: BikeModel): void {
     }
     m.anchor('brake_lever', m.bike, [C[0] + 0.22, C[1] - 0.09, 0.21]);
   } else {
-    const g = gripOf(B.bar, HT);
-    if (B.bar === 'flat') {
-      m.add('handlebar', tubeGeo([hx, hy, 0], [g[0], g[1], 0], 0.018));
-      m.add('handlebar', tubeGeo([g[0], g[1], -0.4], [g[0], g[1], 0.4], 0.015));
-    } else {
-      m.add('handlebar', tubeGeo([hx, hy, 0], [hx - 0.02, hy + 0.08, 0], 0.02));
-      for (const sd of [1, -1]) {
-        m.add('handlebar', tubeGeo([hx - 0.02, hy + 0.08, 0], [hx - 0.02, hy + 0.08, sd * 0.14], 0.016));
-        m.add('handlebar', tubeGeo([hx - 0.02, hy + 0.08, sd * 0.14], [g[0], g[1], sd * 0.3], 0.015));
-        m.add('handlebar', tubeGeo([g[0], g[1], sd * 0.3], [g[0], g[1], sd * 0.4], 0.015));
-      }
-    }
+    // Flat and riser bars are the same library bar and grips (the riser on spacers, see bikeSpec).
+    put('bar_flat', { k: 1 });
+    put('grip_drive', { dark: true });
+    put('grip_nondrive', { dark: true });
+    const g = xfPt(xf, M.lever.at);
     for (const sd of [1, -1]) {
-      // grip, then the brake lever: a clamp, a body forward of the bar and a blade in front of the grip
-      m.add('handlebar', tubeGeo([g[0], g[1], sd * 0.3], [g[0], g[1], sd * 0.4], 0.021), null, null, { k: 0.45 });
-      m.add('brake_lever', new T.CylinderGeometry(0.021, 0.021, 0.016, 12), [g[0], g[1], sd * 0.288], [HP, 0, 0], { k: 0.5 });
-      m.add('brake_lever', new T.BoxGeometry(0.055, 0.026, 0.02), [g[0] + 0.03, g[1] + 0.004, sd * 0.288], null, { k: 0.5 });
-      m.add('brake_lever', curveGeo([[g[0] + 0.052, g[1] + 0.0, sd * 0.292], [g[0] + 0.068, g[1] - 0.008, sd * 0.33], [g[0] + 0.07, g[1] - 0.016, sd * 0.385]], 0.0075, 16), null, null, { k: 1.15 });
+      // brake lever: a clamp on the bar just inboard of the grip, a body forward of the bar and a blade in front of the grip
+      const lz = sd * M.lever.z;
+      m.add('brake_lever', new T.CylinderGeometry(0.027, 0.027, 0.024, 12), [g[0], g[1], lz], [HP, 0, 0], { k: 0.5 });
+      m.add('brake_lever', new T.BoxGeometry(0.055, 0.026, 0.02), [g[0] + 0.03, g[1] + 0.004, lz], null, { k: 0.5 });
+      m.add('brake_lever', curveGeo([[g[0] + 0.052, g[1] + 0.0, lz + sd * 0.004], [g[0] + 0.07, g[1] - 0.008, lz + sd * 0.045], [g[0] + 0.075, g[1] - 0.016, lz + sd * 0.1]], 0.0075, 16), null, null, { k: 1.15 });
     }
     if (hasShifter) {
-      // trigger shifter under the bar, inside the brake lever: the large lever for the thumb
+      // trigger shifter under the bar, inboard of the brake lever: the large lever for the thumb
       // (towards the rider) and the small release lever in front for the index finger
-      m.add('shifter_rear', new T.CylinderGeometry(0.019, 0.019, 0.012, 12), [g[0], g[1], 0.262], [HP, 0, 0], { k: 0.5 });
+      const sh = xfPt(xf, M.shifter.at);
+      m.add('shifter_rear', new T.CylinderGeometry(0.026, 0.026, 0.02, 12), [sh[0], sh[1], S[2]], [HP, 0, 0], { k: 0.5 });
       m.add('shifter_rear', new T.BoxGeometry(0.06, 0.036, 0.045), [S[0], S[1], S[2]], null, { k: 0.55 });
       const thumb = m.add('shifter_rear', new T.BoxGeometry(0.03, 1, 0.007), null, null, { k: 0.85 });
       plate(thumb, [S[0] - 0.02, S[1] - 0.012, S[2] + 0.005], [S[0] - 0.065, S[1] - 0.022, S[2] + 0.04], [0, 1, 0]);
@@ -66,7 +72,7 @@ export function buildCockpit(m: BikeModel): void {
       plate(trig, [S[0] + 0.022, S[1] - 0.008, S[2] + 0.004], [S[0] + 0.042, S[1] - 0.026, S[2] + 0.03], [1, 0, 0]);
       m.add('shifter_rear', new T.BoxGeometry(0.004, 0.016, 0.026), [S[0] - 0.031, S[1] + 0.004, S[2]], null, { dark: true });
     }
-    m.anchor('brake_lever', m.bike, [g[0] + 0.07, g[1], 0.36]);
+    m.anchor('brake_lever', m.bike, [g[0] + 0.07, g[1], M.lever.z + 0.06]);
   }
   if (hasShifter) m.anchor('shifter_rear', m.bike, [S[0], S[1] + 0.05, S[2]]);
 }
@@ -93,7 +99,7 @@ export function buildShiftCable(m: BikeModel): void {
     start = [[S[0] - 0.035, S[1] - 0.02, S[2] - 0.005], [C[0] + 0.07, C[1] - 0.012, 0.2], [C[0] + 0.015, C[1] - 0.02, 0.13], [C[0] - 0.03, C[1] - 0.07, 0.07]];
   } else {
     const head: V3 = [bt.pos[0] - bt.axis[0] * bt.len / 2, bt.pos[1], bt.pos[2] - bt.axis[2] * bt.len / 2];
-    start = [head, [head[0] + 0.06, head[1] - 0.02, head[2] - 0.08], [hx + 0.08, hy - 0.04, 0.09]];
+    start = [head, [head[0] + 0.02, head[1] - 0.03, head[2] - 0.17], [hx + 0.1, hy - 0.05, 0.09]];
   }
   const path: V3[] = B.bar === 'drop'
     ? [...start, [HB[0] + 0.02, HB[1] + 0.01, 0.07], [HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, bby - 0.07, 0.05], along(cs[2], cs[4], 0.1, 0.035, 0.02), along(cs[2], cs[4], 0.6, 0.035, 0.022), ...loop, end]

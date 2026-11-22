@@ -85,7 +85,10 @@ say(`saddle: clamp barrel t ${bT[0].toFixed(1)}..${bT[1].toFixed(1)} mm from the
 const sTop = sad.reduce((a, p) => (p[1] > a[1] ? p : a));
 const head = at(headT);
 const saddleTopY = Math.max(...sad.filter((p) => Math.abs(p[0] - head[0]) < 40).map((p) => p[1]));
-say(`saddle: head (${head.map((v) => v.toFixed(1))}), top above the head y ${saddleTopY.toFixed(1)} (${(saddleTopY - head[1]).toFixed(1)} mm above), highest point (${sTop.map((v) => v.toFixed(1))}), x ${extent(sad, 0).map((v) => v.toFixed(0))}`);
+// where the hook catches: the lowest point under the saddle (the rails) 100 mm in front of the clamp
+const hookX = head[0] + 100;
+const hookY = Math.min(...sad.filter((p) => Math.abs(p[0] - hookX) < 25).map((p) => p[1]));
+say(`saddle: hook at (${hookX.toFixed(1)}, ${hookY.toFixed(1)}), head (${head.map((v) => v.toFixed(1))}), top above the head y ${saddleTopY.toFixed(1)} (${(saddleTopY - head[1]).toFixed(1)} mm above), highest point (${sTop.map((v) => v.toFixed(1))}), x ${extent(sad, 0).map((v) => v.toFixed(0))}`);
 
 // ---------------------------------------------------------------- stem, bar, grips
 const sa: P3 = [meta.steering.a[0] * MM, meta.steering.a[1] * MM, 0];
@@ -177,6 +180,8 @@ export const MOUNTS = {
     head: ${u2(head)} as M2,
     /** the highest point of the shell above the clamp (y), and the highest point of all (x, y, z): the saddle's rest when the bike is flipped */
     topY: ${u(saddleTopY)},
+    /** the underside of the rails in front of the clamp (x, y): where the hook catches */
+    hook: ${u2([hookX, hookY])} as M2,
     rest: ${u3(sTop)} as M3,
   },
   /** the steering axis (a point on it, the direction up and backwards), the stem's foot and top along it, and the bar clamp */

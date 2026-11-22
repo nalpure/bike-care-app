@@ -13,6 +13,8 @@ import { buildCockpit, buildShiftCable } from './cockpit.js';
 import { buildChain, buildCrankset, layChain, rAt } from './drivetrain.js';
 import { buildDerailleur, derLayout, moveDerailleur, spinPulleys, type DerParts, type Turn } from './derailleur.js';
 import { curveGeo, disposeTree, hullShape, slabGeo, tubeGeo, UP } from './geo.js';
+import { libGeo } from './library.js';
+import { MOUNTS as M } from './mounts.js';
 import { batteryLine, GAP_OK, GROUND, HP, LIFT, stayPts, stayZ, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
 import { newPath, type Circle } from './chain.js';
 import type { Pins } from './pins.js';
@@ -99,6 +101,8 @@ export class BikeModel {
   /** screws and the barrel adjuster: where they are (in their parent), which way they turn, and the group that turns */
   readonly turns = new Map<string, Turn & { spin: T.Object3D }>();
   readonly crankset = new T.Group();
+  /** the pedals' hanging groups (on the crank's ends): setCrank turns them back so they stay level */
+  readonly pedals: T.Group[] = [];
   readonly rearHub = new T.Group();
   readonly frontHub = new T.Group();
   cage: T.Group | null = null;
@@ -164,6 +168,12 @@ export class BikeModel {
     disposeTree(this.standG, this.standMat);
     disposeTree(this.hookG, this.standMat);
     if (this.decal) this.decal.tex.dispose();
+  }
+
+  /** Turns the crank to theta (about the bottom bracket); the pedals turn the other way and stay level. */
+  setCrank(theta: number): void {
+    this.crankset.rotation.z = theta;
+    for (const p of this.pedals) p.rotation.z = -theta;
   }
 
   /** The part ids that exist on this bike. */
@@ -280,7 +290,8 @@ export class BikeModel {
     const ft = (a: V3, b: V3, r: number) => this.add('frame', tubeGeo(a, b, r), null, null, { tint: 'frame' });
     const fr = B.kind === 'mountain' ? 0.03 : road ? 0.02 : 0.024;
     const dtR = fr + 0.004;
-    ft([0, bby, 0], [ST[0], ST[1], 0], fr + (road ? 0.004 : 0));
+    // the seat tube is as wide as the library collar's bore (a fixed size, like every library part)
+    ft([0, bby, 0], [ST[0], ST[1], 0], M.seat.boreR);
     ft([ST[0], ST[1], 0], [HT[0], HT[1], 0], fr - 0.002);
     ft([HT[0], HT[1], 0], [HB[0], HB[1], 0], 0.03);
     ft([0, bby, 0], [HB[0], HB[1], 0], fr + 0.004);
@@ -303,14 +314,21 @@ export class BikeModel {
       this.add('motor', tubeGeo([b0[0], b0[1], 0], [b1[0], b1[1], 0], 0.05), null, null, { k: 0.55 });
     }
 
-    // Seat post along the seat tube, and the saddle
+    // Seat post along the seat tube with the library collar on its top, and the library saddle on the post's end
+    // (the saddle's own clamp barrel; level, not turned with the seat angle).
     this.part('seat_post');
-    const postTop: V3 = [B.saddleX + 0.06, B.saddleY - 0.04, 0];
-    this.add('seat_post', tubeGeo([ST[0], ST[1], 0], postTop, 0.015), null, null, { k: 1.1 });
+    const [sx, sy] = B.saddleH;
+    this.add('seat_post', tubeGeo([ST[0], ST[1], 0], [sx, sy, 0], M.seat.postR), null, null, { k: 1.1 });
+    {
+      const top = [M.seat.axisP[0] + M.seat.axisD[0] * M.seat.collarTop, M.seat.axisP[1] + M.seat.axisD[1] * M.seat.collarTop];
+      const turn = Math.atan2(B.seatD[1], B.seatD[0]) - Math.atan2(M.seat.axisD[1], M.seat.axisD[0]);
+      const c = Math.cos(turn);
+      const s = Math.sin(turn);
+      this.add('seat_post', libGeo('seat_collar'), [ST[0] - (c * top[0] - s * top[1]), ST[1] - (s * top[0] + c * top[1]), 0], [0, 0, turn], { k: 0.8 });
+    }
     this.part('saddle');
-    this.add('saddle', new T.BoxGeometry(0.34, 0.05, 0.12), [B.saddleX, B.saddleY, 0], null, { k: 0.5 });
-    this.add('saddle', new T.BoxGeometry(0.14, 0.035, 0.06), [B.saddleX + 0.22, B.saddleY - 0.005, 0], null, { k: 0.5 });
-    this.anchor('saddle', this.bike, [B.saddleX, B.saddleY + 0.04, 0]);
+    this.add('saddle', libGeo('saddle'), [sx - M.saddle.head[0], sy - M.saddle.head[1], 0], null, { dark: true });
+    this.anchor('saddle', this.bike, [sx + 0.1, sy + M.saddle.topY - M.saddle.head[1] + 0.01, 0]);
 
     // Fork
     this.part('fork');
@@ -357,7 +375,8 @@ export class BikeModel {
 
   private buildStand(): void {
     const B = this.spec;
-    const cx = B.ST[0] - 0.03;
+    // the clamp holds the post, 0.12 above the seat tube's top
+    const cx = B.ST[0] + (B.seatD[0] / B.seatD[1]) * 0.12;
     const cz = -0.34;
     const cy = B.ST[1] + 0.12 + LIFT;
     const top = cy + 0.2;
@@ -392,7 +411,8 @@ export class BikeModel {
 
   /** The point on the saddle the hook holds, in bike space. */
   get hookPoint(): T.Vector3 {
-    return new T.Vector3(this.spec.saddleX + 0.13, this.spec.saddleY - 0.03, 0);
+    const [hx, hy] = this.spec.saddleH;
+    return new T.Vector3(hx + M.saddle.hook[0] - M.saddle.head[0], hy + M.saddle.hook[1] - M.saddle.head[1], 0);
   }
 
   // ---------------------------------------------------------------- name on the down tube

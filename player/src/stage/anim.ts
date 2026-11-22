@@ -83,7 +83,25 @@ export function dirSign(direction?: string): 1 | -1 {
 }
 
 const QUARTER = Math.PI / 2;
-const PEDAL = 4.2;
+/**
+ * The stage draws 60 pictures a second. Anything that moves more than half its repeat distance in one picture looks as if
+ * it runs backwards (the wheel's 18 spokes repeat every 20 deg, the 11 tooth sprocket every 33 deg). So the pedals turn
+ * at 2.1 rad/s (the "rotate" clip on the crank at 1.3): the sprocket block, which turns exactly with the chain, then moves
+ * well under half a tooth a picture in every gear; the rear wheel's drawn turn is capped by wheelStep.
+ */
+export const PEDAL = 2.1;
+export const CRANK_SPIN = 1.3;
+/** the most the rear wheel is drawn to turn in one picture (rad): below half the spokes' repeat (0.175 rad) */
+export const WHEEL_MAX_STEP = 0.12;
+
+/**
+ * How far the wheel is drawn to turn in one picture of length dt at a turn rate (rad/s). A drawing rule against
+ * strobing, not physics: the wheel keeps its direction (and the freewheel) but turns slower than it would.
+ */
+export function wheelStep(rate: number, dt: number): number {
+  const step = rate * dt;
+  return Math.sign(step) * Math.min(Math.abs(step), WHEEL_MAX_STEP);
+}
 
 /**
  * A named clip, or undefined when the clip does not exist. Content names a clip without a
@@ -202,7 +220,7 @@ export function motion(a: any, ctx: AnimCtx): Anim | undefined {
     return { duration: 4.2, frame: (t) => ({ pose: { from, to, k: ramp(t, 0.7, 2.3) } }) };
   }
   if ((target === 'crank' || target === 'chainring') && kind === 'rotate') {
-    return { duration: 4, frame: () => ({ crankSpeed: sign * 2.6 }) };
+    return { duration: 4, frame: () => ({ crankSpeed: sign * CRANK_SPIN }) };
   }
   if ((target === 'rear_wheel' || target === 'front_wheel') && kind === 'rotate') {
     return { duration: 4, frame: () => ({ wheelSpeed: { [target]: sign * 2 } }) };

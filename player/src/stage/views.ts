@@ -60,9 +60,10 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
     if (B.barrelAt === 'derailleur') return { p: [t[0] - 0.2, t[1] + 0.13, t[2] + 0.3], t: [t[0], t[1] - 0.01, t[2]], space: 'bike' };
     return { p: [t[0] + 0.5, t[1] + 0.42, t[2] - 0.5], t, space: 'bike' };
   },
+  // The library bar is 784 mm wide (a fixed size), so the camera stands further back than for the old 400 mm bar.
   handlebar_from_above: (B) => {
-    const [hx, hy] = B.HT;
-    return { p: [hx - 0.8, hy + 1.0, 0.45], t: [hx - 0.04, hy + 0.1, 0.05], space: 'bike' };
+    const [cx, cy] = B.C;
+    return { p: [cx - 0.9, cy + 2.0, 0.55], t: [cx + 0.03, cy - 0.02, 0.0], space: 'bike' };
   },
   chain_close: (B) => {
     const ty = (B.bby + B.huby) / 2 - 0.075;

@@ -2,6 +2,8 @@
 // facts, and the frame-point helpers (grip, battery line, stays).
 // Session area: shared by everything; session C (cassette, chain line) and E (frame, bar) edit here.
 
+import { MOUNTS as M } from './mounts.js';
+
 export const TAU = Math.PI * 2;
 export const HP = Math.PI / 2;
 export const PITCH = 0.0254;
@@ -21,6 +23,8 @@ export const GAP_BIG = 0.022;
 export const GAP_SMALL = 0.004;
 /** the derailleur pulleys' pitch radius (where the chain's pins run): 11 teeth (rd-rig.ts) */
 export const RP = rOf(11);
+/** chainring thickness (1.8 mm); its back face lies on the library crank's spider */
+export const RING_T = 1.8 / 500;
 /** default bottom bracket height (a city bike: 65 mm below the axles) */
 export const BBY = HUBY - 0.13;
 export const DEG = Math.PI / 180;
@@ -56,7 +60,7 @@ export interface BikeSpec {
   rc: number;
   /** outer width of the chain, by number of speeds (scene units) */
   chainW: number;
-  /** z of the chainring, and of the cassette's middle */
+  /** z of the chainring, and of the cassette's middle: the library crank's spider face plus half the ring */
   chainline: number;
   /** z of the rear dropouts (±) and the derailleur hanger: just outside the smallest sprocket */
   zDrop: number;
@@ -64,13 +68,39 @@ export interface BikeSpec {
   ST: V2;
   HT: V2;
   HB: V2;
-  saddleX: number;
-  saddleY: number;
-  /** handlebar clamp, right shifter, highest point of the bar (the bike rests on it upside down) */
+  /** up the seat tube (backwards), unit; the saddle's clamp on the post, and the saddle's highest point (it rests on it upside down) */
+  seatD: V2;
+  saddleH: V2;
+  saddleRest: V2;
+  /** the stem, bar and grips as one rigid piece: library space -> bike space (see cockpitXf), and the spacers under the stem */
+  xf: Xf;
+  spacer: number;
+  /** handlebar clamp (the stem's), right shifter, highest point of the bar (the bike rests on it upside down) */
   C: V2;
   S: V3;
   barTop: V2;
 }
+
+/** A turn about z, then a shift, in the side plane: c = cos, s = sin. */
+export interface Xf { c: number; s: number; tx: number; ty: number }
+
+/**
+ * Where the library's stem, bar and grips go: the stem's foot sits on the head tube's top HT (lifted by `spacer` along the
+ * steering axis) and the whole piece is turned from the library's head angle (71 deg) to this bike's. The library bar, the
+ * stem's clamp and the grips keep their real size; only this turn and shift follow the bike's geometry.
+ */
+export function cockpitXf(HT: V2, ha: number, spacer: number): Xf {
+  const rot = Math.PI - ha - Math.atan2(M.stem.axisD[1], M.stem.axisD[0]);
+  const c = Math.cos(rot);
+  const s = Math.sin(rot);
+  const foot: V2 = [M.stem.axisP[0] + M.stem.axisD[0] * M.stem.footT, M.stem.axisP[1] + M.stem.axisD[1] * M.stem.footT];
+  const tx = HT[0] - Math.cos(ha) * spacer - (c * foot[0] - s * foot[1]);
+  const ty = HT[1] + Math.sin(ha) * spacer - (s * foot[0] + c * foot[1]);
+  return { c, s, tx, ty };
+}
+
+/** A library-space point (x, y) in bike space. */
+export const xfPt = (f: Xf, p: ArrayLike<number>): V2 => [f.c * p[0] - f.s * p[1] + f.tx, f.s * p[0] + f.c * p[1] + f.ty];
 
 /**
  * Common cassettes, one row per kind of bike and number of speeds. DRAWING DATA, not facts: the
@@ -191,6 +221,10 @@ export function geometryOf(facts: Record<string, unknown>): Partial<Record<keyof
  *   anything else -> city frame with a kickstand. Cargo bikes are drawn as city bikes.
  * - bike.handlebar (drop, flat, riser) picks the bar; unknown -> drop on road bikes, riser on
  *   mountain bikes, flat otherwise.
+ * - Library parts (mounts.ts) keep their real size on every bike; only their position follows the geometry: the crank on the
+ *   bottom bracket (one chain line for all bikes, the crank's), the collar on the seat tube's top, the saddle on the
+ *   seat tube's axis, the stem's foot on the head tube's top turned to the head angle. A riser bar is the flat bar on
+ *   20 mm of spacers. The bars are the library's 784 mm wide.
  * - A drop bar has combined brake and shift levers, which have no barrel adjuster: the barrel
  *   adjuster is drawn at the derailleur. Flat and riser bars have a trigger shifter with the
  *   barrel adjuster on it.
@@ -228,7 +262,8 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   const chainMm = speeds <= 8 ? 7.3 : speeds === 9 ? 6.6 : speeds === 10 ? 5.9 : speeds === 11 ? 5.5 : 5.3;
   // 1.8 mm thick, thinner only where the chain would not fit beside the next sprocket
   const sprT = (n > 1 ? Math.min(1.8, 2 * (spMm - chainMm / 2) - 0.1) : 1.8) / 500;
-  const chainline = road ? 0.1 : mtb ? 0.115 : 0.105;
+  // one chain line for every bike: the library crank's (its spider face plus half the chainring)
+  const chainline = M.crank.ringFaceZ + RING_T / 2;
   const zs = cassette.map((_, i) => (n > 1 ? chainline + ((n - 1) / 2 - i) * sp : chainline));
   const tt = road ? 0.028 : mtb ? 0.07 : 0.045;
 
@@ -273,17 +308,25 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   }
   // The rear wheel moves back if it would touch the seat tube (short chainstays, slack seat angle).
   for (let i = 0; i < 40 && distSeg([rx, huby], [0, bby], ST) - 0.034 < rt + 0.015; i++) rx -= 0.01;
-  // Seat post continues the seat tube; the saddle sits 0.06 behind the top of the post.
-  const saddleY = ST[1] + (road ? 0.3 : 0.26);
-  const sdx = ST[0] / Math.max(0.1, ST[1] - bby);
-  const saddleX = ST[0] + sdx * (saddleY - 0.04 - ST[1]) - 0.06;
+  // Seat post continues the seat tube: the library collar sits on its top, the post comes out as far as the library's
+  // (122 mm from the collar to the saddle's clamp; 20 mm more on a road bike) and the saddle's clamp (the library saddle,
+  // level, at its real size) sits on the end. The saddle follows the seat tube's position, not its angle.
+  const sl = Math.hypot(ST[0], ST[1] - bby) || 1;
+  const seatD: V2 = [ST[0] / sl, (ST[1] - bby) / sl];
+  const exposed = -M.seat.collarTop + M.seat.headT + (road ? 0.04 : 0);
+  const saddleH: V2 = [ST[0] + seatD[0] * exposed, ST[1] + seatD[1] * exposed];
+  const saddleRest: V2 = [saddleH[0] + M.saddle.rest[0] - M.saddle.head[0], saddleH[1] + M.saddle.rest[1] - M.saddle.head[1]];
 
-  const [hx, hy] = HT;
-  const C: V2 = [hx + 0.14, hy + 0.03];
-  // right shifter: the hood of a drop bar, or the trigger pod under a flat or riser bar
-  const grip = gripOf(bar, HT);
-  const S: V3 = bar === 'drop' ? [C[0] + 0.165, C[1] + 0.012, 0.21] : [grip[0], grip[1] - 0.04, 0.255];
-  const barTop: V2 = bar === 'drop' ? [C[0] + 0.19, C[1] + 0.058] : [grip[0], grip[1] + 0.02];
+  // Stem, bar and grips are the library's, as one piece on the steering axis (cockpitXf). A riser bar is the same bar on
+  // 20 mm of spacers under the stem (a rule of this drawing, not a fact about risers). Drop bars use the library's stem and
+  // draw their own bar and levers.
+  const spacer = bar === 'riser' ? 0.04 : 0;
+  const xf = cockpitXf(HT, ha, spacer);
+  const C: V2 = xfPt(xf, M.stem.clamp);
+  // right shifter: the hood of a drop bar, or the trigger pod under a flat or riser bar (just below the bar)
+  const shift = xfPt(xf, M.shifter.at);
+  const S: V3 = bar === 'drop' ? [C[0] + 0.165, C[1] + 0.012, 0.21] : [shift[0], shift[1] - 0.05, M.shifter.z];
+  const barTop: V2 = bar === 'drop' ? [C[0] + 0.19, C[1] + 0.058] : xfPt(xf, M.grip.rest);
   const chainW = chainMm / 500;
   return {
     kind, bar, gears, colour,
@@ -302,15 +345,10 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
     chainline,
     zDrop: zs[0] + 0.0245,
     ST, HT, HB,
-    saddleX, saddleY,
+    seatD, saddleH, saddleRest,
+    xf, spacer,
     C, S, barTop,
   };
-}
-
-/** Where the grip starts on a flat or riser bar (x, y); the grip runs from z 0.3 to 0.4. */
-export function gripOf(bar: BikeSpec['bar'], HT: V2): V2 {
-  const [hx, hy] = HT;
-  return bar === 'riser' ? [hx - 0.04, hy + 0.16] : [hx - 0.04, hy + 0.12];
 }
 
 /** Distance from point p to segment ab, in the side plane. */
