@@ -2,7 +2,7 @@
 
 Before any task, read `docs/idea.md` (what the app should be) and `docs/decisions.md` (owner decisions since then, and where `approach.md` is out of date). For work on content or the build tool, also read `docs/approach.md`, sections "Building blocks" to "Build tool". These win over anything in `legacy/`.
 
-Each area has its own guide, loaded when you work there: `content/CLAUDE.md` (writing content), `tools/CLAUDE.md` (build tool), `player/CLAUDE.md` (the app and the 3D view). If you were given a session prompt in `prompts/`, read it and its plan before starting.
+Each area has its own guide, loaded when you work there: `content/CLAUDE.md` (writing content), `tools/CLAUDE.md` (build tool), `tools/assets/CLAUDE.md` (parts library and source-model tools, e.g. taking parts out of the hardtail STEP), `player/CLAUDE.md` (the app and the 3D view). If you were given a session prompt in `prompts/`, read it and its plan before starting.
 
 ## Layout
 
