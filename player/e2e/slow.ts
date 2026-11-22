@@ -22,6 +22,7 @@ const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javas
 /** Bikes to draw: a demo bike of the garage, the facts set on it before the tutorial starts, and how it is held. */
 const BIKES: Array<{ id: string; garage: string; facts: Record<string, unknown>; hold: string }> = [
   { id: 'road-stand', garage: 'road-bike-stand', facts: { 'bike.category': 'road_gravel', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 11 }, hold: 'stand' },
+  { id: 'mtb12-stand', garage: 'road-bike-stand', facts: { 'bike.category': 'mtb', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 12 }, hold: 'stand' },
   { id: 'city-upside-down', garage: 'city-derailleur-no-stand', facts: { 'bike.category': 'city', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 8 }, hold: 'upside_down' },
 ];
 const SIZES = [{ width: 390, height: 844 }, { width: 667, height: 375 }];
