@@ -127,6 +127,9 @@ export class BikeModel {
   N = 0;
   /** the links laid now (at most N) */
   links = 0;
+  /** the sprocket block's unwrapped angle, and the chainShift it belongs to (layChain keeps it turning the right way) */
+  cassetteSpin = 0;
+  cassetteShift = 0;
   private decal: { cv: HTMLCanvasElement; tex: T.CanvasTexture; mat: T.MeshBasicMaterial; key: string } | null = null;
   /** @internal builder state */
   Q = new T.Object3D();

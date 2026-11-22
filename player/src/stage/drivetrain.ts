@@ -216,13 +216,22 @@ export function layChain(m: BikeModel): void {
   const N = Math.min(m.N, Math.max(2, Math.round(chordLength(m.path, PITCH) / PITCH)));
   m.links = N;
   layPins(m.path, N, PITCH, theta, pitchAngle(B.rc, PITCH), pins);
-  // sprockets: the nearest sprocket's gaps are at the block's angle plus whole teeth
+  // Sprockets: the nearest sprocket's gaps are at the block's angle plus whole teeth. Which whole
+  // number of teeth is taken from how far the chain has moved since the last frame, not from the
+  // nearest angle: when the block turns more than half a tooth per frame, the nearest angle would
+  // turn it backwards (and the sprockets with other tooth counts would shake).
   let k0 = -1;
   for (let k = 0; k < N && k0 < 0; k++) if (pins.wheel[k] === 1) k0 = k;
   if (k0 >= 0) {
-    const a = TAU / B.cassette[nearestSprocket(B, m.derZ)];
+    const near = nearestSprocket(B, m.derZ);
+    const a = TAU / B.cassette[near];
     const phi = Math.atan2(pins.y[k0] - B.huby, pins.x[k0] - B.rx);
-    m.cassetteG.rotation.z = ((phi % a) + a) % a;
+    const base = ((phi % a) + a) % a;
+    // the block turns with the chain: chain travel / radius (chainShift < 0 pedalling forward turns it clockwise)
+    const expected = m.cassetteSpin + (m.chainShift - m.cassetteShift) / B.rs[near];
+    m.cassetteSpin = base + Math.round((expected - base) / a) * a;
+    m.cassetteShift = m.chainShift;
+    m.cassetteG.rotation.z = m.cassetteSpin;
   }
   let nIn = 0;
   let nOut = 0;

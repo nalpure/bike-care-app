@@ -197,6 +197,41 @@ describe('bike builder', () => {
     }
   });
 
+  it('moves the chain smoothly and turns the sprockets the way the chain goes, however fast', () => {
+    const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.rear_speeds': 11 }), mat);
+    const B = m.spec;
+    for (const gear of [0, 7]) {
+      // pedalling forward at 4.2 rad/s (more than half a tooth of the smallest sprocket per frame at 60 fps) and at 1 mm of chain per step
+      for (const step of [4.2 * B.rc / 60, 0.002]) {
+        m.chainShift = 0;
+        m.cassetteSpin = 0;
+        m.cassetteShift = 0;
+        m.setDer(m.zOf(gear), GAP_OK);
+        let prevSpin = m.cassetteG.rotation.z;
+        let prev: number[][] = [];
+        const take = () => Array.from({ length: m.links }, (_, k) => [m.pins.x[k], m.pins.y[k], m.pins.z[k]]);
+        for (let i = 1; i <= 90; i++) {
+          m.chainShift = -i * step;
+          m.setDer(m.zOf(gear), GAP_OK);
+          expect(m.cassetteG.rotation.z, `gear ${gear + 1} frame ${i}: sprockets turn forward`).toBeLessThan(prevSpin);
+          prevSpin = m.cassetteG.rotation.z;
+          const cur = take();
+          if (prev.length && step < 0.003) {
+            // no pin jumps: each one is within about the step of a pin of the frame before
+            for (const p of cur) {
+              const d = Math.min(...prev.map((q) => Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2])));
+              expect(d, `gear ${gear + 1} frame ${i}: a pin jumped`).toBeLessThan(step * 1.5);
+            }
+          }
+          prev = cur;
+        }
+        // the block turned as far as the chain travelled round the sprocket, within a tooth
+        expect(Math.abs(-prevSpin - (90 * step) / B.rs[gear]), `gear ${gear + 1}: the block turns with the chain`).toBeLessThan((2 * Math.PI) / B.cassette[gear]);
+      }
+    }
+    m.dispose();
+  });
+
   it('keeps the drivetrain within its triangle budget and draws the chain in at most 4 calls', () => {
     const tris = (o: T.Object3D) => {
       let n = 0;

@@ -1,8 +1,8 @@
 // The chain as a ring of pins, one pitch apart in a straight line (chord), as on a real chain.
 // Pins are laid along the exact path (chain.ts) from a first pin on the chainring, so on every wheel
 // they sit on the pitch circle and one pitch apart: the wheel's tooth gaps follow from them. The
-// length the chain has left over becomes a sag, an arc of equal links, on the last run before the
-// chainring (the free run on a real bike); the run to the sprocket stays straight.
+// length the chain has left over (a fraction of a link up to a few percent) is spread evenly over the
+// last run before the chainring, the free one on a real bike; the run to the sprocket stays straight.
 // No three.js: plain numbers, so it can be tested in node.
 // Session area: C (drivetrain).
 
@@ -21,6 +21,8 @@ export interface Pins {
 export const newPins = (n: number): Pins => ({ x: new Float64Array(n), y: new Float64Array(n), z: new Float64Array(n), wheel: new Int8Array(n), parity: 0 });
 
 const pt3 = { x: 0, y: 0, z: 0 };
+/** where each pin of the last call lies along the path (scratch) */
+let sPin = new Float64Array(0);
 
 /** The point at xy-length `s` along the path, exact. Returns the index of its piece (a hint for the next call). */
 export function pathAt(o: Path, s: number, out: { x: number; y: number; z: number }, hint = 0): number {
@@ -61,7 +63,7 @@ export function chordLength(o: Path, p: number): number {
 /**
  * Lays `N` pins one pitch `p` apart along the path `o`, the first on the first wheel's pitch circle
  * at a tooth gap (that wheel's gaps are at `theta + k * alpha`). The last pin on the last wheel
- * ends the taut part; the pins after it hang on the sag back to the first pin.
+ * ends the taut part; the pins after it are spread along the path back to the first pin.
  */
 export function layPins(o: Path, N: number, p: number, theta: number, alpha: number, out: Pins): void {
   const segs = o.segs;
@@ -74,6 +76,9 @@ export function layPins(o: Path, N: number, p: number, theta: number, alpha: num
   const u = dir > 0 ? mod(theta - first.a0, alpha) : mod(first.a0 - theta, alpha);
   out.parity = mod(Math.round((first.a0 + dir * u - theta) / alpha), 2);
   let s = Math.min(first.len * 0.999, first.r * u);
+  const sFirst = s;
+  if (sPin.length < N) sPin = new Float64Array(N);
+  sPin[0] = s;
   let hint = pathAt(o, s, pt3, 0);
   out.x[0] = pt3.x;
   out.y[0] = pt3.y;
@@ -94,69 +99,28 @@ export function layPins(o: Path, N: number, p: number, theta: number, alpha: num
       else hi = mid;
     }
     s = (lo + hi) / 2;
+    sPin[k] = s;
     hint = pathAt(o, s, q, hint);
     out.x[k] = q.x;
     out.y[k] = q.y;
     out.z[k] = q.z;
     const seg = segs[hint];
-    // a pin that has gone round past the end of the path is not on a wheel: the sag replaces it
+    // a pin that has gone round past the end of the path is not on a wheel: the spread of the last run replaces it
     out.wheel[k] = seg.k === 'arc' && s < totalS ? seg.wheel : -1;
     if (out.wheel[k] === wheels - 1) lastOnWheel = k;
   }
-  // The free run: pins lastOnWheel+1 .. N-1 on an arc of equal links from the last wheel pin to the first pin.
-  const m = N - 1 - lastOnWheel;
-  const ax = out.x[lastOnWheel];
-  const ay = out.y[lastOnWheel];
-  const az = out.z[lastOnWheel];
-  const dx = out.x[0] - ax;
-  const dy = out.y[0] - ay;
-  const dz = out.z[0] - az;
-  const D = Math.hypot(dx, dy, dz) || 1e-9;
-  const ux = dx / D;
-  const uy = dy / D;
-  const uz = dz / D;
-  // the sag bulges down: the part of "down" across the run
-  let bx = uy * ux;
-  let by = -1 + uy * uy;
-  let bz = uy * uz;
-  const bl = Math.hypot(bx, by, bz) || 1;
-  bx /= bl;
-  by /= bl;
-  bz /= bl;
-  const links = m + 1;
-  // equal chords p on a circular arc over the base D: sin(a) / (links * sin(a / links)) = D / (links * p)
-  const ratio = D / (links * p);
-  let half = 0;
-  let rho = 0;
-  if (ratio < 1 - 1e-9) {
-    let lo = 1e-6;
-    let hi = Math.PI;
-    for (let it = 0; it < 50; it++) {
-      const mid = (lo + hi) / 2;
-      if (Math.sin(mid) / (links * Math.sin(mid / links)) > ratio) lo = mid;
-      else hi = mid;
-    }
-    half = (lo + hi) / 2;
-    rho = D / (2 * Math.sin(half));
-  }
-  const mx = ax + dx / 2;
-  const my = ay + dy / 2;
-  const mz = az + dz / 2;
-  for (let j = 1; j <= m; j++) {
-    const k = lastOnWheel + j;
+  // The pins after the last one on the last wheel share the length that is left over: their spacing
+  // along the path is stretched or squeezed evenly (by a few percent at most) so the last one is
+  // one link before the first pin. They stay on the path, so the run stays straight and nothing
+  // jumps when a pin changes from the wheel to the run.
+  const sEnd = sFirst + totalS;
+  const sL = sPin[lastOnWheel];
+  const links = N - lastOnWheel;
+  for (let k = lastOnWheel + 1; k < N; k++) {
+    pathAt(o, sL + ((sEnd - sL) * (k - lastOnWheel)) / links, q, 0);
+    out.x[k] = q.x;
+    out.y[k] = q.y;
+    out.z[k] = q.z;
     out.wheel[k] = -1;
-    if (half === 0) {
-      // too short for a sag (or exactly taut): the links share the straight line evenly
-      out.x[k] = ax + (dx * j) / links;
-      out.y[k] = ay + (dy * j) / links;
-      out.z[k] = az + (dz * j) / links;
-    } else {
-      const phi = -half + (2 * half * j) / links;
-      const along = rho * Math.sin(phi);
-      const off = rho * Math.cos(phi) - rho * Math.cos(half);
-      out.x[k] = mx + ux * along + bx * off;
-      out.y[k] = my + uy * along + by * off;
-      out.z[k] = mz + uz * along + bz * off;
-    }
   }
 }
