@@ -11,7 +11,7 @@
 //   --deflection  tessellation tolerance as a share of each part's bounding box (default 0.001)
 //   --angular     largest angle in radians between neighbouring triangles on a curve (default 0.5)
 //   --scale       multiplier on the mesh coordinates: the STEP is in mm, glTF is metres, so 0.001 (default)
-// Fine simplification (per-part ratios) is not done here; the parts library build does it (tools/assets/library.yaml).
+// Fine simplification (per-part ratios) is not done here; the parts library build does it (tools/assets/library/library.yaml).
 //
 // Stage 1 needs only Node: it indexes the STEP text (about a minute for 400 MB), works out which products are
 // wanted, their ancestors in the assembly tree (only for the placement), and everything their geometry refers to,

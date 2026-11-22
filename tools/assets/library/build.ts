@@ -1,5 +1,5 @@
 // Builds the parts library from a source glTF: `npm run parts`.
-// Reads tools/assets/library.yaml; writes player/public/parts/library.glb, library.json and CREDITS.txt.
+// Reads tools/assets/library/library.yaml; writes player/public/parts/library.glb, library.json and CREDITS.txt.
 // Library space: scene units (1 unit = 0.5 m), x forward, y up, z to the drive side, origin at the source's bottom bracket.
 //   lib = 2 * (src.z, src.y, -src.x), src in metres. Front parts (stem, bar, grips) are turned straight about the steering axis.
 // These are drawing data only; nothing here says anything about compatibility (hard rule 3).
@@ -12,9 +12,9 @@ import { KHRMeshQuantization } from '@gltf-transform/extensions';
 import { quantize } from '@gltf-transform/functions';
 import { MeshoptSimplifier } from 'meshoptimizer';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const outDir = path.join(root, 'player/public/parts');
-const cfg = YAML.parse(fs.readFileSync(path.join(root, 'tools/assets/library.yaml'), 'utf8'));
+const cfg = YAML.parse(fs.readFileSync(path.join(root, 'tools/assets/library/library.yaml'), 'utf8'));
 const MM = 500; // one scene unit in mm
 
 type V3 = [number, number, number];

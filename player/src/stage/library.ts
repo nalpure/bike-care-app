@@ -1,4 +1,4 @@
-// The parts library: real part shapes (built by `npm run parts` from tools/assets/library.yaml) loaded once at start.
+// The parts library: real part shapes (built by `npm run parts` from tools/assets/library/library.yaml) loaded once at start.
 // Every geometry is in library space: scene units (1 unit = 0.5 m), x forward, y up, z to the drive side,
 // origin at the source's bottom bracket centre. Parts are not moved to their own origin; builders place them
 // from measured points (player/public/parts/library.json). The geometries are shared: never dispose them.

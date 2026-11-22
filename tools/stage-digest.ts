@@ -2,9 +2,9 @@
 // For many bikes and every derailleur position it records, per mesh in traversal order, the part id,
 // the world matrix (every instance matrix for instanced meshes) and a hash of the position array.
 //
-//   npx tsx tools/stage-digest.ts tools/assets/out/digest-before.json
+//   npx tsx tools/stage-digest.ts scratch/digest-before.json
 //   (change code)
-//   npx tsx tools/stage-digest.ts tools/assets/out/digest-after.json
+//   npx tsx tools/stage-digest.ts scratch/digest-after.json
 //   and compare the two files: the per-bike, per-step hashes must be identical.
 
 import { createHash } from 'node:crypto';

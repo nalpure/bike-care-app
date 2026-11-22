@@ -80,7 +80,7 @@ const BARREL_LEN = V(BARREL.seat).distanceTo(V(BARREL.head));
 // barrel's bracket (the bottom of the upper body, below the L screw) is turned up about its root until the
 // barrel points at a clamp bolt made here under the lower body's back end; the wire runs straight from the
 // barrel to the bolt and is pinched between the bolt's washer and the body (owner request 2026-11-22).
-// Found with scratch scripts in tools/assets/out (not kept). Drawing data, not facts about any part.
+// Found with throw-away scripts in scratch/ (not kept). Drawing data, not facts about any part.
 //
 // The lower body travels about 38 mm inwards over the gears, so the wire leaves the barrel straight in the
 // middle gears and up to about 26 deg off its axis on the smallest and the largest sprocket.

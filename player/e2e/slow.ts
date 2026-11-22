@@ -5,7 +5,7 @@
 //   npm run build && npm run shots          portrait 390x844 and short landscape 667x375
 //   npm run shots -- --only road            only bikes whose id contains "road"
 //
-// Screenshots: player/e2e/shots/slow/<bike>-<width>x<height>/. Page errors are printed.
+// Screenshots: scratch/shots/slow/<bike>-<width>x<height>/. Page errors are printed.
 
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
@@ -14,7 +14,7 @@ import { extname, join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 
 const REPO = resolve(import.meta.dirname, '../..');
-const OUT = join(REPO, 'player/e2e/shots/slow');
+const OUT = join(REPO, 'scratch/shots/slow');
 const PORT = 4189;
 const SUB = '/sub/';
 const TYPES: Record<string, string> = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.txt': 'text/plain' };

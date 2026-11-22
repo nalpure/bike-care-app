@@ -1,8 +1,33 @@
-# Parts library and source-model tools: guide for agents
+# 3D parts tools: guide for agents
 
-What is here: `library.yaml` + `build-library.ts` build the 3D parts library (`npm run parts`), `check-library.ts` checks it (`npm run parts:check`), `measure-mounts.ts` and `measure-rd.ts` write the measured mounts and derailleur rig (`npm run parts:mounts`, `npm run parts:rig`). `explore/` holds one-off scripts for looking at source models. Each script has a header comment saying what it does and how to call it; read that first. Throw-away output goes to `tools/assets/out/` (git-ignored).
+Everything that turns a source 3D model into the parts the player draws. Nothing here runs at app time. The library is built from one source model, the touring bike (`assets-src/rigid-bike-touring-bike`, a glTF in metres). The other models in `assets-src/` are candidates; `assets-src/overview.md` has the owner's notes on each.
 
-The library is built from one source model, the touring bike (`assets-src/rigid-bike-touring-bike`, a glTF in metres). Other source models in `assets-src/` are candidates; `assets-src/overview.md` has the owner's notes on each.
+```
+tools/assets/
+  library/    build the parts library and check it
+    library.yaml      which source nodes make which part (data only)
+    build.ts          npm run parts         -> player/public/parts/ (library.glb, library.json, CREDITS.txt)
+    check.ts          npm run parts:check   compares each part with its source model; checks the size budget
+    check-page.html   the page check.ts drives in headless Chromium
+  measure/    measure the built library or the source, write generated code into the player
+    mounts.ts         npm run parts:mounts  -> player/src/stage/mounts.ts (crank, saddle, stem, bar, grips)
+    rd.ts             npm run parts:rig     -> player/src/stage/rd-rig.ts (derailleur axes, pins, pulleys)
+  explore/    look at a model; each file has a header saying how to call it
+    tree.mjs          node names and sizes of a glTF
+    bbox.mjs          boxes (turned parts look larger than they are)
+    islands.mjs       true size of each loose piece of a node
+    view.html + shot.mjs   render a GLB or glTF from chosen directions to a PNG (see the shot.mjs header)
+    step-extract.mjs  cut named parts out of the hardtail STEP into a small GLB (below)
+    simplify.html, rig-view.html   helpers used by the scripts above
+```
+
+## Rules
+
+- **Check before you write.** Need a node list, a size, a view, a bounding box? Use `explore/`. Need a new measurement? Read `measure/rd.ts` first: it already finds axes, pins and pulleys. Add to these files instead of writing a new script next to them.
+- **Throw-away probes** go in `scratch/` at the repo root (git-ignored, `npm run clean` deletes it). A probe you needed twice is not throw-away: give it a header comment and move it into `explore/` or `measure/`; otherwise delete it.
+- **Generated files** (`mounts.ts`, `rd-rig.ts`, `player/public/parts/*`) are never edited by hand. After any change to `library.yaml`: `npm run parts`, then `npm run parts:mounts`, then `npm run parts:rig` if the derailleur nodes changed.
+- Never read a `.gltf`, `.glb` or `.bin` into context. Use the tools above and print numbers.
+- Pictures are for the last step, a few at a time. Prefer a check that prints numbers.
 
 ## Taking parts out of the hardtail (STEP)
 
@@ -11,13 +36,13 @@ The library is built from one source model, the touring bike (`assets-src/rigid-
 ```
 node tools/assets/explore/step-extract.mjs --in "assets-src/hardtail-by-fehe/fv1 - HARDTAIL by FEHE.STEP" \
   --match "^fv1_ts" --exclude "screw|hexbolt|hexsocket|washer|nut$|spring" --deflection 0.01 --angular 1.0 \
-  --out tools/assets/out/hardtail/shifter
+  --out scratch/hardtail/shifter
 ```
 
 - Needs `occt-import-js` (Open Cascade as WebAssembly), a dev dependency installed by `npm install`. `--no-glb` needs only Node.
 - A run takes about a minute. The original file is never changed.
 - List the part names: `grep -o "PRODUCT ( '[^']*'" "<the .STEP>" | sort -u`. Names start with `fv1_` and a short prefix per assembly. `ts_` is the trigger shifter (checked in a render). The other prefixes are guesses from the names (`rd_` rear derailleur, `bc_` brake caliper, `bd_` brake disc, `ch_` chain, `cs_` crankset, `hb_` handlebar, `rh_` rear hub).
-- Look at a result: copy or write it under `tools/assets/out/` and use `explore/shot.mjs` with `view.html?file=tools/assets/out/<path>.glb` (see the shot.mjs header for the arguments).
+- Look at a result: write it under `scratch/` and use `explore/shot.mjs` with `view.html?file=scratch/<path>.glb`.
 
 Findings (shifter, `^fv1_ts`):
 
@@ -31,13 +56,4 @@ Findings (shifter, `^fv1_ts`):
 - A pattern that matches an assembly takes only parts inside it. Without that, screws named `ts_...` but used all over the bike came with it as loose parts. With no assembly matched, every instance of a matched part is taken.
 - `casep1` and `teeth` are the heaviest shifter parts.
 
-Not done or not verified:
-- Only the shifter has been extracted and looked at. Other assemblies are untested (colours, placement, size).
-- Nothing from the hardtail is in `library.yaml` or the player. `library.yaml` has a single `source` and the touring bike's node names; a second source is not wired up.
-- `assets-src/hardtail-by-fehe` has no `credit.txt` yet, and `assets-src/overview.md` says the creator was contacted about usage rights. Settle that before any part ships.
-
-## Log for agents
-
-Add one line per piece of work or finding here: date, what, where. Newest last.
-
-- 2026-11-22: `explore/step-extract.mjs` written and run on the hardtail shifter (see above).
+Not done or not verified: only the shifter has been extracted and looked at. Nothing from the hardtail is in `library.yaml` or the player; `library.yaml` has a single `source` and the touring bike's node names, so a second source is not wired up. Usage rights are open (see `docs/open.md`).

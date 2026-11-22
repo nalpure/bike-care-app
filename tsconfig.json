@@ -11,5 +11,5 @@
     "types": ["node"]
   },
   "include": ["tools/**/*.ts"],
-  "exclude": ["tools/assets/out"]
+  "exclude": ["scratch"]
 }

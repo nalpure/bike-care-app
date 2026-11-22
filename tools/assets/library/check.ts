@@ -1,4 +1,4 @@
-// Shape check of the parts library: `npm run parts:check` (`-- --shots` also writes PNGs to tools/assets/out/).
+// Shape check of the parts library: `npm run parts:check` (`-- --shots` also writes PNGs to scratch/).
 // Renders each library part and its source nodes as silhouettes from 6 directions in headless Chromium (check-page.html),
 // prints one line per part and fails on a bad overlap, a box difference, a mirror/bar error or a budget overrun.
 import fs from 'node:fs';
@@ -7,8 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const here = path.join(root, 'tools/assets');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const here = path.join(root, 'tools/assets/library');
 const shots = process.argv.includes('--shots');
 
 const MIN_OVERLAP = 0.97, MAX_BOX_MM = 0.5, MAX_MIRROR_MM = 1, MAX_TRIS = 35000, MAX_BYTES = 1.5 * 1024 * 1024;
@@ -52,7 +52,7 @@ try {
     const out = path.join(here, 'out');
     fs.mkdirSync(out, { recursive: true });
     for (const [name, url] of Object.entries(res.shots as Record<string, string>)) fs.writeFileSync(path.join(out, `part-${name}.png`), Buffer.from(url.split(',')[1], 'base64'));
-    console.log(`wrote ${Object.keys(res.shots).length} PNGs to tools/assets/out/ (original left, library right)`);
+    console.log(`wrote ${Object.keys(res.shots).length} PNGs to scratch/ (original left, library right)`);
   }
 } finally {
   await browser.close();

@@ -1,4 +1,4 @@
-# Parts library: which source nodes make which library part. Data only; tools/assets/build-library.ts reads it.
+# Parts library: which source nodes make which library part. Data only; tools/assets/library/build.ts reads it.
 # A later source model is another file of this shape. Node names are the ORIGINAL glTF names (not three.js names).
 #
 # source:     glTF file, relative to the repo root.

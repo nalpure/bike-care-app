@@ -16,10 +16,11 @@
     "preview": "vite preview --config player/vite.config.ts",
     "test:e2e": "tsx player/e2e/run.ts",
     "shots": "tsx player/e2e/slow.ts",
-    "parts": "tsx tools/assets/build-library.ts",
-    "parts:check": "tsx tools/assets/check-library.ts",
-    "parts:mounts": "tsx tools/assets/measure-mounts.ts",
-    "parts:rig": "tsx tools/assets/measure-rd.ts"
+    "clean": "node tools/clean.mjs",
+    "parts": "tsx tools/assets/library/build.ts",
+    "parts:check": "tsx tools/assets/library/check.ts",
+    "parts:mounts": "tsx tools/assets/measure/mounts.ts",
+    "parts:rig": "tsx tools/assets/measure/rd.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",
