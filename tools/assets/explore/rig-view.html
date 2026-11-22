@@ -1,0 +1,35 @@
+<!doctype html><html><body style="margin:0;background:#eee">
+<!-- The source derailleur with marker lines on measured axes. Used by measure-rd.ts --shots through shot.mjs.
+     ?only=<regex> (three.js names) &dir=x,y,z (camera direction, source axes) &dist=1.4 &alpha=0.4
+     &marks=<JSON [{p:[x,y,z], d:[x,y,z], c:"#rrggbb", l:mm}]> in LIBRARY space, mm (x forward, y up, z drive side). -->
+<script type="importmap">{"imports":{"three":"/repo/node_modules/three/build/three.module.js","three/addons/":"/repo/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search);
+const W=900,H=700; const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true}); r.setSize(W,H); document.body.appendChild(r.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0xeeeeee);
+scene.add(new THREE.HemisphereLight(0xffffff,0x666666,2.2)); const dl=new THREE.DirectionalLight(0xffffff,2); dl.position.set(-1,2,1); scene.add(dl);
+const cam=new THREE.PerspectiveCamera(30,W/H,0.001,100);
+const gl=await new GLTFLoader().loadAsync('/repo/assets-src/rigid-bike-touring-bike/source/iWwsHSl6/rigid_bike.gltf');
+const root=gl.scene; scene.add(root); root.updateMatrixWorld(true);
+const re=new RegExp(q.get('only')||'.'); const alpha=+(q.get('alpha')||0.4);
+const box=new THREE.Box3();
+root.traverse(o=>{ if(!o.isMesh) return; if(!(re.test(o.name)||re.test(o.parent?.name||''))){o.visible=false;return;}
+  o.material=new THREE.MeshStandardMaterial({color:0x9aa4b0,roughness:.6,transparent:alpha<1,opacity:alpha,depthWrite:alpha>=1}); box.expandByObject(o); });
+// library mm -> source metres: src = (-z, y, x) / 1000
+const toSrc=(v)=>new THREE.Vector3(-v[2]/1000, v[1]/1000, v[0]/1000);
+for(const m of JSON.parse(q.get('marks')||'[]')){
+  const p=toSrc(m.p), d=toSrc(m.d).normalize(), l=(m.l||40)/1000;
+  const mat=new THREE.MeshBasicMaterial({color:m.c||'#d00',depthTest:false});
+  const cyl=new THREE.Mesh(new THREE.CylinderGeometry(0.0006,0.0006,l,8),mat); cyl.position.copy(p); cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d); cyl.renderOrder=2; scene.add(cyl);
+  const s=new THREE.Mesh(new THREE.SphereGeometry(0.0018,12,8),mat); s.position.copy(p); s.renderOrder=2; scene.add(s);
+}
+const c=box.getCenter(new THREE.Vector3()), s=box.getSize(new THREE.Vector3()).length();
+const dir=new THREE.Vector3(...(q.get('dir')||'-1,0.2,0').split(',').map(Number)).normalize();
+cam.position.copy(c).addScaledVector(dir, s*(+q.get('dist')||1.6)); cam.lookAt(c); cam.near=s/50; cam.far=s*20; cam.updateProjectionMatrix();
+r.render(scene,cam);
+const L=document.createElement('div'); L.style.cssText='position:fixed;top:4px;left:4px;font:13px sans-serif';
+L.innerHTML=(q.get('legend')||'').split('|').map(t=>`<div>${t}</div>`).join(''); document.body.appendChild(L);
+window.done=true;
+</script></body></html>

@@ -17,7 +17,8 @@
     "test:e2e": "tsx player/e2e/run.ts",
     "shots": "tsx player/e2e/slow.ts",
     "parts": "tsx tools/assets/build-library.ts",
-    "parts:check": "tsx tools/assets/check-library.ts"
+    "parts:check": "tsx tools/assets/check-library.ts",
+    "parts:rig": "tsx tools/assets/measure-rd.ts"
   },
   "dependencies": {
     "ajv": "^8.20.0",

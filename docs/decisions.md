@@ -16,7 +16,7 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 
 - **2026-11-21 Parts library.** Realistic parts come from CC BY models in `assets-src/` (first the "Rigid Bike [Touring Bike]"), split into a parts library. Frame, wheels, sprockets, chainrings and chain stay generated from the facts. The app credits every model it uses (title, creator, link, licence, "modified").
 - **2026-11-21 Real sprocket spacing.** Sprockets sit at their real spacing; closer camera views make up for it.
-- **2026-11-21 Wide cassettes.** Above 36 teeth the same derailleur gets a longer cage, until a source for a mountain bike derailleur exists.
+- **2026-11-21 Wide cassettes.** Above 36 teeth the same derailleur gets a longer cage, until a source for a mountain bike derailleur exists. The trigger is the largest sprocket only; the wrap only sets the cage's length.
 - **2026-11-21 Source models in git.** Only the touring bike's source is committed; the others stay out of git until they are used.
 
 ## Where approach.md is out of date
