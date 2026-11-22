@@ -2,7 +2,7 @@
 
 Read `CLAUDE.md`, `prompts/05-plan.md` ("The problem", "Rules for every session", "What the source model contains", "Shared names"), the progress files `05-b-library-progress.md`, `05-c-drivetrain-progress.md` and `05-d-derailleur-progress.md` ("Interfaces", "Choices" and "Gotchas"), and `player/CLAUDE.md`. If you have questions, ask them in one batch before you start; after that, work without stopping.
 
-Model: Sonnet. You own `cockpit.ts`, `bike.ts`, `spec.ts` and `drivetrain.ts` in `player/src/stage/` (crank side only), the pose code in `three-stage.ts`, the credits line in `player/src/ui/app.ts`, and `player/README.md`. Leave `derailleur.ts` alone.
+Model: Sonnet. You own `cockpit.ts`, `bike.ts`, `spec.ts` and `drivetrain.ts` in `player/src/stage/` (crank side only), the pose, light and wheel-speed code in `three-stage.ts`, `anim.ts` (the pedal speed only), the credits line in `player/src/ui/app.ts`, and `player/README.md`. Leave `derailleur.ts` alone.
 
 ## Goal
 
@@ -48,15 +48,22 @@ The parts a user looks at around the bike come from the library: crank arms, ped
      - frame colour only on the frame.
    - Tune outlines on library parts as session D did, so the whole bike doesn't read as noise.
    - Compare with `legacy/Bikefix-garage-guide v2.html` for the overall look.
+   - **Depth and contours (owner feedback):** seen from the drive side, chain, cassette and chainring are an even grey. Their faces all point the same way, and the stage's light is deliberately even (`three-stage.ts`, near line 216). First measure: crop the chain run and the cassette from the `chain_close` view and write down the luminance standard deviation. Then try, keeping only what raises it without hurting the rest of the bike: a stronger key light with less ambient light; the chainring in `OUTLINED`; vertex colours that darken towards the sprocket hole, the tooth gaps and the plate rims (no new draw calls). Not allowed: shadow maps, post-processing, an outline copy of the chain. The chain is at about 18k of its 20k triangles, so no plate bevel.
    - Then check the generated parts that now stand out next to the real ones: frame tube ends, dropouts, hubs, tyres, brake levers, shifter. Improve their shapes in code where a small change helps (round tube ends, a hub shell with flanges, a tyre with a rounded section). Keep each fix small; list bigger ones as next steps in the handoff.
 
-5. **Budgets** (`05-plan.md`): add a test that builds a road, a city and an MTB bike and checks:
+5. **Pedal animation without strobing (owner feedback):** the stage draws 60 pictures a second, and anything that moves more than half its repeat distance per picture looks like it runs backwards. Today the cranks turn at `PEDAL = 4.2` rad/s, so the 11 tooth sprocket moves 0.55 of a tooth and the rear wheel 19 rad/s (spokes repeat every 20°) per picture. Chain and sprocket block are already exact at any speed (session C's test). Do this:
+   - `PEDAL` 4.2 to 2.1 and the `crank`/`chainring` rotate clip `2.6` to `1.3` in `anim.ts`.
+   - Cap the rear wheel's drawn turn (the `wheelAngle` lines in `three-stage.ts`) at 0.12 rad per picture (7 rad/s), keeping direction and the freewheel. Put it in one pure function with a comment: a drawing rule against strobing, not physics.
+   - Test, for every cassette row in `spec.ts` and every gear, at the pedal and the clip speed: the sprocket block's step per picture is below half a tooth, and the wheel's step is at most 0.12 rad (also at 30 pictures a second).
+   - The derailleur pulleys must turn with the chain too, but that is session D's.
+
+6. **Budgets** (`05-plan.md`): add a test that builds a road, a city and an MTB bike and checks:
    - at most 150k triangles drawn (instances counted);
    - no more meshes than the baseline session A recorded.
 
    If over, simplify further in `library.yaml` (`npm run parts`, `npm run parts:check`), not in code.
 
-6. **Credits.**
+7. **Credits.**
    - In the "Test build" notice (`ui/app.ts`, the `notice` overlay), add one line under the existing text:
 
      > 3D parts based on "Rigid Bike [Touring Bike]" (https://skfb.ly/pAzTT) by Mohamed Farhan, licensed under CC BY 4.0 (http://creativecommons.org/licenses/by/4.0/). Changed: split into parts, simplified, re-oriented.
@@ -65,14 +72,14 @@ The parts a user looks at around the bike come from the library: crank arms, ped
    - Add a test or e2e check that the line is there.
    - This is the licence requirement; never drop it while library parts are in use.
 
-7. **README:**
+8. **README:**
    - Update `player/README.md`'s 3D section to the new state: the library, the measured mounts, which parts are generated and why, and the recipe for adding a library part or a second variant of a slot (for example clipless pedals).
    - Rewrite "Known 3D shortcomings":
      - one look per part (every derailleur looks like this one);
      - no drop-bar levers, disc brakes, suspension fork or MTB derailleur from a real source yet;
      - the electronic derailleur still to come.
 
-8. **Screenshots for the owner:** garage snapshots of a road, a city and an MTB bike; one whole-bike card view; the bike upside down. Look at no more than 5 yourself. Then run the `verify` skill, commit in logical steps, and run the `handoff` skill.
+9. **Screenshots for the owner:** garage snapshots of a road, a city and an MTB bike; one whole-bike card view; the bike upside down. Look at no more than 5 yourself. Then run the `verify` skill, commit in logical steps, and run the `handoff` skill.
    - In the handoff, list what still looks generated and the next sources to look for:
      - the road bike model in `assets-src/` for the drop bar, levers, rim brakes and front derailleur;
      - an MTB derailleur source.
@@ -80,5 +87,5 @@ The parts a user looks at around the bike come from the library: crank arms, ped
 ## Done when
 
 - Crank, pedals, saddle, seat collar, stem, bar and grips are library parts, placed per bike, with level pedals and a correct upside-down pose.
-- The budgets hold, and the credits line is in the app.
+- The budgets hold, the pedal animation numbers hold, and the credits line is in the app.
 - All checks pass, and the handoff is pushed.

@@ -49,7 +49,7 @@ None open.
 ## Next steps
 
 1. Session D (`05-d-derailleur.md`): use `chordLength` and `layPins` for the cage solution; pulleys sit on a circle of `RP = 0.04` (spec.ts), while 11-tooth pulleys on a 12.7 mm chain need `rOf(11) = 0.0451`: choose the pulley's pitch radius from its tooth count and set `RP` (and `circ[2]`, `circ[3]` radii) to match, then spin them from `pins.wheel === 2 / 3` like the sprocket block in `layChain`.
-2. Session E: replace the crank meshes; the chainring is one mesh centred on the axle (`m.add('chainring', chainringGeo(...))`).
+2. Session E (its prompt now also has the pedal-speed and depth feedback): replace the crank meshes; the chainring is one mesh centred on the axle (`m.add('chainring', chainringGeo(...))`).
 3. Whole-bike budgets are above; MTB 12 has the highest mesh count (162).
 
 ## Gotchas
