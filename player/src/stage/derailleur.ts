@@ -127,7 +127,28 @@ export const WIRE_R = 0.0012;
 const WIRE_IN = new T.Vector3(-0.840865, -0.081107, 0.183532).addScaledVector(CLAMP.d, WIRE_R - 0.002);
 const WIRE_TAIL = new T.Vector3(-0.820661, -0.089745, 0.182448).addScaledVector(CLAMP.d, WIRE_R - 0.002);
 
-/** The upper body with its bracket turned (see BRACKET_M). */
+/**
+ * Where the B screw's head would cut into the upper body: the wall below and outboard of the screw's axis is
+ * moved down 4 mm (in the body's turn on the bike) near the head's path, fading out over 2 mm, so the head is
+ * clear at the right gap and when the screw is turned out. Turned in for a large gap (the start of the B-gap
+ * clip) it still touches the body a little. Nothing else is moved: the link pins are 17 mm and more from the
+ * axis. Found with throw-away scripts (not kept). Drawing data (owner request 2026-11-22).
+ */
+const B_WALL_SHIFT = new T.Vector3(-0.464842, -0.885394, 0).multiplyScalar(0.008);
+const B_SEAT = V(RD_RIG.screws.b.p);
+const B_AXIS = V(RD_RIG.screws.b.d).normalize();
+const smooth = (a: number, b: number, x: number) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+const bWallWeight = (p: T.Vector3) => {
+  const w = p.clone().sub(B_SEAT);
+  const out = -w.dot(B_AXIS) * 500; // mm out of the seat, towards the head
+  const rad = w.addScaledVector(B_AXIS, -w.dot(B_AXIS)).length() * 500;
+  return smooth(-3, -1, out) * (1 - smooth(11.5, 13.5, out)) * (1 - smooth(9, 11, rad));
+};
+
+/** The upper body with its bracket turned (see BRACKET_M) and the wall by the B screw's head moved down. */
 function upperBodyGeo(): T.BufferGeometry {
   return once('upper-body', () => {
     const g = libGeo('rd_upper_body').clone();
@@ -138,6 +159,11 @@ function upperBodyGeo(): T.BufferGeometry {
     const n = new T.Vector3();
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i);
+      const wb = bWallWeight(v);
+      if (wb > 0) {
+        v.addScaledVector(B_WALL_SHIFT, wb);
+        pos.setXYZ(i, v.x, v.y, v.z);
+      }
       const w = bracketWeight(v);
       if (w === 0) continue;
       t.copy(v).applyMatrix4(BRACKET_M);
@@ -316,15 +342,9 @@ const frame = (parent: T.Object3D) => {
   return g;
 };
 
-/**
- * Screw lengths: the H and L screws' shanks; how far the B screw's head seat is out of the seat measured on
- * the model, at the right gap. The screw threads through a tab of the upper body that ends 12 to 15 mm out
- * along its axis (the tab's face is slanted), so the head goes beyond it: 21.5 mm out at the right gap. Turned
- * in for the largest gap (4.9 mm further on an MTB) it is still 16.6 mm out, clear of the body and about
- * 0.8 mm from the H screw's head, which it would touch from about 16 mm out.
- */
+/** Screw lengths: the H and L screws' shanks; the B screw sticks out of its boss this far at the right gap. */
 const HL_LEN = 0.02;
-const B_OUT = 0.043;
+const B_OUT = 0.006;
 
 /**
  * An M4 screw with a socket head, turnable: shank `len` long from the head seat `p` along `d`, the
