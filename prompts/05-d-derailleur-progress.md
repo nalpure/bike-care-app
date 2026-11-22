@@ -2,13 +2,14 @@
 
 ## Status
 
-Part 2 of 3 done (tasks 4, 5, 8). Part 3: tasks 6, 7, 9 (rest of the README), 10 (Sonnet is fine; owner's call).
+Finished (part 3 of 3). Tasks 1-9 done; task 10: screenshots are made, the owner looks at them.
 
 ## Done
 
 - Part 1 (`344e8a4`, `f35d3f6`): `npm run parts:rig` (`tools/assets/measure-rd.ts`) writes `rd-rig.ts`; `rd-kin.ts` (four-bar, `rdPose`); `player/test/derailleur.test.ts` (closure, round trip).
 - Part 2 (`eeae3cb`, `0007619`): `rd-fit.ts` (fit per bike), `derailleur.ts` rewritten on the library pieces (old `derGeom`/`derPose`/constants gone), chain of fixed length, pulleys spin with the chain, screws, barrel/stop, cable; 2 new tests in `stage.test.ts` plus the clearance test rewritten (all 16 cassettes: road 8-12, city 5/7-10, MTB 8-13); README file table and the two derailleur "Known shortcomings" lines.
-- Verified: `npm run check`, `npm test` 111 passed, 14.8 s (12.5 s at the start), typecheck, `test:e2e` 11 of 11, road shots (looked at 4).
+- Part 3 (`befcab4`, `c656eac`, `0d6bab7`): views re-framed (task 7), `limit-screw-align` offset cut to the links reach, outline angle kept at 35 deg (task 6), README `parts:rig` row, MTB 12 bike in `player/e2e/slow.ts`. Verified at the end: `npm run check`, typecheck, `npm test` 111 passed 18.8 s, `test:e2e` 11 of 11, road and MTB shots.
+- Verified in part 2: `npm run check`, `npm test` 111 passed, 14.8 s (12.5 s at the start), typecheck, `test:e2e` 11 of 11, road shots (looked at 4).
 - Budgets (`npx tsx tools/stage-digest.ts <out.json>`, now loads the library): road 11 130 meshes / 53.9k triangles, city 8 138 / 48.3k, MTB 12 147 / 54.9k (before the round 148/152/161 meshes; limit 150k triangles).
 
 ### Measured per cassette (GAP_OK; mm)
@@ -33,16 +34,23 @@ Gap on the largest is 5.5 everywhere. Largest gap on the other sprockets: 11-28 
 - **H/L shanks 10 mm, B screw sticks out 3 mm** at the right gap; tab placed at the B screw's tip on the middle sprocket at GAP_OK.
 - New file `rd-fit.ts` (pure maths) instead of putting the solver into `derailleur.ts`.
 
+- **Views (part 3):** from-behind view stands off `max(0.5, 1.75 x frame height)` and frames from 0.07 above the upper pulley to 0.02 under the lower pulley, over the first and last gear (`views.ts`). Side close-up 0.3 / 0.28 from the gap, barrel close-up 0.39 away.
+- **Outlines:** kept at 35 deg; edge counts barely change up to 75 deg (200-650 segments a piece), so nothing to tune.
+- **limit-screw-align:** offset is min(2 sprockets, what `derLayout` can reach) (`anim.ts`), so on MTB 12 the pulley starts less far out of line.
+
 ## Questions for the owner
 
 1. On 11-42 and 10-51 the upper pulley sits 26-43 mm below the small sprockets, and 10-51 needs a 64 mm hanger. Accept until a mountain bike derailleur source exists? Recommended: yes, and look for a CC BY MTB derailleur (Eagle-style) as the next library source.
 
 ## Next steps
 
-1. Part 3, same prompt: task 6 (shading `k` is set in `buildDerailleur`; tune the outline angle for library meshes: `add()` in `bike.ts` uses `EdgesGeometry(geo, 35)` for every OUTLINED part).
-2. Task 7: `views.ts` close-ups for the real size (use `upperPulley`, `lowerPulley`, `barrelTurn`, `fitFor(B).bolt`); check upside down and the MTB 12 in portrait. The housing loop in `cockpit.ts` now ends at `housingFrom` (20 mm behind the barrel along its axis): check it looks right.
-3. `limit-screw-align` with L on MTB 12: the links reach only about 5 of the clip's 8 mm beyond the largest sprocket (`LINK_SWING.max`); the clip still plays. Consider `o` per bike in `anim.ts`.
-4. Task 9 README rest, task 10 shots (MTB 12 needs a bike in `player/e2e/slow.ts`), verify, handoff.
+1. Owner: look at the shots (below), decide question 1.
+2. Session E (`05-e-parts.md`) next. A future MTB derailleur source (Eagle-style) would replace the long hanger on wide cassettes.
+
+## Screenshots for the owner
+
+- `npm run build && npm run shots -- --only road` and `-- --only mtb`: `player/e2e/shots/slow/road-stand-*` and `mtb12-stand-*` (a PNG is named after the card before it).
+- Derailleur views, upright and upside down (scratch script `tools/assets/out/rd-views.ts`, git-ignored: `npx tsx tools/assets/out/rd-views.ts <tag> road|mtb <view> upright|flipped - 390 360`; needs `dist/`): output `tools/assets/out/rdv-<tag>.png`.
 
 ## Gotchas
 
