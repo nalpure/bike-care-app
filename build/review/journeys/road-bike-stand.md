@@ -24,7 +24,7 @@ No questions: the app already knows what it needs.
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → next check ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → result: **Have the rear gears checked** (do_not_ride)
@@ -276,7 +276,9 @@ Time shown for this bike: 28 to 31 min (depends on how the bike is held).
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
+
+Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → continue ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **EXIT, unsafe**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
@@ -317,7 +319,7 @@ Buttons: [Find a shop] [Ask the assistant]
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → ok ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → to-do: **Have the rear gears checked** (do_not_ride)

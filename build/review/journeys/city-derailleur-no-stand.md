@@ -26,7 +26,7 @@ Questions the app asks first:
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → next check ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → result: **Have the rear gears checked** (do_not_ride)
@@ -252,7 +252,7 @@ Questions the app asks first:
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → next check
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → result: **Have the rear gears checked** (do_not_ride) ◀ **this path**
@@ -288,7 +288,7 @@ The owner chooses: **Take it to a shop**.
 
 Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
 
-<sub>3D: focus rear_derailleur, derailleur_hanger, cassette · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
 
 - [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → ok ◀ **this path**
 - [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → to-do: **Have the rear gears checked** (do_not_ride)

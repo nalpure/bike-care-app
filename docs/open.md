@@ -17,6 +17,9 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **The stand, rope and hook fade out with the frame** (shared material opacity, about 0.4 s); the stand clamp part is forced hidden. `three-stage.ts`, `visibility.ts`.
 - **Framing on a card with `show`:** only the wide `drive_side` view is re-aimed to fill the picture with what is drawn (10 % margin; the crank's full circle counts). Close-ups keep their authored framing, and so does `whole_bike` (world space). `check-high-limit` now shows rear_derailleur, derailleur_hanger, cassette, chain, chainring (no crank, no screws other than H, no cable). `views.ts` (`FIT_VIEWS`, `fitPose`), `three-stage.ts`.
 - **`shift-to-smallest-sprocket` has focus [chain] only** (as asked), so its tags are just "Chain"; the shifter and the sprocket are no longer marked. `content/steps/rear-shifting.yaml`.
+- **Clip `hanger-bend`:** 0.2 rad (11.5 deg, drawing data) about the length axis, bending 40 % of the way from axle to bolt; in, back, out, back in 5.6 s; hanger red past 12 % of the tilt. Caption "A bent hanger tilts the derailleur" (R-20). `anim.ts`, `content/inspections.yaml`.
+- **Contour colour:** blue `--contour` (#1F5FBF light, #6FC3FF dark), every sharp edge of the parts drawn on top at 80 %, so hidden edges of the straight derailleur show too. `styles.css`, `contour.ts`.
+- **`npm run shots -- --at 1.7,3.3`** holds the step's clip at those times for extra pictures (`ThreeStage.holdClip`, not used by the app). `player/e2e/slow.ts`.
 
 ## Questions for the owner
 
@@ -30,6 +33,7 @@ Each with the recommended answer.
 6. Swipes: also a right-edge swipe, and swipe up with a mouse drag? Recommended: no.
 7. Profiles: add an optional `bike_name` (for example "Corvana Strada") if the scenario names look odd in the garage? Recommended: yes, if they do.
 8. Split the brake levers into front and rear nodes? Recommended: not until brake content needs them.
+9. Hanger check: `derailleur_from_behind` (shared with the limit-screw steps) crops the hanger's top under the caption, so the red hanger shows only as a strip. Add a view `hanger_from_behind`, a little higher and wider? Recommended: yes.
 
 ## What still looks generated in 3D (sources to find)
 

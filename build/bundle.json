@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "36bfebbb1da8b29a",
+  "content_hash": "64eab783aca85cde",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -647,11 +647,18 @@
       "minutes": 1,
       "text": "Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.",
       "focus": [
+        "derailleur_hanger"
+      ],
+      "show": [
         "rear_derailleur",
-        "derailleur_hanger",
-        "cassette"
+        "cassette",
+        "rear_end"
       ],
       "view": "derailleur_from_behind",
+      "animation": {
+        "clip": "hanger-bend",
+        "caption": "A bent hanger tilts the derailleur"
+      },
       "states": [
         {
           "id": "straight",
