@@ -122,7 +122,7 @@ const CLAMP = {
   d: new T.Vector3(-0.382574, -0.912791, 0.143001).normalize(),
 };
 /** The inner wire's drawn radius (cockpit.ts draws it). */
-export const WIRE_R = 0.0014;
+export const WIRE_R = 0.0012;
 // measured with the wire's centre 2 mm off the face; moved to one radius off it
 const WIRE_IN = new T.Vector3(-0.840865, -0.081107, 0.183532).addScaledVector(CLAMP.d, WIRE_R - 0.002);
 const WIRE_TAIL = new T.Vector3(-0.820661, -0.089745, 0.182448).addScaledVector(CLAMP.d, WIRE_R - 0.002);
@@ -316,9 +316,15 @@ const frame = (parent: T.Object3D) => {
   return g;
 };
 
-/** Screw lengths: the H and L screws' shanks; the B screw sticks out of its boss this far at the right gap. */
+/**
+ * Screw lengths: the H and L screws' shanks; how far the B screw's head seat is out of the seat measured on
+ * the model, at the right gap. The screw threads through a tab of the upper body that ends 12 to 15 mm out
+ * along its axis (the tab's face is slanted), so the head goes beyond it: 21.5 mm out at the right gap. Turned
+ * in for the largest gap (4.9 mm further on an MTB) it is still 16.6 mm out, clear of the body and about
+ * 0.8 mm from the H screw's head, which it would touch from about 16 mm out.
+ */
 const HL_LEN = 0.02;
-const B_OUT = 0.006;
+const B_OUT = 0.043;
 
 /**
  * An M4 screw with a socket head, turnable: shank `len` long from the head seat `p` along `d`, the
