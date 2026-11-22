@@ -167,7 +167,10 @@ export function cylinders(pc: Piece, minN = 16): Cyl[] {
     const gk = (p: V3) => p.map((v) => Math.floor(v / cell)).join(',');
     for (const i of live) { const k = gk(pc.P[i]); (grid.get(k) ?? grid.set(k, []).get(k)!).push(i); }
     let best: { d: V3; c: V3; r: number; inl: number[] } | null = null;
+    let bestScore = -1;
     const tries = 4000;
+    // candidates are scored on a sample of the live vertices; only the best one is counted on all of them
+    const sample = live.length <= 800 ? live : Array.from({ length: 800 }, () => live[Math.floor(rnd() * live.length)]);
     for (let t = 0; t < tries; t++) {
       const i = live[Math.floor(rnd() * live.length)];
       const p = pc.P[i];
@@ -193,9 +196,10 @@ export function cylinders(pc: Piece, minN = 16): Cyl[] {
       const c = add(p, sc(ni, s));
       const r = Math.abs(s);
       if (r < 0.6 || r > 40) continue;
-      const inl = inliers(pc, live, c, d, r, angTol, radTol);
-      if (!best || inl.length > best.inl.length) best = { d, c, r, inl };
+      const score = inliers(pc, sample, c, d, r, angTol, radTol).length;
+      if (score > bestScore) { bestScore = score; best = { d, c, r, inl: [] }; }
     }
+    if (best) best.inl = inliers(pc, live, best.c, best.d, best.r, angTol, radTol);
     if (!best || best.inl.length < minN) break;
     // refine
     let { d, c, r, inl } = best;
@@ -387,8 +391,9 @@ if (dot(sub(socket.c, barrelCyl.c), bD) > 0) { bD = sc(bD, -1); [bt0, bt1] = [-b
 const barrel = { p: barrelCyl.c, d: bD, head: add(barrelCyl.c, sc(bD, bt0)), seat: add(barrelCyl.c, sc(bD, bt1)), r: barrelCyl.r };
 notes.push(`barrel: ${f1(bt1 - bt0)} mm long, r ${f2(barrel.r)} mm`);
 
-// Cable clamp: the bolt boss on the lower body, square to the link plates (perpendicular to the pins).
-const clampCyl = pick('rd_lower_body', 'cable clamp boss', (c) => !c.hole && near(c.r, 3, 0.2) && Math.abs(dot(c.d, pinDir)) < 0.05);
+// Cable clamp: the bolt boss on the lower body, square to the link plates (perpendicular to the pins) and
+// pointing out to the drive side, where the bolt is reached.
+const clampCyl = pick('rd_lower_body', 'cable clamp boss', (c) => !c.hole && near(c.r, 3, 0.2) && Math.abs(dot(c.d, pinDir)) < 0.05 && Math.abs(c.d[2]) > 0.7);
 const clampD = clampCyl.d[2] < 0 ? sc(clampCyl.d, -1) : clampCyl.d; // out of the body, to the drive side
 const clamp = { p: add(clampCyl.c, sc(clampD, clampCyl.t1)), d: clampD };
 

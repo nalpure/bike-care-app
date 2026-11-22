@@ -46,7 +46,7 @@ export const RD_RIG = {
     lower: { c: [-0.828942, -0.235108, 0.110422], d: [0.009109, -0.007159, 0.999933], teeth: 11, rPitch: 0.045078, teethModel: 10, rSeat: 0.045002, rTip: 0.042002, width: 0.003685 },
   },
   /** barrel adjuster: axis point p, d from the head (housing end) into the thread; head and seat are its two ends */
-  barrel: { p: [-0.949625, -0.039944, 0.161394], d: [0.7938, -0.607943, 0.01692], head: [-0.965504, -0.027782, 0.161055], seat: [-0.936922, -0.049673, 0.161664], r: 0.009002 },
+  barrel: { p: [-0.937527, -0.049209, 0.161652], d: [0.793768, -0.607988, 0.016836], head: [-0.965503, -0.02778, 0.161059], seat: [-0.936921, -0.049673, 0.161665], r: 0.008998 },
   /** inner wire clamp: the clamp bolt's outer face on the lower body, bolt axis out to the drive side */
   clamp: { p: [-0.804014, -0.037851, 0.19243], d: [0.252663, 0.435732, 0.863886] },
   /** screws fused into the upper body: p = head seat on the axis, d = from the head into the thread. bLen: B screw length */

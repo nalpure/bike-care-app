@@ -10,5 +10,6 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["tools/**/*.ts"]
+  "include": ["tools/**/*.ts"],
+  "exclude": ["tools/assets/out"]
 }

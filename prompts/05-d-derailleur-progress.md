@@ -6,7 +6,7 @@ Part 1 of 3 done (tasks 1 to 3: rig, closure, round trip). Part 2: tasks 4, 5, 8
 
 ## Done
 
-- `344e8a4` `tools/assets/measure-rd.ts` (`npm run parts:rig`, about 45 s; `-- --explore` lists every cylinder per piece and the coaxial pairs; `-- --shots` writes `tools/assets/out/rig-{drive,behind,above}.png` through `explore/rig-view.html`). Writes `player/src/stage/rd-rig.ts` (`RD_RIG`, generated, scene units, library space). `player/src/stage/rd-kin.ts` (kinematics). `player/test/derailleur.test.ts` (4 tests). `docs/decisions.md`: long cage line clarified (owner).
+- `344e8a4` `tools/assets/measure-rd.ts` (`npm run parts:rig`, about 25 s; `-- --explore` lists every cylinder per piece and the coaxial pairs; `-- --shots` writes `tools/assets/out/rig-{drive,behind,above}.png` through `explore/rig-view.html`). Writes `player/src/stage/rd-rig.ts` (`RD_RIG`, generated, scene units, library space). `player/src/stage/rd-kin.ts` (kinematics). `player/test/derailleur.test.ts` (4 tests). `docs/decisions.md`: long cage line clarified (owner).
 - Verified: `npm run check`, `npm test` (109 tests, 11.9 s; 11.5 s at session C's end), `npm run typecheck`, `npm run test:e2e` (11 of 11). No shots: the app does not use the new modules yet.
 - Marker renders looked at once from 3 sides: every axis sits on its feature.
 
@@ -43,6 +43,6 @@ None open.
 
 ## Gotchas
 
-- Scratch scripts that import `three` must live inside the repo (`tools/assets/out/` is git-ignored) but `tsc` checks them: delete them before `npm run typecheck`.
-- `measure-rd.ts` RANSAC is seeded, so its output is stable; it takes about 45 s.
-- `git pull --rebase` needs `--autostash` while the three deleted prompt files stay unstaged.
+- Scratch scripts that import `three` must live inside the repo: put them in `tools/assets/out/` (git-ignored, and left out of `tsc`).
+- `measure-rd.ts` RANSAC is seeded, so its output is stable; about 25 s. Its feature picks are filters on the cylinder list (`pick`): if a change to the finder moves a value, check `--explore` before trusting it (the clamp once jumped to another boss).
+- `stage.test.ts` "keeps the derailleur, chain and frame off the sprockets" takes about 5 s alone and timed out once (6.3 s) under load. Part 2 rewrites it; keep it fast or give it its own timeout.
