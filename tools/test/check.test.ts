@@ -70,6 +70,31 @@ describe('the real content', () => {
     expect(r.profiles.get('unknown-bike')!.results[0].questions).toBe(2);
   });
 
+  it('checks show nodes like focus nodes, rejects one listed in both, and carries show into the bundle', () => {
+    const ok = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => { step(d, 'check-high-limit').show = ['frame', 'chain']; })
+      .edit('content/inspections.yaml', (d) => { d.inspections[0].show = ['frame']; })
+      .run();
+    expect(show(ok)).toBe('');
+    const b = JSON.parse(ok.bundle!);
+    expect(b.steps.find((s: any) => s.id === 'check-high-limit').show).toEqual(['frame', 'chain']);
+    expect(b.inspections[0].show).toEqual(['frame']);
+
+    const unknown = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => { step(d, 'check-high-limit').show = ['frame', 'no_such_part']; })
+      .run();
+    const [e] = errorsOf(unknown, 'unknown-node');
+    expect(unknown.issues.errors).toHaveLength(1);
+    expect(formatIssue(e)).toMatch(ERROR_LINE);
+    expect(formatIssue(e)).toContain('Show node "no_such_part"');
+
+    const both = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => { step(d, 'check-high-limit').show = ['upper_pulley']; })
+      .run();
+    expect(both.issues.errors).toHaveLength(1);
+    expect(formatIssue(errorsOf(both, 'show-and-focus')[0])).toContain('list it once, in focus');
+  });
+
   it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {
     const r = runCheck(REPO, { write: false });
     const md = r.profiles.get('city-derailleur-no-stand')!.markdown;

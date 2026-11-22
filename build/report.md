@@ -100,7 +100,8 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `unknown-state-label` | pass | Every state label in sets, clears and forbidden_while exists in states.yaml. |
 | `skip-unsafe` | pass | Buttons skip only later plain steps: never safety checks, inspection calls or steps that change state labels. |
 | `unknown-show-how-from` | pass | Every show_how_from names an existing step or procedure. |
-| `unknown-node` | pass | Every focus node and animation target exists in the 3D catalog. |
+| `unknown-node` | pass | Every focus node, show node and animation target exists in the 3D catalog. |
+| `show-and-focus` | pass | A node is listed once: in focus (marked) or in show (plain), not both. |
 | `unknown-view` | pass | Every view exists in the 3D catalog. |
 | `unknown-clip` | pass | Every clip exists in the 3D catalog. |
 | `unknown-state` | pass | Every inspection state referenced exists. |

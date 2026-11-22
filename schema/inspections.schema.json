@@ -20,6 +20,11 @@
           "text": { "$ref": "common.schema.json#/$defs/text" },
           "tools": { "$ref": "common.schema.json#/$defs/toolUse" },
           "focus": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
+          "show": {
+            "description": "3D parts drawn plain; focus marks the small parts in colour; the 3D view hides every other part. A name goes in one of the two lists, not both.",
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/nodeName" }
+          },
           "view": { "$ref": "common.schema.json#/$defs/nodeName" },
           "animation": { "$ref": "common.schema.json#/$defs/animation" },
           "details": { "$ref": "common.schema.json#/$defs/details" },

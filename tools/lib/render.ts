@@ -51,6 +51,7 @@ function humanKind(it: PathItem): string {
 function sceneLine(def: any): string | null {
   const parts: string[] = [];
   if (def.focus?.length) parts.push(`focus ${def.focus.join(', ')}`);
+  if (def.show?.length) parts.push(`show ${def.show.join(', ')}`);
   if (def.view) parts.push(`view ${def.view}`);
   return parts.length ? `<sub>3D: ${parts.join(' · ')}</sub>` : null;
 }

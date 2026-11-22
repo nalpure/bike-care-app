@@ -33,6 +33,10 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 - The build checks that the text names each listed tool, by its name or a word in its `mentions`.
 - No "do not use" lists. A real danger goes into the step text as a warning (see Texts).
 
+## 3D view
+
+- `focus` lists the small parts the step marks in colour; `show` lists the parts drawn plain; the 3D view will hide every other part (decisions.md, 2026-11-22). A node goes in one list only, and the check rejects both. `show` is optional; a step without it keeps the old 3D look until it gets one.
+
 ## Safety
 
 - Never invent torque, fluid, wear limits, part compatibility or service intervals (hard rule 3). Send the user to the part or its manual, or use a placeholder in angle brackets with an entry in `review/<job>.md`.

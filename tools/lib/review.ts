@@ -134,6 +134,7 @@ function toolsLine(c: Content, tools: any): string | null {
 function sceneLine(def: any): string | null {
   const p: string[] = [];
   if (def.focus?.length) p.push(`focus ${def.focus.join(', ')}`);
+  if (def.show?.length) p.push(`show ${def.show.join(', ')}`);
   if (def.view) p.push(`view ${def.view}`);
   return p.length ? `<sub>3D: ${p.join(' · ')}</sub>` : null;
 }

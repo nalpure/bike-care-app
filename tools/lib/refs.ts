@@ -196,6 +196,10 @@ function checkScene(x: Ctx, def: any, loc: Loc): void {
   (def.focus ?? []).forEach((n: string, i: number) => {
     if (!x.c.catalog.nodes.has(n)) err(x, sub(loc, 'focus', i), 'unknown-node', `Focus node "${n}" is not a 3D node in ${x.c.catalog.source}.`);
   });
+  (def.show ?? []).forEach((n: string, i: number) => {
+    if (!x.c.catalog.nodes.has(n)) err(x, sub(loc, 'show', i), 'unknown-node', `Show node "${n}" is not a 3D node in ${x.c.catalog.source}.`);
+    else if ((def.focus ?? []).includes(n)) err(x, sub(loc, 'show', i), 'show-and-focus', `Node "${n}" is in both focus and show; list it once, in focus.`);
+  });
   if (def.view && !x.c.catalog.views.has(def.view)) err(x, sub(loc, 'view'), 'unknown-view', `View "${def.view}" is not in ${x.c.catalog.source}.`);
   checkAnimation(x, def.animation, sub(loc, 'animation'));
 }

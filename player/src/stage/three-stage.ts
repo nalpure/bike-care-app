@@ -302,6 +302,7 @@ export class ThreeStage implements Stage {
       this.rebuild(spec);
       this.cardKey = '';
     }
+    // v.show (parts drawn plain) is ignored for now; a later change uses it.
     const key = JSON.stringify([v.id, v.focus, v.view, v.animation, v.labels, v.labelsBefore]);
     const prevChosen = this.view.chosen;
     this.view = v;

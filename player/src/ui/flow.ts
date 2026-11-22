@@ -242,7 +242,7 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   if (!textOnly) {
     app.stage.show({
       id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bikeName,
-      focus: card.stage.focus, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: (app.journey?.bikeFacts ?? {}),
+      focus: card.stage.focus, show: card.stage.show, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: (app.journey?.bikeFacts ?? {}),
     });
   }
 

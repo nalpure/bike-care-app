@@ -14,6 +14,8 @@ export interface StageView {
   bike?: string;
   /** named 3D nodes to highlight */
   focus: string[];
+  /** named 3D nodes drawn plain; the 3D view will hide every part in neither focus nor show (a later change uses it) */
+  show?: string[];
   /** named camera position */
   view?: string;
   /** a generic motion on a node, or a named clip */
@@ -49,6 +51,7 @@ export class PlaceholderStage implements Stage {
   }
 
   show(v: StageView): void {
+    // v.show is ignored for now; a later change uses it.
     const names = (list: string[]) => list.map((n) => n.replace(/_/g, ' '));
     this.body.replaceChildren(
       h('span.eyebrow', v.view ? `View: ${v.view.replace(/_/g, ' ')}` : 'Whole bike'),

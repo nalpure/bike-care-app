@@ -58,6 +58,18 @@ describe('engine', () => {
     expect(skipped.ids.length).toBe(plain.ids.length - 1);
   });
 
+  it('hands a step\'s and an inspection\'s show list to the card\'s stage', () => {
+    const j = setup((b) => {
+      b.steps.find((s: any) => s.id === 'check-high-limit').show = ['frame', 'chain'];
+      for (const i of b.inspections) i.show = ['frame'];
+    });
+    const plain = walk(setup(() => {}), 'check-high-limit').at;
+    expect(plain?.kind === 'card' && plain.card.stage.show).toBeUndefined();
+    const r = walk(j, 'check-high-limit').at;
+    expect(r?.kind === 'card' && r.card.stage.show).toEqual(['frame', 'chain']);
+    expect(r?.kind === 'card' && r.card.stage.focus).toEqual(['upper_pulley', 'smallest_sprocket', 'h_screw']);
+  });
+
   it('shows a standing warning on every card while its label is set', () => {
     const j = setup((b) => {
       b.states.find((s: any) => s.id === 'bike_in_stand').warning = 'The bike is clamped. Do not lean on it.';
