@@ -21,6 +21,7 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-22 Shown, marked, hidden.** A step's `focus` lists only the small parts it marks in colour; a new `show` lists the parts drawn plain; every other part is hidden completely (no grey). Steps without `show` keep the old behaviour until they get one. When the frame is hidden, so are stand and hook.
 - **2026-11-22 Clips own the scene.** A named clip decides how the scene looks while it plays: red marking (a part that is bent or wrong), and contours of the correct or starting position. Generic motions (push, rotate, …) add no contours.
 - **2026-11-22 Hanger check.** `derailleur-alignment` gets a clip that bends the hanger in and out (hanger red) with the straight derailleur's contour; shown: hanger, derailleur, sprockets, rear end of the frame with the hub. The chain is left out at first.
+- **2026-11-22 Answers are the exception.** A step states its goal ("the upper wheel should be in line with the smallest sprocket"); Next means it is met. A short question ("Not in line?") offers only the problems; each says briefly what goes wrong (rattling, jumping, unsafe) and plays its solution animation at once.
 
 ## Where approach.md is out of date
 
