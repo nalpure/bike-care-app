@@ -65,6 +65,8 @@ There are no session prompt files and no handoff files. The state of the work li
 - **`docs/decisions.md`**: what the owner decided.
 - **The area guides**: how things work. When you learn something the next agent would otherwise pay for again (a trap, a measured fact), add one line to the guide of that area, not to a log.
 
+**Notify the owner.** The owner is often away from the screen. Call `PushNotification` (load it with ToolSearch if needed) as your last action when (a) the task or a part of it is done, or (b) you need an answer before you can go on. One line under 200 characters that leads with what they must do or what happened, e.g. "Tutorial rewrite done, check passes, 2 questions in docs/open.md" or "Need a decision: keep 784 mm bars?". No notification for routine progress. The tool skips itself when the owner is at the terminal; that is fine.
+
 A large task: read, then propose the plan in a few lines and the split into parts; the owner answers, and each part ends in commits that leave `npm run check` and `npm test` passing, so a fresh session can start from `git log` and this file.
 
 ## Decisions
