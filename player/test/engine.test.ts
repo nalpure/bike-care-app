@@ -63,7 +63,7 @@ describe('engine', () => {
       b.steps.find((s: any) => s.id === 'check-high-limit').show = ['frame', 'chain'];
       for (const i of b.inspections) i.show = ['frame'];
     });
-    const plain = walk(setup(() => {}), 'check-high-limit').at;
+    const plain = walk(setup(() => {}), 'check-low-limit').at;
     expect(plain?.kind === 'card' && plain.card.stage.show).toBeUndefined();
     const r = walk(j, 'check-high-limit').at;
     expect(r?.kind === 'card' && r.card.stage.show).toEqual(['frame', 'chain']);

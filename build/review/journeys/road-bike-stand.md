@@ -112,7 +112,7 @@ Tools: Bike work stand
 
 Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.
 
-<sub>3D: focus shifter_rear, smallest_sprocket, chain · view drive_side</sub>
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
 Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
@@ -120,7 +120,7 @@ Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
 The chain is on the smallest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the smallest sprocket?
 
-<sub>3D: focus upper_pulley, smallest_sprocket, h_screw · view derailleur_from_behind</sub>
+<sub>3D: focus upper_pulley, smallest_sprocket, h_screw · show drivetrain · view derailleur_from_behind</sub>
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 

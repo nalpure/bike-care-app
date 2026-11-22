@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "2d2aaf3c6b455d9a",
+  "content_hash": "3afea71b9123ca7d",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1073,9 +1073,10 @@
       "minutes": 1,
       "text": "Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.",
       "focus": [
-        "shifter_rear",
-        "smallest_sprocket",
         "chain"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "drive_side",
       "animation": {
@@ -1342,6 +1343,9 @@
         "upper_pulley",
         "smallest_sprocket",
         "h_screw"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "derailleur_from_behind",
       "buttons": [

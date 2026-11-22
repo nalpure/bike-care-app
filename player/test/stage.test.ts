@@ -12,7 +12,8 @@ import { chordLength } from '../src/stage/pins.js';
 import { RIG } from '../src/stage/rd-kin.js';
 import { RD_RIG } from '../src/stage/rd-rig.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
-import { CLIPS, LABEL_SCENES, manifest, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS } from '../src/stage/registry.js';
+import { CLIPS, GROUP_NODES, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, SPLIT_PARTS, VIEWS } from '../src/stage/registry.js';
+import { FADED, shownParts, visTargets, type VisCard } from '../src/stage/visibility.js';
 import { viewPose } from '../src/stage/views.js';
 
 const REPO = resolve(import.meta.dirname, '../..');
@@ -78,6 +79,67 @@ function ctxFor(m: BikeModel, focus: string[] = []): AnimCtx {
   };
 }
 
+function card(m: BikeModel, focus: string[], show: string[] | null, more: Partial<VisCard> = {}): VisCard {
+  const hot = new Set(focus.flatMap((n) => partsOf(n)).filter((p) => m.has(p)));
+  return {
+    ids: [...m.parts.keys()], hot, shown: show ? shownParts(hot, show, partsOf, (p) => m.has(p)) : null, hidden: new Set(),
+    context: () => false, exploring: false, showAll: false, selected: null, ...more,
+  };
+}
+
+describe('which parts a card draws (visibility.ts)', () => {
+  const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 }), mat);
+
+  it('with show: focus and show parts are drawn, every other part has target 0 (not drawn), only focus is marked', () => {
+    const { targets, frameGone } = visTargets(card(m, ['chain'], ['drivetrain']));
+    const drawn = [...targets].filter(([, t]) => t.vis === 1).map(([id]) => id).sort();
+    expect(drawn).toEqual(partsOf('drivetrain').filter((p) => m.has(p)).sort());
+    for (const id of ['frame', 'frame_dropout', 'rear_wheel', 'rear_hub', 'front_wheel', 'fork', 'saddle', 'seat_post', 'handlebar', 'brake_lever', 'shift_cable', 'shifter_rear', 'stand_clamp']) {
+      expect(targets.get(id)!.vis, id).toBe(0);
+    }
+    for (const [id, t] of targets) expect(t.hot, id).toBe(id === 'chain' ? 1 : 0);
+    expect(frameGone).toBe(true);
+    // nothing is faded on such a card: a part is in or out
+    for (const t of targets.values()) expect([0, 1]).toContain(t.vis);
+  });
+
+  it('with show: the rear end shows stay ends and hub, and a focus part outside show is drawn too', () => {
+    const { targets } = visTargets(card(m, ['smallest_sprocket'], ['rear_end']));
+    expect([...targets].filter(([, t]) => t.vis === 1).map(([id]) => id).sort()).toEqual(['frame_dropout', 'rear_hub', 'smallest_sprocket']);
+  });
+
+  it('the stand clamp is hidden with the frame, shown with it', () => {
+    expect(visTargets(card(m, ['chain'], ['stand_clamp'])).targets.get('stand_clamp')!.vis).toBe(0);
+    const withFrame = visTargets(card(m, ['chain'], ['frame', 'stand_clamp']));
+    expect(withFrame.frameGone).toBe(false);
+    expect(withFrame.targets.get('stand_clamp')!.vis).toBe(1);
+    expect(withFrame.targets.get('frame_dropout')!.vis).toBe(1);
+  });
+
+  it('without show: the context stays and the rest is faded, as before', () => {
+    const { targets, frameGone } = visTargets(card(m, ['chain'], null, { context: (id) => id === 'frame' || id === 'cassette' }));
+    expect(targets.get('chain')!.vis).toBe(1);
+    expect(targets.get('frame')!.vis).toBe(1);
+    expect(targets.get('cassette')!.vis).toBe(1);
+    expect(targets.get('saddle')!.vis).toBe(FADED);
+    expect(frameGone).toBe(false);
+  });
+
+  it('explore mode: show all draws everything; the step focus keeps the card rule', () => {
+    const all = visTargets(card(m, ['chain'], ['drivetrain'], { exploring: true, showAll: true }));
+    for (const t of all.targets.values()) expect(t.vis).toBe(1);
+    expect(all.frameGone).toBe(false);
+    const step = visTargets(card(m, ['chain'], ['drivetrain'], { exploring: true, showAll: false }));
+    expect(step.targets.get('saddle')!.vis).toBe(0);
+    expect(step.targets.get('chain')!.vis).toBe(1);
+  });
+
+  it('a part that a state label hides stays hidden', () => {
+    const { targets } = visTargets(card(m, ['chain'], ['drivetrain'], { hidden: new Set(['chain']), exploring: true, showAll: true }));
+    expect(targets.get('chain')!.vis).toBe(0);
+  });
+});
+
 describe('3D registry and manifest', () => {
   it('build/3d-manifest.json is the registry export (run npm run manifest after changing the registry)', () => {
     const file = JSON.parse(readFileSync(join(REPO, 'build/3d-manifest.json'), 'utf8'));
@@ -102,6 +164,42 @@ describe('bike builder', () => {
     const missing = Object.keys(NODES).filter((n) => n !== 'bike' && !partsOf(n).some((p) => m.has(p)));
     expect(missing).toEqual([]);
     for (const n of Object.keys(NODES)) if (n !== 'bike') expect(m.anchors.has(n) || m.anchors.has(partsOf(n)[0]), n).toBe(true);
+  });
+
+  it('groups the drivetrain and the rear end, and builds the parts cut out of the frame and the rear wheel', () => {
+    const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 }), mat);
+    const B = m.spec;
+    // drivetrain: the chain's whole path, and not the cable, the shifter or the wheels
+    expect(partsOf('drivetrain')).toEqual(expect.arrayContaining(['chainring', 'crank', 'chain', 'cassette', 'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster']));
+    for (const no of ['shift_cable', 'shifter_rear', 'rear_wheel', 'front_wheel', 'frame']) expect(partsOf('drivetrain'), no).not.toContain(no);
+    for (const p of partsOf('drivetrain')) expect(m.has(p), p).toBe(true);
+    // the split parts: frame and rear_wheel still stand for the whole
+    for (const [part, whole] of Object.entries(SPLIT_PARTS)) {
+      expect(m.has(part), part).toBe(true);
+      expect(partsOf(whole), whole).toContain(part);
+      expect(NODES[part], `${part} is a part, not a node`).toBeUndefined();
+      expect(previewNode(part)).toBe(whole);
+    }
+    expect(partsOf('frame')).toEqual(['frame', 'frame_dropout']);
+    expect(partsOf('rear_wheel')).toEqual(['rear_wheel', 'rear_hub']);
+    expect(partsOf('rear_end')).toEqual(['frame_dropout', 'rear_hub']);
+    expect(previewNode('chain')).toBe('chain');
+    for (const g of GROUP_NODES) expect(NODE_PARTS[g], g).toBeDefined();
+    // the dropout end: only the last stretch of the stays (13 cm = 0.26) and the plates, round the axle
+    const end = meshPoints(m, ['frame_dropout'], 1);
+    expect(end.length).toBeGreaterThan(100);
+    for (const { p } of end) expect(Math.hypot(p.x - B.rx, p.y - B.huby), 'dropout part reaches too far').toBeLessThan(0.3);
+    // ... and the rest of the frame still holds the long part of the stays
+    const rest = meshPoints(m, ['frame'], 1).filter(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) > 0.35 && p.x < B.bby);
+    expect(rest.length).toBeGreaterThan(100);
+    // the hub holds the axle and the freehub body, the wheel keeps rim, tyre and spokes
+    const hub = meshPoints(m, ['rear_hub'], 1);
+    expect(Math.max(...hub.map(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby)))).toBeLessThan(0.08);
+    expect(Math.max(...meshPoints(m, ['rear_wheel'], 1).map(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby)))).toBeGreaterThan(B.rt - 0.05);
+    // a motion on the whole node moves all its pieces about one centre
+    expect(m.parts.get('frame_dropout')!.center.toArray()).toEqual(m.parts.get('frame')!.center.toArray());
+    expect(m.parts.get('rear_hub')!.center.toArray()).toEqual(m.parts.get('rear_wheel')!.center.toArray());
+    m.dispose();
   });
 
   it('picks parts by facts', () => {
@@ -351,7 +449,7 @@ describe('bike builder', () => {
           }
         }
       }
-      const frame = meshPoints(m, ['frame'], 3).filter(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) < 0.32);
+      const frame = meshPoints(m, partsOf('frame'), 3).filter(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) < 0.32);
       expect(frame.find(({ p }) => hitsSprocket(B, p, 0, 0) !== undefined), `${label}: frame`).toBeUndefined();
       m.dispose();
     }
@@ -453,7 +551,7 @@ describe('bike builder', () => {
       const m = new BikeModel(B, mat);
       for (const gear of [0, B.n - 1]) {
         m.setDer(m.zOf(gear), GAP_OK);
-        const bad = meshPoints(m, ['rear_derailleur', 'frame'], 2, { stride: 3, noPulleys: true }).find(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) < 0.4 && hitsSprocket(B, p, 0, 0) !== undefined);
+        const bad = meshPoints(m, ['rear_derailleur', ...partsOf('frame')], 2, { stride: 3, noPulleys: true }).find(({ p }) => Math.hypot(p.x - B.rx, p.y - B.huby) < 0.4 && hitsSprocket(B, p, 0, 0) !== undefined);
         expect(bad?.part, JSON.stringify(facts)).toBeUndefined();
       }
       m.dispose();

@@ -12,7 +12,10 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Sprocket and chainring edge shade 0.7** (`EDGE_DARK` in `geo.ts`); lights unchanged because a stronger sun did not add depth.
 - **Chain plates drawn with 6-sided pin holes**, shaded per link piece. `drivetrain.ts`.
 - **`show` check:** the rule is called `show-and-focus` and is reported only for a node the catalog knows (an unknown name gives `unknown-node` alone). `show` also appears in the reviewers' "3D:" line (`render.ts`, `review.ts`), so a content change that adds `show` changes that card's review hash.
-- **Comment in `three-stage.ts`:** one comment line saying `show` is ignored for now, as the task asked for ThreeStage; no code in `player/src/stage/` changed.
+- **Rear end split:** the dropout end is the last 13 cm (0.26 units) of both stays, cut at a ring of the tube, plus the dropout plates (part `frame_dropout`). The rear hub (part `rear_hub`) is the axle, hub shell, flanges, hub-gear shell and the freehub body; spokes, rim and tyre stay with `rear_wheel`. `player/src/stage/bike.ts`, `geo.ts`.
+- **`drivetrain` and `rear_end` are nodes with tap texts** (`NODES`), though a tap never means them (`GROUP_NODES`). `registry.ts`.
+- **The stand, rope and hook fade out with the frame** (shared material opacity, about 0.4 s); the stand clamp part is forced hidden. `three-stage.ts`, `visibility.ts`.
+- **`shift-to-smallest-sprocket` has focus [chain] only** (as asked), so its tags are just "Chain"; the shifter and the sprocket are no longer marked. `content/steps/rear-shifting.yaml`.
 
 ## Questions for the owner
 

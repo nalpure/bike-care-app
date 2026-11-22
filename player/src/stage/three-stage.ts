@@ -12,6 +12,7 @@ import { h, icon } from '../ui/dom.js';
 import type { Stage, StageView } from '../ui/stage.js';
 import { ease, makeAnim, wheelStep, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
 import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
+import { shownParts, visTargets } from './visibility.js';
 import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
 import { mixPose, poseVals, type PoseVals } from './pose.js';
 import { previewPose, viewPose, type ViewPose } from './views.js';
@@ -102,6 +103,12 @@ export class ThreeStage implements Stage {
   private hotParts = new Set<string>();
   private ctxAll = true;
   private hidden = new Set<string>();
+  /** the parts drawn plain on a card with `show`; null on a card without (then nothing is hidden by the card) */
+  private shown: Set<string> | null = null;
+  /** the frame is not drawn: stand, stand clamp and hook go with it (see applyFocus) */
+  private frameGone = false;
+  /** opacity of the stand, its rope and the hook: eases to 0 while frameGone */
+  private standVis = 1;
   private stepAnim: Playing | null = null;
   private sol: { list: Playing[]; i: number; t0: number } | null = null;
   private t0 = nowS();
@@ -302,8 +309,7 @@ export class ThreeStage implements Stage {
       this.rebuild(spec);
       this.cardKey = '';
     }
-    // v.show (parts drawn plain) is ignored for now; a later change uses it.
-    const key = JSON.stringify([v.id, v.focus, v.view, v.animation, v.labels, v.labelsBefore]);
+    const key = JSON.stringify([v.id, v.focus, v.show, v.view, v.animation, v.labels, v.labelsBefore]);
     const prevChosen = this.view.chosen;
     this.view = v;
     if (key === this.cardKey) {
@@ -317,7 +323,7 @@ export class ThreeStage implements Stage {
 
     // Unknown names: whole bike, no highlight, a warning. Never block the card.
     const problems: string[] = [];
-    for (const f of v.focus) if (!NODES[f]) problems.push(`node "${f}"`);
+    for (const f of [...v.focus, ...(v.show ?? [])]) if (!NODES[f]) problems.push(`node "${f}"`);
     if (v.view && !(VIEWS as readonly string[]).includes(v.view)) problems.push(`view "${v.view}"`);
     const a = v.animation;
     if (a?.clip && !(CLIPS as readonly string[]).includes(a.clip)) problems.push(`clip "${a.clip}"`);
@@ -350,9 +356,16 @@ export class ThreeStage implements Stage {
       if (!ps.length) console.debug(`[stage] ${f} is not on this bike`);
       for (const p of ps) this.hotParts.add(p);
     }
+    // Show: only the focus parts and these are drawn; every other part fades out and is then not drawn.
+    // A card without show keeps the old rule (the rest of the bike stays, faded).
+    this.shown = null;
+    if (v.show && !fallback) {
+      this.shown = shownParts(this.hotParts, v.show, partsOf, (p) => m.has(p));
+    }
     const viewName = fallback ? 'whole_bike' : v.view ?? 'whole_bike';
     this.ctxAll = viewName === 'whole_bike' || this.hotParts.size === 0;
     this.applyFocus();
+    if (this.first || reduceMotion()) this.standVis = this.frameGone ? 0 : 1;
 
     // Where the derailleur rests on this card
     if (focus.includes('smallest_sprocket')) this.restZ = m.zOf(0);
@@ -454,18 +467,25 @@ export class ThreeStage implements Stage {
         p.visT = this.hidden.has(p.id) ? 0 : 1;
         p.hotT = this.pickParts.has(p.id) ? 1 : 0;
       }
+      this.frameGone = false;
       return;
     }
-    for (const p of m.parts.values()) {
-      const isHot = this.hotParts.has(p.id);
-      const isCtx = this.ctxAll || p.ctx.includes('frame') || p.ctx.some((c) => hotCtx.has(c));
-      p.visT = this.hidden.has(p.id) ? 0 : this.exploring && this.showAll ? 1 : isHot || isCtx ? 1 : 0.1;
-      p.hotT = isHot ? 1 : 0;
-      if (this.exploring && this.selected) {
-        p.hotT = p.id === this.selected ? 1 : 0;
-        if (!this.hidden.has(p.id)) p.visT = this.showAll || p.id === this.selected || isHot || isCtx ? 1 : 0.1;
-      }
+    const { targets, frameGone } = visTargets({
+      ids: [...m.parts.keys()],
+      hot: this.hotParts,
+      shown: this.shown,
+      hidden: this.hidden,
+      context: (id) => this.ctxAll || m.parts.get(id)!.ctx.includes('frame') || m.parts.get(id)!.ctx.some((c) => hotCtx.has(c)),
+      exploring: this.exploring,
+      showAll: this.showAll,
+      selected: this.selected,
+    });
+    for (const [id, t] of targets) {
+      const p = m.parts.get(id)!;
+      p.visT = t.vis;
+      p.hotT = t.hot;
     }
+    this.frameGone = frameGone;
   }
 
   private buildTags(nodes: string[]): void {
@@ -546,6 +566,8 @@ export class ThreeStage implements Stage {
     this.hotParts = new Set();
     this.hidden = new Set();
     this.ctxAll = true;
+    this.shown = null;
+    this.standVis = 1;
     this.poseTo = this.posePrev = this.poseBefore = this.poseAfter = 'ground';
     this.poseFrom = poseVals('ground', m.spec);
     this.poseK = 1;
@@ -730,7 +752,7 @@ export class ThreeStage implements Stage {
   }
 
   private showInfo(id: string | null): void {
-    const n = id ? NODES[id] : null;
+    const n = id ? NODES[id] ?? NODES[previewNode(id)] : null;
     this.pname.textContent = n ? n.name : 'Tap a part';
     this.palias.textContent = n ? n.aliases : 'Drag to turn, pinch to zoom.';
     this.pdesc.textContent = n ? n.about : '';
@@ -765,8 +787,9 @@ export class ThreeStage implements Stage {
         this.applyFocus();
       } else {
         this.revealTags();
-        if (id && NODES[id]) {
-          this.setNote(NODES[id].name);
+        const info = id ? NODES[id] ?? NODES[previewNode(id)] : undefined;
+        if (info) {
+          this.setNote(info.name);
           clearTimeout(this.noteTimer);
           this.noteTimer = window.setTimeout(() => this.setNote(), 3000);
         }
@@ -897,8 +920,13 @@ export class ThreeStage implements Stage {
     this.root.position.set(vals.rx, vals.ry, 0);
     this.root.rotation.set(vals.rrx, 0, 0);
     this.scene.updateMatrixWorld(true);
-    m.standG.visible = shown === 'stand';
-    m.hookG.visible = shown === 'hung';
+    this.standVis += ((this.frameGone ? 0 : 1) - this.standVis) * (1 - Math.exp(-dt * 6));
+    const standOn = this.standVis > 0.01;
+    this.standMat.opacity = this.standVis;
+    this.standMat.transparent = this.standVis < 0.999;
+    this.standMat.depthWrite = this.standVis > 0.98;
+    m.standG.visible = shown === 'stand' && standOn;
+    m.hookG.visible = shown === 'hung' && standOn;
     if (m.hookG.visible) {
       const at = this.root.localToWorld(m.hookPoint);
       const hook = m.hookG.getObjectByName('hook')!;

@@ -25,6 +25,7 @@ Read first: `docs/decisions.md`, section "3D view". Then only what you need: `li
 | `pins.ts` | The chain as a ring of pins one pitch apart (chord): `layPins` lays them along the path from a first pin on the chainring, so on every wheel they sit exactly on the pitch circle; the sprocket block's angle follows from them. `chordLength` is the taut length of the chain around the path. The length left over is spread evenly over the free run before the chainring (a few percent per link at most). No three.js |
 | `views.ts` | Named camera poses. `whole_bike` is in world space; close-ups are in bike space, so they follow a lifted, hung or flipped bike |
 | `anim.ts` | `PEDAL`, `CRANK_SPIN`, `wheelStep` (the drawing rule against strobing: the rear wheel's drawn turn is capped per picture; not physics). Named clips (`shift-to-smallest`, `limit-screw-align`, `b-gap-adjust`, `cable-tension-shift`, …) and the generic motions. A `rotate` on a screw or the barrel adjuster plays the matching clip in the given direction |
+| `visibility.ts` | Which parts a card draws (`visTargets`, `shownParts`; pure, tested in `stage.test.ts`): with `show` only focus + show parts, every other part target 0; without, the old context rule with the rest faded to 0.1 |
 | `three-stage.ts` | `ThreeStage`: scene, lights and the prototype's r128 look (colour management off, lights × π), the pose for each way of holding the bike (`poseVals`), focus fade, tags (stacked so they don't overlap), caption, explore mode, replay, solutions, and the garage preview (below) |
 
 ## Garage preview
@@ -52,5 +53,12 @@ stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any 
 4. Which bike the facts produce: `bikeSpec` in `spec.ts`. Write a new rule as a comment there and list it in `docs/open.md`.
 5. Camera: `views.ts`. Holding poses: `LABEL_SCENES` plus `poseVals` in `three-stage.ts`. Look and lights: `three-stage.ts`.
 6. Check it: `npm run build && npm run shots -- --only road`, look at 2 to 4 PNGs, then run the `verify` skill. `stage.test.ts` checks that the derailleur, chain and frame stay off the sprockets in every gear of every kind of bike, and that tyres clear the frame, also with extreme geometry.
+
+## Learnt
+
+- Visibility: a card with `show` draws only focus + show parts and every other part has target 0 (faded over the change, then `group.visible` is false), a card without `show` keeps the 0.1 fade; "show all" in explore shows everything. When the `frame` part is not drawn, stand, rope, hook and the stand clamp go too (the pose still applies). The rule lives in `visibility.ts`, not in `applyFocus`.
+- `frame_dropout` and `rear_hub` are parts cut out of `frame` and `rear_wheel` (`SPLIT_PARTS`, `NODE_PARTS`), not nodes: use `partsOf('frame')` and `partsOf('rear_wheel')` whenever you need the whole. They share the parent's `center` and `ctx`. `curveGeoSplit` cuts a tube by index, so the vertices are those of `curveGeo`. `drivetrain` and `rear_end` are group nodes (`GROUP_NODES`): `previewNode` never maps a part to them.
+- `npx tsx tools/stage-digest.ts` also writes `geo` per bike, a hash of every triangle per part that does not change when a part is split; compare that, not `steps`, after a split.
+- `npm run shots` names each PNG after the card before the one it shows (the file `05-shift-to-smallest-sprocket.png` shows card 5, "check-high-limit"); read the card number in the picture.
 
 The prototype in `legacy/Bikefix-garage-guide v2.html` is the visual reference. Keep its look.

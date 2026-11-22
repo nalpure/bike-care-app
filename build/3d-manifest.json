@@ -26,6 +26,8 @@
     "b_screw",
     "barrel_adjuster",
     "shift_cable",
+    "drivetrain",
+    "rear_end",
     "shifter_rear"
   ],
   "views": [

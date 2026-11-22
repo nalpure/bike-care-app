@@ -19,7 +19,8 @@ steps:
     title: "Shift to the hardest gear"
     minutes: 1
     text: "Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear."
-    focus: [shifter_rear, smallest_sprocket, chain]
+    focus: [chain]
+    show: [drivetrain]
     view: drive_side
     animation: { clip: shift-to-smallest, caption: "Shift while the pedals turn" }
 
@@ -152,6 +153,7 @@ steps:
     text: "The chain is on the smallest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the smallest sprocket?"
     tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, smallest_sprocket, h_screw]
+    show: [drivetrain]
     view: derailleur_from_behind
     buttons:
       - id: in-line
