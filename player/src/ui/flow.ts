@@ -314,6 +314,9 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
  * the browser takes over a vertical drag as a scroll and then sends no pointer events.
  * The swipe is timed by the events' own time stamps (when the finger moved), not by when a busy
  * page got round to handling them, so a quick swipe still counts while the 3D view is slow.
+ * Safari on iOS lets a scrollable text bounce past its top and end (scrollTop below 0 or past the
+ * end while the finger pulls), for example a card whose answer buttons make it taller than the
+ * box. The scroll position is clamped, so a bounce does not count as scrolling.
  */
 function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): void {
   let x0 = 0;
@@ -322,15 +325,16 @@ function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): v
   let top0 = 0;
   let atEnd = false;
   let atTop = false;
+  const scrolled = () => Math.min(Math.max(el.scrollTop, 0), Math.max(0, el.scrollHeight - el.clientHeight));
   el.addEventListener('touchstart', (e) => {
     const t = e.touches[0];
     const one = e.touches.length === 1;
-    atEnd = one && el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
-    atTop = one && el.scrollTop <= 2;
+    atEnd = one && scrolled() + el.clientHeight >= el.scrollHeight - 2;
+    atTop = one && scrolled() <= 2;
     x0 = t.clientX;
     y0 = t.clientY;
     t0 = e.timeStamp;
-    top0 = el.scrollTop;
+    top0 = scrolled();
   }, { passive: true });
   el.addEventListener('touchend', (e) => {
     const up = atEnd;
@@ -340,7 +344,7 @@ function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): v
     const t = e.changedTouches[0];
     const dx = t.clientX - x0;
     const dy = t.clientY - y0;
-    if (Math.abs(dy) <= Math.abs(dx) * 1.5 || e.timeStamp - t0 >= 900 || Math.abs(el.scrollTop - top0) >= 2) return;
+    if (Math.abs(dy) <= Math.abs(dx) * 1.5 || e.timeStamp - t0 >= 900 || Math.abs(scrolled() - top0) >= 2) return;
     if (up && dy < -60) onNext();
     else if (down && dy > 60) onBack();
   });

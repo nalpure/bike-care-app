@@ -3,12 +3,6 @@
 // load its own module twice and fail with "failed to find the current suite".
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { constants, setPriority } from 'node:os';
-
-// Below-normal priority (the Vitest workers inherit it), so other work on the machine comes first.
-try {
-  setPriority(constants.priority.PRIORITY_BELOW_NORMAL);
-} catch { /* not allowed here: run at normal priority */ }
 
 const cwd = process.cwd().replace(/^[a-z]:/, (d) => d.toUpperCase());
 const vitest = fileURLToPath(new URL('../node_modules/vitest/vitest.mjs', import.meta.url)).replace(/^[a-z]:/, (d) => d.toUpperCase());

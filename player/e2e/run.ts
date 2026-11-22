@@ -9,12 +9,10 @@
 //
 // The 3D view is drawn in software here (no graphics card), which is what makes this slow and
 // keeps the machine busy. So the profile journeys run in text-only mode, except the ones in
-// WITH_3D; the extras test the 3D view and keep it. The whole run has below-normal priority
-// (Chromium inherits it), so other work on the machine comes first.
+// WITH_3D; the extras test the 3D view and keep it.
 
 import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
-import { constants, setPriority } from 'node:os';
 import { join, resolve } from 'node:path';
 import { chromium, type Page } from 'playwright';
 import YAML from 'yaml';
@@ -472,13 +470,19 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     });
     expect(clear, 'the assistant button covers Back or Next');
     await shot('03-card-after-swipe');
-    // Swipe down for the previous step: back to the first card, with its answer still there.
+    // Swipe down for the previous step: back to the first card, with its answer still there. Also
+    // while the card still waits for an answer (Next disabled) and its text is taller than the box.
+    expect(await page.locator('[data-test="next"]').isDisabled(), 'Next is enabled before the second card is answered');
+    await page.addStyleTag({ content: '.guide { flex: none !important; height: 160px !important; }' });
+    expect(await page.evaluate(() => { const g = document.querySelector('.guide')!; return g.scrollHeight > g.clientHeight; }), 'the shortened text box does not scroll');
     const g2 = (await page.locator('.guide').boundingBox())!;
-    await swipe(page, [mid, g2.y + 20], [mid, g2.y + g2.height - 30]);
+    await swipe(page, [mid, g2.y + 20], [mid, g2.y + g2.height - 20]);
+    await page.evaluate(() => document.querySelectorAll('style').forEach((s) => s.textContent?.includes('height: 160px') && s.remove()));
     expect(await view(page) === first, `a swipe down did not go to the previous step (${second} -> ${await view(page)})`);
     expect(await page.locator('[data-test="verdict"]').count() === 1, 'the swipe down did not keep the answer on the previous card');
     await shot('04-card-after-swipe-down');
-    await swipe(page, [mid, g2.y + g2.height - 30], [mid, g2.y + 20]);
+    const g3 = (await page.locator('.guide').boundingBox())!;
+    await swipe(page, [mid, g3.y + g3.height - 30], [mid, g3.y + 20]);
     expect(await view(page) === second, `a second swipe up did not go to the next step (${await view(page)})`);
 
     // Back by the left screen edge, as the arrow does.
@@ -512,9 +516,6 @@ async function shot_fail(page: Page, dir: string): Promise<void> {
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  try {
-    setPriority(constants.priority.PRIORITY_BELOW_NORMAL);
-  } catch { /* not allowed here: run at normal priority */ }
   const oi = args.indexOf('--only');
   const only = oi >= 0 ? (args[oi + 1] ?? '').split(',').filter(Boolean) : null;
   if (only && !only.length) {
