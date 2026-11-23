@@ -447,6 +447,51 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r, 'profile-missing-sees'), show(r)).toHaveLength(1);
   });
 
+  it('a step with a question needs no answer in a journey: Next means the goal is met', () => {
+    const r = sandbox()
+      .edit('profiles/city-derailleur-no-stand.yaml', (d) => delete d.profile.journeys[0].tutorial_sees['check-low-limit'])
+      .run();
+    expect(show(r)).toBe('');
+    const res = [...r.profiles.values()].flatMap((p) => p.results).find((x) => x.journey === 'slow-shifting-upside-down')!;
+    expect(res.ending).toBe('tutorial complete');
+  });
+
+  it('a step with a question has 1 to 3 problem answers, and needs at least one', () => {
+    const one = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-high-limit').buttons.splice(1))
+      .run();
+    expect(errorsOf(one, 'check-needs-buttons'), show(one)).toHaveLength(0);
+    box!.dispose();
+    const none = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').question = 'Not right?'))
+      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-b-gap').buttons.splice(0))
+      .run();
+    expect(errorsOf(none).length, show(none)).toBeGreaterThan(0);
+  });
+
+  it("an inspection's default must continue in every tutorial call, and a journey may not tap it", () => {
+    const r = sandbox()
+      .edit('content/inspections.yaml', (d) => {
+        const i = d.inspections.find((x: any) => x.id === 'barrel-adjuster-present');
+        i.default = 'none';
+        i.question = 'Somewhere else?';
+      })
+      .run();
+    expect(errorsOf(r, 'default-continues').length, show(r)).toBeGreaterThan(0);
+    box!.dispose();
+    const r2 = sandbox()
+      .edit('content/inspections.yaml', (d) => {
+        const i = d.inspections.find((x: any) => x.id === 'derailleur-alignment');
+        i.default = 'straight';
+        i.question = 'Looks bent?';
+      })
+      .run();
+    // road-bike-stand / no-barrel-adjuster names "straight" in tutorial_sees; Next means it now
+    const e = errorsOf(r2, 'unknown-button');
+    expect(e.length, show(r2)).toBeGreaterThan(0);
+    expect(e[0].message).toContain('Leave tutorial_sees.derailleur-alignment out');
+  });
+
   it('writes no bundle when there are errors', () => {
     const b = sandbox().edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-high-limit').tools.required = ['sonic-screwdriver']));
     const r = b.run(true);

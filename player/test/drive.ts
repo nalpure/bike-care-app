@@ -85,6 +85,8 @@ export function drive(c: Content, profile: any, j: any): Driven {
           }
         }
         let now = journey.screen();
+        // Where Next answers, a problem the owner tapped is fixed and Next goes on.
+        if (now.kind === 'card' && now.card.nextAnswers && now.card.chosenTone === 'bad') out.blocks++;
         if (now.kind === 'card' && !now.card.nextEnabled) {
           // A block: after the fix, the owner taps the good state and goes on.
           out.blocks++;

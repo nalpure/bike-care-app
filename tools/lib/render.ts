@@ -82,6 +82,8 @@ export interface CardOptions {
   after?: Set<string>;
   /** extra lines under the heading */
   note?: string;
+  /** a path or journey: no chosen answer means the user tapped Next (marked) */
+  onPath?: boolean;
   /** heading level, default 3 */
   level?: number;
 }
@@ -103,18 +105,44 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
   const tools = [...it.tools.required.map((t) => toolName(c, t)), ...it.tools.one_of.map((u) => oneOfText(c, u)), ...it.tools.helpful.map((t) => `${toolName(c, t)} (helpful)`)];
   if (tools.length) L.push('', `Tools: ${tools.join('; ')}`);
 
-  if (it.kind === 'inspect') {
-    L.push('');
-    for (const st of it.def.states) {
-      const outc = it.outcomes?.[st.id];
-      let res = '→ continue';
-      if (outc && typeof outc === 'object') {
-        if (outc.block) res = `→ **BLOCK**: ${fill(outc.block, o.known)}`;
-        if (outc.exit) res = `→ ${exitTag(outc.exit.kind)}: ${fill(outc.exit.text, o.known)}${outc.exit.show_how_from ? ` · jump: \`${outc.exit.show_how_from}\`` : ''}`;
-      }
-      const mark = o.chosen === st.id ? ' ◀ **this path**' : '';
-      L.push(`- [ ] **${fill(st.label, o.known)}** — ${fill(st.meaning, o.known)} ${res}${mark}`);
+  const stateLine = (st: any): string => {
+    const outc = it.outcomes?.[st.id];
+    let res = '→ continue';
+    if (outc && typeof outc === 'object') {
+      if (outc.block) res = `→ **BLOCK**: ${fill(outc.block, o.known)}`;
+      if (outc.exit) res = `→ ${exitTag(outc.exit.kind)}: ${fill(outc.exit.text, o.known)}${outc.exit.show_how_from ? ` · jump: \`${outc.exit.show_how_from}\`` : ''}`;
     }
+    const mark = o.chosen === st.id ? ' ◀ **this path**' : '';
+    return `- [ ] **${fill(st.label, o.known)}** — ${fill(st.meaning, o.known)} ${res}${mark}`;
+  };
+  // Answers are the exception: Next without an answer is the good answer.
+  const nextMark = o.onPath && o.chosen === undefined ? ' ◀ **this path**' : '';
+  const dflt = it.kind === 'inspect' ? it.def.states.find((s: any) => s.id === it.def.default) : undefined;
+  if (it.kind === 'inspect' && dflt && it.outcomes) {
+    // A tutorial call: the default state has no button.
+    L.push('', `**${fill(it.def.question, o.known)}**`, '');
+    for (const st of it.def.states) {
+      if (st.id === dflt.id) continue;
+      L.push(stateLine(st));
+    }
+    L.push(`- [ ] **Next** (no answer) — ${fill(dflt.meaning, o.known)} → continue${o.chosen === dflt.id ? ' ◀ **this path**' : nextMark}`);
+  } else if (it.kind === 'inspect') {
+    L.push('');
+    if (dflt) L.push(`<sub>In tutorials: "${fill(it.def.question, o.known)}" above the other states; "${fill(dflt.label, o.known)}" has no button, Next means it.</sub>`, '');
+    for (const st of it.def.states) L.push(stateLine(st));
+  } else if (it.buttons.length && it.def.question) {
+    L.push('', `**${fill(it.def.question, o.known)}**`, '');
+    for (const b of it.buttons) {
+      const mark = o.chosen === b.id ? ' ◀ **this path**' : '';
+      let res = b.text ? fill(b.text, o.known) : '';
+      if (b.block) res = `**UNSAFE until fixed**: ${fill(b.block, o.known)} Next means it is fixed now`;
+      if (b.exit) res = `${exitTag(b.exit.kind)}: ${fill(b.exit.text, o.known)}${b.exit.show_how_from ? ` · jump: \`${b.exit.show_how_from}\`` : ''}`;
+      if (b.text && (b.block || b.exit)) res = `${fill(b.text, o.known)} ${res}`;
+      L.push(`- [ ] **${fill(b.label, o.known)}** <sub>\`${b.id}\`</sub> → ${res}${mark}`);
+      for (const a of b.solution ?? []) L.push(`  - Plays at once: ${animLine(a)}`);
+      if (b.skips?.length) L.push(`  - Skips: ${b.skips.map((s: string) => `\`${s}\``).join(', ')}`);
+    }
+    L.push(`- [ ] **Next** (no answer) → the goal in the text is met${nextMark}`);
   } else if (it.buttons.length) {
     L.push('');
     for (const b of it.buttons) {
@@ -284,7 +312,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
     const after = i + 1 < p.before.length ? p.before[i + 1] : p.final;
     const beforeWork = !v.items.slice(0, i).some((x) => x.kind === 'step');
     const note = it.kind === 'inspect' && beforeWork ? '<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>' : undefined;
-    L.push(...renderCard(c, it, { number: i + 1, known: nothingKnown, showAllDetails: true, chosen, before: p.before[i], after, note }));
+    L.push(...renderCard(c, it, { number: i + 1, known: nothingKnown, showAllDetails: true, chosen, before: p.before[i], after, note, onPath: true }));
     if (v.stop && i === v.stop.index) {
       const sp = v.stop;
       const apart = p.before[i];

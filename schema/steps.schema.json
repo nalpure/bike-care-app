@@ -17,6 +17,10 @@
           },
           "minutes": { "$ref": "common.schema.json#/$defs/minutes" },
           "text": { "$ref": "common.schema.json#/$defs/text" },
+          "question": {
+            "description": "Answers are the exception: the text states the goal, Next means it is met. This short question ('Not in line?') stands above the buttons, which are only the problems. Next is never locked.",
+            "$ref": "common.schema.json#/$defs/text"
+          },
           "when": { "$ref": "common.schema.json#/$defs/condition" },
           "if_unknown": {
             "description": "When a fact in when is unknown. ask: ask before the start; if still unknown, as include. generic: show generic_text. skip: leave the step out. include: show the step as written.",
@@ -46,7 +50,7 @@
         },
         "required": ["id", "kind", "title", "minutes", "text"],
         "additionalProperties": false,
-        "dependentRequired": { "when": ["if_unknown"], "if_unknown": ["when"] }
+        "dependentRequired": { "when": ["if_unknown"], "if_unknown": ["when"], "question": ["buttons"] }
       }
     }
   },

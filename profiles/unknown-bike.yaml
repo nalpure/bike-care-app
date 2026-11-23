@@ -21,7 +21,6 @@ profile:
       choices: { hold_bike: ground }
       tutorial_sees:
         barrel-adjuster-present: at-derailleur
-        check-high-limit: in-line
-        check-low-limit: rattles
+        check-low-limit: too-far-out
         check-low-limit-by-hand: in-line
         check-all-gears-riding: quiet

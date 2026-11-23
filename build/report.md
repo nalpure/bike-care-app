@@ -114,11 +114,12 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `placeholder-fallback` | pass | Every placeholder has fallback wording for an unknown value. |
 | `details-needs` | pass | A details line uses only facts listed in its needs. |
 | `action-has-buttons` | pass | Action steps have no state buttons. |
-| `check-needs-buttons` | pass | Every check and safety check on a path shows 2 or 3 buttons. |
+| `check-needs-buttons` | pass | Every check and safety check on a path shows 2 or 3 buttons (with a question: 1 to 3 problem answers). |
+| `default-continues` | pass | An inspection's default state is a good state: it leads to no job, and every tutorial call maps it to continue. |
 | `unsafe-only-in-safety-checks` | pass | block and unsafe exits only in safety checks and inspection calls. |
 | `no-solution-on-exit` | pass | An exit button offers no solution. |
 | `exit-jump-outside` | pass | Exits in procedures and in a tutorial's checks run before anything is opened and never jump. |
-| `block-needs-fix` | pass | Every block has a good state to tap once fixed. |
+| `block-needs-fix` | pass | Every block has a good state to tap once fixed (with a question, Next is that state). |
 | `button-needs-text` | pass | Every button has text, block or exit. |
 | `generic-needs-text` | pass | if_unknown: generic comes with generic_text. |
 | `animation-kind` | pass | An animation is a generic motion or a named clip. |
@@ -130,7 +131,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `case-target` | pass | A case has exactly one of include, cases. |
 | `hands-off-only` | pass | Diagnoses, the routine check and a tutorial's checks use only hands-off inspections. |
 | `profile-missing-answer` | pass | Every question a profile journey reaches is answered. |
-| `profile-missing-sees` | pass | Every inspection and safety check a profile journey reaches has an answer. |
+| `profile-missing-sees` | pass | Every inspection and safety check a profile journey reaches has an answer, unless Next answers it (a step with a question, an inspection with a default in a tutorial). |
 | `profile-missing-choice` | pass | Every run choice a profile journey reaches is chosen. |
 | `profile-missing-job-choice` | pass | Every job screen a profile journey reaches has a choice. |
 | `profile-missing-after-stop` | pass | Every exit with a jump button a profile reaches says what the owner taps. |

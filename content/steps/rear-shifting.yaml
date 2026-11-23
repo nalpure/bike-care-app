@@ -146,27 +146,27 @@ steps:
           text: "Stop riding: the chain can catch in the spokes and lock the wheel. Push the bike to a shop."
 
   # ------------------------------------------------------------ used in both ways of holding the bike
+  # Answers are the exception (owner, 2026-11-22): the text states the goal, Next means it is met,
+  # and the buttons are only the problems. Only the inner limit (L) is safety relevant.
   - id: check-high-limit
-    kind: safety_check
+    kind: check
     title: "Set the outer limit (H screw)"
     minutes: 3
-    text: "The chain is on the smallest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the smallest sprocket?"
+    text: "The chain is on the smallest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the smallest sprocket."
+    question: "Not in line?"
     tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, smallest_sprocket, h_screw]
     show: [rear_derailleur, derailleur_hanger, cassette, chain, chainring]
     view: derailleur_from_behind
     buttons:
-      - id: in-line
-        label: "In line, and the chain ran quietly"
-        text: "The H screw is set. Nothing to change."
       - id: too-far-out
         label: "Further out, away from the spokes"
-        block: "The chain could fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the toothed wheel is in line with the smallest sprocket."
+        text: "The chain can fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the toothed wheel is in line."
         solution:
           - { target: h_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw clockwise a quarter turn" }
-      - id: rattles
-        label: "The chain rattled, or jumped to a bigger sprocket"
-        text: "With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn. Then turn the pedals, or ride a short way, and look and listen again. Repeat until the toothed wheel is in line with the smallest sprocket and the chain runs quietly. If the toothed wheel does not move, stop turning: the cable holds it, and a later step sets the cable."
+      - id: too-far-in
+        label: "Further in, towards the spokes"
+        text: "The chain rattles or jumps to a bigger sprocket. With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn at a time, until the toothed wheel is in line. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
         solution:
           - { target: h_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw counterclockwise a quarter turn" }
 
@@ -174,22 +174,20 @@ steps:
     kind: safety_check
     title: "Set the inner limit (L screw)"
     minutes: 3
-    text: "The chain is on the largest sprocket. Look from directly behind the bike at the upper of the two small toothed wheels on the derailleur: is it in line with the largest sprocket?"
+    text: "The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket."
+    question: "Not in line?"
     tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, largest_sprocket, l_screw]
     view: derailleur_from_behind
     buttons:
-      - id: in-line
-        label: "In line, and the chain ran quietly"
-        text: "The L screw is set. Nothing to change."
       - id: too-far-in
         label: "Further in, towards the spokes"
-        block: "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line with the largest sprocket."
+        block: "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line."
         solution:
           - { target: l_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw clockwise a quarter turn" }
-      - id: rattles
-        label: "The chain rattled, or slipped off the largest sprocket"
-        text: "With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn, then shift to the largest sprocket again, look and listen. Repeat until the toothed wheel is in line with the largest sprocket and the chain runs quietly."
+      - id: too-far-out
+        label: "Further out, away from the spokes"
+        text: "The chain rattles or slips off the largest sprocket. With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn at a time, until the toothed wheel is in line."
         solution:
           - { target: l_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw counterclockwise a quarter turn" }
 

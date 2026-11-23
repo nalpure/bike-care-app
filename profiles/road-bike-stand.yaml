@@ -44,7 +44,6 @@ profile:
       tutorial_sees:
         barrel-adjuster-present: at-derailleur
         check-high-limit: too-far-out
-        check-low-limit: in-line
         check-low-limit-by-hand: in-line
         check-all-gears: chain-off
       after_stop: show_how

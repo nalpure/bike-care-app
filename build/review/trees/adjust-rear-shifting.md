@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `55f12dd8fca0` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `777dbd77a403` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -52,11 +52,10 @@ Time of the complete path: 28 min (stand), 29 min (hang), 28 min (upside_down)
    - when choice.hold_bike is hang: Hang the bike up · `hang-bike` (+bike_hung)
    - when choice.hold_bike is upside_down: Turn the bike over · `turn-upside-down` (+bike_upside_down)
 4. Shift to the hardest gear · `shift-to-smallest-sprocket` · action <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-5. Set the outer limit (H screw) · `check-high-limit` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-   - buttons: `in-line` · `too-far-out` (BLOCK) · `rattles`
+5. Set the outer limit (H screw) · `check-high-limit` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 6. Shift to the easiest gear · `shift-to-largest-sprocket` · action <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 7. Set the inner limit (L screw) · `check-low-limit` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-   - buttons: `in-line` · `too-far-in` (BLOCK) · `rattles`
+   - buttons: `too-far-in` (BLOCK) · `too-far-out`
 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - buttons: `in-line` · `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
@@ -87,11 +86,10 @@ Time of the complete path: 31 min (ground)
 
 3. Park the bike · `park-bike` · action <sub>apart: nothing</sub>
 4. Ride into the hardest gear · `ride-to-smallest-sprocket` · action <sub>apart: nothing</sub>
-5. Set the outer limit (H screw) · `check-high-limit` · safety check <sub>apart: nothing</sub>
-   - buttons: `in-line` · `too-far-out` (BLOCK) · `rattles`
+5. Set the outer limit (H screw) · `check-high-limit` · check <sub>apart: nothing</sub>
 6. Ride into the easiest gear · `ride-to-largest-sprocket` · action <sub>apart: nothing</sub>
 7. Set the inner limit (L screw) · `check-low-limit` · safety check <sub>apart: nothing</sub>
-   - buttons: `in-line` · `too-far-in` (BLOCK) · `rattles`
+   - buttons: `too-far-in` (BLOCK) · `too-far-out`
 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: nothing</sub>
    - buttons: `in-line` · `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: nothing</sub>

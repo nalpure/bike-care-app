@@ -47,14 +47,14 @@ function walk(j: Journey, stopAt?: string, pick: Record<string, string> = {}): {
 
 describe('engine', () => {
   it('a button with skips leaves out the named later steps', () => {
-    const plain = walk(setup(() => {}), undefined, { 'check-high-limit': 'in-line' });
-    expect(plain.ids).toContain('check-b-gap');
+    const plain = walk(setup(() => {}), undefined, { 'check-b-gap': 'small-gap' });
+    expect(plain.ids).toContain('check-cable-tension');
     const j = setup((b) => {
-      const step = b.steps.find((s: any) => s.id === 'check-high-limit');
-      step.buttons.find((x: any) => x.id === 'in-line').skips = ['check-b-gap'];
+      const step = b.steps.find((s: any) => s.id === 'check-b-gap');
+      step.buttons.find((x: any) => x.id === 'small-gap').skips = ['check-cable-tension'];
     });
-    const skipped = walk(j, undefined, { 'check-high-limit': 'in-line' });
-    expect(skipped.ids).not.toContain('check-b-gap');
+    const skipped = walk(j, undefined, { 'check-b-gap': 'small-gap' });
+    expect(skipped.ids).not.toContain('check-cable-tension');
     expect(skipped.ids.length).toBe(plain.ids.length - 1);
   });
 
@@ -80,18 +80,56 @@ describe('engine', () => {
     expect(r.at?.kind === 'card' && r.at.card.warnings).toEqual(['The bike is clamped. Do not lean on it.']);
   });
 
-  it('keeps Next disabled on a block until a good state is tapped', () => {
+  it('keeps Next disabled on a block until a good state is tapped (step without a question)', () => {
     const j = setup(() => {});
-    walk(j, 'check-high-limit');
-    j.tap('too-far-out');
+    walk(j, 'check-low-limit-by-hand');
+    j.tap('too-far-in');
     const blocked = j.screen();
     expect(blocked.kind === 'card' && blocked.card.nextEnabled).toBe(false);
     j.next();
     const still = j.screen();
-    expect(still.kind === 'card' && still.card.id).toBe('check-high-limit');
+    expect(still.kind === 'card' && still.card.id).toBe('check-low-limit-by-hand');
     j.tap('in-line');
     const ok = j.screen();
     expect(ok.kind === 'card' && ok.card.nextEnabled).toBe(true);
+  });
+
+  it('on a step with a question, Next is never locked and means the goal is met', () => {
+    const j = setup(() => {});
+    const at = walk(j, 'check-low-limit').at;
+    expect(at?.kind === 'card' && at.card.question).toBe('Not in line?');
+    expect(at?.kind === 'card' && at.card.nextAnswers && at.card.nextEnabled).toBe(true);
+    // a block: the solution comes with it, Next stays pressable and means "fixed now"
+    j.tap('too-far-in');
+    const blocked = j.screen();
+    expect(blocked.kind === 'card' && blocked.card.chosenTone).toBe('bad');
+    expect(blocked.kind === 'card' && blocked.card.nextEnabled).toBe(true);
+    expect(blocked.kind === 'card' && blocked.card.solution?.length).toBe(1);
+    j.next();
+    const after = j.screen();
+    expect(after.kind === 'card' && after.card.id).toBe('check-low-limit-by-hand');
+  });
+
+  it('an inspection with a default: in a tutorial its state has no button and Next takes it', () => {
+    const s = new Session();
+    const b = JSON.parse(raw);
+    const insp = b.inspections.find((x: any) => x.id === 'derailleur-alignment');
+    insp.default = 'straight';
+    insp.question = 'Looks bent?';
+    const store = new Store(memoryKV());
+    const bike = store.addBike('Test bike', { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' });
+    const j = new Journey(new Content(b), store, bike, s, { tutorial: 'adjust-rear-shifting' });
+    j.choose('hold_bike', 'stand');
+    j.startTutorial();
+    const card = j.screen();
+    expect(card.kind === 'card' && card.card.id).toBe('derailleur-alignment');
+    expect(card.kind === 'card' && card.card.buttons.map((x) => x.id)).toEqual(['crooked']);
+    expect(card.kind === 'card' && card.card.question).toBe('Looks bent?');
+    expect(card.kind === 'card' && card.card.nextEnabled).toBe(true);
+    j.next();
+    expect(s.answers['derailleur-alignment']).toBe('straight');
+    const nx = j.screen();
+    expect(nx.kind === 'card' && nx.card.id).not.toBe('derailleur-alignment');
   });
 
   it('only moves the progress bar forward, also when going back by hand', () => {

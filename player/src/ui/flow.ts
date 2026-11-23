@@ -247,13 +247,20 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
   }
 
   const chosenBtn = card.buttons.find((b) => b.id === card.chosen);
+  // On a card where Next answers, a problem's solution plays at once; the button replays it.
+  const tap = (id: string) => {
+    app.act((x) => x.tap(id));
+    const s = app.journey?.screen();
+    if (!textOnly && s?.kind === 'card' && s.card.nextAnswers && s.card.solution?.length) app.stage.playSolution(s.card.solution);
+  };
   const verdict = card.chosen !== undefined
     ? h(`div.verdict.${card.chosenTone === 'bad' ? 'bad' : card.chosenTone === 'good' ? 'good' : 'info'}`, { 'data-test': 'verdict' },
-      h('b', card.chosenTone === 'bad' ? (card.nextEnabled ? 'Take note' : 'Fix this first') : 'Your answer'),
+      h('b', card.chosenTone === 'bad' ? (card.nextEnabled && !card.nextAnswers ? 'Take note' : 'Fix this first') : 'Your answer'),
       h('strong', chosenBtn?.label ?? ''),
       card.chosenText ? h('p', card.chosenText) : null,
+      card.nextAnswers && chosenBtn ? h('p.s', { 'data-test': 'fixed-hint' }, 'Once it is fixed, tap Next.') : null,
       h('div.actions',
-        card.solution?.length ? h('button.btn.primary', { 'data-test': 'solution', onclick: () => app.stage.playSolution(card.solution!) }, 'Show solution') : null,
+        card.solution?.length ? h('button.btn.primary', { 'data-test': 'solution', onclick: () => app.stage.playSolution(card.solution!) }, card.nextAnswers && !textOnly ? 'Play again' : 'Show solution') : null,
         h('button.link', { 'data-test': 'again', onclick: () => app.act((x) => x.untap()) }, 'Choose again'),
       ),
       card.solution?.length && textOnly ? h('div.solution', card.solution.map((a: any) => h('span', `▶ ${a.caption ?? ''}`))) : null,
@@ -273,7 +280,7 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
     h('p', card.text),
     card.details.map((d) => h('p.detail', d)),
     card.buttons.length && card.chosen === undefined
-      ? h('div.q', h('div.kicker', card.question ?? 'What do you see?'), card.buttons.map((b) => h('button.opt', { 'data-test': `btn-${b.id}`, onclick: () => app.act((x) => x.tap(b.id)) }, b.label)))
+      ? h('div.q', h('div.kicker', card.question ?? 'What do you see?'), card.buttons.map((b) => h('button.opt', { 'data-test': `btn-${b.id}`, onclick: () => tap(b.id) }, b.label)))
       : null,
     verdict,
   );

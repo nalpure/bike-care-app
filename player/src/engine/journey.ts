@@ -53,6 +53,8 @@ export interface Card {
   chosenText?: string;
   chosenTone?: 'good' | 'bad' | 'info';
   solution?: any[];
+  /** Answers are the exception: Next without an answer means the goal is met, and Next is never locked */
+  nextAnswers?: boolean;
   nextEnabled: boolean;
   nextLabel: string;
   canBack: boolean;
@@ -794,8 +796,17 @@ export class Journey {
     return { kind: 'continue', text: b.text, good: true };
   }
 
-  /** Must the user tap before Next? Inspections always; steps that can block or exit. */
+  /**
+   * Answers are the exception (decisions.md, 2026-11-22): on a step with a question, and on an
+   * inspection with a default in a tutorial, Next means the goal is met and is never locked.
+   */
+  private nextAnswers(it: PathItem): boolean {
+    return it.kind === 'inspect' ? it.def.default !== undefined : !!it.def.question;
+  }
+
+  /** Must the user tap before Next? Inspections always; steps that can block or exit. Not where Next answers. */
   private needsTap(it: PathItem): boolean {
+    if (this.nextAnswers(it)) return false;
     if (it.kind === 'inspect') return true;
     return it.buttons.some((b) => b.block || b.exit);
   }
@@ -858,7 +869,8 @@ export class Journey {
         canBack: this.canBack,
       };
     }
-    const tap = t.taps[String(idx)];
+    // The default state (taken by Next) has no button: the card shows it as not answered.
+    const tap = it.kind === 'inspect' && t.taps[String(idx)] === it.def.default ? undefined : t.taps[String(idx)];
     const o = this.outcomeOf(it, tap);
     const nxt = this.nextIndex(t, all, run, idx);
     const remaining = this.countRemaining(t, all, run, idx);
@@ -872,13 +884,16 @@ export class Journey {
       text: this.c.fill(it.generic ? it.def.generic_text : it.def.text, this.known, t.params),
       details: this.c.details(it.def, this.known, t.params),
       needs: [...it.tools.required.map((x) => this.c.toolName(x)), ...it.tools.one_of.map((u) => u.options.map((x) => this.c.toolName(x)).join(' or '))],
-      question: it.kind === 'inspect' || it.buttons.length ? 'What do you see on your bike?' : undefined,
-      buttons: it.kind === 'inspect' ? it.def.states.map((x: any) => ({ id: x.id, label: x.label })) : it.buttons.map((b) => ({ id: b.id, label: b.label })),
+      question: it.def.question ?? (it.kind === 'inspect' || it.buttons.length ? 'What do you see on your bike?' : undefined),
+      buttons: it.kind === 'inspect'
+        ? it.def.states.filter((x: any) => x.id !== it.def.default).map((x: any) => ({ id: x.id, label: x.label }))
+        : it.buttons.map((b) => ({ id: b.id, label: b.label })),
       chosen: tap,
       chosenText: o.text,
       chosenTone: o.kind === 'block' || o.kind === 'exit' ? 'bad' : o.kind === 'continue' ? (it.kind === 'inspect' ? 'good' : 'info') : undefined,
       solution: it.kind === 'step' ? it.buttons.find((b) => b.id === tap)?.solution : undefined,
-      nextEnabled: o.kind === 'continue' || (o.kind === 'none' && !this.needsTap(it)),
+      nextAnswers: this.nextAnswers(it),
+      nextEnabled: this.nextAnswers(it) || o.kind === 'continue' || (o.kind === 'none' && !this.needsTap(it)),
       nextLabel: nxt.idx === undefined ? 'Finish' : 'Next',
       canBack: this.canBack,
       progress,
@@ -1023,6 +1038,15 @@ export class Journey {
     const run = res.ok;
     const all = combined(run);
     const idx = t.path[t.path.length - 1];
+    const it = all[idx];
+    // Next on an inspection with a default: no answer, or a block now fixed, means the default state.
+    if (it.kind === 'inspect' && it.def.default !== undefined) {
+      const tap = t.taps[String(idx)];
+      if (tap === undefined || this.outcomeOf(it, tap).kind === 'block') {
+        t.taps[String(idx)] = it.def.default;
+        this.session.answers[it.id] = it.def.default;
+      }
+    }
     const nx = this.nextIndex(t, all, run, idx);
     this.applyAuto(t, nx.auto);
     const n = t.path.length;

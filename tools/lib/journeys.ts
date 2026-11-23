@@ -248,18 +248,21 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
     if (it.kind === 'inspect') {
       repeat = !workStarted && r.session.has(it.id);
       chosen = repeat ? r.session.get(it.id) : sees[it.id];
-      if (!repeat) r.usedTutorialSees.add(it.id);
+      if (!repeat && chosen !== undefined) r.usedTutorialSees.add(it.id);
+      // In a tutorial, Next takes the inspection's default state.
+      if (chosen === undefined && it.def.default !== undefined) chosen = it.def.default;
       if (chosen === undefined) {
         r.error('profile-missing-sees', `The tutorial reaches inspection "${it.id}", but the journey has no tutorial_sees.${it.id}.`, 'tutorial_sees');
         return 'incomplete profile';
       }
       const o = it.outcomes?.[chosen];
       if (o && typeof o === 'object') {
-        if (o.block) outcome = { kind: 'block', message: o.block, good: it.def.states.find((s: any) => it.outcomes?.[s.id] === 'continue')?.label };
+        if (o.block) outcome = { kind: 'block', message: o.block, good: it.def.default !== undefined ? undefined : it.def.states.find((s: any) => it.outcomes?.[s.id] === 'continue')?.label };
         if (o.exit) outcome = { kind: 'exit', exitKind: o.exit.kind, message: o.exit.text, showHowFrom: o.exit.show_how_from };
       }
     } else if (it.buttons.length) {
-      const decisive = it.buttons.some((b: any) => b.block || b.exit);
+      // With a question, Next without an answer means the goal is met.
+      const decisive = !it.def.question && it.buttons.some((b: any) => b.block || b.exit);
       chosen = sees[it.id];
       if (chosen !== undefined) r.usedTutorialSees.add(it.id);
       if (decisive && chosen === undefined) {
@@ -271,7 +274,7 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
         r.error('unknown-button', `Step ${it.id} shows no button with id "${chosen}" on this path.`, 'tutorial_sees', it.id);
         return 'incomplete profile';
       }
-      if (b?.block) outcome = { kind: 'block', message: b.block, good: it.buttons.find((x: any) => !x.block && !x.exit)?.label };
+      if (b?.block) outcome = { kind: 'block', message: b.block, good: it.def.question ? undefined : it.buttons.find((x: any) => !x.block && !x.exit)?.label };
       if (b?.exit) outcome = { kind: 'exit', exitKind: b.exit.kind, message: b.exit.text, showHowFrom: b.exit.show_how_from };
       for (const s of b?.skips ?? []) skipIds.set(s, b.label);
     }
@@ -279,13 +282,18 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
       const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
       r.L.push(`##### – ${it.def.title} · \`${it.id}\` · not shown again: answered earlier in this session ("${label}")`, '');
     } else {
-      r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5 }));
+      r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5, onPath: true }));
       r.minutes += it.def.minutes;
       if (it.kind === 'inspect' && chosen !== undefined) r.session.set(it.id, chosen);
     }
 
     if (outcome.kind === 'block') {
-      r.L.push(`Next stays disabled. After the fix, the owner taps "${outcome.good}" and goes on.`, '');
+      if (outcome.good === undefined) {
+        // Next means it is fixed now: for the session the inspection is in its default state.
+        if (it.kind === 'inspect') r.session.set(it.id, it.def.default);
+        r.L.push('The owner fixes it and taps Next (Next is never locked on a card with a question).', '');
+      }
+      else r.L.push(`Next stays disabled. After the fix, the owner taps "${outcome.good}" and goes on.`, '');
       continue;
     }
     if (outcome.kind === 'exit') {

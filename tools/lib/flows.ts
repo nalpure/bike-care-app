@@ -107,7 +107,7 @@ export const SIM_RULES: Record<string, string> = {
   'missing-safety-check': 'Every path, including jump-ahead paths, passes the safety checks for what was opened.',
   'early-stop-misplaced': 'A stop that needs nothing apart sits before the first step that opens something.',
   'exit-in-finish-with-state': 'finish runs only after everything is put back.',
-  'check-needs-buttons': 'Every check and safety check on a path shows 2 or 3 buttons.',
+  'check-needs-buttons': 'Every check and safety check on a path shows 2 or 3 buttons (with a question: 1 to 3 problem answers).',
   'choice-not-declared': 'A tutorial declares every run choice its conditions read.',
   'skip-not-ahead': 'A button skips only steps that come later in the same sequence.',
   'inspection-not-applicable': 'An inspection called on a path applies to that bike.',
@@ -230,7 +230,9 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
   // Buttons per screen on this path
   v.items.forEach((it) => {
     if (it.kind === 'step' && it.def.kind !== 'action') {
-      if (it.buttons.length < 2) agg.add('check-needs-buttons', it.defSrc, `${tid} / ${itemName(it)}`, `On this path the ${it.def.kind} shows ${it.buttons.length} button(s); it needs 2 or 3.`, v.id);
+      // With a question, Next is the good answer, so one problem answer is enough.
+      const min = it.def.question ? 1 : 2;
+      if (it.buttons.length < min) agg.add('check-needs-buttons', it.defSrc, `${tid} / ${itemName(it)}`, `On this path the ${it.def.kind} shows ${it.buttons.length} button(s); it needs ${min} to 3.`, v.id);
     }
   });
 

@@ -30,7 +30,7 @@ profile:
       choices: { hold_bike: upside_down }
       tutorial_sees:
         barrel-adjuster-present: at-shifter-or-cable
-        check-high-limit: rattles
+        check-high-limit: too-far-in
         check-low-limit: too-far-in
         check-low-limit-by-hand: in-line
         check-all-gears: quiet

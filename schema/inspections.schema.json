@@ -18,6 +18,14 @@
           "hands_off": { "type": "boolean" },
           "minutes": { "$ref": "common.schema.json#/$defs/minutes" },
           "text": { "$ref": "common.schema.json#/$defs/text" },
+          "default": {
+            "description": "Tutorials only: the usual state. It gets no button; Next means it. Its outcome in every tutorial call is continue. Diagnoses and the routine check show every state.",
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "question": {
+            "description": "Tutorials only, with default: the short question above the other states ('Looks bent?').",
+            "$ref": "common.schema.json#/$defs/text"
+          },
           "tools": { "$ref": "common.schema.json#/$defs/toolUse" },
           "focus": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/nodeName" } },
           "show": {
@@ -45,8 +53,8 @@
             }
           }
         },
-        "required": ["id", "title", "hands_off", "minutes", "text", "states"],
-        "additionalProperties": false
+        "required": ["id", "title", "hands_off", "minutes", "text", "states"],        "additionalProperties": false,
+        "dependentRequired": { "default": ["question"], "question": ["default"] }
       }
     }
   },

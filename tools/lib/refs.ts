@@ -117,7 +117,7 @@ function sentences(text: string): number {
 
 /** Every text of a step or inspection the user reads on its card, lower-cased, for the mention rule. */
 function cardText(def: any): string {
-  const parts: string[] = [def.text, def.generic_text, ...(def.details ?? []).map((d: any) => d.text)];
+  const parts: string[] = [def.text, def.generic_text, def.question, ...(def.details ?? []).map((d: any) => d.text)];
   for (const b of def.buttons ?? []) parts.push(b.label, b.text, b.block, b.exit?.text);
   for (const s of def.states ?? []) parts.push(s.label, s.meaning);
   return parts.filter(Boolean).join(' \n ').toLowerCase();
@@ -242,9 +242,15 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
   if (step.kind === 'action' && buttons.length) {
     err(x, sub(loc, 'buttons'), 'action-has-buttons', 'An action step has no state buttons. Make it a check, or move the buttons to a check step.');
   }
-  if (step.kind !== 'action' && buttons.length < 2) {
-    err(x, loc, 'check-needs-buttons', `A ${step.kind} needs 2 or 3 state buttons; it has ${buttons.length}.`);
+  if (step.kind === 'action' && step.question) {
+    err(x, sub(loc, 'question'), 'action-has-buttons', 'An action step asks no question. Make it a check.');
   }
+  // With a question, Next is the good answer and the buttons are only the problems (one is enough).
+  const min = step.question ? 1 : 2;
+  if (step.kind !== 'action' && buttons.length < min) {
+    err(x, loc, 'check-needs-buttons', step.question ? `A ${step.kind} with a question needs 1 to 3 problem answers; it has ${buttons.length}.` : `A ${step.kind} needs 2 or 3 state buttons; it has ${buttons.length}.`);
+  }
+  checkText(x, step.question, sub(loc, 'question'));
   buttons.forEach((b, i) => {
     const bl = sub(loc, 'buttons', i);
     if ((b.block || b.exit?.kind === 'unsafe') && step.kind !== 'safety_check') {
@@ -276,7 +282,7 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
     (b.solution ?? []).forEach((a: any, j: number) => checkAnimation(x, a, sub(bl, 'solution', j)));
     if (b.label && b.label.split(/\s+/).length > 10) warn(x, bl, 'label-too-long', `Button label has more than 10 words: "${b.label}".`);
   });
-  if (buttons.some((b) => b.block) && !buttons.some((b) => !b.block && !b.exit)) {
+  if (!step.question && buttons.some((b) => b.block) && !buttons.some((b) => !b.block && !b.exit)) {
     err(x, sub(loc, 'buttons'), 'block-needs-fix', 'A step with a block button needs a good state the user can tap once it is fixed.');
   }
   const labels = buttons.map((b) => b.label);
@@ -316,6 +322,9 @@ function checkInspection(x: Ctx, e: Entry): void {
   checkText(x, d.text, sub(loc, 'text'));
   const ids = d.states.map((s: any) => s.id);
   if (new Set(ids).size !== ids.length) err(x, sub(loc, 'states'), 'duplicate-id', 'Two states have the same id.');
+  if (d.default !== undefined && !ids.includes(d.default)) err(x, sub(loc, 'default'), 'unknown-state', `default "${d.default}" is not a state of ${d.id}. States: ${ids.join(', ')}.`);
+  if (d.default !== undefined && d.states.find((s: any) => s.id === d.default)?.leads_to) err(x, sub(loc, 'default'), 'default-continues', `default "${d.default}" leads to a job. The default is the usual, good state.`);
+  checkText(x, d.question, sub(loc, 'question'));
   d.states.forEach((s: any, i: number) => {
     const sl = sub(loc, 'states', i);
     if (s.leads_to && !x.c.jobs.has(s.leads_to.job)) err(x, sl, 'unknown-job', `leads_to names job "${s.leads_to.job}", which is not in content/jobs.yaml.`);
@@ -387,6 +396,10 @@ function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list:
           if (sh && !stepOrProcedureExists(x.c, sh)) err(x, ol, 'unknown-show-how-from', `show_how_from "${sh}" is neither a step nor a procedure.`);
           checkText(x, o.block ?? o.exit?.text, ol);
         }
+      }
+      const dflt = insp.def.default;
+      if (dflt !== undefined && dflt in it.outcomes && it.outcomes[dflt] !== 'continue') {
+        err(x, sub(loc, 'outcomes', dflt), 'default-continues', `State "${dflt}" is the default of ${it.inspect} (Next means it), so its outcome must be continue.`);
       }
       if (Object.values(it.outcomes).some((o: any) => o?.block) && !Object.values(it.outcomes).includes('continue')) {
         err(x, sub(loc, 'outcomes'), 'block-needs-fix', 'An inspection call with a block needs a state that continues once it is fixed.');
@@ -506,6 +519,7 @@ function checkProfile(x: Ctx, e: Entry): void {
       const step = x.c.steps.get(k);
       if (insp) {
         if (!insp.def.states.some((st: any) => st.id === v)) err(x, sub(jl, 'tutorial_sees', k), 'unknown-state', `Inspection ${k} has no state "${v}".`);
+        else if (v === insp.def.default) err(x, sub(jl, 'tutorial_sees', k), 'unknown-button', `"${v}" is the default of ${k}: in a tutorial it has no button. Leave tutorial_sees.${k} out; the owner taps Next.`);
       } else if (step) {
         if (!(step.def.buttons ?? []).some((b: any) => b.id === v)) err(x, sub(jl, 'tutorial_sees', k), 'unknown-button', `Step ${k} has no button with id "${v}".`);
       } else err(x, sub(jl, 'tutorial_sees', k), 'unknown-ref', `"${k}" is neither an inspection nor a step.`);
