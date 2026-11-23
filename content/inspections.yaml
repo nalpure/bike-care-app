@@ -16,7 +16,7 @@ inspections:
     text: "Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain."
     focus: [derailleur_hanger]
     show: [rear_derailleur, cassette, rear_end]
-    view: derailleur_from_behind
+    view: hanger_from_behind
     animation: { clip: hanger-bend, caption: "A bent hanger tilts the derailleur" }
     states:
       - id: straight

@@ -78,23 +78,32 @@ type ViewName = (typeof VIEWS)[number];
 
 const hasDerailleur = (B: BikeSpec) => B.gears === 'derailleur' && B.n > 1;
 
+/**
+ * From straight behind, a little outside the sprockets. The frame runs from just above the upper
+ * pulley (or from `reach`, when that is higher) down past the lower pulley, in the first and the last gear.
+ */
+function fromBehind(B: BikeSpec, reach = -Infinity): ViewPose {
+  const ends = hasDerailleur(B) ? [B.zs[0], B.zs[B.n - 1]] : [B.chainline];
+  const ups = ends.map((z) => (hasDerailleur(B) ? upperPulley(B, z) : [B.rx, B.huby - 0.1]));
+  const lps = ends.map((z) => (hasDerailleur(B) ? lowerPulley(B, z) : [B.rx, B.huby - 0.26]));
+  const top = Math.max(Math.max(...ups.map((u) => u[1])) + 0.07, reach);
+  const low = Math.min(...lps.map((l) => l[1])) - 0.02;
+  const ty = (top + low) / 2;
+  const zc = B.chainline;
+  const d = Math.max(0.5, (top - low) * 1.75);
+  return { p: [B.rx - d, ty + 0.02, zc + 0.07], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
+}
+
 export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
   whole_bike: () => ({ p: [-1.45, 1.65, 5.7], t: [0.2, 1.1, 0.05], space: 'world' }),
   drive_side: (B) => ({ p: [-0.5, B.bby + 0.95, 3.6], t: [-0.1, B.bby + 0.37, 0.12], space: 'bike' }),
   // From straight behind, a little outside the sprockets: the upper pulley reads against the
   // sprockets' lowest teeth, with the bike upright or upside down. The frame runs from just above
   // the upper pulley down past the lower pulley, in the first and the last gear.
-  derailleur_from_behind: (B) => {
-    const ends = hasDerailleur(B) ? [B.zs[0], B.zs[B.n - 1]] : [B.chainline];
-    const ups = ends.map((z) => (hasDerailleur(B) ? upperPulley(B, z) : [B.rx, B.huby - 0.1]));
-    const lps = ends.map((z) => (hasDerailleur(B) ? lowerPulley(B, z) : [B.rx, B.huby - 0.26]));
-    const top = Math.max(...ups.map((u) => u[1])) + 0.07;
-    const low = Math.min(...lps.map((l) => l[1])) - 0.02;
-    const ty = (top + low) / 2;
-    const zc = B.chainline;
-    const d = Math.max(0.5, (top - low) * 1.75);
-    return { p: [B.rx - d, ty + 0.02, zc + 0.07], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
-  },
+  derailleur_from_behind: (B) => fromBehind(B),
+  // The hanger check: the same view, its top raised so the whole hanger, up to the axle, sits
+  // below the caption (which covers about the top tenth of the picture).
+  hanger_from_behind: (B) => fromBehind(B, B.huby + 0.04),
   // The gap between the upper pulley and the largest sprocket, seen along the sprocket's edge
   // from behind, above and outside: the derailleur's body and links stay out of the way.
   derailleur_side_close: (B) => {

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "64eab783aca85cde",
+  "content_hash": "14b32b122d04dc25",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -654,7 +654,7 @@
         "cassette",
         "rear_end"
       ],
-      "view": "derailleur_from_behind",
+      "view": "hanger_from_behind",
       "animation": {
         "clip": "hanger-bend",
         "caption": "A bent hanger tilts the derailleur"

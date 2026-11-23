@@ -89,6 +89,7 @@ export const VIEWS = [
   'whole_bike',
   'drive_side',
   'derailleur_from_behind',
+  'hanger_from_behind',
   'derailleur_side_close',
   'barrel_adjuster_close',
   'handlebar_from_above',

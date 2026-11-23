@@ -9,7 +9,7 @@ Where a card appears, and what is apart at that moment, is listed under it. Orde
 
 ### Look at the rear derailleur
 
-<sub>Unit `card:inspection:derailleur-alignment` · hash `74efbd5a89a4` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:derailleur-alignment` · hash `a089a90aeda5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
@@ -17,7 +17,7 @@ Stand behind the bike and look at the rear derailleur, the part below the sprock
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view derailleur_from_behind</sub>
+<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view hanger_from_behind</sub>
 
 Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
