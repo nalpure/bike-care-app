@@ -22,6 +22,9 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-22 Clips own the scene.** A named clip decides how the scene looks while it plays: red marking (a part that is bent or wrong), and contours of the correct or starting position. Generic motions (push, rotate, …) add no contours.
 - **2026-11-22 Hanger check.** `derailleur-alignment` gets a clip that bends the hanger in and out (hanger red) with the straight derailleur's contour; shown: hanger, derailleur, sprockets, rear end of the frame with the hub. The chain is left out at first.
 - **2026-11-22 Answers are the exception.** A step states its goal ("the upper wheel should be in line with the smallest sprocket"); Next means it is met. A short question ("Not in line?") offers only the problems; each says briefly what goes wrong (rattling, jumping, unsafe) and plays its solution animation at once.
+- **2026-11-22 Next is never locked** on such a card, and stays a plain "Next": after a problem answer it means "fixed now". No "all good" button. An answer that exits still exits.
+- **2026-11-22 Defaults for inspections.** An inspection may name a default state (with a short question); in tutorials that state has no button and Next takes it. Diagnoses and the routine check keep explicit answers.
+- **2026-11-22 What is safety relevant.** Of the limit screws only L (the chain must not fall towards the spokes) is a safety check; H is a plain check. Safety steps get a red label next to the title.
 
 ## Where approach.md is out of date
 

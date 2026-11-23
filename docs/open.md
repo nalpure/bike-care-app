@@ -21,7 +21,9 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Contour colour:** blue `--contour` (#1F5FBF light, #6FC3FF dark), every sharp edge of the parts drawn on top at 80 %, so hidden edges of the straight derailleur show too. `styles.css`, `contour.ts`.
 - **View `hanger_from_behind`:** `derailleur_from_behind` with its top raised to 4 cm above the axle, so the whole hanger sits under the caption; about 16 % further back on the road bike. At full tilt the cage touches the bottom edge in portrait. `views.ts`.
 - **`npm run shots -- --at 1.7,3.3`** holds the step's clip at those times for extra pictures (`ThreeStage.holdClip`, not used by the app). `player/e2e/slow.ts`.
-
+- **Cards where Next answers:** verdict heading "Fix this first" on a problem, a hint "Once it is fixed, tap Next.", the solution button reads "Play again". Auto-play only on these cards; old-style cards keep "Show solution". `ui/flow.ts`.
+- **No build rule finds a leftover "all good" button** on a step with `question` (it looks like a text-only problem answer); `content/CLAUDE.md` says to leave it out. Steps without `question` keep the old locked Next until converted.
+- **Profiles:** a step with `question` left out of `tutorial_sees` means Next; naming an inspection's default in `tutorial_sees` is an error. Next after a block on an inspection with a default records the default for the session. `journeys.ts`, `refs.ts`, `journey.ts`.
 ## Questions for the owner
 
 Each with the recommended answer.

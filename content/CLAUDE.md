@@ -17,6 +17,7 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 - Name the part and say where it is: "the small screw marked L on the back of the derailleur".
 - **Turning: say which way.** "Turn the screw marked L clockwise a quarter turn." Never "screw in", "screw out", "tighten" or "loosen" on their own. Clockwise is seen looking at the screw head; where that is unclear (a barrel adjuster), say where to look from. The animation's `direction` uses the same words.
 - Buttons describe what the user sees ("The chain rattles on the largest sprocket"), never a judgement ("L limit too tight"). At most three.
+- **Answers are the exception** (decisions.md, 2026-11-22; example `check-high-limit`). The `text` states the goal ("… should be in line with the smallest sprocket."); `question` ("Not in line?") stands above buttons that are only the problems. Each says briefly what goes wrong and what to do, with a `solution` that plays at once. No "all good" button: Next means it (the build cannot tell one, so leave it out). Steps without `question` work the old way until converted. An inspection may name `default` and `question`: in tutorials that state has no button and Next takes it; leave it out of a profile's `tutorial_sees`.
 - **Warnings** go in the step text, and only when they are about safety or a very common mistake. A wrong screwdriver size does not qualify.
 - Facts that are only nice to know appear in text only when known: `{fact.key|fallback wording}` or `details`.
 
