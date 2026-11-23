@@ -12,3 +12,4 @@ Remove an entry once it is done or the owner rejects it.
 
 ## Entries
 
+- [importance 1] `show: [bike]` passes the check but draws nothing, and nine nodes must be repeated for a whole-bike card — expand `bike` in `partsOf` for `show` (`registry.ts`), or fail the check on it.

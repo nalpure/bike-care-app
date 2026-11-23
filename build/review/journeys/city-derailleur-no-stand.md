@@ -43,9 +43,9 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 
 ##### 3. Test ride the gears · `shift-test-ride` · inspection · 3 min
 
-Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.
+Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.
 
-<sub>3D: focus shifter_rear, cassette · view drive_side</sub>
+<sub>3D: focus shifter_rear · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
 - [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → result: **Adjust the rear gears** (soon) ◀ **this path**
 - [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → result: **Adjust the rear gears** (soon)
@@ -90,13 +90,15 @@ Time shown for this bike: 28 to 31 min (depends on how the bike is held).
 
 ##### 1. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
 
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.
+Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable.
 
-<sub>3D: focus barrel_adjuster, shift_cable · view barrel_adjuster_close</sub>
+<sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
 
-- [ ] **It is at the derailleur** — The cable tension can be set at the derailleur. → continue
+**Not at the derailleur?**
+
 - [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue ◀ **this path**
 - [ ] **I cannot find one** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
+- [ ] **Next** (no answer) — The cable tension can be set at the derailleur. → continue
 
 ##### 2. Turn the bike over · `turn-upside-down` · action · 2 min · from procedure `hold-bike`
 
@@ -138,7 +140,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.
 
-<sub>3D: focus shifter_rear, largest_sprocket, chain · view drive_side</sub>
+<sub>3D: focus largest_sprocket, chain · show drivetrain · view drive_side</sub>
 
 Animation: "Shift one gear at a time" (clip shift-to-largest)
 
@@ -146,7 +148,7 @@ Animation: "Shift one gear at a time" (clip shift-to-largest)
 
 The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket.
 
-<sub>3D: focus upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
+<sub>3D: focus upper_pulley, largest_sprocket, l_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
@@ -162,53 +164,61 @@ The owner fixes it and taps Next (Next is never locked on a card with a question
 
 ##### 7. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper toothed wheel stop?
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stop in line with the largest sprocket.
 
-<sub>3D: focus rear_derailleur, upper_pulley, largest_sprocket, l_screw · view derailleur_from_behind</sub>
+<sub>3D: focus upper_pulley, largest_sprocket, l_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 
 Animation: "Push the derailleur in by hand" (rear_derailleur push, towards_spokes, as far as it goes)
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
-- [ ] **In line with the largest sprocket** <sub>`in-line`</sub> → The inner limit is safe. Let go of the derailleur. ◀ **this path**
-- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again.
-  - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
+**Does it go further in?**
+
+- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **UNSAFE until fixed**: Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again. Next means it is fixed now
+  - Plays at once: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
+- [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
 ##### 8. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
-Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.
+Keep the chain on the largest sprocket. Look from the side: the gap between the upper toothed wheel of the derailleur and the sprocket should be small, and the teeth should not touch.
 
-<sub>3D: focus upper_pulley, largest_sprocket, b_screw · view derailleur_side_close</sub>
+<sub>3D: focus upper_pulley, largest_sprocket, b_screw · show rear_derailleur, derailleur_hanger, cassette, chain · view derailleur_side_close</sub>
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
-- [ ] **A small gap, the teeth do not touch** <sub>`small-gap`</sub> → The gap is fine. The manual for your derailleur gives the exact gap, if you want to check it.
+**Wrong gap?**
+
 - [ ] **The wheel touches the sprocket, or almost** <sub>`touching`</sub> → With the screwdriver or hex key, turn the B screw at the back of the derailleur clockwise, a little at a time, until there is a small gap.
-  - Show solution: "Turn the B screw clockwise a little" (b_screw rotate, clockwise, a little)
+  - Plays at once: "Turn the B screw clockwise a little" (b_screw rotate, clockwise, a little)
 - [ ] **A big gap, and shifting here was slow** <sub>`wide-gap`</sub> → With the screwdriver or hex key, turn the B screw counterclockwise, a little at a time, until the gap is small but the teeth do not touch.
-  - Show solution: "Turn the B screw counterclockwise a little" (b_screw rotate, counterclockwise, a little)
+  - Plays at once: "Turn the B screw counterclockwise a little" (b_screw rotate, counterclockwise, a little)
+- [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
 ##### 9. Set the cable tension · `check-cable-tension` · check · 5 min
 
-Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain.
+Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
 
-<sub>3D: focus barrel_adjuster, chain, cassette · view drive_side</sub>
+<sub>3D: focus barrel_adjuster, chain · show drivetrain · view drive_side</sub>
+
+**Slow or noisy?**
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
-  - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
+  - Plays at once: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
 - [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
-- [ ] **Every shift is quick and quiet** <sub>`smooth`</sub> → The cable tension is right.
+  - Plays at once: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
+- [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
 ##### 10. Test every gear · `check-all-gears` · safety check · 2 min
 
-Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen.
+Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.
 
-<sub>3D: focus cassette, chain, rear_derailleur · view drive_side</sub>
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
-- [ ] **Every gear runs quietly** <sub>`quiet`</sub> → Your rear gears are set. ◀ **this path**
+**Something wrong?**
+
 - [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
 - [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike`
+- [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
 ##### 11. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
 
@@ -224,13 +234,15 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 ##### 12. Test ride the gears · `shift-test-ride` · inspection · 3 min
 
-Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.
+Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.
 
-<sub>3D: focus shifter_rear, cassette · view drive_side</sub>
+<sub>3D: focus shifter_rear · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+
+**Slow or rattling?**
 
 - [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
 - [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
-- [ ] **Every gear changes quickly and runs quietly** — The rear gears shift well. → continue ◀ **this path**
+- [ ] **Next** (no answer) — The rear gears shift well. → continue ◀ **this path**
 
 #### End
 
@@ -309,9 +321,9 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 
 ##### 3. Test ride the gears · `shift-test-ride` · inspection · 3 min
 
-Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.
+Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.
 
-<sub>3D: focus shifter_rear, cassette · view drive_side</sub>
+<sub>3D: focus shifter_rear · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
 - [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → to-do: **Adjust the rear gears** (soon) ◀ **this path**
 - [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → to-do: **Adjust the rear gears** (soon)

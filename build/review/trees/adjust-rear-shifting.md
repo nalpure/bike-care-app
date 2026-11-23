@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `777dbd77a403` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `c3e187a18c23` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -57,11 +57,11 @@ Time of the complete path: 28 min (stand), 29 min (hang), 28 min (upside_down)
 7. Set the inner limit (L screw) · `check-low-limit` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - buttons: `too-far-in` (BLOCK) · `too-far-out`
 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-   - buttons: `in-line` · `too-far-in` (BLOCK)
+   - buttons: `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 10. Set the cable tension · `check-cable-tension` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 11. Test every gear · `check-all-gears` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-   - buttons: `quiet` · `rattles` · `chain-off` (EXIT unsafe → jump to `release-bike`)
+   - buttons: `rattles` · `chain-off` (EXIT unsafe → jump to `release-bike`)
 12. procedure `release-bike` <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - when choice.hold_bike is stand: Take the bike out of the stand · `unclamp-from-stand` (−bike_in_stand)
    - when choice.hold_bike is hang: Take the bike down · `take-bike-down` (−bike_hung)
@@ -91,11 +91,11 @@ Time of the complete path: 31 min (ground)
 7. Set the inner limit (L screw) · `check-low-limit` · safety check <sub>apart: nothing</sub>
    - buttons: `too-far-in` (BLOCK) · `too-far-out`
 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: nothing</sub>
-   - buttons: `in-line` · `too-far-in` (BLOCK)
+   - buttons: `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: nothing</sub>
 10. Set the cable tension on short rides · `check-cable-tension-riding` · check <sub>apart: nothing</sub>
 11. Test every gear on a ride · `check-all-gears-riding` · safety check <sub>apart: nothing</sub>
-   - buttons: `quiet` · `rattles` · `chain-off` (EXIT unsafe)
+   - buttons: `rattles` · `chain-off` (EXIT unsafe)
 
 ## Exits before the first step
 

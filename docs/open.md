@@ -24,6 +24,15 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Cards where Next answers:** verdict heading "Fix this first" on a problem, a hint "Once it is fixed, tap Next.", the solution button reads "Play again". Auto-play only on these cards; old-style cards keep "Show solution". `ui/flow.ts`.
 - **No build rule finds a leftover "all good" button** on a step with `question` (it looks like a text-only problem answer); `content/CLAUDE.md` says to leave it out. Steps without `question` keep the old locked Next until converted.
 - **Profiles:** a step with `question` left out of `tutorial_sees` means Next; naming an inspection's default in `tutorial_sees` is an error. Next after a block on an inspection with a default records the default for the session. `journeys.ts`, `refs.ts`, `journey.ts`.
+- **Rear-shifting tutorial in the new style** (`content/steps/rear-shifting.yaml`, `content/inspections.yaml`): every step and both used inspections now have `show`; focus keeps only small parts (screws, upper wheel, barrel adjuster, a sprocket, the chain where it moves). Gear-running checks focus only the chain and show `drivetrain`.
+- **`check-low-limit` got the same `show` as `check-high-limit`** (it had only the new wording, no `show`, so it kept the old fade look), and so did `check-low-limit-by-hand` (the hand-pushed derailleur is shown, not marked).
+- **`shift-to-largest-sprocket` marks the sprocket and chain, not the shifter**, like `shift-to-smallest-sprocket`.
+- **Rides and the test-ride inspection show the whole bike** as a node list (frame, fork, wheels, handlebar, saddle, seat post, shift cable, drivetrain): `show: [bike]` draws nothing. Focus is the shifter (and the sprocket).
+- **`barrel-adjuster-present` has default `at-derailleur`** (question "Not at the derailleur?"): the shifter/cable and "cannot find" answers stay as buttons. The text now says to look at the derailleur first. Profiles no longer name `at-derailleur`.
+- **`shift-test-ride` has default `fine`** ("Slow or rattling?") and a goal sentence; the sentence also shows in the diagnosis and the routine check, which keep all three buttons.
+- **`check-b-gap`:** the manual pointer moved to `details` and shows only when the derailleur model is known (before: "your derailleur" as fallback).
+- **Texts:** goals appended as "should ..." to the texts; "all good" buttons removed from all rear-shifting checks, and profile `tutorial_sees` for them removed. Mechanics and problem texts unchanged. Tests that used the old-style buttons now build an old-style step in the test.
+
 ## Questions for the owner
 
 Each with the recommended answer.

@@ -205,7 +205,7 @@ describe('review units and the ledger', () => {
 describe('rules broken on purpose', () => {
   it('a fourth button', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-cable-tension').buttons.push({ id: 'noise', label: 'It makes a strange noise', text: 'Listen again.' }))
+      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-cable-tension').buttons.push({ id: 'noise', label: 'It makes a strange noise', text: 'Listen again.' }, { id: 'hum', label: 'It hums', text: 'Listen again.' }))
       .run();
     const e = errorsOf(r, 'max-buttons');
     expect(e, show(r)).toHaveLength(1);
@@ -313,13 +313,12 @@ describe('rules broken on purpose', () => {
   it('a not-needed exit on a plain check is allowed and adds a path', () => {
     const r = sandbox()
       .edit('content/steps/rear-shifting.yaml', (d) => {
-        const b = step(d, 'check-cable-tension').buttons.find((x: any) => x.id === 'smooth');
-        b.exit = { kind: 'not_needed', text: 'Your gears are fine. Put the bike back on its wheels.', show_how_from: 'release-bike' };
-        delete b.text;
+        step(d, 'check-cable-tension').buttons.push({
+          id: 'smooth',
+          label: 'Every shift is quick and quiet',
+          exit: { kind: 'not_needed', text: 'Your gears are fine. Put the bike back on its wheels.', show_how_from: 'release-bike' },
+        });
       })
-      // The step now decides the path, so profiles that reach it must say what the owner taps.
-      .edit('profiles/city-derailleur-no-stand.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-cable-tension'] = 'slow-easier'))
-      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-cable-tension'] = 'slow-harder'))
       .run();
     expect(show(r)).toBe('');
     const ids = r.flows!.tutorials[0].paths.map((p) => p.id);
@@ -340,7 +339,7 @@ describe('rules broken on purpose', () => {
 
   it('two buttons with the same id', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[1].id = 'small-gap'))
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[1].id = 'touching'))
       .run();
     expect(errorsOf(r, 'duplicate-id'), show(r)).toHaveLength(1);
   });
@@ -383,7 +382,7 @@ describe('rules broken on purpose', () => {
 
   it('a placeholder without fallback wording', () => {
     const r = sandbox()
-      .replace('content/steps/rear-shifting.yaml', '{drive.rear_derailleur_model|your derailleur}', '{drive.rear_derailleur_model}')
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').text += ' See the manual for {drive.rear_derailleur_model}.'))
       .run();
     expect(errorsOf(r, 'placeholder-fallback'), show(r)).toHaveLength(1);
   });
@@ -409,7 +408,7 @@ describe('rules broken on purpose', () => {
       .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))
       .run();
     expect(show(r)).toBe('');
-    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-small-gap');
+    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-touching');
     expect(skip, r.flows!.tutorials[0].paths.map((p) => p.id).join('\n')).toBeDefined();
     expect(skip!.variant.items.map((i) => i.id)).not.toContain('check-cable-tension');
   });
@@ -442,7 +441,14 @@ describe('rules broken on purpose', () => {
 
   it('a profile journey that reaches a safety check without saying what the owner taps', () => {
     const r = sandbox()
-      .edit('profiles/city-derailleur-no-stand.yaml', (d) => delete d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'])
+      // an old-style step (no question): the buttons decide the path, so a journey must say which one
+      .edit('content/steps/rear-shifting.yaml', (d) => {
+        const s = step(d, 'check-low-limit-by-hand');
+        delete s.question;
+        s.buttons.unshift({ id: 'in-line', label: 'In line with the largest sprocket', text: 'The inner limit is safe.' });
+      })
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'] = 'in-line'))
+      .edit('profiles/unknown-bike.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'] = 'in-line'))
       .run();
     expect(errorsOf(r, 'profile-missing-sees'), show(r)).toHaveLength(1);
   });

@@ -42,9 +42,7 @@ profile:
       job_choice: diy
       choices: { hold_bike: stand }
       tutorial_sees:
-        barrel-adjuster-present: at-derailleur
         check-high-limit: too-far-out
-        check-low-limit-by-hand: in-line
         check-all-gears: chain-off
       after_stop: show_how
 

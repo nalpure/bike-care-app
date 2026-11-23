@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "fa6d5865619d4ed2",
+  "content_hash": "c63194af536c3a34",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -686,10 +686,17 @@
       },
       "hands_off": true,
       "minutes": 1,
-      "text": "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter.",
+      "text": "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable.",
+      "default": "at-derailleur",
+      "question": "Not at the derailleur?",
       "focus": [
         "barrel_adjuster",
         "shift_cable"
+      ],
+      "show": [
+        "rear_derailleur",
+        "derailleur_hanger",
+        "rear_end"
       ],
       "view": "barrel_adjuster_close",
       "states": [
@@ -771,10 +778,22 @@
       },
       "hands_off": true,
       "minutes": 3,
-      "text": "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down.",
+      "text": "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.",
+      "default": "fine",
+      "question": "Slow or rattling?",
       "focus": [
-        "shifter_rear",
-        "cassette"
+        "shifter_rear"
+      ],
+      "show": [
+        "frame",
+        "fork",
+        "front_wheel",
+        "rear_wheel",
+        "handlebar",
+        "saddle",
+        "seat_post",
+        "shift_cable",
+        "drivetrain"
       ],
       "view": "drive_side",
       "states": [
@@ -1098,9 +1117,11 @@
       "minutes": 1,
       "text": "Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.",
       "focus": [
-        "shifter_rear",
         "largest_sprocket",
         "chain"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "drive_side",
       "animation": {
@@ -1113,11 +1134,14 @@
       "kind": "check",
       "title": "Set the cable tension",
       "minutes": 5,
-      "text": "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain.",
+      "text": "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.",
+      "question": "Slow or noisy?",
       "focus": [
         "barrel_adjuster",
-        "chain",
-        "cassette"
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "drive_side",
       "buttons": [
@@ -1150,11 +1174,6 @@
               "caption": "Turn the barrel adjuster clockwise a quarter turn"
             }
           ]
-        },
-        {
-          "id": "smooth",
-          "label": "Every shift is quick and quiet",
-          "text": "The cable tension is right."
         }
       ]
     },
@@ -1163,7 +1182,8 @@
       "kind": "safety_check",
       "title": "Test every gear",
       "minutes": 2,
-      "text": "Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen.",
+      "text": "Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.",
+      "question": "Something wrong?",
       "details": [
         {
           "needs": [
@@ -1173,17 +1193,13 @@
         }
       ],
       "focus": [
-        "cassette",
-        "chain",
-        "rear_derailleur"
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "drive_side",
       "buttons": [
-        {
-          "id": "quiet",
-          "label": "Every gear runs quietly",
-          "text": "Your rear gears are set."
-        },
         {
           "id": "rattles",
           "label": "It rattles or jumps in some gears",
@@ -1215,6 +1231,17 @@
         "shifter_rear",
         "smallest_sprocket"
       ],
+      "show": [
+        "frame",
+        "fork",
+        "front_wheel",
+        "rear_wheel",
+        "handlebar",
+        "saddle",
+        "seat_post",
+        "shift_cable",
+        "drivetrain"
+      ],
       "view": "drive_side"
     },
     {
@@ -1232,6 +1259,17 @@
         "shifter_rear",
         "largest_sprocket"
       ],
+      "show": [
+        "frame",
+        "fork",
+        "front_wheel",
+        "rear_wheel",
+        "handlebar",
+        "saddle",
+        "seat_post",
+        "shift_cable",
+        "drivetrain"
+      ],
       "view": "drive_side"
     },
     {
@@ -1239,7 +1277,8 @@
       "kind": "check",
       "title": "Set the cable tension on short rides",
       "minutes": 10,
-      "text": "Ride slowly and shift one gear at a time, through all gears and back. Stop and park the bike before you turn anything.",
+      "text": "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.",
+      "question": "Slow or noisy?",
       "forbidden_while": [
         "bike_in_stand",
         "bike_hung",
@@ -1247,8 +1286,10 @@
       ],
       "focus": [
         "barrel_adjuster",
-        "chain",
-        "cassette"
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "drive_side",
       "buttons": [
@@ -1281,11 +1322,6 @@
               "caption": "Turn the barrel adjuster clockwise a quarter turn"
             }
           ]
-        },
-        {
-          "id": "smooth",
-          "label": "Every shift is quick and quiet",
-          "text": "The cable tension is right."
         }
       ]
     },
@@ -1294,7 +1330,8 @@
       "kind": "safety_check",
       "title": "Test every gear on a ride",
       "minutes": 3,
-      "text": "Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen.",
+      "text": "Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.",
+      "question": "Something wrong?",
       "forbidden_while": [
         "bike_in_stand",
         "bike_hung",
@@ -1309,17 +1346,13 @@
         }
       ],
       "focus": [
-        "cassette",
-        "chain",
-        "rear_derailleur"
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
       ],
       "view": "drive_side",
       "buttons": [
-        {
-          "id": "quiet",
-          "label": "Every gear runs quietly",
-          "text": "Your rear gears are set."
-        },
         {
           "id": "rattles",
           "label": "It rattles or jumps in some gears",
@@ -1410,6 +1443,13 @@
         "largest_sprocket",
         "l_screw"
       ],
+      "show": [
+        "rear_derailleur",
+        "derailleur_hanger",
+        "cassette",
+        "chain",
+        "chainring"
+      ],
       "view": "derailleur_from_behind",
       "buttons": [
         {
@@ -1449,17 +1489,24 @@
       "kind": "safety_check",
       "title": "Double-check the inner limit",
       "minutes": 2,
-      "text": "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: where does the upper toothed wheel stop?",
+      "text": "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stop in line with the largest sprocket.",
+      "question": "Does it go further in?",
       "tools": {
         "one_of": [
           "derailleur-screw-tool"
         ]
       },
       "focus": [
-        "rear_derailleur",
         "upper_pulley",
         "largest_sprocket",
         "l_screw"
+      ],
+      "show": [
+        "rear_derailleur",
+        "derailleur_hanger",
+        "cassette",
+        "chain",
+        "chainring"
       ],
       "view": "derailleur_from_behind",
       "animation": {
@@ -1470,11 +1517,6 @@
         "caption": "Push the derailleur in by hand"
       },
       "buttons": [
-        {
-          "id": "in-line",
-          "label": "In line with the largest sprocket",
-          "text": "The inner limit is safe. Let go of the derailleur."
-        },
         {
           "id": "too-far-in",
           "label": "Past the largest sprocket, towards the spokes",
@@ -1497,7 +1539,16 @@
       "kind": "check",
       "title": "Check the gap to the sprockets",
       "minutes": 3,
-      "text": "Keep the chain on the largest sprocket. Look from the side at the gap between the upper toothed wheel of the derailleur and the sprocket.",
+      "text": "Keep the chain on the largest sprocket. Look from the side: the gap between the upper toothed wheel of the derailleur and the sprocket should be small, and the teeth should not touch.",
+      "question": "Wrong gap?",
+      "details": [
+        {
+          "needs": [
+            "drive.rear_derailleur_model"
+          ],
+          "text": "The manual for {drive.rear_derailleur_model} gives the exact gap."
+        }
+      ],
       "tools": {
         "one_of": [
           "derailleur-screw-tool"
@@ -1508,13 +1559,14 @@
         "largest_sprocket",
         "b_screw"
       ],
+      "show": [
+        "rear_derailleur",
+        "derailleur_hanger",
+        "cassette",
+        "chain"
+      ],
       "view": "derailleur_side_close",
       "buttons": [
-        {
-          "id": "small-gap",
-          "label": "A small gap, the teeth do not touch",
-          "text": "The gap is fine. The manual for {drive.rear_derailleur_model|your derailleur} gives the exact gap, if you want to check it."
-        },
         {
           "id": "touching",
           "label": "The wheel touches the sprocket, or almost",

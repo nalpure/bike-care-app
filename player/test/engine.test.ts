@@ -47,13 +47,13 @@ function walk(j: Journey, stopAt?: string, pick: Record<string, string> = {}): {
 
 describe('engine', () => {
   it('a button with skips leaves out the named later steps', () => {
-    const plain = walk(setup(() => {}), undefined, { 'check-b-gap': 'small-gap' });
+    const plain = walk(setup(() => {}), undefined, { 'check-b-gap': 'touching' });
     expect(plain.ids).toContain('check-cable-tension');
     const j = setup((b) => {
       const step = b.steps.find((s: any) => s.id === 'check-b-gap');
-      step.buttons.find((x: any) => x.id === 'small-gap').skips = ['check-cable-tension'];
+      step.buttons.find((x: any) => x.id === 'touching').skips = ['check-cable-tension'];
     });
-    const skipped = walk(j, undefined, { 'check-b-gap': 'small-gap' });
+    const skipped = walk(j, undefined, { 'check-b-gap': 'touching' });
     expect(skipped.ids).not.toContain('check-cable-tension');
     expect(skipped.ids.length).toBe(plain.ids.length - 1);
   });
@@ -63,7 +63,7 @@ describe('engine', () => {
       b.steps.find((s: any) => s.id === 'check-high-limit').show = ['frame', 'chain'];
       for (const i of b.inspections) i.show = ['frame'];
     });
-    const plain = walk(setup(() => {}), 'check-low-limit').at;
+    const plain = walk(setup((b) => delete b.steps.find((s: any) => s.id === 'check-low-limit').show), 'check-low-limit').at;
     expect(plain?.kind === 'card' && plain.card.stage.show).toBeUndefined();
     const r = walk(j, 'check-high-limit').at;
     expect(r?.kind === 'card' && r.card.stage.show).toEqual(['frame', 'chain']);
@@ -81,7 +81,11 @@ describe('engine', () => {
   });
 
   it('keeps Next disabled on a block until a good state is tapped (step without a question)', () => {
-    const j = setup(() => {});
+    const j = setup((b) => {
+      const s = b.steps.find((x: any) => x.id === 'check-low-limit-by-hand');
+      delete s.question;
+      s.buttons.unshift({ id: 'in-line', label: 'In line with the largest sprocket', text: 'The inner limit is safe.' });
+    });
     walk(j, 'check-low-limit-by-hand');
     j.tap('too-far-in');
     const blocked = j.screen();

@@ -20,7 +20,4 @@ profile:
       job_choice: diy
       choices: { hold_bike: ground }
       tutorial_sees:
-        barrel-adjuster-present: at-derailleur
         check-low-limit: too-far-out
-        check-low-limit-by-hand: in-line
-        check-all-gears-riding: quiet

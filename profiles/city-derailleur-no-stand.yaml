@@ -32,9 +32,6 @@ profile:
         barrel-adjuster-present: at-shifter-or-cable
         check-high-limit: too-far-in
         check-low-limit: too-far-in
-        check-low-limit-by-hand: in-line
-        check-all-gears: quiet
-        shift-test-ride: fine
 
     - id: bent-derailleur
       title: "The derailleur looks bent, so the owner goes to a shop"

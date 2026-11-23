@@ -32,8 +32,11 @@ inspections:
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 1
-    text: "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur, then where it leaves the right shifter."
+    text: "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable."
+    default: at-derailleur
+    question: "Not at the derailleur?"
     focus: [barrel_adjuster, shift_cable]
+    show: [rear_derailleur, derailleur_hanger, rear_end]
     view: barrel_adjuster_close
     states:
       - id: at-derailleur
@@ -73,8 +76,11 @@ inspections:
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 3
-    text: "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down."
-    focus: [shifter_rear, cassette]
+    text: "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly."
+    default: fine
+    question: "Slow or rattling?"
+    focus: [shifter_rear]
+    show: [frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain]
     view: drive_side
     states:
       - id: slow-to-bigger
