@@ -4,7 +4,7 @@
 // The stage applies frames; nothing here touches three.js objects.
 
 import * as T from 'three';
-import { GAP_BIG, GAP_OK, GAP_SMALL, type BikeSpec } from './bike.js';
+import { GAP_BIG, GAP_OK, GAP_SMALL, rAt, type BikeSpec } from './bike.js';
 import { derLayout, fitFor } from './derailleur.js';
 import { CLIPS, MOTIONS, NODES, partsOf, type Pose } from './registry.js';
 
@@ -160,6 +160,25 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       return {
         duration: 1.6 + per * n,
         frame: (t) => ({ derZ: ctx.zOf(t < 0.8 ? 0 : Math.min(n - 1, Math.floor((t - 0.8) / per) + 1)), crankSpeed: PEDAL }),
+      };
+    }
+
+    case 'shift-test-ride': {
+      // A ride: the pedals and both wheels turn while the chain is shifted one gear at a time, up to the largest
+      // sprocket and back to the smallest. The front wheel turns at the speed the rear wheel is driven at.
+      const per = 0.45;
+      const lead = 0.8;
+      const steps = 2 * Math.max(1, n - 1);
+      const gearAt = (t: number) => {
+        const s = Math.floor(Math.min(steps, Math.max(0, (t - lead) / per)));
+        return s <= steps / 2 ? s : steps - s;
+      };
+      return {
+        duration: lead * 2 + per * steps,
+        frame: (t) => {
+          const z = ctx.zOf(gearAt(t));
+          return { derZ: z, crankSpeed: PEDAL, wheelSpeed: { front_wheel: (PEDAL * spec.rc) / rAt(spec, z) } };
+        },
       };
     }
 

@@ -79,9 +79,10 @@ inspections:
     text: "Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly."
     default: fine
     question: "Slow or rattling?"
-    focus: [shifter_rear]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain]
+    focus: [chain]
+    show: [frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain]
     view: drive_side
+    animation: { clip: shift-test-ride, caption: "Shift one gear at a time while you ride" }
     states:
       - id: slow-to-bigger
         label: "Slow or rattling when shifting to easier gears"

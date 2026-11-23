@@ -694,6 +694,20 @@ describe('views and animations', () => {
     expect(end.status).toBe('good');
   });
 
+  it('shift-test-ride: pedals and both wheels turn all the time while the chain goes up through every gear and back down', () => {
+    const an = makeAnim({ clip: 'shift-test-ride', caption: 'x' }, ctxFor(m))!;
+    const zs = new Set<number>();
+    for (let t = 0; t <= an.duration; t += 0.05) {
+      const f = an.frame(t);
+      expect(f.crankSpeed).toBeGreaterThan(0);
+      expect(f.wheelSpeed?.front_wheel).toBeGreaterThan(0);
+      zs.add(f.derZ!);
+    }
+    expect(zs.size).toBe(m.spec.n);
+    expect(an.frame(0).derZ).toBeCloseTo(m.zOf(0));
+    expect(an.frame(an.duration).derZ).toBeCloseTo(m.zOf(0));
+  });
+
   it('generic motions never mark parts or draw contours; only clips do', () => {
     for (const target of Object.keys(NODES)) {
       for (const motion of MOTIONS) {

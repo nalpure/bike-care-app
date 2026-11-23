@@ -83,7 +83,7 @@ Animation: "Turn the pedals backwards" (crank rotate, backward, slowly, two full
 
 ### Test ride the gears
 
-<sub>Unit `card:inspection:shift-test-ride` · hash `d3a7f41f9f08` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:shift-test-ride` · hash `ed8fe4d43c4b` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 3 min</sub>
 
@@ -91,7 +91,9 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus shifter_rear · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+
+Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
 - [ ] **Slow or rattling when shifting to easier gears** <sub>`slow-to-bigger`</sub> — The chain is slow to climb to the bigger sprockets, the easier gears. → usually: **Adjust the rear gears** (soon)
 - [ ] **Slow or rattling when shifting to harder gears** <sub>`slow-to-smaller`</sub> — The chain is slow to drop to the smaller sprockets, the harder gears. → usually: **Adjust the rear gears** (soon)

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "c63194af536c3a34",
+  "content_hash": "3527c0af966b5ad6",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -782,7 +782,7 @@
       "default": "fine",
       "question": "Slow or rattling?",
       "focus": [
-        "shifter_rear"
+        "chain"
       ],
       "show": [
         "frame",
@@ -790,12 +790,18 @@
         "front_wheel",
         "rear_wheel",
         "handlebar",
+        "brake_lever",
+        "shifter_rear",
         "saddle",
         "seat_post",
         "shift_cable",
         "drivetrain"
       ],
       "view": "drive_side",
+      "animation": {
+        "clip": "shift-test-ride",
+        "caption": "Shift one gear at a time while you ride"
+      },
       "states": [
         {
           "id": "slow-to-bigger",
