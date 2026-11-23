@@ -42,6 +42,8 @@ export interface Card {
   /** review unit id, e.g. card:step:check-high-limit */
   unit: string;
   kindLabel: string;
+  /** a kind: safety_check card: the UI shows a red tag next to the title */
+  safety?: boolean;
   title: string;
   text: string;
   details: string[];
@@ -880,6 +882,7 @@ export class Journey {
       flow: t.id, flowKind: 'tutorial', itemKind: it.kind, id: it.id,
       unit: `card:${it.kind === 'inspect' ? 'inspection' : 'step'}:${it.def.id}`,
       kindLabel: it.kind === 'inspect' ? 'Check' : it.def.kind === 'safety_check' ? 'Safety check' : it.def.kind === 'check' ? 'Check' : 'Step',
+      safety: it.kind !== 'inspect' && it.def.kind === 'safety_check',
       title: it.def.title,
       text: this.c.fill(it.generic ? it.def.generic_text : it.def.text, this.known, t.params),
       details: this.c.details(it.def, this.known, t.params),

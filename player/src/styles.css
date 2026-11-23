@@ -10,6 +10,7 @@
   --accent-text: #7A5800;
   --good: #1E9E5A;
   --bad: #D6453D;
+  --bad-text: #B3261E; /* red text on a panel or a --bad tint */
   --stage: #DCE3E8;
   --stage2: #C9D4DB;
   --part: #5C6D7B;
@@ -25,7 +26,7 @@
   :root:not([data-theme="light"]) {
     --bg: #0E151B; --panel: #151E26; --ink: #E8EEF2; --ink2: #9AA9B5; --line: #28343E;
     --accent: #FFC71F; --accent-ink: #1A1500; --accent-text: #FFC71F;
-    --good: #34C77B; --bad: #FF6B5E;
+    --good: #34C77B; --bad: #FF6B5E; --bad-text: #FF8A80;
     --stage: #0A1015; --stage2: #18232C; --part: #8998A5; --contour: #6FC3FF;
     color-scheme: dark;
   }
@@ -33,7 +34,7 @@
 :root[data-theme="dark"] {
   --bg: #0E151B; --panel: #151E26; --ink: #E8EEF2; --ink2: #9AA9B5; --line: #28343E;
   --accent: #FFC71F; --accent-ink: #1A1500; --accent-text: #FFC71F;
-  --good: #34C77B; --bad: #FF6B5E;
+  --good: #34C77B; --bad: #FF6B5E; --bad-text: #FF8A80;
   --stage: #0A1015; --stage2: #18232C; --part: #8998A5; --contour: #6FC3FF;
   color-scheme: dark;
 }
@@ -199,6 +200,7 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .kicker { font: 500 11.5px/1.25 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); display: flex; align-items: center; gap: 8px; }
 .kicker .sp { flex: 1; }
 .step h2 { font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 6.6vw, 33px); line-height: 1.02; letter-spacing: .005em; text-wrap: balance; }
+.step h2 .tag { display: inline-block; vertical-align: .22em; margin-left: 10px; padding: 3px 7px 2px; border-radius: 6px; border: 1px solid var(--bad); background: color-mix(in srgb, var(--bad) 16%, var(--panel)); color: var(--bad-text); font: 600 11px/1.1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
 .step p { font-size: 15.5px; line-height: 1.42; max-width: 62ch; }
 .step p.detail { font-size: 14.5px; color: var(--ink2); }
 .needs { font: 500 11.5px/1.35 var(--f-mono); color: var(--ink2); }

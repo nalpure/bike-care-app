@@ -275,7 +275,7 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
     ),
     card.jumped ? h('p.jumpnote', 'You jumped ahead in this guide to put the bike back.') : null,
     card.warnings.map((w) => h('div.standing', w)),
-    h('h2', card.title),
+    h('h2', card.title, card.safety ? h('span.tag', { 'data-test': 'safety-tag' }, 'Safety') : null),
     card.needs.length ? h('div.needs', `Needs: ${card.needs.join(', ')}`) : null,
     h('p', card.text),
     card.details.map((d) => h('p.detail', d)),
