@@ -67,6 +67,8 @@ There are no session prompt files and no handoff files. The state of the work li
 
 **Notify the owner.** The owner is often away from the screen. Call `PushNotification` (load it with ToolSearch if needed) as your last action when (a) the task or a part of it is done, or (b) you need an answer before you can go on. One line under 200 characters that leads with what they must do or what happened, e.g. "Tutorial rewrite done, check passes, 2 questions in docs/open.md" or "Need a decision: keep 784 mm bars?". No notification for routine progress. The tool skips itself when the owner is at the terminal; that is fine.
 
+**Wishlist.** When you are done, add an entry to `wishlist.md` only if something slowed you down that could be fixed, or you have an idea that would make future work faster; by default add nothing, only what adds real value. Give each entry an importance from 1 (nice to have) to 3 (costs every session).
+
 A large task: read, then propose the plan in a few lines and the split into parts; the owner answers, and each part ends in commits that leave `npm run check` and `npm test` passing, so a fresh session can start from `git log` and this file.
 
 ## Decisions
