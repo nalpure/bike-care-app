@@ -1,6 +1,6 @@
-# Bike maintenance app
+# Bike care app
 
-A phone app that helps a beginner find out what is wrong with their bike and fix it, step by step, with a 3D view of the part. Test build: https://iridescent-moonbeam-15ddc0.netlify.app/ (mechanics are unverified drafts; the app says so).
+A phone app that helps a beginner find out what is wrong with their bike and fix it, step by step, with a 3D view of the part. Test build: https://bike-care-app.netlify.app/
 
 ## How it fits together
 
