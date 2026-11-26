@@ -28,10 +28,14 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **`check-low-limit` got the same `show` as `check-high-limit`** (it had only the new wording, no `show`, so it kept the old fade look), and so did `check-low-limit-by-hand` (the hand-pushed derailleur is shown, not marked).
 - **`shift-to-largest-sprocket` marks the sprocket and chain, not the shifter**, like `shift-to-smallest-sprocket`.
 - **Rides and the test-ride inspection show the whole bike** as a node list (frame, fork, wheels, handlebar, saddle, seat post, shift cable, drivetrain): `show: [bike]` draws nothing. Focus is the shifter (and the sprocket).
-- **`barrel-adjuster-present` has default `at-derailleur`** (question "Not at the derailleur?"): the shifter/cable and "cannot find" answers stay as buttons. The text now says to look at the derailleur first. Profiles no longer name `at-derailleur`.
 - **`shift-test-ride` has default `fine`** ("Slow or rattling?") and a goal sentence; the sentence also shows in the diagnosis and the routine check, which keep all three buttons.
 - **`check-b-gap`:** the manual pointer moved to `details` and shows only when the derailleur model is known (before: "your derailleur" as fallback).
 - **Texts:** goals appended as "should ..." to the texts; "all good" buttons removed from all rear-shifting checks, and profile `tutorial_sees` for them removed. Mechanics and problem texts unchanged. Tests that used the old-style buttons now build an old-style step in the test.
+- **A tap that goes on moves to the next card at once** on every tutorial inspection without a default, so also on the hanger check ("It hangs straight down"). Its meaning text is then not shown. `journey.ts` (`tutTap`).
+- **The keep screen comes right after the barrel answer** when the flow has not offered it yet (the existing "once per flow" rule); if the user already saved this flow's answers, the barrel fact is saved with them. `journey.ts`.
+- **Schema shapes:** a follow-up is an outcome `{ inspect, outcomes }` (one level only); `sets` on an inspection state, only for facts no condition reads; `question` is now allowed without `default`. "I cannot find it" is never stored, so the next run asks again. `schema/`, `refs.ts`, `resolve.ts`.
+- **Fact `drive.barrel_adjuster`** (derailleur, shifter, inline), German label "Zugeinsteller". Bike-sheet answers "At the derailleur", "At the shifter", "On the cable". `content/facts.yaml`.
+- **`barrel-adjuster-search` 3D view** is a placeholder until the 3D part (cable focus, frame, handlebar, shifter and derailleur shown, `drive_side`); the parent card's 3D view is unchanged. `content/inspections.yaml`.
 
 ## Questions for the owner
 
