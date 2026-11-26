@@ -765,7 +765,7 @@ describe('barrel adjusters (barrel.ts)', () => {
     }
   });
 
-  it('cable-tension-shift: counterclockwise turns the picked barrel out and the chain reaches a bigger sprocket; the scene adds its surroundings', () => {
+  it('cable-tension-shift: the picked barrel turns while the pedals and the chain stand still; the scene adds its surroundings', () => {
     for (const { bar, facts } of BARS) {
       const m = new BikeModel(bikeSpec(facts), mat);
       for (const fact of ['derailleur', 'shifter', 'inline', undefined]) {
@@ -779,8 +779,11 @@ describe('barrel adjusters (barrel.ts)', () => {
           const ccw = direction === 'counterclockwise';
           expect(Math.sign(end.screws!.barrel_adjuster!), `${bar} ${fact} ${direction}`).toBe(ccw ? -1 : 1);
           expect(turning.arrow).toEqual({ node: 'barrel_adjuster', dir: ccw ? -1 : 1 });
-          // more tension pulls the chain towards the spokes (smaller z): the bigger sprocket
-          expect(end.derZ).toBeCloseTo(m.zOf(ccw ? mid + 1 : mid - 1));
+          // once a problem is tapped the pedals stop (owner, 2026-11-26), so the chain stays where it is
+          for (let t = 0; t <= an.duration; t += 0.25) {
+            expect(an.frame(t).crankSpeed ?? 0).toBe(0);
+            expect(an.frame(t).derZ).toBeCloseTo(m.zOf(mid));
+          }
           expect(end.scene?.focus).toEqual([main]);
           expect(end.scene?.show).toEqual(main === 'rear_barrel' ? ['rear_end', 'derailleur_hanger', 'rear_derailleur', 'shift_cable'] : ['handlebar', 'shifter_rear', 'shift_cable', 'frame']);
           expect(end.marks).toBeUndefined();
@@ -871,6 +874,20 @@ describe('views and animations', () => {
     expect(end.derZ!).toBeCloseTo(m.zOf(0));
     expect(start.status).toBe('bad');
     expect(end.status).toBe('good');
+  });
+
+  it('shift-through-gears: the pedals turn all the time, the front wheel never, while the chain goes up through every gear and back down', () => {
+    const an = makeAnim({ clip: 'shift-through-gears', caption: 'x' }, ctxFor(m))!;
+    const zs = new Set<number>();
+    for (let t = 0; t <= an.duration; t += 0.05) {
+      const f = an.frame(t);
+      expect(f.crankSpeed).toBeGreaterThan(0);
+      expect(f.wheelSpeed?.front_wheel ?? 0).toBe(0);
+      zs.add(f.derZ!);
+    }
+    expect(zs.size).toBe(m.spec.n);
+    expect(an.frame(0).derZ).toBeCloseTo(m.zOf(0));
+    expect(an.frame(an.duration).derZ).toBeCloseTo(m.zOf(0));
   });
 
   it('shift-test-ride: pedals and both wheels turn all the time while the chain goes up through every gear and back down', () => {

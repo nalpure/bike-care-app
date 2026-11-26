@@ -104,6 +104,7 @@ export const VIEWS = [
 export const CLIPS = [
   'shift-to-smallest',
   'shift-to-largest',
+  'shift-through-gears',
   'shift-test-ride',
   'limit-screw-align',
   'b-gap-adjust',

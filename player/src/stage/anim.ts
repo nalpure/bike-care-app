@@ -180,20 +180,20 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       };
     }
 
+    case 'shift-through-gears': {
+      // The rear wheel off the ground: the pedals turn by hand while the chain is shifted one gear at a time, up
+      // to the largest sprocket and back to the smallest. The rear wheel turns with the chain; the front stays.
+      const g = throughGears(n);
+      return { duration: g.duration, frame: (t) => ({ derZ: ctx.zOf(g.gearAt(t)), crankSpeed: PEDAL }) };
+    }
+
     case 'shift-test-ride': {
-      // A ride: the pedals and both wheels turn while the chain is shifted one gear at a time, up to the largest
-      // sprocket and back to the smallest. The front wheel turns at the speed the rear wheel is driven at.
-      const per = 0.45;
-      const lead = 0.8;
-      const steps = 2 * Math.max(1, n - 1);
-      const gearAt = (t: number) => {
-        const s = Math.floor(Math.min(steps, Math.max(0, (t - lead) / per)));
-        return s <= steps / 2 ? s : steps - s;
-      };
+      // A ride: as shift-through-gears, and the front wheel turns too, at the speed the rear wheel is driven at.
+      const g = throughGears(n);
       return {
-        duration: lead * 2 + per * steps,
+        duration: g.duration,
         frame: (t) => {
-          const z = ctx.zOf(gearAt(t));
+          const z = ctx.zOf(g.gearAt(t));
           return { derZ: z, crankSpeed: PEDAL, wheelSpeed: { front_wheel: (PEDAL * spec.rc) / rAt(spec, z) } };
         },
       };
@@ -247,12 +247,9 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
     }
 
     case 'cable-tension-shift': {
-      // A shift stalls, the barrel adjuster turns, then the shift goes through.
-      // Unscrewing the barrel tightens the cable: the chain then reaches the bigger sprocket.
-      const m = Math.floor(n / 2);
-      const goal = Math.max(0, Math.min(n - 1, sign < 0 ? m + 1 : m - 1));
-      const zb = ctx.zOf(m);
-      const zg = ctx.zOf(goal);
+      // The pedals stand still (owner, 2026-11-26: once a problem is tapped the shifting stops) and the barrel
+      // adjuster turns. The chain stays on its sprocket in the middle: without pedalling it cannot shift.
+      const zb = ctx.zOf(Math.floor(n / 2));
       // The barrel the facts pick is marked and drawn with what is around it, so it does not float: at the
       // derailleur the rear end, the hanger and the cable; at the front the handlebar, the shifter, the cable
       // and the frame (its head tube is what the close-up shows). Owner decision 2026-11-26.
@@ -263,10 +260,10 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       return {
         duration: 5.4,
         frame: (t) => ({
-          derZ: zb + (zg - zb) * (0.3 * (ramp(t, 0.2, 0.6) - ramp(t, 0.8, 1.2)) + ramp(t, 3.1, 3.9)),
-          crankSpeed: PEDAL,
+          derZ: zb,
+          crankSpeed: 0,
           screws: { barrel_adjuster: sign * QUARTER * ramp(t, 1.4, 2.8) },
-          status: t < 3.9 ? 'bad' : 'good',
+          status: t < 2.8 ? 'bad' : 'good',
           arrow: t > 1.2 && t < 3.0 ? { node: 'barrel_adjuster', dir: sign } : undefined,
           scene,
         }),
@@ -309,6 +306,20 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
     }
   }
   return undefined;
+}
+
+/** Every gear once, up from the smallest sprocket to the largest and back: which gear at time t, and how long it takes. */
+function throughGears(n: number): { duration: number; gearAt: (t: number) => number } {
+  const per = 0.45;
+  const lead = 0.8;
+  const steps = 2 * Math.max(1, n - 1);
+  return {
+    duration: lead * 2 + per * steps,
+    gearAt: (t) => {
+      const s = Math.floor(Math.min(steps, Math.max(0, (t - lead) / per)));
+      return s <= steps / 2 ? s : steps - s;
+    },
+  };
 }
 
 /** The barrel tour's timing (s): close on the derailleur's barrel until `go`, along the cable until `arrive`, then close on the front one. */
