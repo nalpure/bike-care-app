@@ -120,7 +120,7 @@ Learned for the bike: `drive.barrel_adjuster` = inline.
 
 ##### 3. Park the bike · `park-bike` · action · 1 min
 
-Put the bike on its kickstand, or lean it against a wall at the saddle and rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls.
+Put the bike on its kickstand, or lean it against a wall at the rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls.
 
 <sub>3D: focus kickstand, rear_wheel · view whole_bike</sub>
 

@@ -72,7 +72,7 @@ steps:
     kind: action
     title: "Park the bike"
     minutes: 1
-    text: "Put the bike on its kickstand, or lean it against a wall at the saddle and rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls."
+    text: "Put the bike on its kickstand, or lean it against a wall at the rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls."
     forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
     focus: [kickstand, rear_wheel]
     view: whole_bike
