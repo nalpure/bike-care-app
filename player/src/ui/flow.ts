@@ -2,7 +2,8 @@
 // One card component serves inspections, steps and checks.
 
 import { UNKNOWN } from '../../../tools/lib/conditions.js';
-import type { Card, Journey, Screen, ShopSummary } from '../engine/journey.js';
+import type { Card, Journey, Peek, Screen, ShopSummary } from '../engine/journey.js';
+import type { StageView } from './stage.js';
 import type { App } from './app.js';
 import { bikeTitle } from '../engine/bikes.js';
 import { h, icon, ICON } from './dom.js';
@@ -268,6 +269,11 @@ const COL = {
    * the view still shows the card it came from, which would read as scrolling back to it.
    */
   moving: null as { to: number; until: number } | null,
+  /** the 3D view of each card in the column (none in text-only mode or for a screen that is no card) */
+  views: {} as Partial<Record<'prev' | 'cur' | 'next', StageView>>,
+  /** which of them the 3D view shows */
+  shown: 'cur' as 'prev' | 'cur' | 'next',
+  stage: null as { show(v: StageView): void } | null,
 };
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -313,7 +319,10 @@ function guideEl(): HTMLElement {
 
 const slotsOf = (g: HTMLElement) => [...g.children] as HTMLElement[];
 
-/** Remembers which slot the view is in, and lights the slot in the middle of the box. */
+/**
+ * Remembers which slot the view is in, lights the slot in the middle of the box, and lets the 3D
+ * view show the card the scroll is heading for (not while the column scrolls by itself).
+ */
 function noteView(g: HTMLElement): void {
   if (!g.isConnected) return;
   const top = g.scrollTop;
@@ -322,34 +331,69 @@ function noteView(g: HTMLElement): void {
     if (top >= s.offsetTop - 1 && top < s.offsetTop + s.offsetHeight) COL.anchor = { key: s.dataset.key!, offset: Math.max(0, top - s.offsetTop) };
     s.classList.toggle('lit', mid >= s.offsetTop && mid < s.offsetTop + s.offsetHeight);
   }
+  if (!COL.moving) showAhead(g);
+}
+
+type Role = 'prev' | 'cur' | 'next';
+
+/**
+ * Where the scroll would come to rest if let go now: on the current card, or on a neighbour once
+ * the view is nearer that one's resting place (the browser's snapping decides the same way). A
+ * locked next card is never a resting place. `end`: the current card's last resting place (a card
+ * taller than the box rests anywhere from its top to there).
+ */
+function ahead(g: HTMLElement): { role: Role; cur: HTMLElement; end: number } | null {
+  const cur = g.querySelector<HTMLElement>(':scope > .cur');
+  if (!cur) return null;
+  const top = g.scrollTop;
+  const room = g.clientHeight;
+  const end = cur.offsetTop + Math.max(0, cur.offsetHeight - room);
+  const prev = cur.previousElementSibling as HTMLElement | null;
+  const next = cur.nextElementSibling as HTMLElement | null;
+  if (top > end + 4) {
+    const go = next && !next.classList.contains('locked') && top - end > next.offsetTop - top;
+    return { role: go ? 'next' : 'cur', cur, end };
+  }
+  if (top < cur.offsetTop - 4) {
+    const prevEnd = prev ? prev.offsetTop + Math.max(0, prev.offsetHeight - room) : 0;
+    return { role: prev && top - prevEnd < cur.offsetTop - top ? 'prev' : 'cur', cur, end };
+  }
+  return { role: 'cur', cur, end };
 }
 
 /**
- * The scroll came to rest. Inside the current card: nothing. Nearer a neighbour (the browser's
- * snapping normally leaves it right on one): the journey moves there. Otherwise back to the card.
+ * The 3D view follows the scroll: as soon as letting go would land on a neighbour card, it shows
+ * that card (camera, focus, animation), before the scroll has come to rest; back on the current
+ * card, it shows that one again. The move itself waits for the rest; it then shows the same view,
+ * so nothing restarts. A neighbour that is not a card leaves the view as it is.
+ */
+function showAhead(g: HTMLElement): void {
+  const a = ahead(g);
+  if (!a || a.role === COL.shown || !COL.stage) return;
+  const v = COL.views[a.role];
+  if (!v) return;
+  COL.shown = a.role;
+  COL.stage.show(v);
+}
+
+/**
+ * The scroll came to rest. On a neighbour (the browser's snapping normally leaves it right on
+ * one): the journey moves there. Between resting places: back onto the current card.
  */
 function settle(g: HTMLElement): void {
   if (!g.isConnected) return;
-  noteView(g);
-  const cur = g.querySelector<HTMLElement>(':scope > .cur');
-  if (!cur) return;
   const top = g.scrollTop;
   if (COL.moving) {
     if (Math.abs(top - COL.moving.to) > 4 && performance.now() < COL.moving.until) return;
     COL.moving = null;
   }
-  const room = g.clientHeight;
-  const end = cur.offsetTop + Math.max(0, cur.offsetHeight - room);
-  const prev = cur.previousElementSibling as HTMLElement | null;
-  const next = cur.nextElementSibling as HTMLElement | null;
-  const go = (y: number) => g.scrollTo({ top: y, behavior: reduceMotion() ? 'auto' : 'smooth' });
-  if (top > end + 4) {
-    if (next && !next.classList.contains('locked') && top - end > next.offsetTop - top) COL.next?.();
-    else go(end);
-  } else if (top < cur.offsetTop - 4) {
-    const prevEnd = prev ? prev.offsetTop + Math.max(0, prev.offsetHeight - room) : 0;
-    if (prev && top - prevEnd < cur.offsetTop - top) COL.back?.();
-    else go(cur.offsetTop);
+  noteView(g);
+  const a = ahead(g);
+  if (!a) return;
+  if (a.role === 'next') COL.next?.();
+  else if (a.role === 'prev') COL.back?.();
+  else if (top > a.end + 4 || top < a.cur.offsetTop - 4) {
+    g.scrollTo({ top: top > a.end ? a.end : a.cur.offsetTop, behavior: reduceMotion() ? 'auto' : 'smooth' });
   }
 }
 
@@ -383,7 +427,7 @@ function slot(key: string, role: 'prev' | 'cur' | 'next', content: HTMLElement[]
 const cardKey = (c: Card) => `card:${c.flow}:${c.id}`;
 
 /** A neighbour as it will look: a card, or the heading of the screen after it. No test ids, no actions. */
-function peekSlot(app: App, p: { screen: Screen; title?: string }, role: 'prev' | 'next', locked = false): HTMLElement {
+function peekSlot(app: App, p: Peek, role: 'prev' | 'next', locked = false): HTMLElement {
   const s = p.screen;
   let body: HTMLElement;
   let key: string;
@@ -439,14 +483,23 @@ function cardBody(app: App, card: Card, live: { tap: (id: string) => void; textO
 }
 
 /** Shows the card on the stage, fills the column, and builds the parts around it that change per card. */
+/** What the 3D view shows for a card, with the bike's facts at that card. */
+function stageView(app: App, card: Card, facts: Record<string, unknown>): StageView {
+  return {
+    id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bikeName,
+    focus: card.stage.focus, show: card.stage.show, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: facts as StageView['facts'],
+  };
+}
+
 function cardParts(app: App, j: Journey, card: Card): { gtop: HTMLElement; progress: HTMLElement; pager: HTMLElement } {
   const textOnly = app.store.data.textOnly;
-  if (!textOnly) {
-    app.stage.show({
-      id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bikeName,
-      focus: card.stage.focus, show: card.stage.show, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: (app.journey?.bikeFacts ?? {}),
-    });
-  }
+  const prev = j.peekBack();
+  const next = j.peekNext();
+  const viewOf = (p: Peek | null) => (p?.screen.kind === 'card' ? stageView(app, p.screen.card, p.facts) : undefined);
+  COL.views = textOnly ? {} : { prev: viewOf(prev), cur: stageView(app, card, j.bikeFacts), next: next?.open ? viewOf(next) : undefined };
+  COL.shown = 'cur';
+  COL.stage = textOnly ? null : app.stage;
+  if (COL.views.cur) app.stage.show(COL.views.cur);
   // On a card where Next answers, a problem's solution plays at once; the button replays it.
   const tap = (id: string) => {
     app.act((x) => x.tap(id));
@@ -454,8 +507,6 @@ function cardParts(app: App, j: Journey, card: Card): { gtop: HTMLElement; progr
     if (!textOnly && s?.kind === 'card' && s.card.nextAnswers && s.card.solution?.length) app.stage.playSolution(s.card.solution);
   };
 
-  const prev = j.peekBack();
-  const next = j.peekNext();
   const list = [
     prev ? peekSlot(app, prev, 'prev') : null,
     slot(cardKey(card), 'cur', [cardBody(app, card, { tap, textOnly })]),

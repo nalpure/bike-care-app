@@ -163,6 +163,13 @@ const SCREEN_TITLE: Record<string, string> = {
 
 // ---------------------------------------------------------------- journey
 
+/** What a move would lead to (`Journey.peek`): the screen, its title, and the bike's facts there (for the 3D view). */
+export interface Peek {
+  screen: Screen;
+  title?: string;
+  facts: Record<string, Value>;
+}
+
 /** Whether what the flow learns goes onto a garage bike. Asked once per flow (the keep screen). */
 type Offer = 'ask' | 'saved' | 'skipped';
 
@@ -316,12 +323,12 @@ export class Journey {
   // ------------------------------------------------------------ peeking
 
   /**
-   * What `fn` leads to, without doing it: runs it, reads the screen and its title, then puts the
+   * What `fn` leads to, without doing it: runs it, reads the screen, its title and the bike's facts, then puts the
    * journey, the bike, the garage bike, the session and the user's tools back as they were.
    * Nothing is stored meanwhile. The card column (`ui/flow.ts`) draws the cards around the
    * current one from this, so they are the very cards Next and Back lead to.
    */
-  peek(fn: (j: Journey) => void): { screen: Screen; title?: string } {
+  peek(fn: (j: Journey) => void): Peek {
     const keep = {
       st: JSON.stringify(this.st),
       bike: JSON.stringify(this.bike),
@@ -340,7 +347,7 @@ export class Journey {
     store.save = () => undefined;
     try {
       fn(this);
-      return { screen: this.screen(), title: this.context().title };
+      return { screen: this.screen(), title: this.context().title, facts: { ...this.bike.facts } };
     } finally {
       if (ownSave) store.save = save;
       else delete store.save;
@@ -364,7 +371,7 @@ export class Journey {
   }
 
   /** The screen Back leads to from this card, or null when there is none or it is this card again. */
-  peekBack(): { screen: Screen; title?: string } | null {
+  peekBack(): Peek | null {
     const s = this.screen();
     if (s.kind !== 'card' || !this.canBack) return null;
     const p = this.peek((j) => j.backCard());
@@ -376,12 +383,12 @@ export class Journey {
    * gives the card the answers that go on lead to (`open` false), when they all lead to the same
    * one; when they lead to different cards (a diagnosis) it gives null.
    */
-  peekNext(): { screen: Screen; title?: string; open: boolean } | null {
+  peekNext(): (Peek & { open: boolean }) | null {
     const s = this.screen();
     if (s.kind !== 'card') return null;
     const card = s.card;
     if (card.nextEnabled) return { ...this.peek((j) => j.next()), open: true };
-    const found = new Map<string, { screen: Screen; title?: string }>();
+    const found = new Map<string, Peek>();
     for (const b of card.buttons) {
       const p = this.peek((j) => {
         j.tap(b.id);

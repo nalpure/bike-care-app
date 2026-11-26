@@ -492,8 +492,31 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     await page.waitForTimeout(700);
     expect(await view(page) === first, 'a swipe on the 3D view went to the next step');
     expect(await page.locator('.cardside .progress').count() === 1, 'no progress bar beside the text');
-    await swipe(page, [mid, guide.y + guide.height - 30], [mid, guide.y + 20]);
+    // The 3D view shows the next card as soon as letting go would land there, before the step moves:
+    // drag past half way and hold, back again, then past half way and let go.
+    const stageCard = () => page.evaluate(() => (window as any).__app.stage.view?.id as string | undefined);
+    const curCard = await stageCard();
+    const nextCard = await page.evaluate(() => document.querySelector<HTMLElement>('.guide > .slot.next')?.dataset.key?.replace(/^card:/, ''));
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (type: string, y?: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: y === undefined ? [] : [{ x: mid, y }] });
+    let finger = guide.y + guide.height - 20;
+    const dragTo = async (y: number) => {
+      const y0 = finger;
+      for (let i = 1; i <= 8; i++) await touch('touchMove', y0 + ((y - y0) * i) / 8);
+      finger = y;
+      await page.waitForTimeout(400);
+    };
+    await touch('touchStart', finger);
+    await dragTo(guide.y + guide.height * 0.3);
+    expect(await stageCard() === nextCard, `past half way, the 3D view does not show the next card (${await stageCard()}, want ${nextCard})`);
+    expect(await view(page) === first, `the step moved before the finger let go (${await view(page)})`);
+    await dragTo(guide.y + guide.height * 0.85);
+    expect(await stageCard() === curCard, `back before half way, the 3D view does not show this card again (${await stageCard()})`);
+    await dragTo(guide.y + 20);
+    await touch('touchEnd');
+    await cdp.detach();
     const second = await viewAfter(page, first);
+    expect(await stageCard() === nextCard, `after the move the 3D view shows another card (${await stageCard()})`);
     expect(second !== first && second.startsWith('journey:card'), `a swipe up did not go to the next step (${first} -> ${second})`);
     expect((await slots()).startsWith('prev,cur'), `the previous card is not drawn above (${await slots()})`);
     // The assistant button keeps clear of Back and Next.
