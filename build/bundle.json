@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "4059458c44919d2f",
+  "content_hash": "aef9960acc56ae9f",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -715,7 +715,7 @@
       },
       "hands_off": true,
       "minutes": 1,
-      "text": "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either.",
+      "text": "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.",
       "question": "Where is it?",
       "focus": [
         "barrel_adjuster",

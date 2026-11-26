@@ -90,7 +90,7 @@ Time shown for this bike: 29 to 32 min (depends on how the bike is held).
 
 ##### 1. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
 
-Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either.
+Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
 
 <sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
 

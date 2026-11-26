@@ -32,7 +32,7 @@ inspections:
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 1
-    text: "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either."
+    text: "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either."
     question: "Where is it?"
     focus: [barrel_adjuster, shift_cable]
     show: [rear_derailleur, derailleur_hanger, rear_end]
