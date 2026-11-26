@@ -11,7 +11,8 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-20 Checks a diagnosis also runs.** A tutorial keeps the hands-off checks it needs before the work (users who open it directly skip the diagnosis), declared once per tutorial, not per case. Hard rule 12 hides them after a diagnosis.
 - **2026-11-20 Service intervals** start as unverified placeholder values until a mechanic signs them off.
 - **2026-11-20 Complete-bike lookup** (database, then an AI web search) is a stub in test builds.
-- **2026-11-25 Barrel adjuster check.** No default; three answers: at the derailleur, at the shifter, "I cannot find it". The last opens a card on where else to look ("on the cable" goes on, "still cannot find it" ends as not supported). With one at both spots the user picks either. The answer is kept on the bike if the user agrees, and the check is then skipped. The 3D view draws an adjuster on the cable at the shifter.
+- **2026-11-25 Barrel adjuster check.** No default; three answers: at the derailleur, at the shifter, "I cannot find it". The last opens a card on where else to look ("on the cable" goes on, "still cannot find it" ends as not supported). With one at both spots the user picks either. The answer is kept on the bike if the user agrees, and the check is then skipped.
+- **2026-11-25 Barrel adjusters in 3D.** Every position the bar type has is always drawn: at the derailleur; at the shifter on flat and riser bars (drop-bar shifters have none); in the cable behind the bar on drop bars. The fact only picks the one that is marked, turned and framed; an adjuster on the cable is shown at the shifter on flat bars.
 
 ## 3D view
 
