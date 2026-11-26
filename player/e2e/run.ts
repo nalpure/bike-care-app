@@ -567,7 +567,7 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
  */
 async function laptop(browser: import('playwright').Browser): Promise<Result> {
   const id = 'extras/laptop-wheel';
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'no-preference' });
   const page = await ctx.newPage();
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -599,6 +599,33 @@ async function laptop(browser: import('playwright').Browser): Promise<Result> {
     expect(wv === first, `the wheel did not go back to the previous step (${second} -> ${wv})`);
     wv = await wheelTo(400, second);
     expect(wv === second, `the wheel did not go to the next step again (${first} -> ${wv})`);
+    // With motion: Next, and an answer that moves on at once (the tutorial's derailleur check), scroll
+    // the column to the next card, and it stays there. A stray scrollend from the jump that starts that
+    // scroll once read as scrolling back and undid the answer.
+    await click(page, 'back');
+    await viewAfter(page, second);
+    await click(page, 'next');
+    await page.waitForTimeout(1500);
+    expect(await view(page) === second, `Next did not stay on the next step (${await view(page)})`);
+    await page.goto(URL); // a fresh sitting, so the tutorial asks the check the diagnosis answered
+    await page.waitForFunction(() => (window as any).__app?.store);
+    await page.evaluate(() => { const a = (window as any).__app; a.start({ tutorial: 'adjust-rear-shifting' }, a.store.bike('road-bike-stand')); });
+    for (let i = 0; i < 30 && !(await view(page)).includes('derailleur-alignment'); i++) {
+      await page.evaluate(() => {
+        const a = (window as any).__app;
+        const s = a.journey.screen();
+        if (s.kind === 'card') a.act((x: any) => x.next());
+        else if (s.kind === 'tools') a.act((x: any) => x.startTutorial());
+        else if (s.kind === 'choice') a.act((x: any) => x.choose(s.choice.id, s.choice.options[0].id));
+      });
+      await page.waitForTimeout(200);
+    }
+    const check = await view(page);
+    expect(check === 'journey:card:derailleur-alignment', `the tutorial did not reach the derailleur check (${check})`);
+    await page.locator('[data-test^="btn-"]').first().click();
+    await page.waitForTimeout(2000);
+    const after = await view(page);
+    expect(after !== check && after.startsWith('journey:card'), `the answer that goes on did not stay on the next card (${after})`);
     return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
   } catch (e: any) {
     await shot_fail(page, dir);

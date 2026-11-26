@@ -262,6 +262,12 @@ const COL = {
   next: null as (() => void) | null,
   back: null as (() => void) | null,
   timer: 0,
+  /**
+   * The column is scrolling to the new card by itself (after Next, Back or an answer that goes on).
+   * Until it gets there, a rest means nothing: the jump that starts it ends with a scrollend while
+   * the view still shows the card it came from, which would read as scrolling back to it.
+   */
+  moving: null as { to: number; until: number } | null,
 };
 
 const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -289,7 +295,12 @@ function guideEl(): HTMLElement {
     if (!HAS_SCROLLEND) restSoon(180);
   }, { passive: true });
   g.addEventListener('scrollend', () => settle(g));
-  g.addEventListener('touchstart', () => (touching = true), { passive: true });
+  // The user's own gesture takes over from the column's scroll.
+  for (const ev of ['wheel', 'pointerdown', 'keydown']) g.addEventListener(ev, () => (COL.moving = null), { passive: true });
+  g.addEventListener('touchstart', () => {
+    touching = true;
+    COL.moving = null;
+  }, { passive: true });
   const lift = () => {
     touching = false;
     restSoon(350);
@@ -323,6 +334,10 @@ function settle(g: HTMLElement): void {
   const cur = g.querySelector<HTMLElement>(':scope > .cur');
   if (!cur) return;
   const top = g.scrollTop;
+  if (COL.moving) {
+    if (Math.abs(top - COL.moving.to) > 4 && performance.now() < COL.moving.until) return;
+    COL.moving = null;
+  }
   const room = g.clientHeight;
   const end = cur.offsetTop + Math.max(0, cur.offsetHeight - room);
   const prev = cur.previousElementSibling as HTMLElement | null;
@@ -346,6 +361,7 @@ function fillColumn(g: HTMLElement, list: HTMLElement[], curKey: string, instant
     const cur = list.find((s) => s.dataset.key === curKey)!;
     const from = was ? list.find((s) => s.dataset.key === was.key) : undefined;
     if (from && from !== cur && !instant && !from.classList.contains('locked')) {
+      COL.moving = { to: cur.offsetTop, until: performance.now() + 1500 };
       g.scrollTop = from.offsetTop + was!.offset;
       g.scrollTo({ top: cur.offsetTop, behavior: reduceMotion() ? 'auto' : 'smooth' });
     } else {
