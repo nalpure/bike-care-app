@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { runCheck } from '../../tools/lib/run.js';
 import { REPO, Sandbox, show, step } from '../../tools/test/helpers.js';
 import { Content } from '../src/engine/content.js';
-import { Journey, Session } from '../src/engine/journey.js';
+import { Journey, Session, type Screen } from '../src/engine/journey.js';
 import { memoryKV, Store } from '../src/engine/store.js';
 import { drive } from './drive.js';
 
@@ -26,6 +26,36 @@ describe('profile journeys in the player', () => {
     expect(got.error).toBeUndefined();
     expect(got.ending).toBe(expected.ending);
     expect(got.minutes).toBe(expected.minutes);
+  });
+
+  it('peeking at the previous and next card changes nothing, and Next leads to the peeked card', () => {
+    const id = (s: Screen) => (s.kind === 'card' ? `card ${s.card.id}` : s.kind);
+    let peeks = 0;
+    for (const { p, j } of cases) {
+      let last: { from: string; next: ReturnType<Journey['peekNext']> } | null = null;
+      const got = drive(content, p, j, (journey, store) => {
+        const s = journey.screen();
+        // What the last card's peek promised is where the owner arrived.
+        if (last && id(s) !== last.from && last.next) {
+          const want = id(last.next.screen);
+          if (last.next.open) expect(`${p.id}/${j.id}: ${id(s)}`).toBe(`${p.id}/${j.id}: ${want}`);
+          else if (s.kind === 'card' && last.next.screen.kind === 'card') expect(`${p.id}/${j.id}: ${id(s)}`).toBe(`${p.id}/${j.id}: ${want}`);
+        }
+        last = null;
+        if (s.kind !== 'card') return;
+        const before = JSON.stringify([s, journey.canBack, journey.context(), journey.minutes, store.data]);
+        const next = journey.peekNext();
+        journey.peekBack();
+        expect(JSON.stringify([journey.screen(), journey.canBack, journey.context(), journey.minutes, store.data])).toBe(before);
+        if (next) peeks++;
+        // Next's promise holds when the owner just taps Next; a card the profile answers first may go elsewhere.
+        const sees = s.card.flowKind === 'tutorial' ? j.tutorial_sees ?? {} : j.sees ?? {};
+        const taps = s.card.chosen === undefined && sees[s.card.id] !== undefined;
+        last = { from: id(s), next: next && (!next.open || !taps) ? next : null };
+      });
+      expect(got.error).toBeUndefined();
+    }
+    expect(peeks).toBeGreaterThan(20);
   });
 
   it('covers a block, an unsafe exit, and a check not repeated after the diagnosis', () => {

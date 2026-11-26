@@ -22,7 +22,8 @@ export function startOf(j: any): Start {
   return { check: j.start.check };
 }
 
-export function drive(c: Content, profile: any, j: any): Driven {
+/** onScreen: called on every screen before the owner acts (the peek test looks around there). */
+export function drive(c: Content, profile: any, j: any, onScreen?: (journey: Journey, store: Store) => void): Driven {
   const store = new Store(memoryKV());
   const bike = store.addBike(profile.name, profile.facts ?? {});
   store.setTools(profile.tools ?? []);
@@ -37,6 +38,7 @@ export function drive(c: Content, profile: any, j: any): Driven {
   let jumped = false;
   let fromJob = '';
   for (let guard = 0; guard < 400; guard++) {
+    onScreen?.(journey, store);
     const s: Screen = journey.screen();
     out.screens.push(s.kind === 'card' ? `card ${s.card.id}` : s.kind);
     switch (s.kind) {

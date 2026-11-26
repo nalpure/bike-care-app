@@ -299,6 +299,100 @@ export class Journey {
     return this.history.length > 0;
   }
 
+  /**
+   * Back as the user means it on a card (the Back button, a swipe down, the edge swipe): undoes the
+   * card's answer and goes on to the previous screen. On the flow's first card it only undoes the answer.
+   */
+  backCard(): void {
+    const id = () => {
+      const s = this.screen();
+      return s.kind === 'card' ? s.card.id : null;
+    };
+    const from = id();
+    this.back();
+    while (from !== null && this.canBack && id() === from) this.back();
+  }
+
+  // ------------------------------------------------------------ peeking
+
+  /**
+   * What `fn` leads to, without doing it: runs it, reads the screen and its title, then puts the
+   * journey, the bike, the garage bike, the session and the user's tools back as they were.
+   * Nothing is stored meanwhile. The card column (`ui/flow.ts`) draws the cards around the
+   * current one from this, so they are the very cards Next and Back lead to.
+   */
+  peek(fn: (j: Journey) => void): { screen: Screen; title?: string } {
+    const keep = {
+      st: JSON.stringify(this.st),
+      bike: JSON.stringify(this.bike),
+      homeRef: this.home,
+      home: this.home ? JSON.stringify(this.home) : '',
+      offer: this.offer,
+      history: this.history.slice(),
+      progressMax: this.progressMax,
+      shownPath: this.shownPath.slice(),
+      session: JSON.stringify(this.session),
+      tools: this.store.data.tools.slice(),
+    };
+    const store = this.store as any;
+    const ownSave = Object.prototype.hasOwnProperty.call(store, 'save');
+    const save = store.save;
+    store.save = () => undefined;
+    try {
+      fn(this);
+      return { screen: this.screen(), title: this.context().title };
+    } finally {
+      if (ownSave) store.save = save;
+      else delete store.save;
+      this.st = JSON.parse(keep.st);
+      this.bike = JSON.parse(keep.bike);
+      this.home = keep.homeRef;
+      if (this.home) {
+        const was = JSON.parse(keep.home);
+        for (const k of Object.keys(this.home)) if (!(k in was)) delete (this.home as any)[k];
+        Object.assign(this.home, was);
+      }
+      this.offer = keep.offer;
+      this.history = keep.history;
+      this.progressMax = keep.progressMax;
+      this.shownPath = keep.shownPath;
+      const sess = JSON.parse(keep.session);
+      for (const k of Object.keys(this.session)) if (!(k in sess)) delete (this.session as any)[k];
+      Object.assign(this.session, sess);
+      this.store.data.tools = keep.tools;
+    }
+  }
+
+  /** The screen Back leads to from this card, or null when there is none or it is this card again. */
+  peekBack(): { screen: Screen; title?: string } | null {
+    const s = this.screen();
+    if (s.kind !== 'card' || !this.canBack) return null;
+    const p = this.peek((j) => j.backCard());
+    return p.screen.kind === 'card' && p.screen.card.id === s.card.id ? null : p;
+  }
+
+  /**
+   * The screen after this card. `open`: Next leads there now. A card that still waits for an answer
+   * gives the card the answers that go on lead to (`open` false), when they all lead to the same
+   * one; when they lead to different cards (a diagnosis) it gives null.
+   */
+  peekNext(): { screen: Screen; title?: string; open: boolean } | null {
+    const s = this.screen();
+    if (s.kind !== 'card') return null;
+    const card = s.card;
+    if (card.nextEnabled) return { ...this.peek((j) => j.next()), open: true };
+    const found = new Map<string, { screen: Screen; title?: string }>();
+    for (const b of card.buttons) {
+      const p = this.peek((j) => {
+        j.tap(b.id);
+        const t = j.screen();
+        if (t.kind === 'card' && t.card.id === card.id && t.card.nextEnabled) j.next();
+      });
+      if (p.screen.kind === 'card' && p.screen.card.id !== card.id) found.set(p.screen.card.id, p);
+    }
+    return found.size === 1 ? { ...[...found.values()][0], open: false } : null;
+  }
+
   // ------------------------------------------------------------ facts and the reader
 
   private known = (k: string): Value | undefined => {
