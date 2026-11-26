@@ -15,7 +15,7 @@
 
 | Flow | Kind | Paths | Complete paths | Time of complete paths | Stop paths | Exits before the first step |
 | --- | --- | --- | --- | --- | --- | --- |
-| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 25 | 4 | 28 to 31 min | 21 | 6 |
+| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 29 | 8 | 28 to 32 min | 21 | 6 |
 | [gears-shift-badly](review/trees/gears-shift-badly.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 6 |
 | [routine-check](review/trees/routine-check.md) | routine check | - | - | - | - | - |
 
@@ -27,7 +27,7 @@ Details per unit in [review/index.md](review/index.md).
 
 | Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
 | --- | --- | --- | --- | --- |
-| card | 43 | 0 of 33 | 0 of 43 | 0 |
+| card | 44 | 0 of 34 | 0 of 44 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
 | journey | 8 | — | 0 of 8 | 0 |
 
@@ -36,9 +36,13 @@ Details per unit in [review/index.md](review/index.md).
 | Flow | Combination | Time |
 | --- | --- | --- |
 | adjust-rear-shifting | `derailleur.mechanical.stand` | 28 min |
+| adjust-rear-shifting | `derailleur.mechanical.stand` | 29 min |
 | adjust-rear-shifting | `derailleur.mechanical.hang` | 29 min |
+| adjust-rear-shifting | `derailleur.mechanical.hang` | 30 min |
 | adjust-rear-shifting | `derailleur.mechanical.upside-down` | 28 min |
+| adjust-rear-shifting | `derailleur.mechanical.upside-down` | 29 min |
 | adjust-rear-shifting | `derailleur.mechanical.ground` | 31 min |
+| adjust-rear-shifting | `derailleur.mechanical.ground` | 32 min |
 
 ## Where bikes end at a shop or not covered
 
@@ -68,9 +72,9 @@ Use this list to decide what to cover next.
 | [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Routine check finds slow shifting; the to-do item opens the guide | 1 to-do item(s) | 5 min | 0 |
 | [e-trekking-hub-gear](review/journeys/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain touches the spokes at the end | stop, jump ahead, bike put back, shop | 29 min | 0 |
-| [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-present | 2 min | 0 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-search | 3 min | 0 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
-| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 35 min | 2 |
+| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 36 min | 2 |
 
 Journeys that end at a shop, a stop or not covered: 3 of 8.
 
@@ -126,7 +130,9 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `item-kind` | pass | Each case item is exactly one of step, procedure, inspect. |
 | `inspect-needs-outcomes` | pass | Each inspection call in a tutorial maps its states to outcomes. |
 | `outcomes-match-states` | pass | Outcomes name exactly the states of the inspection. |
-| `outcome-kind` | pass | An outcome is continue, block or exit. |
+| `outcome-kind` | pass | An outcome is continue, block, exit, or a follow-up inspection. |
+| `follow-up` | pass | A follow-up inspection is another inspection and has no follow-up of its own. |
+| `sets-fact` | pass | An inspection state sets only facts that no condition reads (no question, not ask: never), to allowed values; no two states set the same. |
 | `jump-in-finish` | pass | No jump-ahead from finish. |
 | `case-target` | pass | A case has exactly one of include, cases. |
 | `hands-off-only` | pass | Diagnoses, the routine check and a tutorial's checks use only hands-off inspections. |

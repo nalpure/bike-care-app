@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `c3e187a18c23` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `b30345e1be3c` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -40,12 +40,14 @@ Not shown again when the user already answered them in this session, for example
    - `crooked` → **EXIT, unsafe**: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
 2. Find the barrel adjuster · `barrel-adjuster-present` · inspection
    - `at-derailleur` → continue
-   - `at-shifter-or-cable` → continue
-   - `none` → **EXIT, not covered**: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+   - `at-shifter` → continue
+   - `cant-find` → follow-up: Look along the cable · `barrel-adjuster-search` · inspection
+     - `on-cable` → continue
+     - `not-found` → **EXIT, not covered**: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
 
 ## Case `wheel-free` (stand · hang · upside_down)
 
-Time of the complete path: 28 min (stand), 29 min (hang), 28 min (upside_down)
+Time of the complete path: 28 min (stand), 29 min (stand), 29 min (hang), 30 min (hang), 28 min (upside_down), 29 min (upside_down)
 
 3. procedure `hold-bike` <sub>apart: nothing</sub>
    - when choice.hold_bike is stand: Clamp the bike in the stand · `clamp-in-stand` (+bike_in_stand)
@@ -82,7 +84,7 @@ Jump-ahead paths:
 
 ## Case `test-rides` (ground)
 
-Time of the complete path: 31 min (ground)
+Time of the complete path: 31 min (ground), 32 min (ground)
 
 3. Park the bike · `park-bike` · action <sub>apart: nothing</sub>
 4. Ride into the hardest gear · `ride-to-smallest-sprocket` · action <sub>apart: nothing</sub>

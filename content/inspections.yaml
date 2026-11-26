@@ -32,21 +32,42 @@ inspections:
     applies_when: { drive.gear_type: [derailleur] }
     hands_off: true
     minutes: 1
-    text: "Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable."
-    default: at-derailleur
-    question: "Not at the derailleur?"
+    text: "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either."
+    question: "Where is it?"
     focus: [barrel_adjuster, shift_cable]
     show: [rear_derailleur, derailleur_hanger, rear_end]
     view: barrel_adjuster_close
     states:
       - id: at-derailleur
-        label: "It is at the derailleur"
+        label: "At the derailleur"
         meaning: "The cable tension can be set at the derailleur."
-      - id: at-shifter-or-cable
-        label: "It is at the shifter, or on the cable"
+        sets: { drive.barrel_adjuster: derailleur }
+      - id: at-shifter
+        label: "At the shifter"
+        meaning: "The cable tension can be set at the shifter. It works the same way."
+        sets: { drive.barrel_adjuster: shifter }
+      - id: cant-find
+        label: "I cannot find it"
+        meaning: "Look along the cable next."
+
+  # Follow-up of barrel-adjuster-present, shown only after "I cannot find it".
+  - id: barrel-adjuster-search
+    title: "Look along the cable"
+    applies_when: { drive.gear_type: [derailleur] }
+    hands_off: true
+    minutes: 1
+    text: "Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar."
+    question: "Found it?"
+    focus: [shift_cable]
+    show: [frame, handlebar, shifter_rear, rear_derailleur]
+    view: drive_side
+    states:
+      - id: on-cable
+        label: "It is on the cable"
         meaning: "The cable tension can be set there. It works the same way."
-      - id: none
-        label: "I cannot find one"
+        sets: { drive.barrel_adjuster: inline }
+      - id: not-found
+        label: "I still cannot find it"
         meaning: "This bike may have no barrel adjuster."
 
   - id: chain-condition

@@ -42,6 +42,7 @@ profile:
       job_choice: diy
       choices: { hold_bike: stand }
       tutorial_sees:
+        barrel-adjuster-present: at-derailleur
         check-high-limit: too-far-out
         check-all-gears: chain-off
       after_stop: show_how
@@ -52,7 +53,8 @@ profile:
       choices: { hold_bike: stand }
       tutorial_sees:
         derailleur-alignment: straight
-        barrel-adjuster-present: none
+        barrel-adjuster-present: cant-find
+        barrel-adjuster-search: not-found
 
     - id: routine-check-dirty-chain
       title: "Routine check finds a dirty chain"

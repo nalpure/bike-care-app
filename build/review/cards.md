@@ -35,19 +35,45 @@ Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 ### Find the barrel adjuster
 
-<sub>Unit `card:inspection:barrel-adjuster-present` · hash `19d7f36877c5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:barrel-adjuster-present` · hash `14aecc1c946c` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable.
+Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either.
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
 <sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
 
-- [ ] **It is at the derailleur** <sub>`at-derailleur`</sub> — The cable tension can be set at the derailleur.
-- [ ] **It is at the shifter, or on the cable** <sub>`at-shifter-or-cable`</sub> — The cable tension can be set there. It works the same way.
-- [ ] **I cannot find one** <sub>`none`</sub> — This bike may have no barrel adjuster.
+**Where is it?**
+
+- [ ] **At the derailleur** <sub>`at-derailleur`</sub> — The cable tension can be set at the derailleur. · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur
+- [ ] **At the shifter** <sub>`at-shifter`</sub> — The cable tension can be set at the shifter. It works the same way. · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
+- [ ] **I cannot find it** <sub>`cant-find`</sub> — Look along the cable next.
+
+<sub>What each state does in a tutorial is part of that tutorial's flow tree.</sub>
+
+<sub>Appears in:</sub>
+
+- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: nothing apart</sub>
+- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
+
+### Look along the cable
+
+<sub>Unit `card:inspection:barrel-adjuster-search` · hash `6a3375966db2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+
+<sub>inspection · 1 min</sub>
+
+Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.
+
+<sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
+
+<sub>3D: focus shift_cable · show frame, handlebar, shifter_rear, rear_derailleur · view drive_side</sub>
+
+**Found it?**
+
+- [ ] **It is on the cable** <sub>`on-cable`</sub> — The cable tension can be set there. It works the same way. · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = On the cable
+- [ ] **I still cannot find it** <sub>`not-found`</sub> — This bike may have no barrel adjuster.
 
 <sub>What each state does in a tutorial is part of that tutorial's flow tree.</sub>
 
@@ -94,6 +120,8 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 <sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
 Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
+
+**Slow or rattling?** <sub>In tutorials "Every gear changes quickly and runs quietly" has no button; Next means it.</sub>
 
 - [ ] **Slow or rattling when shifting to easier gears** <sub>`slow-to-bigger`</sub> — The chain is slow to climb to the bigger sprockets, the easier gears. → usually: **Adjust the rear gears** (soon)
 - [ ] **Slow or rattling when shifting to harder gears** <sub>`slow-to-smaller`</sub> — The chain is slow to drop to the smaller sprockets, the harder gears. → usually: **Adjust the rear gears** (soon)
@@ -570,7 +598,7 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 ### Bike sheet: Drivetrain / Antrieb
 
-<sub>Unit `card:fact-group:drive` · hash `e23c6a038210` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact-group:drive` · hash `96217826066b` · beginner: ⬜ not reviewed</sub>
 
 <sub>The bike sheet's group "Drivetrain / Antrieb", icon `drivetrain`. One line per fact: its label, then what the user can enter.</sub>
 
@@ -579,6 +607,10 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 - **Derailleur screw heads / Schraubenköpfe am Schaltwerk** <sub>`drive.rear_derailleur_screws`, enum, never asked, from the bike's data</sub>
   - `cross`: Cross-head screws / Kreuzschlitzschrauben
   - `hex`: Hex screws / Innensechskantschrauben
+- **Barrel adjuster / Zugeinsteller** <sub>`drive.barrel_adjuster`, enum, never asked</sub>
+  - `derailleur`: At the derailleur / Am Schaltwerk
+  - `shifter`: At the shifter / Am Schalthebel
+  - `inline`: On the cable / Im Schaltzug
 - **Rear speeds / Gänge hinten** <sub>`drive.rear_speeds`, number, 1 to 13, never asked</sub>
 - **Rear derailleur / Schaltwerk** <sub>`drive.rear_derailleur_model`, text, never asked</sub>
 - **Shifter / Schalthebel** <sub>`drive.shifter_model`, text, never asked</sub>

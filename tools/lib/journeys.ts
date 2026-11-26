@@ -142,6 +142,23 @@ function shopSummary(c: Content, r: Run, jobId: string, extra: string[] = []): s
   ];
 }
 
+/**
+ * The state of an inspection call that the bike's known facts already give (a state's sets, or a
+ * state whose follow-up has a state with those sets). Written apart from the app on purpose.
+ */
+function stateKnown(c: Content, it: any, known: Map<string, Value>): string | undefined {
+  const match = (st: any) => {
+    const e = Object.entries<any>(st.sets ?? {});
+    return e.length > 0 && e.every(([k, v]) => known.has(k) && String(known.get(k)) === String(v));
+  };
+  for (const st of it.def.states) {
+    if (match(st)) return st.id;
+    const o = it.outcomes?.[st.id];
+    if (o?.inspect && c.inspections.get(o.inspect)?.def.states.some(match)) return st.id;
+  }
+  return undefined;
+}
+
 function notCovered(message: string): string[] {
   return [`**Not covered yet:** ${message}`, '', 'Buttons: [Find a shop] [Ask the assistant]', ''];
 }
@@ -221,6 +238,8 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
   let finishShown = false;
   let n = 1;
   const skipIds = new Map<string, string>();
+  /** index -> state the owner tapped (or Next took) on each inspection so far */
+  const taps = new Map<number, string>();
   // Before the first step, an inspection answered earlier in this session is not shown again.
   // After work has started it is a re-check of the result and is always shown.
   let workStarted = false;
@@ -235,6 +254,12 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
       r.L.push(`##### – ${it.def.title} · \`${it.id}\` · skipped: the owner answered "${skipIds.get(it.id)}" earlier`, '');
       continue;
     }
+    // A follow-up shows only after the answer it follows.
+    if (it.after) {
+      let p = i - 1;
+      while (p >= 0 && !(all[p].kind === 'inspect' && all[p].id === it.after.id)) p--;
+      if (p < 0 || taps.get(p) !== it.after.state) continue;
+    }
     const before = new Set(state);
     if (it.kind === 'step') {
       workStarted = true;
@@ -245,12 +270,15 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
     let chosen: string | undefined;
     let repeat = false;
     let outcome: { kind: 'continue' | 'block' | 'exit'; exitKind?: string; message?: string; showHowFrom?: string; good?: string } = { kind: 'continue' };
+    let fromFacts: string | undefined;
     if (it.kind === 'inspect') {
       repeat = !workStarted && r.session.has(it.id);
-      chosen = repeat ? r.session.get(it.id) : sees[it.id];
-      if (!repeat && chosen !== undefined) r.usedTutorialSees.add(it.id);
+      fromFacts = !workStarted && !repeat ? stateKnown(c, it, r.known) : undefined;
+      chosen = repeat ? r.session.get(it.id) : fromFacts ?? sees[it.id];
+      if (!repeat && fromFacts === undefined && chosen !== undefined) r.usedTutorialSees.add(it.id);
       // In a tutorial, Next takes the inspection's default state.
       if (chosen === undefined && it.def.default !== undefined) chosen = it.def.default;
+      if (chosen !== undefined) taps.set(i, chosen);
       if (chosen === undefined) {
         r.error('profile-missing-sees', `The tutorial reaches inspection "${it.id}", but the journey has no tutorial_sees.${it.id}.`, 'tutorial_sees');
         return 'incomplete profile';
@@ -281,10 +309,20 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
     if (repeat) {
       const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
       r.L.push(`##### – ${it.def.title} · \`${it.id}\` · not shown again: answered earlier in this session ("${label}")`, '');
+    } else if (fromFacts !== undefined) {
+      const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
+      r.L.push(`##### – ${it.def.title} · \`${it.id}\` · not shown: the bike's facts answer it ("${label}")`, '');
+      r.session.set(it.id, chosen!);
     } else {
       r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5, onPath: true }));
       r.minutes += it.def.minutes;
-      if (it.kind === 'inspect' && chosen !== undefined) r.session.set(it.id, chosen);
+      if (it.kind === 'inspect' && chosen !== undefined) {
+        r.session.set(it.id, chosen);
+        // An answer that tells a lasting fact: learned now, kept on the bike if the owner agrees.
+        const sets = Object.entries<any>(it.def.states.find((s: any) => s.id === chosen)?.sets ?? {});
+        for (const [k, v] of sets) r.known.set(k, v);
+        if (sets.length) r.L.push(`Learned for the bike: ${sets.map(([k, v]) => `\`${k}\` = ${v}`).join(', ')}.`, '');
+      }
     }
 
     if (outcome.kind === 'block') {

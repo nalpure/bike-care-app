@@ -23,11 +23,15 @@ tutorial:
     - inspect: barrel-adjuster-present
       outcomes:
         at-derailleur: continue
-        at-shifter-or-cable: continue
-        none:
-          exit:
-            kind: not_covered
-            text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+        at-shifter: continue
+        cant-find:
+          inspect: barrel-adjuster-search
+          outcomes:
+            on-cable: continue
+            not-found:
+              exit:
+                kind: not_covered
+                text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
   # Bikes outside the job's covers (jobs.yaml) end there, before any case.
   cases:
     - when: { choice.hold_bike: [stand, hang, upside_down] }

@@ -93,6 +93,17 @@ facts:
       cross: { en: "Cross-head screws", de: "Kreuzschlitzschrauben" }
       hex: { en: "Hex screws", de: "Innensechskantschrauben" }
 
+  - key: drive.barrel_adjuster
+    label: { en: "Barrel adjuster", de: "Zugeinsteller" }
+    type: enum
+    values: [derailleur, shifter, inline]
+    safety: false
+    note: "Where the rear gear cable's barrel adjuster is. Never asked as a question: the check barrel-adjuster-present (and its follow-up barrel-adjuster-search) sets it, and once known the check is not shown again. The 3D view draws the barrel there; inline is drawn at the shifter."
+    answers:
+      derailleur: { en: "At the derailleur", de: "Am Schaltwerk" }
+      shifter: { en: "At the shifter", de: "Am Schalthebel" }
+      inline: { en: "On the cable", de: "Im Schaltzug" }
+
   - key: drive.rear_speeds
     label: { en: "Rear speeds", de: "Gänge hinten" }
     type: number

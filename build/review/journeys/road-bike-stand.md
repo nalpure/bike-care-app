@@ -53,7 +53,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-smaller.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 28 to 31 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 29 to 32 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -80,7 +80,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: Bike work stand ✓. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
 
-Time shown for this bike: 28 to 31 min (depends on how the bike is held).
+Time shown for this bike: 29 to 32 min (depends on how the bike is held).
 
 #### Steps
 
@@ -88,15 +88,17 @@ Time shown for this bike: 28 to 31 min (depends on how the bike is held).
 
 ##### 1. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
 
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable.
+Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either.
 
 <sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
 
-**Not at the derailleur?**
+**Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
 
-- [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
-- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
-- [ ] **Next** (no answer) — The cable tension can be set at the derailleur. → continue ◀ **this path**
+- [ ] **At the derailleur** — The cable tension can be set at the derailleur. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur ◀ **this path**
+- [ ] **At the shifter** — The cable tension can be set at the shifter. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
+- [ ] **I cannot find it** — Look along the cable next. → next card: "Look along the cable" (`barrel-adjuster-search`), shown only after this answer
+
+Learned for the bike: `drive.barrel_adjuster` = derailleur.
 
 ##### 2. Clamp the bike in the stand · `clamp-in-stand` · action · 2 min · from procedure `hold-bike`
 
@@ -242,7 +244,7 @@ Tools: Bike work stand
 
 **Shop summary** (to show or tell the mechanic):
 
-- Bike: Road bike with a work stand. `bike.brand` = Corvana; `bike.line` = Strada; `bike.model` = SL 3; `bike.year` = 2020; `bike.handlebar` = drop ("Drop bar, curved down"); `bike.colour` = #1f4e79; `geometry.stack_mm` = 560; `geometry.reach_mm` = 385; `geometry.head_tube_mm` = 150; `geometry.seat_tube_mm` = 520; `geometry.top_tube_mm` = 550; `geometry.chainstay_mm` = 410; `geometry.wheelbase_mm` = 990; `geometry.bb_drop_mm` = 72; `geometry.head_angle_deg` = 73; `geometry.seat_angle_deg` = 73.5; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
+- Bike: Road bike with a work stand. `bike.brand` = Corvana; `bike.line` = Strada; `bike.model` = SL 3; `bike.year` = 2020; `bike.handlebar` = drop ("Drop bar, curved down"); `bike.colour` = #1f4e79; `geometry.stack_mm` = 560; `geometry.reach_mm` = 385; `geometry.head_tube_mm` = 150; `geometry.seat_tube_mm` = 520; `geometry.top_tube_mm` = 550; `geometry.chainstay_mm` = 410; `geometry.wheelbase_mm` = 990; `geometry.bb_drop_mm` = 72; `geometry.head_angle_deg` = 73; `geometry.seat_angle_deg` = 73.5; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000; `drive.barrel_adjuster` = derailleur ("At the derailleur")
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 - Found: Slow or rattling when shifting to harder gears (`shift-test-ride`: slow-to-smaller)
@@ -282,7 +284,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: Bike work stand ✓. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
 
-Time shown for this bike: 28 to 31 min (depends on how the bike is held).
+Time shown for this bike: 29 to 32 min (depends on how the bike is held).
 
 #### Steps
 
@@ -299,15 +301,28 @@ Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 ##### 2. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
 
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable.
+Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either.
 
 <sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
 
-**Not at the derailleur?**
+**Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
 
-- [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
-- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you. ◀ **this path**
-- [ ] **Next** (no answer) — The cable tension can be set at the derailleur. → continue
+- [ ] **At the derailleur** — The cable tension can be set at the derailleur. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur
+- [ ] **At the shifter** — The cable tension can be set at the shifter. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
+- [ ] **I cannot find it** — Look along the cable next. → next card: "Look along the cable" (`barrel-adjuster-search`), shown only after this answer ◀ **this path**
+
+##### 3. Look along the cable · `barrel-adjuster-search` · inspection · 1 min
+
+Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.
+
+<sub>3D: focus shift_cable · show frame, handlebar, shifter_rear, rear_derailleur · view drive_side</sub>
+<sub>Shown only after the answer "I cannot find it" to `barrel-adjuster-present`.</sub>
+
+
+**Found it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
+
+- [ ] **It is on the cable** — The cable tension can be set there. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = On the cable
+- [ ] **I still cannot find it** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you. ◀ **this path**
 
 **Not covered yet** (the progress bar does not move): "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
 
@@ -318,10 +333,10 @@ Buttons: [Find a shop] [Ask the assistant]
 - Bike: Road bike with a work stand. `bike.brand` = Corvana; `bike.line` = Strada; `bike.model` = SL 3; `bike.year` = 2020; `bike.handlebar` = drop ("Drop bar, curved down"); `bike.colour` = #1f4e79; `geometry.stack_mm` = 560; `geometry.reach_mm` = 385; `geometry.head_tube_mm` = 150; `geometry.seat_tube_mm` = 520; `geometry.top_tube_mm` = 550; `geometry.chainstay_mm` = 410; `geometry.wheelbase_mm` = 990; `geometry.bb_drop_mm` = 72; `geometry.head_angle_deg` = 73; `geometry.seat_angle_deg` = 73.5; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
-- Stopped at: `barrel-adjuster-present`, "none"
+- Stopped at: `barrel-adjuster-search`, "not-found"
 - Price: no estimate yet
 
-**Journey ends:** exit (not_covered) at barrel-adjuster-present. **Time:** 2 min. **Questions asked:** 0.
+**Journey ends:** exit (not_covered) at barrel-adjuster-search. **Time:** 3 min. **Questions asked:** 0.
 
 ---
 

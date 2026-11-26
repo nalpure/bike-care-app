@@ -23,7 +23,7 @@
             "$ref": "common.schema.json#/$defs/id"
           },
           "question": {
-            "description": "Tutorials only, with default: the short question above the other states ('Looks bent?').",
+            "description": "Tutorials only: the short question above the state buttons ('Looks bent?' above the problems when there is a default, 'Where is it?' above every state when there is none).",
             "$ref": "common.schema.json#/$defs/text"
           },
           "tools": { "$ref": "common.schema.json#/$defs/toolUse" },
@@ -46,7 +46,14 @@
                 "id": { "$ref": "common.schema.json#/$defs/id" },
                 "label": { "$ref": "common.schema.json#/$defs/text" },
                 "meaning": { "$ref": "common.schema.json#/$defs/text" },
-                "leads_to": { "$ref": "common.schema.json#/$defs/leadsTo" }
+                "leads_to": { "$ref": "common.schema.json#/$defs/leadsTo" },
+                "sets": {
+                  "description": "Tutorials only: lasting facts this answer tells about the bike, such as { drive.barrel_adjuster: shifter }. They are kept on the bike only if the user agrees (the keep screen). When they are already known, the inspection is answered from them and not shown.",
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": { "$ref": "common.schema.json#/$defs/factKey" },
+                  "additionalProperties": { "type": ["string", "number", "boolean"] }
+                }
               },
               "required": ["id", "label", "meaning"],
               "additionalProperties": false
@@ -54,7 +61,7 @@
           }
         },
         "required": ["id", "title", "hands_off", "minutes", "text", "states"],        "additionalProperties": false,
-        "dependentRequired": { "default": ["question"], "question": ["default"] }
+        "dependentRequired": { "default": ["question"] }
       }
     }
   },

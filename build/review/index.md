@@ -5,7 +5,7 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 43 fully approved
+- Cards: 0 of 44 fully approved
 - Flow trees: 0 of 3 fully approved
 - Journeys: 0 of 8 fully approved
 
@@ -16,6 +16,7 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `tree:check:routine-check` | Routine check | ⬜ not reviewed | — | [trees/routine-check.md](trees/routine-check.md) |
 | `card:inspection:derailleur-alignment` | Look at the rear derailleur | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:inspection:barrel-adjuster-present` | Find the barrel adjuster | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:inspection:barrel-adjuster-search` | Look along the cable | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:inspection:chain-condition` | Look at the chain | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:inspection:shift-test-ride` | Test ride the gears | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:clamp-in-stand` | Clamp the bike in the stand | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |

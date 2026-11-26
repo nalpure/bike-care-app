@@ -209,11 +209,11 @@ function buildTutorialFlow(c: Content, t: TutorialEntry, agg: Aggregator): Tutor
       }
 
       const complete = combined(run);
-      const sim0 = simulateVariant({ id: baseId, ending: 'complete', items: complete, afterJump: complete.map(() => false) }, params);
+      const sim0 = simulateVariant({ id: baseId, ending: 'complete', items: complete, afterJump: complete.map(() => false), hidden: complete.map(() => false) }, params);
       const stateAt = (_v: Variant, index: number) => sim0.before[index];
       for (const v of variantsOf(run, baseId, stateAt)) {
         const sim = simulateVariant(v, params, (rule, it, msg) => agg.add(rule, it.src, `tutorial ${t.def.id} / ${itemName(it)}`, msg, v.id));
-        const path: TutorialPath = { id: v.id, combo, run, variant: v, before: sim.before, final: sim.final, minutes: minutesOf(v.items) };
+        const path: TutorialPath = { id: v.id, combo, run, variant: v, before: sim.before, final: sim.final, minutes: minutesOf(v.items.filter((_x, i) => !v.hidden[i])) };
         flow.paths.push(path);
         checkVariant(c, t, path, params, agg);
       }

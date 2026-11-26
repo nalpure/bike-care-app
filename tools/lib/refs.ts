@@ -330,7 +330,22 @@ function checkInspection(x: Ctx, e: Entry): void {
     if (s.leads_to && !x.c.jobs.has(s.leads_to.job)) err(x, sl, 'unknown-job', `leads_to names job "${s.leads_to.job}", which is not in content/jobs.yaml.`);
     checkText(x, s.label, sl);
     checkText(x, s.meaning, sl);
+    for (const [k, v] of Object.entries<any>(s.sets ?? {})) {
+      const kl = sub(sl, 'sets', k);
+      const f = factDef(x.c, k);
+      if (!f) {
+        err(x, kl, 'unknown-fact', `sets names fact "${k}", which is not in content/facts.yaml.`);
+        continue;
+      }
+      // A fact a condition reads would change the planned path in the middle of the flow.
+      if (f.def.question || f.def.ask === 'never') err(x, kl, 'sets-fact', `Fact ${k} has a question or ask: never, so conditions may read it. An inspection sets only facts that no condition reads.`);
+      if (f.def.values && !f.def.values.map(String).includes(String(v))) err(x, kl, 'condition-value', `Fact ${k} has no value "${v}". Values: ${f.def.values.join(', ')}.`);
+      if (f.def.type === 'boolean' && typeof v !== 'boolean') err(x, kl, 'condition-value', `Fact ${k} is true or false, not "${v}".`);
+    }
   });
+  // Two states that set the same facts cannot be told apart when the facts are already known.
+  const sigs = d.states.filter((s: any) => s.sets).map((s: any) => JSON.stringify(Object.entries(s.sets).sort()));
+  if (new Set(sigs).size !== sigs.length) err(x, sub(loc, 'states'), 'sets-fact', 'Two states set the same facts to the same values.');
   if (d.states.every((s: any) => s.leads_to)) warn(x, sub(loc, 'states'), 'no-ok-state', 'Every state leads to a job. Usually one state is the good state, without leads_to.');
 }
 
@@ -372,40 +387,53 @@ function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list:
       loc.id = `tutorial ${tid} / procedure ${it.procedure}`;
       if (!procedureExists(x.c, it.procedure)) err(x, loc, 'unknown-procedure', `Procedure "${it.procedure}" is not in content/procedures.yaml.`);
     }
-    if (it.inspect) {
-      loc.id = `tutorial ${tid} / inspect ${it.inspect}`;
-      const insp = x.c.inspections.get(it.inspect);
-      if (!insp) {
-        err(x, loc, 'unknown-inspection', `Inspection "${it.inspect}" is not in content/inspections.yaml.`);
-        return;
-      }
-      if (!it.outcomes) {
-        err(x, loc, 'inspect-needs-outcomes', 'A tutorial maps every state of an inspection to continue, block, stop or end.');
-        return;
-      }
-      const states: string[] = insp.def.states.map((s: any) => s.id);
-      for (const s of states) if (!(s in it.outcomes)) err(x, sub(loc, 'outcomes'), 'outcomes-match-states', `No outcome for state "${s}" of ${it.inspect}.`);
-      for (const [s, o] of Object.entries<any>(it.outcomes)) {
-        const ol = sub(loc, 'outcomes', s);
-        if (!states.includes(s)) err(x, ol, 'outcomes-match-states', `Inspection ${it.inspect} has no state "${s}". States: ${states.join(', ')}.`);
-        if (typeof o === 'object') {
-          const k = ['block', 'exit'].filter((key) => o[key] !== undefined);
-          if (k.length !== 1) err(x, ol, 'outcome-kind', 'An outcome is continue, or has exactly one of block, exit.');
-          const sh = o.exit?.show_how_from;
-          if (sh && list === 'finish') err(x, ol, 'jump-in-finish', 'finish runs only on the good path, so its exits cannot jump ahead.');
-          if (sh && !stepOrProcedureExists(x.c, sh)) err(x, ol, 'unknown-show-how-from', `show_how_from "${sh}" is neither a step nor a procedure.`);
-          checkText(x, o.block ?? o.exit?.text, ol);
-        }
-      }
-      const dflt = insp.def.default;
-      if (dflt !== undefined && dflt in it.outcomes && it.outcomes[dflt] !== 'continue') {
-        err(x, sub(loc, 'outcomes', dflt), 'default-continues', `State "${dflt}" is the default of ${it.inspect} (Next means it), so its outcome must be continue.`);
-      }
-      if (Object.values(it.outcomes).some((o: any) => o?.block) && !Object.values(it.outcomes).includes('continue')) {
-        err(x, sub(loc, 'outcomes'), 'block-needs-fix', 'An inspection call with a block needs a state that continues once it is fixed.');
-      }
-    }
+    if (it.inspect) checkInspectCall(x, loc, it.inspect, it.outcomes, list, tid, false);
   });
+}
+
+/** One inspection call in a tutorial and its outcomes; a follow-up ({ inspect, outcomes }) is checked the same way. */
+function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'sequence' | 'finish', tid: string, follow: boolean): void {
+  loc.id = `tutorial ${tid} / inspect ${id}`;
+  const insp = x.c.inspections.get(id);
+  if (!insp) {
+    err(x, loc, 'unknown-inspection', `Inspection "${id}" is not in content/inspections.yaml.`);
+    return;
+  }
+  if (!outcomes) {
+    err(x, loc, 'inspect-needs-outcomes', 'A tutorial maps every state of an inspection to continue, block, stop or end.');
+    return;
+  }
+  const states: string[] = insp.def.states.map((s: any) => s.id);
+  for (const s of states) if (!(s in outcomes)) err(x, sub(loc, 'outcomes'), 'outcomes-match-states', `No outcome for state "${s}" of ${id}.`);
+  for (const [s, o] of Object.entries<any>(outcomes)) {
+    const ol = sub(loc, 'outcomes', s);
+    if (!states.includes(s)) err(x, ol, 'outcomes-match-states', `Inspection ${id} has no state "${s}". States: ${states.join(', ')}.`);
+    if (typeof o !== 'object') continue;
+    if (o.inspect !== undefined) {
+      if (follow) err(x, ol, 'follow-up', 'A follow-up inspection cannot have a follow-up of its own.');
+      else if (o.inspect === id) err(x, ol, 'follow-up', 'A follow-up is a different inspection.');
+      else checkInspectCall(x, { ...ol }, o.inspect, o.outcomes, list, tid, true);
+      continue;
+    }
+    const k = ['block', 'exit'].filter((key) => o[key] !== undefined);
+    if (k.length !== 1) err(x, ol, 'outcome-kind', 'An outcome is continue, a follow-up { inspect, outcomes }, or has exactly one of block, exit.');
+    const sh = o.exit?.show_how_from;
+    if (sh && list === 'finish') err(x, ol, 'jump-in-finish', 'finish runs only on the good path, so its exits cannot jump ahead.');
+    if (sh && !stepOrProcedureExists(x.c, sh)) err(x, ol, 'unknown-show-how-from', `show_how_from "${sh}" is neither a step nor a procedure.`);
+    checkText(x, o.block ?? o.exit?.text, ol);
+  }
+  const dflt = insp.def.default;
+  if (dflt !== undefined && dflt in outcomes && outcomes[dflt] !== 'continue') {
+    err(x, sub(loc, 'outcomes', dflt), 'default-continues', `State "${dflt}" is the default of ${id} (Next means it), so its outcome must be continue.`);
+  }
+  if (Object.values(outcomes).some((o: any) => o?.block) && !Object.values(outcomes).includes('continue')) {
+    err(x, sub(loc, 'outcomes'), 'block-needs-fix', 'An inspection call with a block needs a state that continues once it is fixed.');
+  }
+}
+
+/** The follow-up calls inside an inspection call's outcomes: [state, { inspect, outcomes }]. */
+function followUps(outcomes: any): Array<[string, any]> {
+  return Object.entries<any>(outcomes ?? {}).filter(([, o]) => o && typeof o === 'object' && o.inspect !== undefined);
 }
 
 function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile> }): void {
@@ -421,10 +449,13 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
   checkFlowItems(x, t.checks ?? [], e.file, [...e.path, 'checks'], 'sequence', t.id);
   (t.checks ?? []).forEach((it: any, i: number) => {
     const l = sub(loc, 'checks', i);
-    const insp = x.c.inspections.get(it.inspect);
-    if (insp && !insp.def.hands_off) err(x, l, 'hands-off-only', `Inspection ${it.inspect} is not hands_off. A tutorial's checks run before the work and use only hands-off inspections.`);
-    for (const [s, o] of Object.entries<any>(it.outcomes ?? {})) {
-      if (o?.exit?.show_how_from) err(x, sub(l, 'outcomes', s), 'exit-jump-outside', "A tutorial's checks run before anything is apart, so their exits cannot jump.");
+    const calls: Array<[Loc, any]> = [[l, it], ...followUps(it.outcomes).map(([s, f]): [Loc, any] => [sub(l, 'outcomes', s), f])];
+    for (const [cl, call] of calls) {
+      const insp = x.c.inspections.get(call.inspect);
+      if (insp && !insp.def.hands_off) err(x, cl, 'hands-off-only', `Inspection ${call.inspect} is not hands_off. A tutorial's checks run before the work and use only hands-off inspections.`);
+      for (const [s, o] of Object.entries<any>(call.outcomes ?? {})) {
+        if (o?.exit?.show_how_from) err(x, sub(cl, 'outcomes', s), 'exit-jump-outside', "A tutorial's checks run before anything is apart, so their exits cannot jump.");
+      }
     }
   });
   t.cases.forEach((cs: any, i: number) => {
@@ -594,7 +625,12 @@ function checkUnused(x: Ctx): void {
         if (it.procedure) usedProcs.add(it.procedure);
         if (it.inspect) usedInsp.add(it.inspect);
       }
-    for (const it of t.def.checks ?? []) usedInsp.add(it.inspect);
+    for (const it of t.def.checks ?? []) {
+      usedInsp.add(it.inspect);
+      for (const [, f] of followUps(it.outcomes)) usedInsp.add(f.inspect);
+    }
+    for (const cf of t.cases.values())
+      for (const it of [...(cf.data.sequence ?? []), ...(cf.data.finish ?? [])]) for (const [, f] of followUps(it.outcomes)) usedInsp.add(f.inspect);
   }
   for (const d of x.c.diagnoses.values()) for (const ch of d.def.checks) usedInsp.add(ch.inspect);
   for (const ch of x.c.checks.values()) for (const it of ch.def.inspections) usedInsp.add(it.inspect);

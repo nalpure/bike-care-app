@@ -85,6 +85,8 @@ export function drive(c: Content, profile: any, j: any): Driven {
           }
         }
         let now = journey.screen();
+        // A tap that goes on moves to the next card by itself (an inspection without a default).
+        if (now.kind === 'card' && now.card.position.n !== card.position.n) break;
         // Where Next answers, a problem the owner tapped is fixed and Next goes on.
         if (now.kind === 'card' && now.card.nextAnswers && now.card.chosenTone === 'bad') out.blocks++;
         if (now.kind === 'card' && !now.card.nextEnabled) {

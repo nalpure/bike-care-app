@@ -56,7 +56,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-bigger.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 28 to 31 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 29 to 32 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -83,7 +83,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: none. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
 
-Time shown for this bike: 28 to 31 min (depends on how the bike is held).
+Time shown for this bike: 29 to 32 min (depends on how the bike is held).
 
 #### Steps
 
@@ -91,29 +91,44 @@ Time shown for this bike: 28 to 31 min (depends on how the bike is held).
 
 ##### 1. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
 
-Find the barrel adjuster: a small ribbed knob on the gear cable. Look where the cable enters the derailleur first. If it is not there, look where the cable leaves the right shifter, then along the cable.
+Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then at the right shifter. If there is one at both, pick either.
 
 <sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
 
-**Not at the derailleur?**
+**Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
 
-- [ ] **It is at the shifter, or on the cable** — The cable tension can be set there. It works the same way. → continue
-- [ ] **I cannot find one** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
-- [ ] **Next** (no answer) — The cable tension can be set at the derailleur. → continue ◀ **this path**
+- [ ] **At the derailleur** — The cable tension can be set at the derailleur. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur
+- [ ] **At the shifter** — The cable tension can be set at the shifter. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
+- [ ] **I cannot find it** — Look along the cable next. → next card: "Look along the cable" (`barrel-adjuster-search`), shown only after this answer ◀ **this path**
 
-##### 2. Park the bike · `park-bike` · action · 1 min
+##### 2. Look along the cable · `barrel-adjuster-search` · inspection · 1 min
+
+Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.
+
+<sub>3D: focus shift_cable · show frame, handlebar, shifter_rear, rear_derailleur · view drive_side</sub>
+<sub>Shown only after the answer "I cannot find it" to `barrel-adjuster-present`.</sub>
+
+
+**Found it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
+
+- [ ] **It is on the cable** — The cable tension can be set there. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = On the cable ◀ **this path**
+- [ ] **I still cannot find it** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
+
+Learned for the bike: `drive.barrel_adjuster` = inline.
+
+##### 3. Park the bike · `park-bike` · action · 1 min
 
 Put the bike on its kickstand, or lean it against a wall at the saddle and rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls.
 
 <sub>3D: focus kickstand, rear_wheel · view whole_bike</sub>
 
-##### 3. Ride into the hardest gear · `ride-to-smallest-sprocket` · action · 2 min
+##### 4. Ride into the hardest gear · `ride-to-smallest-sprocket` · action · 2 min
 
 Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Listen to the chain, then stop and park the bike as before.
 
 <sub>3D: focus shifter_rear, smallest_sprocket · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
-##### 4. Set the outer limit (H screw) · `check-high-limit` · check · 3 min
+##### 5. Set the outer limit (H screw) · `check-high-limit` · check · 3 min
 
 The chain is on the smallest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the smallest sprocket.
 
@@ -129,13 +144,13 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 5. Ride into the easiest gear · `ride-to-largest-sprocket` · action · 2 min
+##### 6. Ride into the easiest gear · `ride-to-largest-sprocket` · action · 2 min
 
 Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once.
 
 <sub>3D: focus shifter_rear, largest_sprocket · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
-##### 6. Set the inner limit (L screw) · `check-low-limit` · safety check · 3 min
+##### 7. Set the inner limit (L screw) · `check-low-limit` · safety check · 3 min
 
 The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket.
 
@@ -151,7 +166,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met
 
-##### 7. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
+##### 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
 
 Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stop in line with the largest sprocket.
 
@@ -167,7 +182,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 8. Check the gap to the sprockets · `check-b-gap` · check · 3 min
+##### 9. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
 Keep the chain on the largest sprocket. Look from the side: the gap between the upper toothed wheel of the derailleur and the sprocket should be small, and the teeth should not touch.
 
@@ -183,7 +198,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the B screw counterclockwise a little" (b_screw rotate, counterclockwise, a little)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 9. Set the cable tension on short rides · `check-cable-tension-riding` · check · 10 min
+##### 10. Set the cable tension on short rides · `check-cable-tension-riding` · check · 10 min
 
 Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.
 
@@ -197,7 +212,7 @@ Ride slowly and shift one gear at a time, through all gears and back: every shif
   - Plays at once: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 10. Test every gear on a ride · `check-all-gears-riding` · safety check · 3 min
+##### 11. Test every gear on a ride · `check-all-gears-riding` · safety check · 3 min
 
 Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.
 
@@ -211,8 +226,8 @@ Ride once more and shift through every gear, from the hardest to the easiest and
 
 #### End
 
-Done. Nothing is left apart. Tutorial time: 30 min.
+Done. Nothing is left apart. Tutorial time: 31 min.
 
-**Journey ends:** tutorial complete. **Time:** 35 min. **Questions asked:** 2.
+**Journey ends:** tutorial complete. **Time:** 36 min. **Questions asked:** 2.
 
 ---

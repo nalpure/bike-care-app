@@ -29,7 +29,7 @@ profile:
       job_choice: diy
       choices: { hold_bike: upside_down }
       tutorial_sees:
-        barrel-adjuster-present: at-shifter-or-cable
+        barrel-adjuster-present: at-shifter
         check-high-limit: too-far-in
         check-low-limit: too-far-in
 

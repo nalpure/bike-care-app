@@ -9,7 +9,7 @@
 
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
 import {
-  combined, enumerate, findJumpTarget, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy,
+  combined, enumerate, findJumpTarget, hiddenFollowUps, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, stateFromFacts,
   type DiagnosisRun, type PathItem, type Reader, type ToolList, type ToolSetUse, type TutorialRun, mergeTools,
 } from '../../../tools/lib/resolve.js';
 import type { Content } from './content.js';
@@ -497,6 +497,8 @@ export class Journey {
     if (s.k === 'diag' || s.k === 'routine') s.tap = undefined;
     else if (s.k === 'tut') {
       const idx = s.t.path[s.t.path.length - 1];
+      const res = this.tutRun(s.t);
+      if ('ok' in res) this.unlearn(combined(res.ok)[idx], s.t.taps[String(idx)]);
       delete s.t.taps[String(idx)];
       s.t.exitAt = undefined;
     }
@@ -823,10 +825,19 @@ export class Journey {
     const limit = t.jumped ? run.sequence.length : all.length;
     let workStarted = t.path.some((i) => all[i].kind === 'step');
     const auto: Array<{ idx: number; state: string }> = [];
+    const tapAt = (j: number) => auto.find((a) => a.idx === j)?.state ?? t.taps[String(j)];
     for (let i = from + 1; i < limit; i++) {
       if (skipped.has(i)) continue;
       const it = all[i];
+      // A follow-up shows only after the answer it follows (taps so far, and answers passed on the way).
+      if (it.after && hiddenFollowUps(all, tapAt).has(i)) continue;
       if (it.kind === 'inspect' && !workStarted) {
+        // Facts already known on the bike answer it (a state's sets): not shown.
+        const known = stateFromFacts(all, i, (k) => this.bike.facts[k]);
+        if (known !== undefined && this.outcomeOf(it, known).kind === 'continue') {
+          auto.push({ idx: i, state: known });
+          continue;
+        }
         const earlier = this.session.answers[it.id];
         if (earlier !== undefined) {
           const o = this.outcomeOf(it, earlier);
@@ -997,7 +1008,7 @@ export class Journey {
     t.started = true;
     const all = combined(res.ok);
     const first = this.nextIndex(t, all, res.ok, -1);
-    this.applyAuto(t, first.auto);
+    this.applyAuto(t, first.auto, all);
     if (first.idx === undefined) {
       this.finishTutorial(t, res.ok);
       return;
@@ -1006,8 +1017,17 @@ export class Journey {
     this.onArrive(t, all, first.idx);
   }
 
-  private applyAuto(t: TutState, auto: Array<{ idx: number; state: string }>): void {
-    for (const a of auto) t.taps[String(a.idx)] = a.state;
+  private applyAuto(t: TutState, auto: Array<{ idx: number; state: string }>, all: PathItem[]): void {
+    for (const a of auto) {
+      t.taps[String(a.idx)] = a.state;
+      this.learnFrom(all[a.idx], a.state);
+    }
+  }
+
+  /** An inspection state with sets tells lasting facts: learned now, kept only through the keep screen. */
+  private learnFrom(it: PathItem, state: string | undefined): void {
+    if (it.kind !== 'inspect' || state === undefined) return;
+    for (const [k, v] of Object.entries<any>(it.def.states.find((s: any) => s.id === state)?.sets ?? {})) this.bike.facts[k] = v;
   }
 
   private onArrive(t: TutState, all: PathItem[], idx: number): void {
@@ -1029,10 +1049,25 @@ export class Journey {
     const all = combined(res.ok);
     const idx = t.path[t.path.length - 1];
     const it = all[idx];
+    // A different answer replaces what the earlier one taught.
+    this.unlearn(it, t.taps[String(idx)]);
     t.taps[String(idx)] = id;
     const o = this.outcomeOf(it, id);
-    if (it.kind === 'inspect') this.session.answers[it.id] = id;
+    if (it.kind === 'inspect') {
+      this.session.answers[it.id] = id;
+      this.learnFrom(it, id);
+    }
     t.exitAt = o.kind === 'exit' ? idx : undefined;
+    // An inspection without a default (all its states are buttons): an answer that goes on moves on at once.
+    if (it.kind === 'inspect' && it.def.default === undefined && o.kind === 'continue') this.tutNext(t);
+  }
+
+  private unlearn(it: PathItem, state: string | undefined): void {
+    if (it.kind !== 'inspect' || state === undefined) return;
+    for (const k of Object.keys(it.def.states.find((s: any) => s.id === state)?.sets ?? {})) {
+      if (this.home && k in this.home.facts) this.bike.facts[k] = this.home.facts[k];
+      else delete this.bike.facts[k];
+    }
   }
 
   private tutNext(t: TutState): void {
@@ -1046,12 +1081,14 @@ export class Journey {
     if (it.kind === 'inspect' && it.def.default !== undefined) {
       const tap = t.taps[String(idx)];
       if (tap === undefined || this.outcomeOf(it, tap).kind === 'block') {
+        this.unlearn(it, tap);
         t.taps[String(idx)] = it.def.default;
         this.session.answers[it.id] = it.def.default;
+        this.learnFrom(it, it.def.default);
       }
     }
     const nx = this.nextIndex(t, all, run, idx);
-    this.applyAuto(t, nx.auto);
+    this.applyAuto(t, nx.auto, all);
     const n = t.path.length;
     this.progressMax = Math.max(this.progressMax, n / (n + this.countRemaining(t, all, run, idx)));
     if (nx.idx === undefined) {

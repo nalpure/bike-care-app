@@ -124,7 +124,8 @@ async function walk(page: Page, p: any, j: any, shotDir: string, demoIds: string
       if (!hasVerdict && want !== undefined) {
         await click(page, `btn-${want}`);
         await shot(`card-${id}-tapped`);
-        if (!(await view(page)).startsWith('journey:card')) continue;
+        // An exit, or a tap that moved on by itself (an inspection without a default).
+        if ((await view(page)) !== v) continue;
       }
       const next = page.locator('[data-test="next"]');
       if (await next.isDisabled()) {
