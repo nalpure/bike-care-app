@@ -40,7 +40,8 @@ steps:
     minutes: 5
     text: "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet."
     question: "Slow or noisy?"
-    focus: [barrel_adjuster, chain]
+    # 3D: the card is about shifting; the solution's clip adds the barrel the bike's facts pick, with what is around it.
+    focus: [chain]
     show: [drivetrain]
     view: drive_side
     buttons:
@@ -106,7 +107,8 @@ steps:
     text: "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything."
     question: "Slow or noisy?"
     forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
-    focus: [barrel_adjuster, chain]
+    # 3D: as check-cable-tension
+    focus: [chain]
     show: [drivetrain]
     view: drive_side
     buttons:

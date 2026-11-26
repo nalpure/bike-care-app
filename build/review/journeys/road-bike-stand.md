@@ -90,7 +90,9 @@ Time shown for this bike: 29 to 32 min (depends on how the bike is held).
 
 Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
 
-<sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
+<sub>3D: focus barrel_adjuster · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, shift_cable, saddle, seat_post, drivetrain · view barrel_adjuster_close</sub>
+
+Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
 
 **Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
 
@@ -198,7 +200,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
 
-<sub>3D: focus barrel_adjuster, chain · show drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
 **Slow or noisy?**
 
@@ -303,7 +305,9 @@ Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
 
-<sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
+<sub>3D: focus barrel_adjuster · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, shift_cable, saddle, seat_post, drivetrain · view barrel_adjuster_close</sub>
+
+Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
 
 **Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
 
@@ -315,7 +319,7 @@ Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look
 
 Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.
 
-<sub>3D: focus shift_cable · show frame, handlebar, shifter_rear, rear_derailleur · view drive_side</sub>
+<sub>3D: focus shift_cable, front_barrel · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, drivetrain · view drive_side</sub>
 <sub>Shown only after the answer "I cannot find it" to `barrel-adjuster-present`.</sub>
 
 

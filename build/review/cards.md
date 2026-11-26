@@ -35,7 +35,7 @@ Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 ### Find the barrel adjuster
 
-<sub>Unit `card:inspection:barrel-adjuster-present` · hash `4b148acc8f82` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:barrel-adjuster-present` · hash `fd074b72fc9e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
@@ -43,7 +43,9 @@ Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus barrel_adjuster, shift_cable · show rear_derailleur, derailleur_hanger, rear_end · view barrel_adjuster_close</sub>
+<sub>3D: focus barrel_adjuster · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, shift_cable, saddle, seat_post, drivetrain · view barrel_adjuster_close</sub>
+
+Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
 
 **Where is it?**
 
@@ -60,7 +62,7 @@ Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look
 
 ### Look along the cable
 
-<sub>Unit `card:inspection:barrel-adjuster-search` · hash `6a3375966db2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:barrel-adjuster-search` · hash `1c3855ec6432` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
@@ -68,7 +70,7 @@ Follow the gear cable from the right shifter to the rear derailleur. On some bik
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus shift_cable · show frame, handlebar, shifter_rear, rear_derailleur · view drive_side</sub>
+<sub>3D: focus shift_cable, front_barrel · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, drivetrain · view drive_side</sub>
 
 **Found it?**
 
@@ -308,13 +310,13 @@ Animation: "Shift one gear at a time" (clip shift-to-largest)
 
 ### Set the cable tension
 
-<sub>Unit `card:step:check-cable-tension` · hash `806da8437a8a` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension` · hash `34c0cc6355e1` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 5 min</sub>
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
 
-<sub>3D: focus barrel_adjuster, chain · show drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
   - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
@@ -378,13 +380,13 @@ Ride slowly and shift one gear at a time into the easiest gear, the largest spro
 
 ### Set the cable tension on short rides
 
-<sub>Unit `card:step:check-cable-tension-riding` · hash `74d943732ba4` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension-riding` · hash `cca05def3dce` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 10 min</sub>
 
 Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.
 
-<sub>3D: focus barrel_adjuster, chain · show drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 

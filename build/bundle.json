@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "aef9960acc56ae9f",
+  "content_hash": "e8eb1dab06a0bb02",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -718,15 +718,26 @@
       "text": "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.",
       "question": "Where is it?",
       "focus": [
-        "barrel_adjuster",
-        "shift_cable"
+        "barrel_adjuster"
       ],
       "show": [
-        "rear_derailleur",
-        "derailleur_hanger",
-        "rear_end"
+        "frame",
+        "fork",
+        "front_wheel",
+        "rear_wheel",
+        "handlebar",
+        "brake_lever",
+        "shifter_rear",
+        "shift_cable",
+        "saddle",
+        "seat_post",
+        "drivetrain"
       ],
       "view": "barrel_adjuster_close",
+      "animation": {
+        "clip": "barrel-tour",
+        "caption": "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar."
+      },
       "states": [
         {
           "id": "at-derailleur",
@@ -764,13 +775,18 @@
       "text": "Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.",
       "question": "Found it?",
       "focus": [
-        "shift_cable"
+        "shift_cable",
+        "front_barrel"
       ],
       "show": [
         "frame",
+        "fork",
+        "front_wheel",
+        "rear_wheel",
         "handlebar",
+        "brake_lever",
         "shifter_rear",
-        "rear_derailleur"
+        "drivetrain"
       ],
       "view": "drive_side",
       "states": [
@@ -1215,7 +1231,6 @@
       "text": "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.",
       "question": "Slow or noisy?",
       "focus": [
-        "barrel_adjuster",
         "chain"
       ],
       "show": [
@@ -1363,7 +1378,6 @@
         "bike_upside_down"
       ],
       "focus": [
-        "barrel_adjuster",
         "chain"
       ],
       "show": [
