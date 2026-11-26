@@ -13,6 +13,7 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-20 Complete-bike lookup** (database, then an AI web search) is a stub in test builds.
 - **2026-11-25 Barrel adjuster check.** No default; three answers: at the derailleur, at the shifter, "I cannot find it". The last opens a card on where else to look ("on the cable" goes on, "still cannot find it" ends as not supported). With one at both spots the user picks either. The answer is kept on the bike if the user agrees, and the check is then skipped.
 - **2026-11-25 Barrel adjusters in 3D.** Every position the bar type has is always drawn: at the derailleur; at the shifter on flat and riser bars (drop-bar shifters have none); in the cable behind the bar on drop bars. The fact only picks the one that is marked, turned and framed; an adjuster on the cable is shown at the shifter on flat bars.
+- **2026-11-26 Two barrel adjusters, cable-tension steps in 3D.** Only the rear barrel belongs to the drivetrain group. The cable-tension cards are about shifting: focus the chain, show the drivetrain. Their solution clip adds what is around the picked barrel (derailleur: rear end, hanger, cable; front: handlebar, shifter, cable, frame), marks it and turns it; afterwards the card returns to its own scene. The barrel tour plays once; its caption says what to look for and where.
 
 ## 3D view
 

@@ -35,7 +35,13 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **The keep screen comes right after the barrel answer** when the flow has not offered it yet (the existing "once per flow" rule); if the user already saved this flow's answers, the barrel fact is saved with them. `journey.ts`.
 - **Schema shapes:** a follow-up is an outcome `{ inspect, outcomes }` (one level only); `sets` on an inspection state, only for facts no condition reads; `question` is now allowed without `default`. "I cannot find it" is never stored, so the next run asks again. `schema/`, `refs.ts`, `resolve.ts`.
 - **Fact `drive.barrel_adjuster`** (derailleur, shifter, inline), German label "Zugeinsteller". Bike-sheet answers "At the derailleur", "At the shifter", "On the cable". `content/facts.yaml`.
-- **`barrel-adjuster-search` 3D view** is a placeholder until the 3D part (cable focus, frame, handlebar, shifter and derailleur shown, `drive_side`); the parent card's 3D view is unchanged. `content/inspections.yaml`.
+- **Barrel rules in 3D** (`player/src/stage/barrel.ts`, comment above `bikeSpec`): parts and nodes `rear_barrel` (in `drivetrain`) and `front_barrel` (shifter on flat and riser bars, in the housing behind a drop bar); `barrel_adjuster` is the one the fact picks, both while unknown (turned and framed: old guess). "At the shifter" on a drop bar picks the front one.
+- **A barrel is drawn with what holds it:** the rear one whenever the derailleur is drawn, the front one with the shifter or the cable (`addHeld`, `visibility.ts`). The pick is read per card, not part of `BikeSpec`, so an answer does not rebuild the bike.
+- **Inline adjuster drawn** as a 25 mm ribbed knob on a smooth body in a straight run of housing 1 to 5 cm behind the drop bar; its "cable goes in" side faces the shifter (R-22). `derailleur.ts` (`inlineRun`), `cockpit.ts`.
+- **Clips can set `scene`** (show and focus nodes added while they play, marked in the focus colour, not red) **and `cam`** (bike space, followed smoothly), and can play `once`. `anim.ts`, `three-stage.ts`.
+- **Barrel tour** (`barrel-tour`, card `barrel-adjuster-present`): 9.7 s, close on the derailleur's barrel, along the cable 1 unit from it on the drive side, close on the front barrel; both barrels marked and tagged. The card shows the whole bike. Captions over 48 characters wrap (`.cap.long`).
+- **`barrel-adjuster-search`:** marks the cable and `front_barrel`; shows the whole bike with the drivetrain, `drive_side` framing all of it.
+- **`npm run shots`** has two more bikes: `road-inline` (drop bar, "on the cable") and `unknown-ground` (unknown bike answering the questions), per-bike answers (`tutorial`), solution pictures (`solve`) and a "marked" box. `player/e2e/slow.ts`.
 
 ## Questions for the owner
 
@@ -49,6 +55,7 @@ Each with the recommended answer.
 6. Swipes: also a right-edge swipe, and swipe up with a mouse drag? Recommended: no.
 7. Profiles: add an optional `bike_name` (for example "Corvana Strada") if the scenario names look odd in the garage? Recommended: yes, if they do.
 8. Split the brake levers into front and rear nodes? Recommended: not until brake content needs them.
+9. The note on `drive.barrel_adjuster` (`content/facts.yaml`) still says "inline is drawn at the shifter"; on drop bars it is now drawn behind the bar. Update the note in a content session? Recommended: yes.
 
 ## What still looks generated in 3D (sources to find)
 
