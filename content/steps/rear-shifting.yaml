@@ -157,7 +157,7 @@ steps:
           - { target: h_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw counterclockwise a quarter turn" }
 
   - id: check-low-limit
-    kind: safety_check
+    kind: check
     title: "Set the inner limit (L screw)"
     minutes: 3
     text: "The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket."
@@ -182,7 +182,7 @@ steps:
     kind: safety_check
     title: "Double-check the inner limit"
     minutes: 2
-    text: "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stop in line with the largest sprocket."
+    text: "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket. Warning: If this is not the case, the chain might fall towards the spokes while riding and jam the wheel."
     question: "Does it go further in?"
     tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, largest_sprocket, l_screw]
