@@ -341,6 +341,24 @@ async function bikePage(browser: import('playwright').Browser): Promise<Result> 
     expect(await page.locator('[data-test="preview"] canvas').count() === 1, 'no 3D preview on the bike page');
     await shot('02-characteristics');
 
+    // The preview opens to full screen and closes again (button and Escape); the assistant hides meanwhile.
+    const vp = page.viewportSize()!;
+    const fills = async () => {
+      const r = await page.locator('[data-test="stage"]').boundingBox();
+      return !!r && Math.abs(r.width - vp.width) < 2 && Math.abs(r.height - vp.height) < 2;
+    };
+    await click(page, 'preview-full');
+    await page.waitForTimeout(300);
+    expect(await fills(), 'the 3D preview did not open to full screen');
+    expect(!(await page.locator('[data-test="assistant"]').isVisible()), 'the assistant button shows over the full-screen 3D view');
+    await shot('02b-preview-full');
+    await click(page, 'preview-full');
+    expect(!(await fills()), 'the close button did not end the full screen');
+    await click(page, 'preview-full');
+    await page.keyboard.press('Escape');
+    expect(!(await fills()), 'Escape did not end the full screen');
+    expect(await view(page) === 'bike:road-bike-stand', `Escape in full screen left the bike page (${await view(page)})`);
+
     // Characteristics: tap a line, change the answer.
     await page.locator('[data-test="row-bike.ebike"] button.fline').click();
     await click(page, 'fact-bike.ebike-true');
@@ -442,8 +460,11 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     expect((await fab.getAttribute('data-side')) === 'left', 'the assistant button did not stick to the left edge');
     expect(await page.locator('.modal').count() === 0, 'dragging the assistant button opened it');
     await shot('02-assistant-left');
+    await page.evaluate(() => ((window as any).__fab = document.querySelector('.assist')));
     await page.locator('.tabbar button', { hasText: 'Garage' }).click();
     expect((await fab.getAttribute('data-side')) === 'left', 'the assistant button moved to another side on the garage screen');
+    // One element on every screen, so it does not slide in from its default place on a new screen.
+    expect(await page.evaluate(() => document.querySelector('.assist') === (window as any).__fab), 'a new screen made a new assistant button');
 
     // A card: swipe up for the next step; the 3D view does not count.
     await page.locator('.tabbar button', { hasText: 'Repair' }).click();
@@ -485,6 +506,22 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     const g3 = (await page.locator('.guide').boundingBox())!;
     await swipe(page, [mid, g3.y + g3.height - 30], [mid, g3.y + 20]);
     expect(await view(page) === second, `a second swipe up did not go to the next step (${await view(page)})`);
+
+    // A touchpad or mouse wheel does the same, one step per gesture; a gesture that scrolls the
+    // text does not count, so a long first card may take a second one.
+    const wheelTo = async (dy: number, want: string) => {
+      const g = (await page.locator('.guide').boundingBox())!;
+      await page.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
+      for (let i = 0; i < 6 && (await view(page)) !== want; i++) {
+        await page.mouse.wheel(0, dy);
+        await page.waitForTimeout(400); // longer than a gesture's gap
+      }
+      return view(page);
+    };
+    let wv = await wheelTo(-300, first);
+    expect(wv === first, `scrolling up did not go to the previous step (${second} -> ${wv})`);
+    wv = await wheelTo(300, second);
+    expect(wv === second, `scrolling down did not go to the next step (${first} -> ${wv})`);
 
     // Back by the left screen edge, as the arrow does.
     await swipe(page, [4, 400], [280, 410]);

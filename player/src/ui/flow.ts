@@ -287,7 +287,9 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
 
   const guide = h('div.guide', step);
   // Swipe down does what Back does, but never leaves the flow from its first screen.
-  attachSwipe(guide, () => card.nextEnabled && app.advance((x) => x.next(), 'next'), () => j.canBack && app.back());
+  const onNext = () => card.nextEnabled && app.advance((x) => x.next(), 'next');
+  const onBack = () => j.canBack && app.back();
+  attachSwipe(guide, onNext, onBack);
 
   const appEl = h(`main.app${textOnly ? '.textonly' : ''}`,
     textOnly ? null : app.stage.el,
@@ -302,6 +304,7 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
       ),
     ),
   );
+  attachWheel(appEl, guide, onNext, onBack);
   const flowTitle = card.flowKind === 'tutorial' ? app.c.jobTitle(app.c.ix.tutorials.get(card.flow)?.job ?? card.flow) : card.flowKind === 'diagnosis' ? app.c.ix.diagnoses.get(card.flow)?.symptom ?? card.flow : app.c.ix.checks.get(card.flow)?.title ?? card.flow;
   return h('section.screen',
     h('div.gtop',
@@ -356,6 +359,50 @@ function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): v
     else if (down && dy > 60) onBack();
   });
   el.addEventListener('touchcancel', () => (atEnd = atTop = false));
+}
+
+/**
+ * The same with a touchpad or a mouse wheel, anywhere on the card (text or 3D view): scrolling
+ * on past the text's end goes to the next step, scrolling up past its top to the previous one.
+ * One gesture (wheel events less than GAP apart, so a touchpad's coasting counts as part of it)
+ * moves one step at most, and none if it scrolled the text, so reading to the end of a long text
+ * never turns the page by itself. The gesture is kept across screens, because its coasting goes
+ * on into the next card. Pinch zoom (ctrl) and sideways scrolling don't count, nor the full-screen
+ * 3D explorer, where the wheel zooms.
+ */
+const WHEEL = { last: -1e9, sum: 0, read: false, done: false };
+const GAP = 220;
+const WHEEL_STEP = 80;
+
+function attachWheel(area: HTMLElement, text: HTMLElement, onNext: () => void, onBack: () => void): void {
+  area.addEventListener('wheel', (e) => {
+    const target = e.target as Element;
+    if (e.ctrlKey || target.closest?.('.stage3d.explore')) return;
+    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? text.clientHeight : 1);
+    if (Math.abs(dy) <= Math.abs(e.deltaX)) return;
+    if (e.timeStamp - WHEEL.last > GAP) Object.assign(WHEEL, { sum: 0, read: false, done: false });
+    WHEEL.last = e.timeStamp;
+    if (WHEEL.done) {
+      e.preventDefault(); // the coasting of a gesture that turned the page must not scroll the new text
+      return;
+    }
+    const room = text.scrollHeight - text.clientHeight;
+    const canScroll = dy > 0 ? text.scrollTop < room - 2 : text.scrollTop > 2;
+    if (canScroll) {
+      // this gesture reads the text and never changes the step; over the 3D view or the
+      // buttons it scrolls the text too, as it would over the text
+      WHEEL.read = true;
+      if (target.closest?.('.guide') !== text) text.scrollTop += dy;
+      return;
+    }
+    if (WHEEL.read) return;
+    if (WHEEL.sum && Math.sign(WHEEL.sum) !== Math.sign(dy)) WHEEL.sum = 0;
+    WHEEL.sum += dy;
+    if (Math.abs(WHEEL.sum) < WHEEL_STEP) return;
+    WHEEL.done = true;
+    if (WHEEL.sum > 0) onNext();
+    else onBack();
+  }, { passive: false });
 }
 
 // ---------------------------------------------------------------- exits, job, shop

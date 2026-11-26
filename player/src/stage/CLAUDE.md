@@ -46,6 +46,7 @@ stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any 
 - The tag shows `NODES[node].name` and `modelOf(node, facts)`: the values of the node's `model_fact` facts, joined. A tapped sprocket shows as the sprockets, the upper wheel as the derailleur (`previewNode`).
 - `PlaceholderStage` (`ui/stage.ts`) has no preview; check `'preview' in stage` before calling it.
 - Without WebGL the host shows a one-line note.
+- A button in the corner (`preview-full`) puts the preview over the whole screen (`setFull`, class `full`, like explore on a card); close button, Escape or leaving the preview end it. `.stage-full` on the page hides the assistant button meanwhile.
 
 ## Changing the 3D bike: recipe
 

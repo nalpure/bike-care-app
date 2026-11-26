@@ -45,6 +45,8 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Clip `shift-through-gears`** on `check-cable-tension`: pedals by hand, every gear up and back (the test ride's timing), rear wheel only. The barrel solution keeps the chain on the middle sprocket and turns the derailleur green after the quarter turn. `check-cable-tension-riding` has no card clip. `anim.ts`.
 - **`test-ride-gears`** is the `finish` of both cases, shows the whole bike with the `shift-test-ride` clip; labels "It shifts slowly or rattles in some gears" / "The chain jumps or falls off". The old "go back to the cable step" answer is gone. `content/steps/rear-shifting.yaml`.
 - **No content stops while the bike is held** any more, so "jump ahead and put the bike back" is tested only on a sandbox copy (`journeys.test.ts`, `check.test.ts`), not in the e2e browser run. Journey renamed `chain-falls-off-on-test-ride`.
+- **Garage full screen** is an in-app overlay like explore (not the browser's Fullscreen API, which Safari on iPhone lacks); same camera, so the bike is small in portrait until pinched. `three-stage.ts` (`setFull`).
+- **Wheel steps** work anywhere on the card, also over the 3D view (there it scrolls the text first); 80 px per step, a gesture ends after 220 ms without wheel events. `ui/flow.ts` (`attachWheel`).
 
 ## Questions for the owner
 

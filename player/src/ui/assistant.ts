@@ -1,6 +1,7 @@
 // The assistant button: one floating button on every screen. The user can drag it; it sticks to
 // the nearest side edge, and the place is kept in the settings. It moves out of the way (without
 // being saved) when it would cover the buttons that move a flow on: Next, Back and the answers.
+// One element serves every screen (`assistantButton`), so it moves only when its place changes.
 
 import type { App } from './app.js';
 import { h, icon, ICON } from './dom.js';
@@ -9,7 +10,7 @@ const SIZE = 52;
 const EDGE = 10;
 const PAD = 8;
 /** Elements the button must not cover. */
-const PROTECTED = '.pager, .cta, .q, .qopts, .verdict .actions, .tabbar, .helpbtn, .wh .ib, .gtop button, .tabs2, .stage3d .fabs';
+const PROTECTED = '.pager, .cta, .q, .qopts, .verdict .actions, .tabbar, .helpbtn, .wh .ib, .gtop button, .tabs2, .stage3d .fabs, .stage3d .pfabs';
 /** Text it should not cover if there is room elsewhere. */
 const TEXT = '.step h2, .step p, .step .kicker, .step .needs, .step .verdict, .step .standing';
 
@@ -35,6 +36,9 @@ function overlaps(top: number, side: 'left' | 'right', withText = false): boolea
 export function placeAssistant(app: App): void {
   const btn = document.querySelector<HTMLElement>('.assist');
   if (!btn || btn.classList.contains('dragging')) return;
+  // The first time it appears it goes straight to its place, without sliding there.
+  const first = btn.dataset.side === undefined;
+  if (first) btn.style.transition = 'none';
   const pos = app.store.data.assistant ?? { side: 'right' as const, y: 1 };
   const { min, max } = bounds();
   const want = Math.min(max, Math.max(min, pos.y * window.innerHeight));
@@ -59,6 +63,10 @@ export function placeAssistant(app: App): void {
   btn.style.top = `${Math.round(top)}px`;
   btn.style.left = side === 'left' ? `${EDGE}px` : `${window.innerWidth - EDGE - SIZE}px`;
   btn.dataset.side = side;
+  if (first) {
+    void btn.offsetTop; // apply the place before the transition comes back
+    btn.style.transition = '';
+  }
 }
 
 let scheduled = 0;
@@ -67,7 +75,22 @@ export function placeSoon(app: App): void {
   scheduled = requestAnimationFrame(() => placeAssistant(app));
 }
 
+/**
+ * The same button element for every screen, so a new screen does not make it slide in from its
+ * default place: it keeps its place and moves (with the short transition) only if the new screen
+ * needs it somewhere else.
+ */
+const made = new WeakMap<App, HTMLElement>();
+
 export function assistantButton(app: App): HTMLElement {
+  const had = made.get(app);
+  if (had) return had;
+  const btn = makeButton(app);
+  made.set(app, btn);
+  return btn;
+}
+
+function makeButton(app: App): HTMLElement {
   const btn = h('button.assist', { 'aria-label': 'Ask the assistant (AI)', 'data-test': 'assistant' }, icon(ICON.ai), h('span.ai', 'AI'));
   let down = false;
   let moved = false;

@@ -50,6 +50,13 @@ export interface PreviewOptions {
 const PREVIEW_CSS = `
 .stage3d.preview { flex: none; width: 100%; height: 100%; min-height: 0; }
 .stage3d.preview .fabs, .stage3d.preview .cap, .stage3d.preview .tags3d { display: none; }
+.stage3d .pfabs, .stage3d.no3d.preview .pfabs { display: none; }
+.stage3d .pfabs { position: absolute; right: 10px; bottom: 10px; }
+.stage3d.preview .pfabs { display: flex; }
+.stage3d.preview.full { position: fixed; inset: 0; z-index: 75; width: auto; height: auto; border-radius: 0; border: 0; }
+.stage3d.preview.full .pfabs { bottom: auto; top: calc(12px + env(safe-area-inset-top, 0px)); right: max(12px, env(safe-area-inset-right, 0px)); }
+.stage3d.preview.full .stnote { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+.stage-full .assist { visibility: hidden; }
 .stage3d .ptag { position: absolute; left: 0; top: 0; display: none; flex-direction: column; gap: 2px; max-width: min(70%, 260px); padding: 6px 9px; border-radius: 9px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); font: 600 14px/1.2 var(--f-body); pointer-events: none; will-change: transform; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
 .stage3d .ptag.on { display: flex; }
 .stage3d .ptag small { font: 500 10.5px/1.25 var(--f-mono); letter-spacing: .02em; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -69,6 +76,8 @@ export class ThreeStage implements Stage {
   private xall: HTMLElement;
   private xfocus: HTMLElement;
   private ptag: HTMLElement;
+  /** the preview's full-screen button (expand, or close while full) */
+  private pfull: HTMLButtonElement;
 
   private gl: T.WebGLRenderer | null = null;
   private scene = new T.Scene();
@@ -178,8 +187,10 @@ export class ThreeStage implements Stage {
     this.xfocus = h('button', { 'aria-pressed': 'false', onclick: () => this.setShowAll(false) }, 'Step focus');
     this.xall = h('button', { 'aria-pressed': 'true', onclick: () => this.setShowAll(true) }, 'Show all');
     this.ptag = h('div.ptag', { 'aria-live': 'polite', 'data-test': 'preview-tag' });
+    this.pfull = h('button.fab', { 'data-test': 'preview-full', onclick: () => this.setFull(!this.el.classList.contains('full')) }) as HTMLButtonElement;
     this.el = h('section.stage.stage3d', { 'aria-label': '3D view of the bike', 'data-test': 'stage' },
       this.canvas, this.noglEl, this.tagsEl, this.ptag, this.capEl, this.noteEl,
+      h('div.pfabs', this.pfull),
       h('div.fabs',
         h('button.fab', { 'aria-label': 'Replay animation', 'data-test': 'replay', onclick: () => this.replay() }, icon(ICON_REPLAY)),
         h('button.fab', { 'aria-label': 'Explore in 3D', 'data-test': 'explore', onclick: () => this.enterExplore() }, icon(ICON_EXPAND)),
@@ -190,6 +201,7 @@ export class ThreeStage implements Stage {
       ),
       h('div.xui.xbottom', h('div.pcard', { 'aria-live': 'polite' }, this.pname, this.palias, this.pdesc)),
     );
+    this.setFull(false);
 
     try {
       this.gl = new T.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
@@ -263,6 +275,11 @@ export class ThreeStage implements Stage {
     document.fonts?.ready.then(() => this.model?.redrawDecal());
     new ResizeObserver(() => this.resize()).observe(this.el);
     document.addEventListener('keydown', (e) => {
+      if (this.previewing && this.el.classList.contains('full')) {
+        e.stopPropagation();
+        if (e.key === 'Escape') this.setFull(false);
+        return;
+      }
       if (!this.exploring) return;
       e.stopPropagation();
       if (e.key === 'Escape') this.exitExplore();
@@ -806,6 +823,7 @@ export class ThreeStage implements Stage {
     if (!this.previewing) return;
     this.previewing = false;
     clearTimeout(this.idleTimer);
+    this.setFull(false);
     this.el.classList.remove('preview');
     this.clearPick();
     if (this.controls) {
@@ -817,6 +835,19 @@ export class ThreeStage implements Stage {
     this.cardKey = '';
     this.noteEl.textContent = '';
     this.applyFocus();
+    this.resize();
+  }
+
+  /**
+   * The garage preview over the whole screen (like explore on a card), or back in its box. The
+   * bike keeps turning and taps still show tags. Escape, the close button or leaving the preview
+   * ends it. The assistant button is hidden meanwhile (`.stage-full` on the page).
+   */
+  private setFull(on: boolean): void {
+    this.el.classList.toggle('full', on);
+    document.documentElement.classList.toggle('stage-full', on);
+    this.pfull.replaceChildren(icon(on ? ICON_CLOSE : ICON_EXPAND));
+    this.pfull.setAttribute('aria-label', on ? 'Close full screen' : 'Full screen');
     this.resize();
   }
 
