@@ -16,6 +16,7 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-26 Two barrel adjusters, cable-tension steps in 3D.** Only the rear barrel belongs to the drivetrain group. The cable-tension cards are about shifting: focus the chain, show the drivetrain. Their solution clip adds what is around the picked barrel (derailleur: rear end, hanger, cable; front: handlebar, shifter, cable, frame), marks it and turns it; afterwards the card returns to its own scene. The barrel tour plays once; its caption says what to look for and where.
 - **2026-11-26 Last test ride.** Both ways of holding the bike end with one safety check, "Test ride the gears" (the stand's "Test every gear" is gone). Two problems, both to a shop: slow or rattling (ride there carefully), the chain jumps or falls off (do not ride). Each exit names the likely causes: the inner cable or its housing, a hanger or derailleur bent too little to see.
 - **2026-11-26 L limit.** Setting the L screw is a plain check; the hand push that follows (`check-low-limit-by-hand`) is the safety check for the inner limit.
+- **2026-11-26 One button per result.** A card has as many buttons as different results (fix, exit, severity), which may be one; a single button is worded as the answer to the question. The check rejects two buttons with the same result.
 - **2026-11-26 Shifting stops on a tap.** The cable-tension card shows the pedals turning and the chain going through every gear until a problem is tapped; then the pedals stand still while the barrel turns.
 
 ## 3D view

@@ -125,6 +125,7 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 | `exit-jump-outside` | pass | Exits in procedures and in a tutorial's checks run before anything is opened and never jump. |
 | `block-needs-fix` | pass | Every block has a good state to tap once fixed (with a question, Next is that state). |
 | `button-needs-text` | pass | Every button has text, block or exit. |
+| `same-outcome` | pass | Each button leads somewhere different: no two buttons of a step, and no two states of an inspection call that block or exit, have the same result. |
 | `generic-needs-text` | pass | if_unknown: generic comes with generic_text. |
 | `animation-kind` | pass | An animation is a generic motion or a named clip. |
 | `item-kind` | pass | Each case item is exactly one of step, procedure, inspect. |

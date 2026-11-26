@@ -111,6 +111,13 @@ export function checkText(x: Ctx, text: string | undefined, loc: Loc, needs: str
   }
 }
 
+/** JSON with sorted keys and undefined left out, so two equal values give the same string however they were written. */
+function canonical(v: unknown): string {
+  return JSON.stringify(v, (_k, val) =>
+    val && typeof val === 'object' && !Array.isArray(val) ? Object.fromEntries(Object.keys(val).sort().map((k) => [k, val[k]])) : val,
+  );
+}
+
 function sentences(text: string): number {
   return text.split(/[.!?](?:\s|$)/).filter((s) => s.trim().length > 0).length;
 }
@@ -282,6 +289,15 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
     (b.solution ?? []).forEach((a: any, j: number) => checkAnimation(x, a, sub(bl, 'solution', j)));
     if (b.label && b.label.split(/\s+/).length > 10) warn(x, bl, 'label-too-long', `Button label has more than 10 words: "${b.label}".`);
   });
+  // One button per result: buttons that lead to the same thing are one answer (owner, 2026-11-26).
+  const seen = new Map<string, string>();
+  buttons.forEach((b, i) => {
+    const key = canonical({ text: b.text, block: b.block, exit: b.exit, solution: b.solution, skips: b.skips, when: b.when });
+    const first = seen.get(key);
+    if (first !== undefined) {
+      err(x, sub(loc, 'buttons', i), 'same-outcome', `Buttons "${first}" and "${b.label}" lead to the same result. Merge them into one button, or make what follows differ.`);
+    } else seen.set(key, b.label);
+  });
   if (!step.question && buttons.some((b) => b.block) && !buttons.some((b) => !b.block && !b.exit)) {
     err(x, sub(loc, 'buttons'), 'block-needs-fix', 'A step with a block button needs a good state the user can tap once it is fixed.');
   }
@@ -421,6 +437,17 @@ function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'se
     if (sh && list === 'finish') err(x, ol, 'jump-in-finish', 'finish runs only on the good path, so its exits cannot jump ahead.');
     if (sh && !stepOrProcedureExists(x.c, sh)) err(x, ol, 'unknown-show-how-from', `show_how_from "${sh}" is neither a step nor a procedure.`);
     checkText(x, o.block ?? o.exit?.text, ol);
+  }
+  // One button per result: two states that end the same way, and tell nothing different about the bike, are one answer.
+  const ends = new Map<string, string>();
+  for (const [s, o] of Object.entries<any>(outcomes)) {
+    if (typeof o !== 'object' || (o.block === undefined && o.exit === undefined)) continue;
+    const sets = insp.def.states.find((st: any) => st.id === s)?.sets;
+    const key = canonical({ block: o.block, exit: o.exit, sets });
+    const first = ends.get(key);
+    if (first !== undefined) {
+      err(x, sub(loc, 'outcomes', s), 'same-outcome', `States "${first}" and "${s}" of ${id} end the same way. Map them to different results, or give the inspection one state for both.`);
+    } else ends.set(key, s);
   }
   const dflt = insp.def.default;
   if (dflt !== undefined && dflt in outcomes && outcomes[dflt] !== 'continue') {

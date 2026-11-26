@@ -469,6 +469,31 @@ describe('rules broken on purpose', () => {
     expect(e[0].message).toContain('unknown key "on"');
   });
 
+  it('two buttons of a step with the same result', () => {
+    const r = sandbox()
+      .edit('content/steps/rear-shifting.yaml', (d) => {
+        const s = step(d, 'test-ride-gears');
+        s.buttons[1].exit = { ...s.buttons[0].exit };
+      })
+      .run();
+    const e = errorsOf(r, 'same-outcome');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].id).toBe('step test-ride-gears');
+    expect(e[0].message).toContain('"The chain jumps or falls off"');
+  });
+
+  it('two states of an inspection call that end the same way; several continues are fine', () => {
+    const exit = { kind: 'shop_only', text: 'Your gears still do not shift cleanly. A shop can check it.' };
+    const r = sandbox()
+      .edit('content/tutorials/adjust-rear-shifting/cases/wheel-free.yaml', (d) => {
+        d.finish.unshift({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': { exit }, 'slow-to-smaller': { exit: { ...exit } } } });
+      })
+      .run();
+    const e = errorsOf(r, 'same-outcome');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].message).toContain('"slow-to-bigger" and "slow-to-smaller"');
+  });
+
   it('a valid skip adds a path without the skipped step', () => {
     const r = sandbox()
       .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))

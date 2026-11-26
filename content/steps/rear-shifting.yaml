@@ -191,7 +191,7 @@ steps:
     animation: { target: rear_derailleur, motion: push, direction: towards_spokes, amount: "as far as it goes", caption: "Push the derailleur in by hand" }
     buttons:
       - id: too-far-in
-        label: "Past the largest sprocket, towards the spokes"
+        label: "Yes, past the largest sprocket"
         block: "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again."
         solution:
           - { target: l_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw clockwise a quarter turn" }

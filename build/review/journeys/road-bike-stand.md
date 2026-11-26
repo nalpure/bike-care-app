@@ -174,7 +174,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 **Does it go further in?**
 
-- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **UNSAFE until fixed**: Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again. Next means it is fixed now
+- [ ] **Yes, past the largest sprocket** <sub>`too-far-in`</sub> → **UNSAFE until fixed**: Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again. Next means it is fixed now
   - Plays at once: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 

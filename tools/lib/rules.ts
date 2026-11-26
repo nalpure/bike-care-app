@@ -46,6 +46,7 @@ export const STATIC_RULES: Record<string, string> = {
   'exit-jump-outside': "Exits in procedures and in a tutorial's checks run before anything is opened and never jump.",
   'block-needs-fix': 'Every block has a good state to tap once fixed (with a question, Next is that state).',
   'button-needs-text': 'Every button has text, block or exit.',
+  'same-outcome': 'Each button leads somewhere different: no two buttons of a step, and no two states of an inspection call that block or exit, have the same result.',
   'generic-needs-text': 'if_unknown: generic comes with generic_text.',
   'animation-kind': 'An animation is a generic motion or a named clip.',
   'item-kind': 'Each case item is exactly one of step, procedure, inspect.',

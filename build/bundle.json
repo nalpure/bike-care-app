@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "416c754c56a67b34",
+  "content_hash": "3b4275e70ece1f17",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1591,7 +1591,7 @@
       "buttons": [
         {
           "id": "too-far-in",
-          "label": "Past the largest sprocket, towards the spokes",
+          "label": "Yes, past the largest sprocket",
           "block": "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again.",
           "solution": [
             {

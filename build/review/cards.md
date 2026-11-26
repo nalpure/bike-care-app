@@ -448,7 +448,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Double-check the inner limit
 
-<sub>Unit `card:step:check-low-limit-by-hand` · hash `c1365daf93e2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit-by-hand` · hash `1f26d6276a73` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 2 min</sub>
 
@@ -460,7 +460,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 Animation: "Push the derailleur in by hand" (rear_derailleur push, towards_spokes, as far as it goes)
 
-- [ ] **Past the largest sprocket, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again.
+- [ ] **Yes, past the largest sprocket** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again.
   - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 
 <sub>Appears in:</sub>
