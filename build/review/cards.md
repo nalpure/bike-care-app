@@ -426,9 +426,9 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Set the inner limit (L screw)
 
-<sub>Unit `card:step:check-low-limit` · hash `3b79aff7c8d6` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit` · hash `ac7756e385e2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
-<sub>safety check · 3 min</sub>
+<sub>check · 3 min</sub>
 
 The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket.
 
@@ -436,7 +436,7 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 <sub>3D: focus upper_pulley, largest_sprocket, l_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 
-- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → **BLOCK** (Next stays disabled): Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line.
+- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → The chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line.
   - Show solution: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → The chain rattles or slips off the largest sprocket. With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn at a time, until the toothed wheel is in line.
   - Show solution: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
@@ -448,11 +448,11 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Double-check the inner limit
 
-<sub>Unit `card:step:check-low-limit-by-hand` · hash `b99f0fb23fc2` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-low-limit-by-hand` · hash `e7133a8e9708` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 2 min</sub>
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stop in line with the largest sprocket.
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket. Warning: If this is not the case, the chain might fall towards the spokes while riding and jam the wheel.
 
 Tools. Needed: none. One of these, depending on your part: A tool for the small screws on the rear derailleur. Helpful: none.
 

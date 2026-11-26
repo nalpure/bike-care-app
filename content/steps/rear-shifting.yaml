@@ -169,7 +169,7 @@ steps:
     buttons:
       - id: too-far-in
         label: "Further in, towards the spokes"
-        block: "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line."
+        text: "The chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line."
         solution:
           - { target: l_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw clockwise a quarter turn" }
       - id: too-far-out

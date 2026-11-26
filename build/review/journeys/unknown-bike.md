@@ -152,7 +152,7 @@ Ride slowly and shift one gear at a time into the easiest gear, the largest spro
 
 <sub>3D: focus shifter_rear, largest_sprocket · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
-##### 7. Set the inner limit (L screw) · `check-low-limit` · safety check · 3 min
+##### 7. Set the inner limit (L screw) · `check-low-limit` · check · 3 min
 
 The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket.
 
@@ -162,7 +162,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 **Not in line?**
 
-- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → **UNSAFE until fixed**: Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line. Next means it is fixed now
+- [ ] **Further in, towards the spokes** <sub>`too-far-in`</sub> → The chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line.
   - Plays at once: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 - [ ] **Further out, away from the spokes** <sub>`too-far-out`</sub> → The chain rattles or slips off the largest sprocket. With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn at a time, until the toothed wheel is in line. ◀ **this path**
   - Plays at once: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
@@ -170,7 +170,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 ##### 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stop in line with the largest sprocket.
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket. Warning: If this is not the case, the chain might fall towards the spokes while riding and jam the wheel.
 
 <sub>3D: focus upper_pulley, largest_sprocket, l_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 

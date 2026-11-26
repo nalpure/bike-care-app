@@ -114,8 +114,8 @@ describe('engine', () => {
 
   it('on a step with a question, Next is never locked and means the goal is met', () => {
     const j = setup(() => {});
-    const at = walk(j, 'check-low-limit').at;
-    expect(at?.kind === 'card' && at.card.question).toBe('Not in line?');
+    const at = walk(j, 'check-low-limit-by-hand').at;
+    expect(at?.kind === 'card' && at.card.question).toBe('Does it go further in?');
     expect(at?.kind === 'card' && at.card.nextAnswers && at.card.nextEnabled).toBe(true);
     // a block: the solution comes with it, Next stays pressable and means "fixed now"
     j.tap('too-far-in');
@@ -125,7 +125,7 @@ describe('engine', () => {
     expect(blocked.kind === 'card' && blocked.card.solution?.length).toBe(1);
     j.next();
     const after = j.screen();
-    expect(after.kind === 'card' && after.card.id).toBe('check-low-limit-by-hand');
+    expect(after.kind === 'card' && after.card.id).toBe('check-b-gap');
   });
 
   it('an inspection with a default: in a tutorial its state has no button and Next takes it', () => {

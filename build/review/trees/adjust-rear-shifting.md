@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `33feb57088d4` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `c4d200de8ff2` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -56,8 +56,7 @@ Time of the complete path: 26 min (stand), 27 min (stand), 27 min (hang), 28 min
 4. Shift to the hardest gear · `shift-to-smallest-sprocket` · action <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 5. Set the outer limit (H screw) · `check-high-limit` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 6. Shift to the easiest gear · `shift-to-largest-sprocket` · action <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-7. Set the inner limit (L screw) · `check-low-limit` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-   - buttons: `too-far-in` (BLOCK) · `too-far-out`
+7. Set the inner limit (L screw) · `check-low-limit` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - buttons: `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
@@ -80,8 +79,7 @@ Time of the complete path: 31 min (ground), 32 min (ground)
 4. Ride into the hardest gear · `ride-to-smallest-sprocket` · action <sub>apart: nothing</sub>
 5. Set the outer limit (H screw) · `check-high-limit` · check <sub>apart: nothing</sub>
 6. Ride into the easiest gear · `ride-to-largest-sprocket` · action <sub>apart: nothing</sub>
-7. Set the inner limit (L screw) · `check-low-limit` · safety check <sub>apart: nothing</sub>
-   - buttons: `too-far-in` (BLOCK) · `too-far-out`
+7. Set the inner limit (L screw) · `check-low-limit` · check <sub>apart: nothing</sub>
 8. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: nothing</sub>
    - buttons: `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: nothing</sub>

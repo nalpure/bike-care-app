@@ -515,6 +515,7 @@ describe('rules broken on purpose', () => {
       })
       .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'] = 'in-line'))
       .edit('profiles/unknown-bike.yaml', (d) => (d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'] = 'in-line'))
+      .edit('profiles/city-derailleur-no-stand.yaml', (d) => delete d.profile.journeys[0].tutorial_sees['check-low-limit-by-hand'])
       .run();
     expect(errorsOf(r, 'profile-missing-sees'), show(r)).toHaveLength(1);
   });

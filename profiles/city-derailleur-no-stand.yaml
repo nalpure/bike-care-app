@@ -32,6 +32,7 @@ profile:
         barrel-adjuster-present: at-shifter
         check-high-limit: too-far-in
         check-low-limit: too-far-in
+        check-low-limit-by-hand: too-far-in
 
     - id: bent-derailleur
       title: "The derailleur looks bent, so the owner goes to a shop"

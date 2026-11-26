@@ -8,7 +8,7 @@ sequence:
   - step: shift-to-smallest-sprocket
   - step: check-high-limit               # block while the derailleur sits outside the smallest sprocket
   - step: shift-to-largest-sprocket
-  - step: check-low-limit                # block while the derailleur sits past the largest sprocket
+  - step: check-low-limit
   - step: check-low-limit-by-hand        # double-check: block while a push takes it past the largest sprocket
   - step: check-b-gap
   - step: check-cable-tension
