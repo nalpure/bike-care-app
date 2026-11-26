@@ -28,7 +28,7 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **`check-low-limit` got the same `show` as `check-high-limit`** (it had only the new wording, no `show`, so it kept the old fade look), and so did `check-low-limit-by-hand` (the hand-pushed derailleur is shown, not marked).
 - **`shift-to-largest-sprocket` marks the sprocket and chain, not the shifter**, like `shift-to-smallest-sprocket`.
 - **Rides and the test-ride inspection show the whole bike** as a node list (frame, fork, wheels, handlebar, saddle, seat post, shift cable, drivetrain): `show: [bike]` draws nothing. Focus is the shifter (and the sprocket).
-- **`shift-test-ride` has default `fine`** ("Slow or rattling?") and a goal sentence; the sentence also shows in the diagnosis and the routine check, which keep all three buttons.
+- **`shift-test-ride` has default `fine`** ("Slow or rattling?") and a goal sentence; the sentence also shows in the diagnosis and the routine check, which keep all three buttons. Since 2026-11-26 no tutorial calls it; default and question are kept for a later one.
 - **`check-b-gap`:** the manual pointer moved to `details` and shows only when the derailleur model is known (before: "your derailleur" as fallback).
 - **Texts:** goals appended as "should ..." to the texts; "all good" buttons removed from all rear-shifting checks, and profile `tutorial_sees` for them removed. Mechanics and problem texts unchanged. Tests that used the old-style buttons now build an old-style step in the test.
 - **A tap that goes on moves to the next card at once** on every tutorial inspection without a default, so also on the hanger check ("It hangs straight down"). Its meaning text is then not shown. `journey.ts` (`tutTap`).
@@ -42,6 +42,9 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Barrel tour** (`barrel-tour`, card `barrel-adjuster-present`): 9.7 s, close on the derailleur's barrel, along the cable 1 unit from it on the drive side, close on the front barrel; both barrels marked and tagged. The card shows the whole bike. Captions over 48 characters wrap (`.cap.long`).
 - **`barrel-adjuster-search`:** marks the cable and `front_barrel`; shows the whole bike with the drivetrain, `drive_side` framing all of it.
 - **`npm run shots`** has two more bikes: `road-inline` (drop bar, "on the cable") and `unknown-ground` (unknown bike answering the questions), per-bike answers (`tutorial`), solution pictures (`solve`) and a "marked" box. `player/e2e/slow.ts`.
+- **Clip `shift-through-gears`** on `check-cable-tension`: pedals by hand, every gear up and back (the test ride's timing), rear wheel only. The barrel solution keeps the chain on the middle sprocket and turns the derailleur green after the quarter turn. `check-cable-tension-riding` has no card clip. `anim.ts`.
+- **`test-ride-gears`** is the `finish` of both cases, shows the whole bike with the `shift-test-ride` clip; labels "It shifts slowly or rattles in some gears" / "The chain jumps or falls off". The old "go back to the cable step" answer is gone. `content/steps/rear-shifting.yaml`.
+- **No content stops while the bike is held** any more, so "jump ahead and put the bike back" is tested only on a sandbox copy (`journeys.test.ts`, `check.test.ts`), not in the e2e browser run. Journey renamed `chain-falls-off-on-test-ride`.
 
 ## Questions for the owner
 
@@ -55,7 +58,6 @@ Each with the recommended answer.
 6. Swipes: also a right-edge swipe, and swipe up with a mouse drag? Recommended: no.
 7. Profiles: add an optional `bike_name` (for example "Corvana Strada") if the scenario names look odd in the garage? Recommended: yes, if they do.
 8. Split the brake levers into front and rear nodes? Recommended: not until brake content needs them.
-9. The note on `drive.barrel_adjuster` (`content/facts.yaml`) still says "inline is drawn at the shifter"; on drop bars it is now drawn behind the bar. Update the note in a content session? Recommended: yes.
 
 ## What still looks generated in 3D (sources to find)
 

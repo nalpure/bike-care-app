@@ -5,7 +5,7 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 44 fully approved
+- Cards: 0 of 43 fully approved
 - Flow trees: 0 of 3 fully approved
 - Journeys: 0 of 8 fully approved
 
@@ -29,11 +29,10 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:step:shift-to-smallest-sprocket` | Shift to the hardest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:shift-to-largest-sprocket` | Shift to the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-cable-tension` | Set the cable tension | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:check-all-gears` | Test every gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:ride-to-smallest-sprocket` | Ride into the hardest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:ride-to-largest-sprocket` | Ride into the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-cable-tension-riding` | Set the cable tension on short rides | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:check-all-gears-riding` | Test every gear on a ride | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:test-ride-gears` | Test ride the gears | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-high-limit` | Set the outer limit (H screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-low-limit` | Set the inner limit (L screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-low-limit-by-hand` | Double-check the inner limit | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
@@ -62,7 +61,7 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `journey:city-derailleur-no-stand/bent-derailleur` | The derailleur looks bent, so the owner goes to a shop | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:city-derailleur-no-stand/routine-check-slow-shifting` | Routine check finds slow shifting; the to-do item opens the guide | — | ⬜ not reviewed | [journeys/city-derailleur-no-stand.md](journeys/city-derailleur-no-stand.md) |
 | `journey:e-trekking-hub-gear/hub-gear-not-covered` | Gears do not shift cleanly on a hub gear | — | ⬜ not reviewed | [journeys/e-trekking-hub-gear.md](journeys/e-trekking-hub-gear.md) |
-| `journey:road-bike-stand/chain-touches-spokes` | Adjusting in the stand, but the chain touches the spokes at the end | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |
+| `journey:road-bike-stand/chain-falls-off-on-test-ride` | Adjusting in the stand, but the chain falls off on the test ride | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |
 | `journey:road-bike-stand/no-barrel-adjuster` | Opens the tutorial directly, but finds no barrel adjuster | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |
 | `journey:road-bike-stand/routine-check-dirty-chain` | Routine check finds a dirty chain | — | ⬜ not reviewed | [journeys/road-bike-stand.md](journeys/road-bike-stand.md) |
 | `journey:unknown-bike/test-rides` | Slow shifting, adjusted between short test rides | — | ⬜ not reviewed | [journeys/unknown-bike.md](journeys/unknown-bike.md) |

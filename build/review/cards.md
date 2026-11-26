@@ -133,7 +133,6 @@ Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
 <sub>Appears in:</sub>
 
-- <sub>tutorial adjust-rear-shifting: case wheel-free, finish; when holding: stand, hang, upside_down; before it: nothing apart</sub>
 - <sub>diagnosis gears-shift-badly: check 3; before it: nothing apart</sub>
 - <sub>routine check routine-check: item 3; before it: nothing apart</sub>
 
@@ -218,7 +217,6 @@ Animation: "Open the clamp while you hold the bike" (stand_clamp rotate, counter
 <sub>Appears in:</sub>
 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand; via `release-bike`; before it: bike_in_stand</sub>
-- <sub>tutorial adjust-rear-shifting: case wheel-free, after a jump ahead; when holding: stand; via `release-bike`; before it: bike_in_stand</sub>
 
 ### Take the bike down
 
@@ -239,7 +237,6 @@ Animation: "Lift the bike off and set it down" (bike push, down, until the rear 
 <sub>Appears in:</sub>
 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: hang; via `release-bike`; before it: bike_hung</sub>
-- <sub>tutorial adjust-rear-shifting: case wheel-free, after a jump ahead; when holding: hang; via `release-bike`; before it: bike_hung</sub>
 
 ### Turn the bike back over
 
@@ -258,7 +255,6 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 <sub>Appears in:</sub>
 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: upside_down; via `release-bike`; before it: bike_upside_down</sub>
-- <sub>tutorial adjust-rear-shifting: case wheel-free, after a jump ahead; when holding: upside_down; via `release-bike`; before it: bike_upside_down</sub>
 
 ### Park the bike
 
@@ -310,7 +306,7 @@ Animation: "Shift one gear at a time" (clip shift-to-largest)
 
 ### Set the cable tension
 
-<sub>Unit `card:step:check-cable-tension` · hash `34c0cc6355e1` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension` · hash `825f49f70849` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 5 min</sub>
 
@@ -318,29 +314,12 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
 
 <sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
+Animation: "Shift through every gear and back" (clip shift-through-gears)
+
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
   - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
 - [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
   - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
-
-### Test every gear
-
-<sub>Unit `card:step:check-all-gears` · hash `166a019c8d82` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>safety check · 2 min</sub>
-
-Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.
-
-> _When drive.rear_speeds is known:_ Your bike has {drive.rear_speeds} gears at the rear.
-
-<sub>3D: focus chain · show drivetrain · view drive_side</sub>
-
-- [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
-- [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike`
 
 <sub>Appears in:</sub>
 
@@ -399,26 +378,29 @@ Ride slowly and shift one gear at a time, through all gears and back: every shif
 
 - <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
 
-### Test every gear on a ride
+### Test ride the gears
 
-<sub>Unit `card:step:check-all-gears-riding` · hash `1485341d5c3b` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:test-ride-gears` · hash `5108730604a3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
-Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.
+Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
 
 > _When drive.rear_speeds is known:_ Your bike has {drive.rear_speeds} gears at the rear.
 
-<sub>3D: focus chain · show drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+
+Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 
-- [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Park the bike, go back to the cable step and adjust as it says, then ride again. If it does not get better, a shop can check the cable.
-- [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Stop riding: the chain can catch in the spokes and lock the wheel. Push the bike to a shop.
+- [ ] **It shifts slowly or rattles in some gears** <sub>`rattles`</sub> → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause.
+- [ ] **The chain jumps or falls off** <sub>`chain-off`</sub> → **EXIT, unsafe**: Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump.
 
 <sub>Appears in:</sub>
 
-- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
+- <sub>tutorial adjust-rear-shifting: case wheel-free, finish; when holding: stand, hang, upside_down; before it: nothing apart</sub>
+- <sub>tutorial adjust-rear-shifting: case test-rides, finish; when holding: ground; before it: nothing apart</sub>
 
 ### Set the outer limit (H screw)
 

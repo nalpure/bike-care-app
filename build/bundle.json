@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "e8eb1dab06a0bb02",
+  "content_hash": "9835bcb6707cf720",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -212,7 +212,7 @@
         "inline"
       ],
       "safety": false,
-      "note": "Where the rear gear cable's barrel adjuster is. Never asked as a question: the check barrel-adjuster-present (and its follow-up barrel-adjuster-search) sets it, and once known the check is not shown again. The 3D view draws the barrel there; inline is drawn at the shifter.",
+      "note": "Where the rear gear cable's barrel adjuster is. Never asked as a question: the check barrel-adjuster-present (and its follow-up barrel-adjuster-search) sets it, and once known the check is not shown again. The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars.",
       "answers": {
         "derailleur": {
           "en": "At the derailleur",
@@ -1237,6 +1237,10 @@
         "drivetrain"
       ],
       "view": "drive_side",
+      "animation": {
+        "clip": "shift-through-gears",
+        "caption": "Shift through every gear and back"
+      },
       "buttons": [
         {
           "id": "slow-easier",
@@ -1267,45 +1271,6 @@
               "caption": "Turn the barrel adjuster clockwise a quarter turn"
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "check-all-gears",
-      "kind": "safety_check",
-      "title": "Test every gear",
-      "minutes": 2,
-      "text": "Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.",
-      "question": "Something wrong?",
-      "details": [
-        {
-          "needs": [
-            "drive.rear_speeds"
-          ],
-          "text": "Your bike has {drive.rear_speeds} gears at the rear."
-        }
-      ],
-      "focus": [
-        "chain"
-      ],
-      "show": [
-        "drivetrain"
-      ],
-      "view": "drive_side",
-      "buttons": [
-        {
-          "id": "rattles",
-          "label": "It rattles or jumps in some gears",
-          "text": "Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable."
-        },
-        {
-          "id": "chain-off",
-          "label": "The chain falls off, or touches the spokes",
-          "exit": {
-            "kind": "unsafe",
-            "text": "Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop.",
-            "show_how_from": "release-bike"
-          }
         }
       ]
     },
@@ -1418,11 +1383,11 @@
       ]
     },
     {
-      "id": "check-all-gears-riding",
+      "id": "test-ride-gears",
       "kind": "safety_check",
-      "title": "Test every gear on a ride",
+      "title": "Test ride the gears",
       "minutes": 3,
-      "text": "Ride once more and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.",
+      "text": "Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.",
       "question": "Something wrong?",
       "forbidden_while": [
         "bike_in_stand",
@@ -1441,21 +1406,36 @@
         "chain"
       ],
       "show": [
+        "frame",
+        "fork",
+        "front_wheel",
+        "rear_wheel",
+        "handlebar",
+        "saddle",
+        "seat_post",
+        "shift_cable",
         "drivetrain"
       ],
       "view": "drive_side",
+      "animation": {
+        "clip": "shift-test-ride",
+        "caption": "Shift one gear at a time while you ride"
+      },
       "buttons": [
         {
           "id": "rattles",
-          "label": "It rattles or jumps in some gears",
-          "text": "Park the bike, go back to the cable step and adjust as it says, then ride again. If it does not get better, a shop can check the cable."
+          "label": "It shifts slowly or rattles in some gears",
+          "exit": {
+            "kind": "shop_only",
+            "text": "Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause."
+          }
         },
         {
           "id": "chain-off",
-          "label": "The chain falls off, or touches the spokes",
+          "label": "The chain jumps or falls off",
           "exit": {
             "kind": "unsafe",
-            "text": "Stop riding: the chain can catch in the spokes and lock the wheel. Push the bike to a shop."
+            "text": "Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump."
           }
         }
       ]
@@ -1840,30 +1820,12 @@
                 "step": "check-cable-tension"
               },
               {
-                "step": "check-all-gears"
-              },
-              {
                 "procedure": "release-bike"
               }
             ],
             "finish": [
               {
-                "inspect": "shift-test-ride",
-                "outcomes": {
-                  "fine": "continue",
-                  "slow-to-bigger": {
-                    "exit": {
-                      "kind": "shop_only",
-                      "text": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-                    }
-                  },
-                  "slow-to-smaller": {
-                    "exit": {
-                      "kind": "shop_only",
-                      "text": "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-                    }
-                  }
-                }
+                "step": "test-ride-gears"
               }
             ]
           }
@@ -1900,12 +1862,13 @@
               },
               {
                 "step": "check-cable-tension-riding"
-              },
-              {
-                "step": "check-all-gears-riding"
               }
             ],
-            "finish": []
+            "finish": [
+              {
+                "step": "test-ride-gears"
+              }
+            ]
           }
         }
       ],

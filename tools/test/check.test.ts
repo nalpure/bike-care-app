@@ -10,6 +10,13 @@ import { errorsOf, REPO, Sandbox, show, step } from './helpers.js';
 
 let box: Sandbox | undefined;
 const sandbox = () => (box = new Sandbox());
+/** An unsafe exit on a safety check done while the bike is held (no content has one since 2026-11-26). */
+const heldStop = (showHowFrom?: string) => (d: any) =>
+  step(d, 'check-low-limit-by-hand').buttons.push({
+    id: 'caught',
+    label: 'It catches in the spokes',
+    exit: { kind: 'unsafe', text: 'Do not ride. Take it to a shop.', ...(showHowFrom ? { show_how_from: showHowFrom } : {}) },
+  });
 
 const ERROR_LINE = /^ERROR [^\s|]+(:\d+)? \| [^|]+ \| [a-z0-9-]+ \| .+$/;
 
@@ -24,7 +31,7 @@ describe('the real content', () => {
     const r = runCheck(REPO, { write: false });
     expect(show(r)).toBe('');
     const t = r.flows!.tutorials.find((f) => f.id === 'adjust-rear-shifting')!;
-    expect(t.paths).toHaveLength(29);
+    expect(t.paths).toHaveLength(24);
     expect(t.paths.filter((p) => p.variant.ending === 'complete').map((p) => p.id)).toEqual([
       'derailleur.mechanical.stand',
       'derailleur.mechanical.stand--barrel-adjuster-present-cant-find',
@@ -42,7 +49,8 @@ describe('the real content', () => {
     };
     expect(shown('derailleur.mechanical.stand')).not.toContain('barrel-adjuster-search');
     expect(shown('derailleur.mechanical.stand--barrel-adjuster-present-cant-find')).toContain('barrel-adjuster-search');
-    expect(t.paths.filter((p) => p.variant.ending === 'jump')).toHaveLength(3);
+    // no stop is reached while the bike is held (2026-11-26), so no path jumps ahead
+    expect(t.paths.filter((p) => p.variant.ending === 'jump')).toHaveLength(0);
     expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(6).fill('not_covered'));
     const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
     expect(d.paths).toHaveLength(6);
@@ -54,7 +62,7 @@ describe('the real content', () => {
       'city-derailleur-no-stand/bent-derailleur': 'shop: Have the rear gears checked',
       'city-derailleur-no-stand/routine-check-slow-shifting': '1 to-do item(s)',
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
-      'road-bike-stand/chain-touches-spokes': 'stop, jump ahead, bike put back, shop',
+      'road-bike-stand/chain-falls-off-on-test-ride': 'exit (unsafe) at test-ride-gears',
       'road-bike-stand/no-barrel-adjuster': 'exit (not_covered) at barrel-adjuster-search',
       'road-bike-stand/routine-check-dirty-chain': '1 to-do item(s)',
       'unknown-bike/test-rides': 'tutorial complete',
@@ -107,7 +115,13 @@ describe('the real content', () => {
   });
 
   it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {
-    const r = runCheck(REPO, { write: false });
+    // No tutorial calls an inspection after the work any more, so the test puts one in the finish.
+    const r = sandbox()
+      .edit('content/tutorials/adjust-rear-shifting/cases/wheel-free.yaml', (d) => {
+        d.finish.unshift({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } });
+      })
+      .run();
+    expect(show(r)).toBe('');
     const md = r.profiles.get('city-derailleur-no-stand')!.markdown;
     expect(md).toContain('`derailleur-alignment` · not shown again');
     // The finish test ride comes after the work, so it is shown again although the diagnosis asked it.
@@ -157,7 +171,7 @@ describe('review units and the ledger', () => {
     expect(ids).toContain('card:inspection:derailleur-alignment');
     expect(ids).toContain('card:choice:hold_bike');
     expect(ids).toContain('tree:tutorial:adjust-rear-shifting');
-    expect(ids).toContain('journey:road-bike-stand/chain-touches-spokes');
+    expect(ids).toContain('journey:road-bike-stand/chain-falls-off-on-test-ride');
     // Each step appears once in the card sheet, however many paths use it.
     const cards = r.outputs!.files.get('build/review/cards.md')!;
     expect(cards.match(/`check-high-limit`/g)?.length ?? 0).toBeLessThanOrEqual(2);
@@ -189,7 +203,7 @@ describe('review units and the ledger', () => {
     const after = b.run();
     expect(unit(after, card.id).byRole.mechanic.status).toBe('changed');
     expect(unit(after, tree.id).byRole.mechanic.status).toBe('approved');
-    expect(unit(after, 'journey:road-bike-stand/chain-touches-spokes').unit.hash).not.toBe(unit(before, 'journey:road-bike-stand/chain-touches-spokes').unit.hash);
+    expect(unit(after, 'journey:road-bike-stand/chain-falls-off-on-test-ride').unit.hash).not.toBe(unit(before, 'journey:road-bike-stand/chain-falls-off-on-test-ride').unit.hash);
   });
 
   it('reordering steps invalidates the flow tree', () => {
@@ -227,15 +241,12 @@ describe('rules broken on purpose', () => {
 
   it('an exit reached with the bike held, without show_how_from', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => {
-        const b = step(d, 'check-all-gears').buttons.find((x: any) => x.exit);
-        delete b.exit.show_how_from;
-      })
+      .edit('content/steps/rear-shifting.yaml', heldStop())
       .run();
     const e = errorsOf(r, 'exit-needs-show-how-from');
     expect(e.length, show(r)).toBe(3); // stand, hang, upside down
     expect(e[0].file).toBe('content/steps/rear-shifting.yaml');
-    expect(e[0].id).toContain('check-all-gears');
+    expect(e[0].id).toContain('check-low-limit-by-hand');
     expect(e.map((x) => x.message).join(' ')).toMatch(/bike_in_stand/);
   });
 
@@ -270,7 +281,7 @@ describe('rules broken on purpose', () => {
 
   it('a show_how_from that does not lie ahead', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-all-gears').buttons.find((x: any) => x.exit).exit.show_how_from = 'shift-to-smallest-sprocket'))
+      .edit('content/steps/rear-shifting.yaml', heldStop('shift-to-smallest-sprocket'))
       .run();
     expect(errorsOf(r, 'show-how-from-not-ahead').length, show(r)).toBeGreaterThan(0);
   });
@@ -470,11 +481,11 @@ describe('rules broken on purpose', () => {
 
   it('a skip over a safety check', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-all-gears']))
+      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-high-limit').buttons[0].skips = ['check-low-limit-by-hand']))
       .run();
     const e = errorsOf(r, 'skip-unsafe');
     expect(e, show(r)).toHaveLength(1);
-    expect(e[0].id).toBe('step check-b-gap');
+    expect(e[0].id).toBe('step check-high-limit');
   });
 
   it('a skip of a step that is not ahead', () => {

@@ -32,8 +32,8 @@ profile:
   answers: {}
   tools: [bike-stand]
   journeys:
-    - id: chain-touches-spokes
-      title: "Adjusting in the stand, but the chain touches the spokes at the end"
+    - id: chain-falls-off-on-test-ride
+      title: "Adjusting in the stand, but the chain falls off on the test ride"
       start: { diagnosis: gears-shift-badly }
       sees:
         derailleur-alignment: straight
@@ -44,8 +44,7 @@ profile:
       tutorial_sees:
         barrel-adjuster-present: at-derailleur
         check-high-limit: too-far-out
-        check-all-gears: chain-off
-      after_stop: show_how
+        test-ride-gears: chain-off
 
     - id: no-barrel-adjuster
       title: "Opens the tutorial directly, but finds no barrel adjuster"

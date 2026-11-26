@@ -55,7 +55,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-bigger.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 29 to 32 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 27 to 32 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -82,7 +82,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: none. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: Soft mat or old blanket. (✓ = the owner has it)
 
-Time shown for this bike: 29 to 32 min (depends on how the bike is held).
+Time shown for this bike: 27 to 32 min (depends on how the bike is held).
 
 #### Steps
 
@@ -204,6 +204,8 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
 
 <sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
+Animation: "Shift through every gear and back" (clip shift-through-gears)
+
 **Slow or noisy?**
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
@@ -212,19 +214,7 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
   - Plays at once: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 10. Test every gear · `check-all-gears` · safety check · 2 min
-
-Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.
-
-<sub>3D: focus chain · show drivetrain · view drive_side</sub>
-
-**Something wrong?**
-
-- [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
-- [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike`
-- [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
-
-##### 11. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
+##### 10. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
 
 Turn the bike back onto its wheels. With a heavy bike, ask someone to help.
 
@@ -236,25 +226,25 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 ##### Finish
 
-##### 12. Test ride the gears · `shift-test-ride` · inspection · 3 min
+##### 11. Test ride the gears · `test-ride-gears` · safety check · 3 min
 
-Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.
+Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
 
-<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
 
 Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
-**Slow or rattling?**
+**Something wrong?**
 
-- [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
-- [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it.
-- [ ] **Next** (no answer) — The rear gears shift well. → continue ◀ **this path**
+- [ ] **It shifts slowly or rattles in some gears** <sub>`rattles`</sub> → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause.
+- [ ] **The chain jumps or falls off** <sub>`chain-off`</sub> → **EXIT, unsafe**: Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump.
+- [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
 #### End
 
-Done. Nothing is left apart. Tutorial time: 27 min.
+Done. Nothing is left apart. Tutorial time: 25 min.
 
-**Journey ends:** tutorial complete. **Time:** 32 min. **Questions asked:** 1.
+**Journey ends:** tutorial complete. **Time:** 30 min. **Questions asked:** 1.
 
 ---
 

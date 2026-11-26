@@ -24,8 +24,8 @@ const URL = `http://localhost:${PORT}/`;
 
 interface Result { id: string; ending: string; expected: string; error?: string }
 
-/** Profile journeys that keep the 3D view (both orientations): a bike held in a stand, a jump ahead and putting it back. */
-const WITH_3D = new Set(['road-bike-stand/chain-touches-spokes']);
+/** Profile journeys that keep the 3D view (both orientations): a bike held in a stand, putting it back, and the test ride. */
+const WITH_3D = new Set(['road-bike-stand/chain-falls-off-on-test-ride']);
 
 function expectedEndings(): Map<string, string> {
   const md = readFileSync(join(REPO, 'build/report.md'), 'utf8');

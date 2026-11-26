@@ -98,7 +98,7 @@ facts:
     type: enum
     values: [derailleur, shifter, inline]
     safety: false
-    note: "Where the rear gear cable's barrel adjuster is. Never asked as a question: the check barrel-adjuster-present (and its follow-up barrel-adjuster-search) sets it, and once known the check is not shown again. The 3D view draws the barrel there; inline is drawn at the shifter."
+    note: "Where the rear gear cable's barrel adjuster is. Never asked as a question: the check barrel-adjuster-present (and its follow-up barrel-adjuster-search) sets it, and once known the check is not shown again. The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars."
     answers:
       derailleur: { en: "At the derailleur", de: "Am Schaltwerk" }
       shifter: { en: "At the shifter", de: "Am Schalthebel" }

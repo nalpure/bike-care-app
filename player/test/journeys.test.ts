@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runCheck } from '../../tools/lib/run.js';
-import { REPO } from '../../tools/test/helpers.js';
+import { REPO, Sandbox, show, step } from '../../tools/test/helpers.js';
 import { Content } from '../src/engine/content.js';
 import { Journey, Session } from '../src/engine/journey.js';
 import { memoryKV, Store } from '../src/engine/store.js';
@@ -28,13 +28,40 @@ describe('profile journeys in the player', () => {
     expect(got.minutes).toBe(expected.minutes);
   });
 
-  it('covers a block, an unsafe exit with jump ahead, and a check not repeated after the diagnosis', () => {
+  it('covers a block, an unsafe exit, and a check not repeated after the diagnosis', () => {
     const results = cases.map(({ p, j }) => ({ id: `${p.id}/${j.id}`, d: drive(content, p, j) }));
     expect(results.some((r) => r.d.blocks > 0)).toBe(true);
-    const jump = results.find((r) => r.id === 'road-bike-stand/chain-touches-spokes')!;
-    expect(jump.d.ending).toBe('stop, jump ahead, bike put back, shop');
+    const stop = results.find((r) => r.id === 'road-bike-stand/chain-falls-off-on-test-ride')!;
+    expect(stop.d.ending).toBe('exit (unsafe) at test-ride-gears');
     // derailleur-alignment is answered in the diagnosis and not shown again in the tutorial
-    expect(jump.d.screens.filter((s) => s === 'card derailleur-alignment')).toHaveLength(1);
+    expect(stop.d.screens.filter((s) => s === 'card derailleur-alignment')).toHaveLength(1);
+  });
+
+  it('an unsafe exit with the bike in the stand jumps ahead to putting it back', () => {
+    // No content reaches a stop while the bike is held any more (2026-11-26), so the test adds one to a copy.
+    const box = new Sandbox();
+    try {
+      const r = box
+        .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-low-limit-by-hand').buttons.push({
+          id: 'caught', label: 'It catches in the spokes',
+          exit: { kind: 'unsafe', text: 'Do not ride. Put the bike back on its wheels and take it to a shop.', show_how_from: 'release-bike' },
+        }))
+        .edit('profiles/road-bike-stand.yaml', (d) => {
+          const j = d.profile.journeys.find((x: any) => x.id === 'chain-falls-off-on-test-ride');
+          const sees = { ...j.tutorial_sees, 'check-low-limit-by-hand': 'caught' };
+          delete sees['test-ride-gears'];
+          d.profile.journeys.push({ ...j, id: 'caught-in-stand', tutorial_sees: sees, after_stop: 'show_how' });
+        })
+        .run();
+      expect(show(r)).toBe('');
+      const p = r.content!.profiles.get('road-bike-stand')!.def;
+      const j = p.journeys.find((x: any) => x.id === 'caught-in-stand');
+      const d = drive(new Content(JSON.parse(r.bundle!)), p, j);
+      expect(d.error).toBeUndefined();
+      expect(d.ending).toBe('stop, jump ahead, bike put back, shop');
+    } finally {
+      box.dispose();
+    }
   });
 
   it('a routine check creates a to-do item that opens its tutorial', () => {

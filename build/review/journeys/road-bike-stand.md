@@ -10,9 +10,9 @@ Road bike, 11-speed mechanical rear derailleur. The owner has a work stand.
 | Answers when asked | none |
 | Tools with them | Bike work stand |
 
-## Journey 1: Adjusting in the stand, but the chain touches the spokes at the end
+## Journey 1: Adjusting in the stand, but the chain falls off on the test ride
 
-<sub>journey id `chain-touches-spokes`</sub>
+<sub>journey id `chain-falls-off-on-test-ride`</sub>
 
 ### Symptom: "My gears don't shift cleanly"
 
@@ -53,7 +53,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-smaller.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 29 to 32 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 27 to 32 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -80,7 +80,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: Bike work stand ✓. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
 
-Time shown for this bike: 29 to 32 min (depends on how the bike is held).
+Time shown for this bike: 27 to 32 min (depends on how the bike is held).
 
 #### Steps
 
@@ -202,6 +202,8 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
 
 <sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
+Animation: "Shift through every gear and back" (clip shift-through-gears)
+
 **Slow or noisy?**
 
 - [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
@@ -210,27 +212,7 @@ Turn the pedals by hand and shift one gear at a time, through all gears and back
   - Plays at once: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 10. Test every gear · `check-all-gears` · safety check · 2 min
-
-Turn the pedals and shift through every gear, from the hardest to the easiest and back. Watch and listen: every gear should run quietly, and the chain should stay on the sprockets.
-
-> Your bike has 11 gears at the rear.
-
-<sub>3D: focus chain · show drivetrain · view drive_side</sub>
-
-**Something wrong?**
-
-- [ ] **It rattles or jumps in some gears** <sub>`rattles`</sub> → Go back to the cable step and adjust as it says, then shift through again. If it does not get better, a shop can check the cable.
-- [ ] **The chain falls off, or touches the spokes** <sub>`chain-off`</sub> → **EXIT, unsafe**: Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop. · jump: `release-bike` ◀ **this path**
-- [ ] **Next** (no answer) → the goal in the text is met
-
-**Stop screen (unsafe)** (the progress bar does not move): "Do not ride: the chain can catch in the spokes and lock the wheel. Put the bike back on its wheels and take it to a shop."
-
-Buttons: [Show me how to put it back] [Find a shop]
-
-The owner taps "Show me how to put it back". **Jumped ahead** in the same tutorial to `unclamp-from-stand`; 0 step(s) skipped. The progress bar moves forward once.
-
-##### 11. Take the bike out of the stand · `unclamp-from-stand` · action · 1 min · from procedure `release-bike`
+##### 10. Take the bike out of the stand · `unclamp-from-stand` · action · 1 min · from procedure `release-bike`
 
 Hold the bike, open the stand clamp and put the bike on its wheels. With a heavy bike, ask someone to help.
 
@@ -242,7 +224,27 @@ Tools: Bike work stand
 
 <sub>State: −bike_in_stand → now: nothing apart</sub>
 
-#### End
+##### Finish
+
+##### 11. Test ride the gears · `test-ride-gears` · safety check · 3 min
+
+Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
+
+> Your bike has 11 gears at the rear.
+
+<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+
+Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
+
+**Something wrong?**
+
+- [ ] **It shifts slowly or rattles in some gears** <sub>`rattles`</sub> → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause.
+- [ ] **The chain jumps or falls off** <sub>`chain-off`</sub> → **EXIT, unsafe**: Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump. ◀ **this path**
+- [ ] **Next** (no answer) → the goal in the text is met
+
+**Stop screen (unsafe)** (the progress bar does not move): "Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump."
+
+Buttons: [Find a shop]
 
 **Shop summary** (to show or tell the mechanic):
 
@@ -250,13 +252,10 @@ Tools: Bike work stand
 - Job: Adjust the rear gears
 - Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
 - Found: Slow or rattling when shifting to harder gears (`shift-test-ride`: slow-to-smaller)
-- Found during the tutorial: "The chain falls off, or touches the spokes" (`check-all-gears`)
-- Already done: tutorial `adjust-rear-shifting` up to the stop; the bike is back on its wheels
+- Stopped at: `test-ride-gears`, "chain-off"
 - Price: no estimate yet
 
-Tutorial time: 24 min.
-
-**Journey ends:** stop, jump ahead, bike put back, shop. **Time:** 29 min. **Questions asked:** 0.
+**Journey ends:** exit (unsafe) at test-ride-gears. **Time:** 30 min. **Questions asked:** 0.
 
 ---
 
@@ -286,7 +285,7 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: Bike work stand ✓. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
 
-Time shown for this bike: 29 to 32 min (depends on how the bike is held).
+Time shown for this bike: 27 to 32 min (depends on how the bike is held).
 
 #### Steps
 

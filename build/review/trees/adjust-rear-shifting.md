@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `b30345e1be3c` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `33feb57088d4` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -47,7 +47,7 @@ Not shown again when the user already answered them in this session, for example
 
 ## Case `wheel-free` (stand · hang · upside_down)
 
-Time of the complete path: 28 min (stand), 29 min (stand), 29 min (hang), 30 min (hang), 28 min (upside_down), 29 min (upside_down)
+Time of the complete path: 26 min (stand), 27 min (stand), 27 min (hang), 28 min (hang), 26 min (upside_down), 27 min (upside_down)
 
 3. procedure `hold-bike` <sub>apart: nothing</sub>
    - when choice.hold_bike is stand: Clamp the bike in the stand · `clamp-in-stand` (+bike_in_stand)
@@ -62,25 +62,15 @@ Time of the complete path: 28 min (stand), 29 min (stand), 29 min (hang), 30 min
    - buttons: `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 10. Set the cable tension · `check-cable-tension` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-11. Test every gear · `check-all-gears` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-   - buttons: `rattles` · `chain-off` (EXIT unsafe → jump to `release-bike`)
-12. procedure `release-bike` <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
+11. procedure `release-bike` <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - when choice.hold_bike is stand: Take the bike out of the stand · `unclamp-from-stand` (−bike_in_stand)
    - when choice.hold_bike is hang: Take the bike down · `take-bike-down` (−bike_hung)
    - when choice.hold_bike is upside_down: Turn the bike back over · `turn-bike-upright` (−bike_upside_down)
 
 **Finish** (good path only; skipped after an exit):
 
-13. Test ride the gears · `shift-test-ride` · inspection <sub>apart: nothing</sub>
-   - `fine` → continue
-   - `slow-to-bigger` → **EXIT, shop only**: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-   - `slow-to-smaller` → **EXIT, shop only**: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-
-Jump-ahead paths:
-
-- `derailleur.mechanical.stand--unsafe-check-all-gears-chain-off--jump`: exit at `check-all-gears` with bike_in_stand → jumps to `unclamp-from-stand`, ends with nothing apart and the shop summary
-- `derailleur.mechanical.hang--unsafe-check-all-gears-chain-off--jump`: exit at `check-all-gears` with bike_hung → jumps to `take-bike-down`, ends with nothing apart and the shop summary
-- `derailleur.mechanical.upside-down--unsafe-check-all-gears-chain-off--jump`: exit at `check-all-gears` with bike_upside_down → jumps to `turn-bike-upright`, ends with nothing apart and the shop summary
+12. Test ride the gears · `test-ride-gears` · safety check <sub>apart: nothing</sub>
+   - buttons: `rattles` (EXIT shop_only) · `chain-off` (EXIT unsafe)
 
 ## Case `test-rides` (ground)
 
@@ -96,8 +86,11 @@ Time of the complete path: 31 min (ground), 32 min (ground)
    - buttons: `too-far-in` (BLOCK)
 9. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: nothing</sub>
 10. Set the cable tension on short rides · `check-cable-tension-riding` · check <sub>apart: nothing</sub>
-11. Test every gear on a ride · `check-all-gears-riding` · safety check <sub>apart: nothing</sub>
-   - buttons: `rattles` · `chain-off` (EXIT unsafe)
+
+**Finish** (good path only; skipped after an exit):
+
+11. Test ride the gears · `test-ride-gears` · safety check <sub>apart: nothing</sub>
+   - buttons: `rattles` (EXIT shop_only) · `chain-off` (EXIT unsafe)
 
 ## Exits before the first step
 

@@ -12,18 +12,7 @@ sequence:
   - step: check-low-limit-by-hand        # double-check: block while a push takes it past the largest sprocket
   - step: check-b-gap
   - step: check-cable-tension
-  - step: check-all-gears                # its unsafe exit: show_how_from release-bike
   - procedure: release-bike              # clears the holding label
 
 finish:
-  - inspect: shift-test-ride
-    outcomes:
-      fine: continue
-      slow-to-bigger:
-        exit:
-          kind: shop_only
-          text: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
-      slow-to-smaller:
-        exit:
-          kind: shop_only
-          text: "Your gears still do not shift cleanly. You can ride carefully, but the cable may be worn or dirty. A shop can check it."
+  - step: test-ride-gears                # safety check; both problems end at a shop
