@@ -164,7 +164,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 ##### 7. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
 
-Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket. Warning: If this is not the case, the chain might fall towards the spokes while riding and jam the wheel.
+Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket.
 
 <sub>3D: focus upper_pulley, largest_sprocket, l_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 

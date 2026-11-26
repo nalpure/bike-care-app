@@ -182,7 +182,7 @@ steps:
     kind: safety_check
     title: "Double-check the inner limit"
     minutes: 2
-    text: "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket. Warning: If this is not the case, the chain might fall towards the spokes while riding and jam the wheel."
+    text: "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket."
     question: "Does it go further in?"
     tools: { one_of: [derailleur-screw-tool] }
     focus: [upper_pulley, largest_sprocket, l_screw]

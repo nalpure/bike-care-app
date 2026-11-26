@@ -6,7 +6,7 @@
 
 ## Summary
 
-- Result: **passed**, 1 warning(s)
+- Result: **passed**, 0 warning(s)
 - Files validated: 18
 - 3D names checked against: `build/3d-manifest.json`
 - Bundle: `build/bundle.json`
@@ -165,9 +165,3 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 - Price for job `derailleur-check-at-shop` is a placeholder.
 - Service interval for job `adjust-rear-shifting` (1500 km) is an unverified placeholder.
 - Service interval for job `chain-care` (300 km) is an unverified placeholder.
-
-## Issues
-
-```
-WARNING content/steps/rear-shifting.yaml:185 | step check-low-limit-by-hand | text-too-long | Step text has more than two sentences. Writing rule: one action, at most two short sentences.
-```
