@@ -5,8 +5,12 @@
 
 import * as T from 'three';
 import { GAP_BIG, GAP_OK, GAP_SMALL, rAt, type BikeSpec } from './bike.js';
+import type { BarrelPick } from './barrel.js';
 import { derLayout, fitFor } from './derailleur.js';
 import { CLIPS, MOTIONS, NODES, partsOf, type Pose } from './registry.js';
+import { barrelClose, type ViewPose } from './views.js';
+
+type V3 = [number, number, number];
 
 export const ease = (x: number) => {
   x = Math.min(1, Math.max(0, x));
@@ -64,6 +68,13 @@ export interface Frame {
   /** the stand's clamp lever, rad; positive closes */
   lever?: number;
   node?: NodeMotion;
+  /**
+   * What the clip adds to the card's scene while it plays (clips only): nodes drawn as well, and nodes marked in the
+   * focus colour. When the clip stops (or another card shows), the card's own scene comes back.
+   */
+  scene?: { show?: string[]; focus?: string[] };
+  /** where the camera is and what it looks at, in bike space (clips only); the stage follows it smoothly */
+  cam?: { p: V3; t: V3 };
 }
 
 /** The parts a frame's `status` colours. */
@@ -85,6 +96,8 @@ const HANGER_ROOT = 0.4;
 export interface Anim {
   /** one loop, in seconds */
   duration: number;
+  /** plays once and then stays on its last frame (Replay starts it again), instead of looping */
+  once?: boolean;
   frame(t: number): Frame;
 }
 
@@ -99,6 +112,10 @@ export interface AnimCtx {
   zOf(i: number): number;
   /** centre of a part in bike space, for generic motions */
   centerOf(part: string): [number, number, number] | undefined;
+  /** the barrel adjuster the bike's facts pick (barrel.ts) */
+  barrel: BarrelPick;
+  /** the gear cable's path in bike space, from the shifter to the derailleur (empty without a cable) */
+  route: V3[];
 }
 
 /**
@@ -236,6 +253,13 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       const goal = Math.max(0, Math.min(n - 1, sign < 0 ? m + 1 : m - 1));
       const zb = ctx.zOf(m);
       const zg = ctx.zOf(goal);
+      // The barrel the facts pick is marked and drawn with what is around it, so it does not float: at the
+      // derailleur the rear end, the hanger and the cable; at the front the handlebar, the shifter, the cable
+      // and the frame (its head tube is what the close-up shows). Owner decision 2026-11-26.
+      const at = ctx.barrel.main;
+      const scene = at === 'rear_barrel'
+        ? { show: ['rear_end', 'derailleur_hanger', 'rear_derailleur', 'shift_cable'], focus: [at] }
+        : { show: ['handlebar', 'shifter_rear', 'shift_cable', 'frame'], focus: [at] };
       return {
         duration: 5.4,
         frame: (t) => ({
@@ -244,7 +268,22 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
           screws: { barrel_adjuster: sign * QUARTER * ramp(t, 1.4, 2.8) },
           status: t < 3.9 ? 'bad' : 'good',
           arrow: t > 1.2 && t < 3.0 ? { node: 'barrel_adjuster', dir: sign } : undefined,
+          scene,
         }),
+      };
+    }
+
+    case 'barrel-tour': {
+      // Where to look for the barrel adjuster: both barrels marked, the camera close on the derailleur's, then
+      // along the gear cable to the front one (on the shifter, or behind a drop bar), and it stays there.
+      const route = tourRoute(ctx.route);
+      const from = barrelClose(spec, 'rear_barrel');
+      const to = barrelClose(spec, 'front_barrel');
+      const scene = { focus: ['rear_barrel', 'front_barrel'] };
+      return {
+        duration: TOUR.end,
+        once: true,
+        frame: (t) => ({ cam: tourCam(route, from, to, t), scene }),
       };
     }
 
@@ -270,6 +309,69 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
     }
   }
   return undefined;
+}
+
+/** The barrel tour's timing (s): close on the derailleur's barrel until `go`, along the cable until `arrive`, then close on the front one. */
+export const TOUR = { go: 1.6, leave: 3.0, near: 6.0, arrive: 8.2, end: 9.7 };
+/** How far the camera follows the cable from (bike units), and from which side: the drive side, a little behind and above. */
+const TOUR_DIST = 1.0;
+const TOUR_DIR: V3 = (() => {
+  const d: V3 = [-0.25, 0.4, 1];
+  const l = Math.hypot(...d);
+  return [d[0] / l, d[1] / l, d[2] / l];
+})();
+
+/**
+ * The cable's route from the derailleur to the shifter, evened out for a camera to follow: points 1 cm apart
+ * along it, each the mean of its neighbours within 12 cm, so loops and bends of the housing do not shake the view.
+ */
+export function tourRoute(route: V3[]): V3[] {
+  const r = route.slice().reverse();
+  if (r.length < 2) return r;
+  const even: V3[] = [r[0]];
+  const step = 0.02;
+  let left = step;
+  for (let i = 1; i < r.length; i++) {
+    let a = r[i - 1];
+    const b = r[i];
+    let d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    while (d >= left) {
+      const k = left / d;
+      a = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+      even.push(a);
+      d -= left;
+      left = step;
+    }
+    left -= d;
+  }
+  even.push(r[r.length - 1]);
+  const w = 12;
+  return even.map((_, i) => {
+    const lo = Math.max(0, i - w);
+    const hi = Math.min(even.length - 1, i + w);
+    const s: V3 = [0, 0, 0];
+    for (let j = lo; j <= hi; j++) for (let c = 0; c < 3; c++) s[c] += even[j][c];
+    return [s[0] / (hi - lo + 1), s[1] / (hi - lo + 1), s[2] / (hi - lo + 1)];
+  });
+}
+
+/** The tour's camera at time t: the close-up `from`, blended into following the route, blended into the close-up `to`. */
+export function tourCam(route: V3[], from: ViewPose, to: ViewPose, t: number): { p: V3; t: V3 } {
+  const mix = (a: V3, b: V3, k: number): V3 => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
+  const u = ramp(t, TOUR.go, TOUR.arrive);
+  let p: V3 = from.p;
+  let look: V3 = from.t;
+  if (route.length) {
+    const f = u * (route.length - 1);
+    const i = Math.min(route.length - 2, Math.floor(f));
+    const at = route.length > 1 ? mix(route[i], route[i + 1], f - i) : route[0];
+    const follow = { p: [at[0] + TOUR_DIR[0] * TOUR_DIST, at[1] + TOUR_DIR[1] * TOUR_DIST, at[2] + TOUR_DIR[2] * TOUR_DIST] as V3, t: at };
+    const kIn = ramp(t, TOUR.go, TOUR.leave);
+    p = mix(from.p, follow.p, kIn);
+    look = mix(from.t, follow.t, kIn);
+  }
+  const kOut = ramp(t, TOUR.near, TOUR.arrive);
+  return { p: mix(p, to.p, kOut), t: mix(look, to.t, kOut) };
 }
 
 /** The way of holding the bike that a motion on the whole bike starts from. */

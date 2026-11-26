@@ -42,6 +42,16 @@ export function shownParts(hot: Iterable<string>, show: string[], partsOf: (node
   return out;
 }
 
+/**
+ * Small parts drawn with what holds them: each part of `held` is added when one of its holders is drawn and the part
+ * is on this bike (the barrel adjusters, barrel.ts: the rear one with the derailleur, the front one with the shifter or
+ * the cable). Returns the same set.
+ */
+export function addHeld(shown: Set<string>, held: Record<string, string[]>, has: (part: string) => boolean): Set<string> {
+  for (const [part, holders] of Object.entries(held)) if (has(part) && holders.some((h) => shown.has(h))) shown.add(part);
+  return shown;
+}
+
 export function visTargets(c: VisCard): { targets: Map<string, VisTarget>; frameGone: boolean } {
   const out = c.shown ? 0 : FADED;
   const targets = new Map<string, VisTarget>();

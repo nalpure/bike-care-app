@@ -13,7 +13,8 @@ import type { Stage, StageView } from '../ui/stage.js';
 import { ease, makeAnim, partStatus, placeMoved, wheelStep, type Anim, type AnimCtx, type Frame, type ScrewNode } from './anim.js';
 import { Contours } from './contour.js';
 import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
-import { shownParts, visTargets } from './visibility.js';
+import { addHeld, shownParts, visTargets } from './visibility.js';
+import { BARREL_FACT, BARREL_HOLDERS, barrelPick, pickedParts, turnKey, turnPart, type BarrelPick } from './barrel.js';
 import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
 import { mixPose, poseVals, type PoseVals } from './pose.js';
 import { fitPose, FIT_VIEWS, previewPose, viewPose, type ViewPose } from './views.js';
@@ -133,6 +134,14 @@ export class ThreeStage implements Stage {
   private contours: Contours | null = null;
   /** a clip time held for pictures (holdClip), else null */
   private heldT: number | null = null;
+  /** the barrel adjuster the card's facts pick (barrel.ts) */
+  private barrels: BarrelPick = barrelPick('flat', undefined);
+  /** the card's own marked and drawn parts; a clip's Frame.scene adds to them while it plays */
+  private cardHot = new Set<string>();
+  private cardShown: Set<string> | null = null;
+  private sceneKey = '';
+  /** the camera follows a clip's Frame.cam */
+  private clipCam = false;
 
   // camera
   private look = new T.Vector3(0, 0.9, 0.1);
@@ -316,7 +325,8 @@ export class ThreeStage implements Stage {
       this.rebuild(spec);
       this.cardKey = '';
     }
-    const key = JSON.stringify([v.id, v.focus, v.show, v.view, v.animation, v.labels, v.labelsBefore]);
+    const pick = barrelPick(spec.bar, v.facts[BARREL_FACT]);
+    const key = JSON.stringify([v.id, v.focus, v.show, v.view, v.animation, v.labels, v.labelsBefore, pick]);
     const prevChosen = this.view.chosen;
     this.view = v;
     if (key === this.cardKey) {
@@ -326,7 +336,9 @@ export class ThreeStage implements Stage {
     }
     this.cardKey = key;
     this.sol = null;
+    this.barrels = pick;
     const m = this.model!;
+    const parts = (n: string) => pickedParts(n, pick, partsOf);
 
     // Unknown names: whole bike, no highlight, a warning. Never block the card.
     const problems: string[] = [];
@@ -359,7 +371,7 @@ export class ThreeStage implements Stage {
     const focus = fallback ? [] : v.focus.filter((f) => f !== 'bike');
     this.hotParts = new Set();
     for (const f of focus) {
-      const ps = partsOf(f).filter((p) => m.has(p));
+      const ps = parts(f).filter((p) => m.has(p));
       if (!ps.length) console.debug(`[stage] ${f} is not on this bike`);
       for (const p of ps) this.hotParts.add(p);
     }
@@ -367,8 +379,11 @@ export class ThreeStage implements Stage {
     // A card without show keeps the old rule (the rest of the bike stays, faded).
     this.shown = null;
     if (v.show && !fallback) {
-      this.shown = shownParts(this.hotParts, v.show, partsOf, (p) => m.has(p));
+      this.shown = addHeld(shownParts(this.hotParts, v.show, parts, (p) => m.has(p)), BARREL_HOLDERS, (p) => m.has(p));
     }
+    this.cardHot = new Set(this.hotParts);
+    this.cardShown = this.shown && new Set(this.shown);
+    this.sceneKey = '';
     const viewName = fallback ? 'whole_bike' : v.view ?? 'whole_bike';
     this.ctxAll = viewName === 'whole_bike' || this.hotParts.size === 0;
     this.applyFocus();
@@ -382,7 +397,7 @@ export class ThreeStage implements Stage {
     this.stepAnim = !fallback && a ? { anim: makeAnim(a, this.animCtx()), caption: a.caption ?? '', view: a.view } : null;
     this.t0 = nowS();
     this.cardView = this.poseFor(viewName);
-    if (!this.exploring) this.goCam(this.stepAnim?.view ? viewPose(this.stepAnim.view, m.spec) : this.cardView, this.first);
+    if (!this.exploring) this.goCam(this.stepAnim?.view ? this.vpose(this.stepAnim.view) : this.cardView, this.first);
     this.buildTags(focus);
     this.setNote();
     this.first = false;
@@ -400,7 +415,7 @@ export class ThreeStage implements Stage {
     this.sol = { list, i: 0, t0: nowS() };
     if (this.exploring) this.exitExplore();
     const vn = list[0].view;
-    if (vn) this.goCam(viewPose(vn, this.model.spec), false);
+    if (vn) this.goCam(this.vpose(vn), false);
   }
 
   replay(): void {
@@ -412,7 +427,7 @@ export class ThreeStage implements Stage {
   private stopSolution(): void {
     const hadView = this.sol?.list.some((p) => p.view);
     this.sol = null;
-    if (hadView && !this.exploring && this.model) this.goCam(this.stepAnim?.view ? viewPose(this.stepAnim.view, this.model.spec) : this.cardView, false);
+    if (hadView && !this.exploring && this.model) this.goCam(this.stepAnim?.view ? this.vpose(this.stepAnim.view) : this.cardView, false);
   }
 
   /** Without WebGL: the names of the parts in focus and the caption, as text. */
@@ -459,6 +474,8 @@ export class ThreeStage implements Stage {
         const part = m.parts.get(p);
         return part ? [part.center.x, part.center.y, part.center.z] : undefined;
       },
+      barrel: this.barrels,
+      route: m.cableRoute,
     };
   }
 
@@ -499,9 +516,11 @@ export class ThreeStage implements Stage {
     const m = this.model!;
     this.tagsEl.replaceChildren();
     this.tagList = [];
-    for (const n of nodes.slice(0, 4)) {
-      const obj = m.anchors.get(n) ?? m.anchors.get(partsOf(n)[0]);
-      if (!obj || !partsOf(n).some((p) => m.has(p))) continue;
+    // barrel_adjuster gets a tag on each barrel it marks (both while the fact is unknown)
+    const tags = nodes.flatMap((n) => (n === 'barrel_adjuster' ? this.barrels.marked.map((p) => ({ n, at: p as string })) : [{ n, at: n }]));
+    for (const { n, at } of tags.slice(0, 4)) {
+      const obj = m.anchors.get(at) ?? m.anchors.get(partsOf(at)[0]);
+      if (!obj || !partsOf(at).some((p) => m.has(p))) continue;
       const el = h('div.tag', NODES[n].label);
       this.tagsEl.append(el);
       this.tagList.push({ el, obj });
@@ -533,9 +552,37 @@ export class ThreeStage implements Stage {
     this.tw = { p0: this.camera.position.clone(), t0: this.look.clone(), vp, k: 0, dur: 1.5 };
   }
 
+  /** A named view on this bike, with the barrel the card's facts pick. */
+  private vpose(name: string): ViewPose | undefined {
+    return viewPose(name, this.model!.spec, this.barrels.main);
+  }
+
+  /**
+   * A clip's Frame.scene: its show and focus nodes are drawn and marked as well as the card's own; without one, the
+   * card's own scene. Applied only when it changes.
+   */
+  private applyScene(sc: Frame['scene']): void {
+    const key = sc && !this.exploring && !this.previewing ? JSON.stringify(sc) : '';
+    if (key === this.sceneKey) return;
+    this.sceneKey = key;
+    const m = this.model!;
+    const parts = (n: string) => pickedParts(n, this.barrels, partsOf).filter((p) => m.has(p));
+    this.hotParts = new Set(this.cardHot);
+    this.shown = this.cardShown && new Set(this.cardShown);
+    if (key && sc) {
+      for (const n of sc.focus ?? []) for (const p of parts(n)) this.hotParts.add(p);
+      if (this.shown) {
+        for (const p of this.hotParts) this.shown.add(p);
+        for (const n of sc.show ?? []) for (const p of parts(n)) this.shown.add(p);
+        this.shown = addHeld(this.shown, BARREL_HOLDERS, (p) => m.has(p));
+      }
+    }
+    this.applyFocus();
+  }
+
   /** The named view for this card; on a card with `show`, a wide view also frames what is drawn (FIT_VIEWS). */
   private poseFor(name: string): ViewPose | undefined {
-    const vp = viewPose(name, this.model!.spec);
+    const vp = this.vpose(name);
     if (!vp || !this.shown || vp.space !== 'bike' || !FIT_VIEWS.includes(name)) return vp;
     return { ...vp, fit: this.shownPoints() };
   }
@@ -584,15 +631,25 @@ export class ThreeStage implements Stage {
    * card's subject (the focus parts, and the show parts on a card with `show`) sits from each edge
    * of the 3D view, as a fraction of its width or height (negative: cut off). Corners behind the
    * camera are counted in `behind`, not in the box; no subject gives an empty `subject` and zeros.
-   * Uses the camera as it is now, so call it once the camera has settled.
+   * Uses the camera as it is now, so call it once the camera has settled. `marked` is the same box for the
+   * marked parts alone (a close-up frames them, not everything drawn), with their ids and one box per part (`each`);
+   * null when none is drawn.
    */
-  framing(): { parts: string[]; subject: string[]; left: number; right: number; top: number; bottom: number; behind: number } | null {
+  framing(): { parts: string[]; subject: string[]; left: number; right: number; top: number; bottom: number; behind: number; marked: { ids: string[]; left: number; right: number; top: number; bottom: number; behind: number; each: Record<string, ReturnType<ThreeStage['boxOf']>> } | null } | null {
     const m = this.model;
     if (!m) return null;
     const parts = [...m.parts.values()].filter((p) => p.visT > 0.5).map((p) => p.id);
     const subject = this.shown ? parts : parts.filter((id) => this.hotParts.has(id));
-    const pts = this.shownPoints(new Set(subject));
-    if (!pts.length) return { parts, subject: [], left: 0, right: 0, top: 0, bottom: 0, behind: 0 };
+    const hot = parts.filter((id) => this.hotParts.has(id));
+    const marked = hot.length ? { ids: hot, ...this.boxOf(hot), each: Object.fromEntries(hot.map((id) => [id, this.boxOf([id])])) } : null;
+    return { parts, subject, ...this.boxOf(subject), marked };
+  }
+
+  /** How far the parts sit from each edge of the 3D view now (see framing). */
+  private boxOf(ids: string[]): { left: number; right: number; top: number; bottom: number; behind: number } {
+    const m = this.model!;
+    const pts = this.shownPoints(new Set(ids));
+    if (!pts.length) return { left: 0, right: 0, top: 0, bottom: 0, behind: 0 };
     m.bike.updateMatrixWorld(true);
     this.camera.updateMatrixWorld(true);
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity, behind = 0;
@@ -608,7 +665,7 @@ export class ThreeStage implements Stage {
       x0 = Math.min(x0, v.x); x1 = Math.max(x1, v.x);
       y0 = Math.min(y0, v.y); y1 = Math.max(y1, v.y);
     }
-    return { parts, subject, left: (x0 + 1) / 2, right: (1 - x1) / 2, top: (1 - y1) / 2, bottom: (y0 + 1) / 2, behind };
+    return { left: (x0 + 1) / 2, right: (1 - x1) / 2, top: (1 - y1) / 2, bottom: (y0 + 1) / 2, behind };
   }
 
   private camDest(vp0: ViewPose): { p: T.Vector3; t: T.Vector3 } {
@@ -886,18 +943,20 @@ export class ThreeStage implements Stage {
   // ------------------------------------------------------------------ arrow and ghost
 
   private placeArrow(a: Frame['arrow']): void {
-    const key = a ? `${a.node}|${a.dir}` : '';
+    // the arrow on barrel_adjuster sits on the barrel the facts pick
+    const part = a ? turnPart(a.node, this.barrels) : '';
+    const key = a ? `${part}|${a.dir}` : '';
     const m = this.model!;
     if (key === this.arrowKey) {
       if (a && this.arrow.visible) this.poseArrow(a);
       return;
     }
     this.arrowKey = key;
-    if (!a || !m.has(a.node)) {
+    if (!a || !m.has(part)) {
       this.arrow.visible = false;
       return;
     }
-    const turn = m.turns.get(a.node);
+    const turn = m.turns.get(part);
     if (!turn) {
       this.arrow.visible = false;
       return;
@@ -923,7 +982,7 @@ export class ThreeStage implements Stage {
    * thread when screwing in, so seen from the head it turns clockwise.
    */
   private poseArrow(a: NonNullable<Frame['arrow']>): void {
-    const turn = this.model?.turns.get(a.node);
+    const turn = this.model?.turns.get(turnPart(a.node, this.barrels));
     const orient = turn?.spin.parent;
     if (!turn || !orient) return;
     this.root.updateMatrixWorld(true);
@@ -978,7 +1037,7 @@ export class ThreeStage implements Stage {
         s.i = (s.i + 1) % s.list.length;
         s.t0 = now;
         p = s.list[s.i];
-        if (s.list.length > 1 && p.view && this.model) this.goCam(viewPose(p.view, this.model.spec), false);
+        if (s.list.length > 1 && p.view && this.model) this.goCam(this.vpose(p.view), false);
       }
       return { play: p, t: now - s.t0 };
     }
@@ -986,7 +1045,7 @@ export class ThreeStage implements Stage {
     if (!p?.anim) return { play: p, t: 0 };
     const d = p.anim.duration;
     const t = this.heldT ?? now - this.t0;
-    return { play: p, t: ((t % d) + d) % d };
+    return { play: p, t: p.anim.once ? Math.min(Math.max(0, t), d) : ((t % d) + d) % d };
   }
 
   /**
@@ -1134,7 +1193,8 @@ export class ThreeStage implements Stage {
     m.setCrank(-this.crankAngle);
     m.rearHub.rotation.z = -this.wheelAngle.rear_wheel;
     m.frontHub.rotation.z = -this.wheelAngle.front_wheel;
-    for (const [id, t] of m.turns) t.spin.rotation.y = fr.screws?.[id as ScrewNode] ?? 0;
+    for (const [id, t] of m.turns) t.spin.rotation.y = fr.screws?.[turnKey(id, this.barrels) as ScrewNode] ?? 0;
+    this.applyScene(fr.scene);
     const lever = m.parts.get('stand_clamp')?.group.userData.lever as T.Object3D | undefined;
     if (lever) lever.rotation.z = fr.lever ?? 0;
     this.applyNodeMotion(fr);
@@ -1151,6 +1211,8 @@ export class ThreeStage implements Stage {
     if (cap !== this.lastCap) {
       this.capEl.textContent = cap;
       this.capEl.classList.toggle('on', !!cap);
+      // a caption longer than a line wraps (the barrel tour explains where to look)
+      this.capEl.classList.toggle('long', cap.length > 48);
       this.lastCap = cap;
     }
 
@@ -1159,7 +1221,21 @@ export class ThreeStage implements Stage {
     if ((this.exploring || this.previewing) && this.controls) {
       this.controls.update();
       this.look.copy(this.controls.target);
+    } else if (fr.cam) {
+      // a clip moves the camera (bike space): followed smoothly, so its start and the jump of a replay ease in
+      const p = this.root.localToWorld(new T.Vector3(...fr.cam.p));
+      const tt = this.root.localToWorld(new T.Vector3(...fr.cam.t));
+      const k = reduceMotion() || this.heldT !== null ? 1 : 1 - Math.exp(-dt * 5);
+      cam.position.lerp(p, k);
+      this.look.lerp(tt, k);
+      cam.lookAt(this.look);
+      this.clipCam = true;
     } else if (this.tw) {
+      if (this.clipCam) {
+        // the clip that moved the camera has ended: back to the card's view from where the camera is
+        this.clipCam = false;
+        this.tw = { p0: cam.position.clone(), t0: this.look.clone(), vp: this.tw.vp, k: 0, dur: 1.2 };
+      }
       const d = this.camDest(this.tw.vp);
       if (this.tw.k < 1) {
         this.tw.k = Math.min(1, this.tw.k + dt / this.tw.dur);

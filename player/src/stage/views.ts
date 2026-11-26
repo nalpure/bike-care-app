@@ -7,6 +7,7 @@
 // framed for a phone in portrait (stage about 1.1 : 1) and landscape.
 
 import { barrelTurn, GAP_OK, lowerPulley, upperPulley, type BikeSpec } from './bike.js';
+import { barrelPick, frontPlace, type BarrelPart } from './barrel.js';
 import type { VIEWS } from './registry.js';
 
 export interface ViewPose {
@@ -94,7 +95,22 @@ function fromBehind(B: BikeSpec, reach = -Infinity): ViewPose {
   return { p: [B.rx - d, ty + 0.02, zc + 0.07], t: [B.rx - 0.03, ty, zc + 0.035], space: 'bike' };
 }
 
-export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
+/**
+ * Close on a barrel adjuster, looking at its head (the side where the cable goes in). At the derailleur: from
+ * behind, above and outside. On the trigger shifter it points forward and in, so from the front and inside. In
+ * the housing below a drop bar its head faces up, to the bar: from the drive side, a little above and behind it, so
+ * the bar's bend (in front) does not hide it.
+ */
+export function barrelClose(B: BikeSpec, which: BarrelPart): ViewPose {
+  const bt = barrelTurn(B, which);
+  const t: [number, number, number] = [bt.pos[0], bt.pos[1], bt.pos[2]];
+  if (which === 'rear_barrel') return { p: [t[0] - 0.2, t[1] + 0.13, t[2] + 0.3], t: [t[0], t[1] - 0.01, t[2]], space: 'bike' };
+  if (frontPlace(B.bar) === 'shifter') return { p: [t[0] + 0.5, t[1] + 0.42, t[2] - 0.5], t, space: 'bike' };
+  return { p: [t[0] - 0.1, t[1] + 0.08, t[2] + 0.4], t, space: 'bike' };
+}
+
+/** Every named view; `barrel` is the barrel adjuster the fact picks (barrel.ts), for barrel_adjuster_close. */
+export const VIEW_POSES: Record<ViewName, (B: BikeSpec, barrel: BarrelPart) => ViewPose> = {
   whole_bike: () => ({ p: [-1.45, 1.65, 5.7], t: [0.2, 1.1, 0.05], space: 'world' }),
   drive_side: (B) => ({ p: [-0.5, B.bby + 0.95, 3.6], t: [-0.1, B.bby + 0.37, 0.12], space: 'bike' }),
   // From straight behind, a little outside the sprockets: the upper pulley reads against the
@@ -119,14 +135,7 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
     const ty = -rx;
     return { p: [g[0] + tx * 0.3, g[1] + ty * 0.3, zN + 0.28], t: g, space: 'bike' };
   },
-  barrel_adjuster_close: (B) => {
-    const bt = barrelTurn(B);
-    const t: [number, number, number] = [bt.pos[0], bt.pos[1], bt.pos[2]];
-    // at the derailleur: from behind, above and outside; on the trigger shifter it points
-    // forward and in, so look at its head from the front and inside
-    if (B.barrelAt === 'derailleur') return { p: [t[0] - 0.2, t[1] + 0.13, t[2] + 0.3], t: [t[0], t[1] - 0.01, t[2]], space: 'bike' };
-    return { p: [t[0] + 0.5, t[1] + 0.42, t[2] - 0.5], t, space: 'bike' };
-  },
+  barrel_adjuster_close: (B, barrel) => barrelClose(B, barrel),
   // The library bar is 784 mm wide (a fixed size), so the camera stands further back than for the old 400 mm bar.
   handlebar_from_above: (B) => {
     const [cx, cy] = B.C;
@@ -138,9 +147,10 @@ export const VIEW_POSES: Record<ViewName, (B: BikeSpec) => ViewPose> = {
   },
 };
 
-export function viewPose(name: string, B: BikeSpec): ViewPose | undefined {
-  const f = (VIEW_POSES as Record<string, (b: BikeSpec) => ViewPose>)[name];
-  return f ? f(B) : undefined;
+/** A named view; `barrel` defaults to the barrel picked while the fact is unknown. */
+export function viewPose(name: string, B: BikeSpec, barrel: BarrelPart = barrelPick(B.bar, undefined).main): ViewPose | undefined {
+  const f = (VIEW_POSES as Record<string, (b: BikeSpec, barrel: BarrelPart) => ViewPose>)[name];
+  return f ? f(B, barrel) : undefined;
 }
 
 /** The garage preview: the whole bike from the drive side, a little from the front and above. */

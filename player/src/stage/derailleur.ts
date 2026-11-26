@@ -1,5 +1,5 @@
 // The rear derailleur: the library pieces (rd_*) on the measured rig, placed by rd-fit.ts and moved
-// with rd-kin.ts; the hanger, the H, L and B screws, the barrel adjuster (or a plain cable stop) and the
+// with rd-kin.ts; the hanger, the H, L and B screws, the rear barrel adjuster (barrel.ts) and the
 // cable ends. Session area: D (derailleur).
 //
 // Every piece is stored where it sits in the source model (library space). Each moving piece hangs in a
@@ -15,6 +15,7 @@ import { libGeo, type LibName } from './library.js';
 import { CAGE_DIR, CAGE_LEN, RdFit, RP_RD, type RdState } from './rd-fit.js';
 import { pulleySpin, RIG } from './rd-kin.js';
 import { RD_RIG, type RigV3 } from './rd-rig.js';
+import { frontPlace, type BarrelPart } from './barrel.js';
 import { GAP_OK, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
 import type { BikeModel } from './bike.js';
 
@@ -181,11 +182,32 @@ function upperBodyGeo(): T.BufferGeometry {
 }
 
 /**
- * Where the barrel adjuster is on this bike, in bike space (on the derailleur: with the chain on the
- * middle sprocket). `axis` points from its head into the thread.
+ * The drop bar's inline adjuster: a straight run of the housing just behind the bar, from `a` (the shifter's
+ * side, where the cable comes in) to `b` (towards the frame). cockpit.ts lays the housing through both points
+ * and the middle. Drawing data.
  */
-export function barrelTurn(B: BikeSpec): Turn {
-  if (B.barrelAt === 'derailleur') {
+export function inlineRun(B: BikeSpec): { a: V3; b: V3 } {
+  const { C } = B;
+  // 4 to 10 cm below the bar's middle, beside the stem and in front of the head tube, clear of the bar (the first
+  // place, 3 cm under the bar, was hidden by the bar's bend from every side)
+  return { a: [C[0] - 0.025, C[1] - 0.06, 0.105], b: [C[0] - 0.035, C[1] - 0.12, 0.09] };
+}
+/** Length of the inline adjuster (25 mm; drawing data). */
+export const INLINE_LEN = 0.05;
+
+/**
+ * Where a barrel adjuster is on this bike, in bike space (barrel.ts says which exist): the rear one on the
+ * derailleur, with the chain on the middle sprocket; the front one on the trigger shifter (flat, riser bars)
+ * or in the housing behind a drop bar. `axis` points from its head, the side where the cable goes in, into the thread.
+ */
+export function barrelTurn(B: BikeSpec, which: BarrelPart): Turn {
+  if (which === 'front_barrel' && frontPlace(B.bar) === 'inline') {
+    const { a, b } = inlineRun(B);
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+    const axis: V3 = [(b[0] - a[0]) / l, (b[1] - a[1]) / l, (b[2] - a[2]) / l];
+    return { pos: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2], axis, len: INLINE_LEN };
+  }
+  if (which === 'rear_barrel') {
     const mid = Math.floor(B.n / 2);
     const st = stateFor(fitFor(B), B.zs[mid], GAP_OK);
     const c = BAR.head.clone().add(BAR.seat).multiplyScalar(0.5).applyMatrix4(st.pose.upper);
@@ -449,28 +471,14 @@ export function buildDerailleur(m: BikeModel): void {
   m.add('derailleur_hanger', slabGeo(hullShape([[B.rx, B.huby, 0.022], [bolt.x, bolt.y, 0.019], [tab.x, tab.y, 0.006]]), z0, z1, 0.0015), null, null, { k: 0.8 });
   m.anchor('derailleur_hanger', m.bike, [(B.rx + bolt.x) / 2, (B.huby + bolt.y) / 2, z1 + 0.008]);
 
-  // Barrel adjuster on the body where the housing comes in, or a plain cable stop there when the
-  // barrel is on the shifter (the user never sees two).
+  // The rear barrel adjuster on the body where the housing comes in: always drawn (barrel.ts); the front
+  // one is built with the cockpit (cockpit.ts).
   const head = BAR.head.clone();
   const seat = BAR.seat.clone();
   const bdir = BAR.d.clone();
-  let housingEnd = head.clone();
-  if (B.barrelAt === 'derailleur') {
-    const spin = m.turnable('barrel_adjuster', { pos: head.clone().add(seat).multiplyScalar(0.5).toArray() as V3, axis: bdir.toArray() as V3, len: BARREL_LEN }, upper);
-    m.add('barrel_adjuster', barrelGeo(), null, null, { parent: spin, k: 1.0 });
-  } else {
-    const len = 0.014;
-    const stop = m.add(D, new T.CylinderGeometry(BARREL.r * 0.85, BARREL.r, len, 14), null, null, { parent: upper, k: 1.05 });
-    stop.position.copy(seat).addScaledVector(bdir, -len / 2);
-    stop.quaternion.setFromUnitVectors(UP, bdir);
-    housingEnd = seat.clone().addScaledVector(bdir, -len);
-    const bt = barrelTurn(B);
-    const spin = m.turnable('barrel_adjuster', bt, m.bike);
-    const br = 0.011;
-    m.add('barrel_adjuster', new T.CylinderGeometry(br, br, bt.len * 0.75, 12), [0, -bt.len * 0.125, 0], null, { parent: spin, flat: true });
-    for (const y of [-0.3, 0, 0.3]) m.add('barrel_adjuster', new T.CylinderGeometry(br + 0.0018, br + 0.0018, 0.003, 12), [0, -bt.len * 0.125 + y * bt.len * 0.75, 0], null, { parent: spin, k: 0.8, flat: true });
-    m.add('barrel_adjuster', new T.CylinderGeometry(br * 0.55, br * 0.55, bt.len * 0.25, 8), [0, bt.len * 0.375, 0], null, { parent: spin, k: 1.2 });
-  }
+  const housingEnd = head.clone();
+  const spin = m.turnable('rear_barrel', { pos: head.clone().add(seat).multiplyScalar(0.5).toArray() as V3, axis: bdir.toArray() as V3, len: BARREL_LEN }, upper);
+  m.add('rear_barrel', barrelGeo(), null, null, { parent: spin, k: 1.0 });
   // the housing comes in along the barrel's axis from behind: cockpit.ts loops it down from the stay through
   // housingIn, which bends it round onto the axis; the short straight piece to the barrel moves with the body
   const onAxis = (t: number) => housingEnd.clone().addScaledVector(bdir, -t).applyMatrix4(ref.pose.upper);

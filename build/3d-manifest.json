@@ -25,6 +25,8 @@
     "l_screw",
     "b_screw",
     "barrel_adjuster",
+    "rear_barrel",
+    "front_barrel",
     "shift_cable",
     "drivetrain",
     "rear_end",
@@ -47,7 +49,8 @@
     "limit-screw-align",
     "b-gap-adjust",
     "cable-tension-shift",
-    "hanger-bend"
+    "hanger-bend",
+    "barrel-tour"
   ],
   "motions": [
     "rotate",

@@ -5,7 +5,8 @@
 // Session area: E (other parts).
 
 import * as T from 'three';
-import { barrelTurn, buildWireTail, WIRE_R } from './derailleur.js';
+import { frontPlace } from './barrel.js';
+import { barrelTurn, buildWireTail, inlineRun, WIRE_R } from './derailleur.js';
 import { curveGeo, plate, tubeGeo } from './geo.js';
 import { libGeo, type LibName } from './library.js';
 import { MOUNTS as M } from './mounts.js';
@@ -82,7 +83,7 @@ export function buildShiftCable(m: BikeModel): void {
   const B = m.spec;
   const { ST, HT, HB, C, S, rx, huby, bby, zDrop: zD, chainline: zc } = B;
   const [hx, hy] = HT;
-  const bt = barrelTurn(B);
+  const bt = barrelTurn(B, 'front_barrel');
   // On a derailleur the housing ends in a loop behind the axle; its last bit, to the
   // derailleur (which turns about its bolt), is placed in setDer.
   const derEnd: V3 | null = m.der ? m.der.housingFrom : null;
@@ -96,7 +97,9 @@ export function buildShiftCable(m: BikeModel): void {
   const along = (a: V3, b: V3, t: number, dy: number, dz: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + dy, a[2] + (b[2] - a[2]) * t + dz];
   let start: V3[];
   if (B.bar === 'drop') {
-    start = [[S[0] - 0.035, S[1] - 0.02, S[2] - 0.005], [C[0] + 0.07, C[1] - 0.012, 0.2], [C[0] + 0.015, C[1] - 0.02, 0.13], [C[0] - 0.03, C[1] - 0.07, 0.07]];
+    // from the hood along the bar, then out behind it through a straight run (the inline adjuster's place)
+    const { a, b } = inlineRun(B);
+    start = [[S[0] - 0.035, S[1] - 0.02, S[2] - 0.005], [C[0] + 0.07, C[1] - 0.012, 0.2], a, bt.pos, b];
   } else {
     const head: V3 = [bt.pos[0] - bt.axis[0] * bt.len / 2, bt.pos[1], bt.pos[2] - bt.axis[2] * bt.len / 2];
     start = [head, [head[0] + 0.02, head[1] - 0.03, head[2] - 0.17], [hx + 0.1, hy - 0.05, 0.09]];
@@ -107,6 +110,8 @@ export function buildShiftCable(m: BikeModel): void {
       ? [...start, [HB[0] - 0.08, HB[1] - 0.05, 0.07], dt(0.4), end]
       : [...start, tt(HT[0] - 0.25, 0.08), tt(HT[0] - 0.45, 0.05), tt(-0.05, 0.05), tt(ST[0] + 0.02, 0.06), along(ss[0], ss[1], 0.4, 0.03, 0.02), along(ss[0], ss[1], 0.75, 0.03, 0.022), ...loop, end];
   m.add('shift_cable', curveGeo(path, 0.006, 360), null, null, { k: 0.6 });
+  m.cableRoute = path;
+  if (m.der) buildFrontBarrel(m);
   m.anchor('shift_cable', m.bike, B.bar === 'drop' ? along(cs[2], cs[4], 0.3, 0.05, 0.02) : tt(-0.05, 0.08));
   if (m.der) {
     // the housing's last bit, and the inner wire out of the barrel and down to its clamp on the lower body
@@ -115,4 +120,27 @@ export function buildShiftCable(m: BikeModel): void {
     m.der.wire = [0, 1, 2].map(() => m.add('shift_cable', new T.CylinderGeometry(WIRE_R, WIRE_R, 1, 6), null, null, { k: 1.3 }));
     buildWireTail(m);
   }
+}
+
+/**
+ * The front barrel adjuster (barrel.ts): on the trigger shifter's inner end where the cable leaves it (flat and
+ * riser bars), or an inline adjuster in the housing just behind a drop bar: a ribbed knob on the shifter's side
+ * that turns, on a smooth body towards the frame. Built along local y, head (the cable's way in) at -y. Drawing data.
+ */
+function buildFrontBarrel(m: BikeModel): void {
+  const B = m.spec;
+  const bt = barrelTurn(B, 'front_barrel');
+  const spin = m.turnable('front_barrel', bt, m.bike);
+  const L = bt.len;
+  if (frontPlace(B.bar) === 'shifter') {
+    const br = 0.011;
+    m.add('front_barrel', new T.CylinderGeometry(br, br, L * 0.75, 12), [0, -L * 0.125, 0], null, { parent: spin, flat: true });
+    for (const y of [-0.3, 0, 0.3]) m.add('front_barrel', new T.CylinderGeometry(br + 0.0018, br + 0.0018, 0.003, 12), [0, -L * 0.125 + y * L * 0.75, 0], null, { parent: spin, k: 0.8, flat: true });
+    m.add('front_barrel', new T.CylinderGeometry(br * 0.55, br * 0.55, L * 0.25, 8), [0, L * 0.375, 0], null, { parent: spin, k: 1.2 });
+    return;
+  }
+  const br = 0.0095;
+  m.add('front_barrel', new T.CylinderGeometry(br, br, L * 0.5, 12), [0, -L * 0.25, 0], null, { parent: spin, flat: true });
+  for (const y of [-0.4, -0.25, -0.1]) m.add('front_barrel', new T.CylinderGeometry(br + 0.0016, br + 0.0016, 0.0028, 12), [0, y * L, 0], null, { parent: spin, k: 0.8, flat: true });
+  m.add('front_barrel', new T.CylinderGeometry(br * 0.8, br * 0.8, L * 0.5, 12), [0, L * 0.25, 0], null, { parent: spin.parent!, k: 1.15 });
 }

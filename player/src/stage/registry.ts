@@ -51,6 +51,8 @@ export const NODES: Record<string, NodeInfo> = {
   l_screw: { label: 'L', name: 'Limit screw L', aliases: 'Marked L on the derailleur', about: 'Sets how far in, towards the spokes, the derailleur can go.' },
   b_screw: { label: 'B screw', name: 'B screw', aliases: 'Also called the B-tension screw', about: 'Sets the gap between the upper wheel and the sprockets.' },
   barrel_adjuster: { label: 'Barrel adjuster', name: 'Barrel adjuster', aliases: 'Also called the cable adjuster', about: 'Changes the cable tension in small steps.' },
+  rear_barrel: { label: 'Barrel adjuster', name: 'Barrel adjuster at the derailleur', aliases: 'Also called the cable adjuster', about: 'Changes the cable tension in small steps.' },
+  front_barrel: { label: 'Barrel adjuster', name: 'Barrel adjuster at the front', aliases: 'On the shifter, or in the cable near the handlebar', about: 'Changes the cable tension in small steps.' },
   shift_cable: { label: 'Cable', name: 'Gear cable', aliases: 'Inner wire in its housing', about: 'Carries the pull from the shifter to the derailleur.' },
   drivetrain: { label: 'Drivetrain', name: 'Drivetrain', aliases: 'Chainring, chain, sprockets and derailleur', about: 'Everything that turns pedalling into driving the rear wheel.' },
   rear_end: { label: 'Rear end', name: 'Rear end of the frame', aliases: 'Stay ends, dropouts and rear hub', about: 'Where the rear wheel and the derailleur hanger are held.' },
@@ -73,9 +75,11 @@ export const NODE_PARTS: Record<string, string[]> = {
   rear_derailleur: ['rear_derailleur', 'upper_pulley'],
   drivetrain: [
     'chainring', 'crank', 'chain', 'cassette', 'smallest_sprocket', 'largest_sprocket',
-    'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster',
+    'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'rear_barrel',
   ],
   rear_end: ['frame_dropout', 'rear_hub'],
+  // the barrel the fact drive.barrel_adjuster picks (barrel.ts); both while it is unknown
+  barrel_adjuster: ['rear_barrel', 'front_barrel'],
 };
 
 /** Nodes that only group parts for `show` and `focus`: no part is "its own" one, so a tap never means them. */
@@ -105,6 +109,7 @@ export const CLIPS = [
   'b-gap-adjust',
   'cable-tension-shift',
   'hanger-bend',
+  'barrel-tour',
 ] as const;
 
 /** Generic motions on any node. */

@@ -6,15 +6,17 @@ import { join, resolve } from 'node:path';
 import * as T from 'three';
 import { describe, expect, it } from 'vitest';
 import YAML from 'yaml';
-import { dirSign, makeAnim, partStatus, placeMoved, type AnimCtx } from '../src/stage/anim.js';
+import { dirSign, makeAnim, partStatus, placeMoved, TOUR, type AnimCtx } from '../src/stage/anim.js';
+import { BARREL_HOLDERS, barrelPick, frontPlace, pickedParts, turnKey, turnPart } from '../src/stage/barrel.js';
+import { barrelTurn, inlineRun } from '../src/stage/derailleur.js';
 import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_BIG, GAP_OK, GAP_SMALL, GEOMETRY_RANGES, GROUND, PITCH, RP, type BikeSpec } from '../src/stage/bike.js';
 import { chordLength } from '../src/stage/pins.js';
 import { RIG } from '../src/stage/rd-kin.js';
 import { RD_RIG } from '../src/stage/rd-rig.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
 import { CLIPS, GROUP_NODES, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, SPLIT_PARTS, VIEWS } from '../src/stage/registry.js';
-import { FADED, shownParts, visTargets, type VisCard } from '../src/stage/visibility.js';
-import { fitPose, FIT_VIEWS, viewPose } from '../src/stage/views.js';
+import { addHeld, FADED, shownParts, visTargets, type VisCard } from '../src/stage/visibility.js';
+import { barrelClose, fitPose, FIT_VIEWS, viewPose } from '../src/stage/views.js';
 
 const REPO = resolve(import.meta.dirname, '../..');
 const mat = new T.MeshStandardMaterial();
@@ -68,9 +70,10 @@ function hitsSprocket(B: BikeSpec, p: T.Vector3, halfWidth: number, halfHeight: 
 const DER_BIKES = ([['road_gravel', [8, 9, 10, 11, 12]], ['trekking_city', [5, 7, 8, 9, 10]], ['mtb', [8, 9, 10, 11, 12, 13]]] as const)
   .flatMap(([cat, ns]) => ns.map((n) => ({ 'bike.category': cat, 'drive.gear_type': 'derailleur', 'drive.rear_speeds': n })));
 
-function ctxFor(m: BikeModel, focus: string[] = []): AnimCtx {
+function ctxFor(m: BikeModel, focus: string[] = [], fact?: string): AnimCtx {
   return {
     spec: m.spec, focus, poseBefore: 'ground', pose: 'ground',
+    barrel: barrelPick(m.spec.bar, fact), route: m.cableRoute,
     zOf: (i) => m.zOf(i),
     centerOf: (p) => {
       const x = m.parts.get(p);
@@ -215,8 +218,8 @@ describe('bike builder', () => {
     const m = new BikeModel(bikeSpec({ 'bike.category': 'road_gravel', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 }), mat);
     const B = m.spec;
     // drivetrain: the chain's whole path, and not the cable, the shifter or the wheels
-    expect(partsOf('drivetrain')).toEqual(expect.arrayContaining(['chainring', 'crank', 'chain', 'cassette', 'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster']));
-    for (const no of ['shift_cable', 'shifter_rear', 'rear_wheel', 'front_wheel', 'frame']) expect(partsOf('drivetrain'), no).not.toContain(no);
+    expect(partsOf('drivetrain')).toEqual(expect.arrayContaining(['chainring', 'crank', 'chain', 'cassette', 'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'rear_barrel']));
+    for (const no of ['shift_cable', 'shifter_rear', 'rear_wheel', 'front_wheel', 'frame', 'front_barrel']) expect(partsOf('drivetrain'), no).not.toContain(no);
     for (const p of partsOf('drivetrain')) expect(m.has(p), p).toBe(true);
     // the split parts: frame and rear_wheel still stand for the whole
     for (const [part, whole] of Object.entries(SPLIT_PARTS)) {
@@ -249,7 +252,6 @@ describe('bike builder', () => {
 
   it('picks parts by facts', () => {
     expect(bikeSpec({ 'bike.category': 'road_gravel' }).bar).toBe('drop');
-    expect(bikeSpec({ 'bike.category': 'road_gravel' }).barrelAt).toBe('derailleur');
     expect(bikeSpec({ 'bike.category': 'mtb' }).forkKind).toBe('susp');
     expect(bikeSpec({ 'bike.category': 'unknown' }).bar).toBe('flat');
     expect(bikeSpec({ 'drive.rear_speeds': 11 }).n).toBe(11);
@@ -470,7 +472,7 @@ describe('bike builder', () => {
   it('keeps the derailleur, chain and frame off the sprockets in every gear', () => {
     // every derailleur piece but the pulleys (the chain runs on them) at least 1 mm from every sprocket's
     // tip circle (hitsSprocket's margin), in every gear of every cassette
-    const DER = ['rear_derailleur', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shift_cable'];
+    const DER = ['rear_derailleur', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'rear_barrel', 'shift_cable'];
     for (const facts of DER_BIKES) {
       const m = new BikeModel(bikeSpec(facts), mat);
       const B = m.spec;
@@ -554,12 +556,12 @@ describe('bike builder', () => {
     expect(bikeSpec({ 'bike.category': 'road_gravel', 'bike.handlebar': 'unknown' }).bar).toBe('drop');
     expect(bikeSpec({ 'bike.category': 'trekking_city', 'bike.handlebar': 'drop' }).bar).toBe('drop');
     expect(bikeSpec({ 'bike.category': 'mtb' }).bar).toBe('riser');
-    // combined brake and shift levers have no barrel adjuster; trigger shifters do
-    expect(bikeSpec({ 'bike.category': 'trekking_city', 'bike.handlebar': 'drop' }).barrelAt).toBe('derailleur');
-    expect(bikeSpec({ 'bike.category': 'road_gravel', 'bike.handlebar': 'flat' }).barrelAt).toBe('shifter');
+    // combined brake and shift levers have no barrel adjuster (it sits in the cable); trigger shifters do
+    expect(frontPlace(bikeSpec({ 'bike.category': 'trekking_city', 'bike.handlebar': 'drop' }).bar)).toBe('inline');
+    expect(frontPlace(bikeSpec({ 'bike.category': 'road_gravel', 'bike.handlebar': 'flat' }).bar)).toBe('shifter');
     for (const bar of ['drop', 'flat', 'riser']) {
       const m = new BikeModel(bikeSpec({ 'bike.handlebar': bar }), mat);
-      expect(m.has('brake_lever') && m.has('shifter_rear') && m.has('barrel_adjuster'), bar).toBe(true);
+      expect(m.has('brake_lever') && m.has('shifter_rear') && m.has('rear_barrel') && m.has('front_barrel'), bar).toBe(true);
       m.dispose();
     }
   });
@@ -640,6 +642,183 @@ function expectTyresClear(B: BikeSpec, label: string): void {
   // the front wheel ahead of the cranks and the down tube, the rear wheel behind the seat tube
   expect(B.FX - B.rt, `${label}: front wheel`).toBeGreaterThan(0.2);
 }
+
+describe('barrel adjusters (barrel.ts)', () => {
+  const BARS = [
+    { bar: 'drop', facts: { 'bike.category': 'road_gravel', 'bike.handlebar': 'drop', 'drive.gear_type': 'derailleur' } },
+    { bar: 'flat', facts: { 'bike.category': 'trekking_city', 'bike.handlebar': 'flat', 'drive.gear_type': 'derailleur' } },
+    { bar: 'riser', facts: { 'bike.category': 'mtb', 'bike.handlebar': 'riser', 'drive.gear_type': 'derailleur' } },
+  ] as const;
+  const sub = (a: ArrayLike<number>, b: ArrayLike<number>) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+  const dot = (a: ArrayLike<number>, b: ArrayLike<number>) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  /** distance from p to a polyline */
+  const toLine = (p: ArrayLike<number>, line: ArrayLike<number>[]) => Math.min(...line.slice(1).map((b, i) => {
+    const a = line[i];
+    const ab = sub(b, a);
+    const t = Math.max(0, Math.min(1, dot(sub(p, a), ab) / (dot(ab, ab) || 1)));
+    return Math.hypot(...sub(p, [a[0] + ab[0] * t, a[1] + ab[1] * t, a[2] + ab[2] * t]));
+  }));
+
+  it('draws two barrels on every bar type: at the derailleur, and on the shifter (flat, riser) or in the cable behind a drop bar', () => {
+    for (const { bar, facts } of BARS) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const B = m.spec;
+      expect(B.bar).toBe(bar);
+      expect(m.has('rear_barrel') && m.has('front_barrel'), bar).toBe(true);
+      expect(frontPlace(B.bar)).toBe(bar === 'drop' ? 'inline' : 'shifter');
+      const front = barrelTurn(B, 'front_barrel');
+      // both sit on the cable as it is drawn
+      expect(toLine(front.pos, m.cableRoute), `${bar}: front barrel off the cable`).toBeLessThan(0.025);
+      if (bar === 'drop') {
+        const { a, b } = inlineRun(B);
+        expect(front.pos[0]).toBeCloseTo((a[0] + b[0]) / 2);
+        // behind the bar: not at the hood (S) but by the stem's clamp
+        expect(Math.hypot(front.pos[0] - B.S[0], front.pos[1] - B.S[1], front.pos[2] - B.S[2])).toBeGreaterThan(0.15);
+        expect(Math.hypot(front.pos[0] - B.C[0], front.pos[1] - B.C[1])).toBeLessThan(0.12);
+      } else {
+        expect(Math.hypot(front.pos[0] - B.S[0], front.pos[1] - B.S[1], front.pos[2] - B.S[2]), `${bar}: on the shifter`).toBeLessThan(0.06);
+      }
+      // the plain cable stop is gone: the derailleur's barrel is its own part, the turnable one
+      expect(m.turns.has('rear_barrel') && m.turns.has('front_barrel')).toBe(true);
+      m.dispose();
+    }
+    const hub = new BikeModel(bikeSpec({ 'drive.gear_type': 'hub_gear' }), mat);
+    expect(hub.has('rear_barrel') || hub.has('front_barrel')).toBe(false);
+    hub.dispose();
+  });
+
+  it('the fact picks the barrel that is marked, turned and framed; unknown marks both and turns the old guess', () => {
+    const both = ['rear_barrel', 'front_barrel'];
+    for (const bar of ['drop', 'flat', 'riser'] as const) {
+      expect(barrelPick(bar, 'derailleur'), bar).toEqual({ main: 'rear_barrel', marked: ['rear_barrel'] });
+      expect(barrelPick(bar, 'shifter'), bar).toEqual({ main: 'front_barrel', marked: ['front_barrel'] });
+      // on flat and riser bars the adjuster on the cable is shown at the shifter (owner rule); on drop bars behind the bar
+      expect(barrelPick(bar, 'inline'), bar).toEqual({ main: 'front_barrel', marked: ['front_barrel'] });
+      for (const unknown of [undefined, 'unknown', '']) {
+        expect(barrelPick(bar, unknown), bar).toEqual({ main: bar === 'drop' ? 'rear_barrel' : 'front_barrel', marked: both });
+      }
+    }
+    const pk = barrelPick('flat', 'shifter');
+    expect(pickedParts('barrel_adjuster', pk, partsOf)).toEqual(['front_barrel']);
+    expect(pickedParts('barrel_adjuster', barrelPick('drop', undefined), partsOf)).toEqual(both);
+    expect(pickedParts('chain', pk, partsOf)).toEqual(['chain']);
+    expect(partsOf('barrel_adjuster')).toEqual(both);
+    expect(turnPart('barrel_adjuster', pk)).toBe('front_barrel');
+    expect(turnPart('h_screw', pk)).toBe('h_screw');
+    expect(turnKey('front_barrel', pk)).toBe('barrel_adjuster');
+    expect(turnKey('rear_barrel', pk)).toBe('rear_barrel');
+    expect(previewNode('rear_barrel')).toBe('barrel_adjuster');
+  });
+
+  it('a barrel is drawn with what holds it: the rear one with the derailleur, the front one with the shifter or the cable', () => {
+    const m = new BikeModel(bikeSpec(BARS[1].facts), mat);
+    const has = (p: string) => m.has(p);
+    const shown = (show: string[]) => addHeld(shownParts([], show, partsOf, has), BARREL_HOLDERS, has);
+    expect(shown(['drivetrain']).has('rear_barrel')).toBe(true);
+    expect(shown(['drivetrain']).has('front_barrel'), 'the front barrel is not in the drivetrain').toBe(false);
+    expect(shown(['rear_derailleur']).has('rear_barrel')).toBe(true);
+    expect(shown(['shifter_rear']).has('front_barrel')).toBe(true);
+    expect(shown(['shift_cable']).has('front_barrel')).toBe(true);
+    expect(shown(['handlebar']).has('front_barrel')).toBe(false);
+    m.dispose();
+  });
+
+  it('every barrel turns about an axis from the side where the cable goes in, and its close-up looks at that side', () => {
+    for (const { bar, facts } of BARS) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const B = m.spec;
+      // rear: the housing comes in from behind, at the head
+      const rear = barrelTurn(B, 'rear_barrel');
+      expect(dot(sub(m.der!.housingFrom, rear.pos), rear.axis), `${bar}: housing at the rear barrel's head`).toBeLessThan(0);
+      // front: the housing towards the frame leaves the shifter's barrel at its head; the inline one has the
+      // cable from the shifter at its head
+      const front = barrelTurn(B, 'front_barrel');
+      const route = m.cableRoute;
+      const near = route.findIndex((p) => Math.hypot(...sub(p, front.pos)) < front.len);
+      const side = bar === 'drop' ? route[0] : route[Math.max(0, near) + 2];
+      expect(dot(sub(side, front.pos), front.axis), `${bar}: cable at the front barrel's head`).toBeLessThan(0);
+      for (const which of ['rear_barrel', 'front_barrel'] as const) {
+        const t = barrelTurn(B, which);
+        const v = viewPose('barrel_adjuster_close', B, which)!;
+        expect(v.t[0]).toBeCloseTo(t.pos[0], 1);
+        expect(v, `${bar} ${which}`).toEqual(barrelClose(B, which));
+        expect(dot(sub(v.p, t.pos), t.axis), `${bar} ${which}: the close-up looks at the head`).toBeLessThan(0);
+      }
+      // nothing of the cockpit or the frame stands between the close-up's camera and the barrel (bounding-box
+      // framing cannot see that: the first inline place was hidden behind the drop bar's bend)
+      const blockers = meshPoints(m, ['handlebar', 'brake_lever', 'shifter_rear', 'frame', 'fork'], 2, { stride: 3 });
+      for (const which of ['rear_barrel', 'front_barrel'] as const) {
+        const t = barrelTurn(B, which);
+        const v = barrelClose(B, which);
+        const seg = sub(t.pos, v.p);
+        const len2 = dot(seg, seg);
+        const hit = blockers.find(({ p }) => {
+          const k = dot(sub([p.x, p.y, p.z], v.p), seg) / len2;
+          if (k < 0 || k > 0.85) return false;
+          return Math.hypot(...sub([p.x, p.y, p.z], [v.p[0] + seg[0] * k, v.p[1] + seg[1] * k, v.p[2] + seg[2] * k])) < 0.004;
+        });
+        expect(hit && `${hit.part} at ${hit.p.toArray().map((x) => x.toFixed(3))}`, `${bar} ${which}: view blocked`).toBeUndefined();
+      }
+      // without a pick, the close-up keeps the old guess
+      expect(viewPose('barrel_adjuster_close', B)).toEqual(barrelClose(B, bar === 'drop' ? 'rear_barrel' : 'front_barrel'));
+      m.dispose();
+    }
+  });
+
+  it('cable-tension-shift: counterclockwise turns the picked barrel out and the chain reaches a bigger sprocket; the scene adds its surroundings', () => {
+    for (const { bar, facts } of BARS) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      for (const fact of ['derailleur', 'shifter', 'inline', undefined]) {
+        const ctx = ctxFor(m, ['chain'], fact);
+        const main = ctx.barrel.main;
+        for (const direction of ['counterclockwise', 'clockwise']) {
+          const an = makeAnim({ target: 'barrel_adjuster', motion: 'rotate', direction, caption: 'x' }, ctx)!;
+          const mid = Math.floor(m.spec.n / 2);
+          const end = an.frame(an.duration - 0.1);
+          const turning = an.frame(2.0);
+          const ccw = direction === 'counterclockwise';
+          expect(Math.sign(end.screws!.barrel_adjuster!), `${bar} ${fact} ${direction}`).toBe(ccw ? -1 : 1);
+          expect(turning.arrow).toEqual({ node: 'barrel_adjuster', dir: ccw ? -1 : 1 });
+          // more tension pulls the chain towards the spokes (smaller z): the bigger sprocket
+          expect(end.derZ).toBeCloseTo(m.zOf(ccw ? mid + 1 : mid - 1));
+          expect(end.scene?.focus).toEqual([main]);
+          expect(end.scene?.show).toEqual(main === 'rear_barrel' ? ['rear_end', 'derailleur_hanger', 'rear_derailleur', 'shift_cable'] : ['handlebar', 'shifter_rear', 'shift_cable', 'frame']);
+          expect(end.marks).toBeUndefined();
+        }
+      }
+      m.dispose();
+    }
+  });
+
+  it('barrel-tour: plays once from close on the derailleur along the cable to close on the front barrel, both marked', () => {
+    for (const { bar, facts } of BARS) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const an = makeAnim({ clip: 'barrel-tour', caption: 'x' }, ctxFor(m))!;
+      expect(an.once).toBe(true);
+      expect(an.duration).toBe(TOUR.end);
+      const from = barrelClose(m.spec, 'rear_barrel');
+      const to = barrelClose(m.spec, 'front_barrel');
+      expect(an.frame(0).cam).toEqual({ p: from.p, t: from.t });
+      const last = an.frame(an.duration).cam!;
+      for (let i = 0; i < 3; i++) {
+        expect(last.p[i]).toBeCloseTo(to.p[i], 6);
+        expect(last.t[i]).toBeCloseTo(to.t[i], 6);
+      }
+      expect(an.frame(1).scene).toEqual({ focus: ['rear_barrel', 'front_barrel'] });
+      // smooth: the camera never jumps, and half way it looks at the cable from the drive side
+      let prev = an.frame(0).cam!;
+      for (let t = 0.05; t <= an.duration; t += 0.05) {
+        const c = an.frame(t).cam!;
+        expect(Math.hypot(...sub(c.p, prev.p)), `${bar} at ${t.toFixed(2)} s`).toBeLessThan(0.06);
+        prev = c;
+      }
+      const half = an.frame((TOUR.leave + TOUR.near) / 2).cam!;
+      expect(toLine(half.t, m.cableRoute), `${bar}: half way the camera looks at the cable`).toBeLessThan(0.08);
+      expect(half.p[2]).toBeGreaterThan(half.t[2] + 0.5);
+      m.dispose();
+    }
+  });
+});
 
 describe('views and animations', () => {
   const m = new BikeModel(bikeSpec({}), mat);

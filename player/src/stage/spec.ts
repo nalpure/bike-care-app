@@ -37,7 +37,6 @@ export interface BikeSpec {
   bar: 'drop' | 'riser' | 'flat';
   forkKind: 'susp' | 'rigid';
   gears: 'derailleur' | 'hub' | 'single' | 'gearbox';
-  barrelAt: 'derailleur' | 'shifter';
   motor: boolean;
   kickstand: boolean;
   /** frame colour from bike.colour (#rrggbb), or null for the theme's part colour */
@@ -225,9 +224,15 @@ export function geometryOf(facts: Record<string, unknown>): Partial<Record<keyof
  *   bottom bracket (one chain line for all bikes, the crank's), the collar on the seat tube's top, the saddle on the
  *   seat tube's axis, the stem's foot on the head tube's top turned to the head angle. A riser bar is the flat bar on
  *   20 mm of spacers. The bars are the library's 784 mm wide.
- * - A drop bar has combined brake and shift levers, which have no barrel adjuster: the barrel
- *   adjuster is drawn at the derailleur. Flat and riser bars have a trigger shifter with the
- *   barrel adjuster on it.
+ * - Barrel adjusters (barrel.ts; owner decision 2026-11-25), on every bike with a rear derailleur, from
+ *   the bar this spec ends up with: one at the derailleur, always; one at the front: on flat and
+ *   riser bars on the right trigger shifter, on drop bars (combined brake and shift levers, which
+ *   have none) in the cable housing just behind the bar. Both are always drawn. The fact
+ *   drive.barrel_adjuster picks the one content's `barrel_adjuster` means (marked, turned, framed):
+ *   derailleur -> the derailleur's; shifter or inline -> the front one (on flat bars an adjuster on
+ *   the cable is shown at the shifter). Unknown -> both are marked, and the one turned and framed
+ *   is the old guess: the derailleur's on drop bars, the shifter's otherwise. The pick is not part
+ *   of BikeSpec: the stage reads the fact on every card (`barrelPick`), so an answer does not rebuild the bike.
  * - drive.gear_type: hub_gear, gearbox, single_speed -> one sprocket; else a rear derailleur.
  *   drive.rear_speeds (5..13) sets the number of sprockets; unknown -> 8.
  * - bike.ebike -> motor and down-tube battery. bike.colour (#rrggbb) -> frame colour.
@@ -331,7 +336,6 @@ export function bikeSpec(facts: Record<string, unknown>): BikeSpec {
   return {
     kind, bar, gears, colour,
     forkKind: mtb ? 'susp' : 'rigid',
-    barrelAt: bar === 'drop' ? 'derailleur' : 'shifter',
     motor: ebike === true || ebike === 'true',
     kickstand: kind === 'city',
     rx, huby, rt, FX, bby,

@@ -77,7 +77,8 @@ const CTX: Record<string, string[]> = {
   h_screw: ['drive', 'rear'],
   l_screw: ['drive', 'rear'],
   b_screw: ['drive', 'rear'],
-  barrel_adjuster: ['cable'],
+  rear_barrel: ['drive', 'rear', 'cable'],
+  front_barrel: ['cable', 'cockpit'],
   shift_cable: ['cable'],
   shifter_rear: ['cable', 'cockpit'],
 };
@@ -91,7 +92,7 @@ interface MatOpt {
 }
 
 /** Parts drawn with outlines: the small mechanical ones a step points at. */
-const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'barrel_adjuster', 'shifter_rear', 'brake_lever', 'crank', 'chainring', 'cassette', 'smallest_sprocket', 'largest_sprocket', 'kickstand', 'stand_clamp']);
+const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'rear_barrel', 'front_barrel', 'shifter_rear', 'brake_lever', 'crank', 'chainring', 'cassette', 'smallest_sprocket', 'largest_sprocket', 'kickstand', 'stand_clamp']);
 
 
 /** One generated bike, with the work stand and the hook it can be held by. */
@@ -121,6 +122,8 @@ export class BikeModel {
 
   /** @internal builder state */
   der: DerParts | null = null;
+  /** the gear cable's path (bike space), from the shifter to the derailleur, as built: the barrel tour follows it */
+  cableRoute: V3[] = [];
   /** @internal builder state */
   chainInner!: T.InstancedMesh;
   /** @internal builder state */
