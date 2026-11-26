@@ -46,7 +46,8 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **`test-ride-gears`** is the `finish` of both cases, shows the whole bike with the `shift-test-ride` clip; labels "It shifts slowly or rattles in some gears" / "The chain jumps or falls off". The old "go back to the cable step" answer is gone. `content/steps/rear-shifting.yaml`.
 - **No content stops while the bike is held** any more, so "jump ahead and put the bike back" is tested only on a sandbox copy (`journeys.test.ts`, `check.test.ts`), not in the e2e browser run. Journey renamed `chain-falls-off-on-test-ride`.
 - **Garage full screen** is an in-app overlay like explore (not the browser's Fullscreen API, which Safari on iPhone lacks); same camera, so the bike is small in portrait until pinched. `three-stage.ts` (`setFull`).
-- **Wheel steps** work anywhere on the card, also over the 3D view (there it scrolls the text first); 80 px per step, a gesture ends after 220 ms without wheel events. `ui/flow.ts` (`attachWheel`).
+- **Card column:** neighbours dimmed to 38 %; a locked next card shows up to 42 % of the box with "Answer above to go on"; no card above when Back would only undo this card's answer (first card). The slide-in animation is gone. `ui/flow.ts`, `styles.css`.
+- **Scrolling between cards works over the text only**, not over the 3D view (the wheel there does nothing on a card). `ui/flow.ts`.
 
 ## Questions for the owner
 

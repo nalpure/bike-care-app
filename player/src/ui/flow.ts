@@ -235,24 +235,161 @@ function renderTools(app: App, j: Journey, s: Extract<Screen, { kind: 'tools' }>
   ], [h('button.btn.primary.wide', { 'data-test': 'start', onclick: () => app.act((x) => x.startTutorial(), 'next') }, 'Start the guide')]);
 }
 
-// ---------------------------------------------------------------- card
+// ---------------------------------------------------------------- card column
 
-function renderCard(app: App, j: Journey, card: Card): HTMLElement {
-  const textOnly = app.store.data.textOnly;
-  if (!textOnly) {
-    app.stage.show({
-      id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bikeName,
-      focus: card.stage.focus, show: card.stage.show, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: (app.journey?.bikeFacts ?? {}),
-    });
-  }
+/**
+ * The card column. The text box (one element for the whole app, `COL.guide`) scrolls through up to
+ * three slots: the previous card above, the current card, and the next card below, each at least
+ * as tall as the box and dimmed while it is not in view. The browser's own scrolling, with snap
+ * points, moves between them: touch, touchpad, mouse wheel and keys alike, one card per gesture
+ * (`scroll-snap-stop`). When the scroll comes to rest on a neighbour, the journey moves there
+ * (`next`, `backCard`) and the column is filled again around the new card at the same place on
+ * screen, so nothing jumps. A move made another way (Next, Back, an answer that goes on) fills
+ * the column with the view where it was and then scrolls to the new card, so it looks the same.
+ *
+ * The neighbours come from `Journey.peekNext` and `peekBack`, so they are the very screens the
+ * moves lead to. A card that still waits for an answer shows the top of the next card, which the
+ * box does not stop on ('locked'): scrolling there springs back. Where the answers lead to
+ * different cards (a diagnosis), nothing is shown below until the answer is given.
+ *
+ * The box stays in the page from card to card (`patchCard`): a touchpad gesture belongs to the
+ * element it started on, and Chrome drops the rest of a gesture whose element was removed.
+ */
+const COL = {
+  guide: null as HTMLElement | null,
+  /** where the view is: the slot at the top of the box, and how far into it */
+  anchor: null as { key: string; offset: number } | null,
+  next: null as (() => void) | null,
+  back: null as (() => void) | null,
+  timer: 0,
+};
 
-  const chosenBtn = card.buttons.find((b) => b.id === card.chosen);
-  // On a card where Next answers, a problem's solution plays at once; the button replays it.
-  const tap = (id: string) => {
-    app.act((x) => x.tap(id));
-    const s = app.journey?.screen();
-    if (!textOnly && s?.kind === 'card' && s.card.nextAnswers && s.card.solution?.length) app.stage.playSolution(s.card.solution);
+const reduceMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const HAS_SCROLLEND = typeof window !== 'undefined' && 'onscrollend' in window;
+
+function guideEl(): HTMLElement {
+  if (COL.guide) return COL.guide;
+  const g = h('div.guide');
+  let raf = 0;
+  let lastScroll = 0;
+  let touching = false;
+  // Rest is the scrollend event, or (older Safari, or a touch the browser did not snap) a moment without scrolling.
+  const restSoon = (ms: number) => {
+    clearTimeout(COL.timer);
+    COL.timer = window.setTimeout(() => {
+      if (touching) return;
+      if (performance.now() - lastScroll < ms - 20) restSoon(ms);
+      else settle(g);
+    }, ms);
   };
+  g.addEventListener('scroll', () => {
+    lastScroll = performance.now();
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(() => noteView(g));
+    if (!HAS_SCROLLEND) restSoon(180);
+  }, { passive: true });
+  g.addEventListener('scrollend', () => settle(g));
+  g.addEventListener('touchstart', () => (touching = true), { passive: true });
+  const lift = () => {
+    touching = false;
+    restSoon(350);
+  };
+  g.addEventListener('touchend', lift, { passive: true });
+  g.addEventListener('touchcancel', lift, { passive: true });
+  COL.guide = g;
+  return g;
+}
+
+const slotsOf = (g: HTMLElement) => [...g.children] as HTMLElement[];
+
+/** Remembers which slot the view is in, and lights the slot in the middle of the box. */
+function noteView(g: HTMLElement): void {
+  if (!g.isConnected) return;
+  const top = g.scrollTop;
+  const mid = top + g.clientHeight / 2;
+  for (const s of slotsOf(g)) {
+    if (top >= s.offsetTop - 1 && top < s.offsetTop + s.offsetHeight) COL.anchor = { key: s.dataset.key!, offset: Math.max(0, top - s.offsetTop) };
+    s.classList.toggle('lit', mid >= s.offsetTop && mid < s.offsetTop + s.offsetHeight);
+  }
+}
+
+/**
+ * The scroll came to rest. Inside the current card: nothing. Nearer a neighbour (the browser's
+ * snapping normally leaves it right on one): the journey moves there. Otherwise back to the card.
+ */
+function settle(g: HTMLElement): void {
+  if (!g.isConnected) return;
+  noteView(g);
+  const cur = g.querySelector<HTMLElement>(':scope > .cur');
+  if (!cur) return;
+  const top = g.scrollTop;
+  const room = g.clientHeight;
+  const end = cur.offsetTop + Math.max(0, cur.offsetHeight - room);
+  const prev = cur.previousElementSibling as HTMLElement | null;
+  const next = cur.nextElementSibling as HTMLElement | null;
+  const go = (y: number) => g.scrollTo({ top: y, behavior: reduceMotion() ? 'auto' : 'smooth' });
+  if (top > end + 4) {
+    if (next && !next.classList.contains('locked') && top - end > next.offsetTop - top) COL.next?.();
+    else go(end);
+  } else if (top < cur.offsetTop - 4) {
+    const prevEnd = prev ? prev.offsetTop + Math.max(0, prev.offsetHeight - room) : 0;
+    if (prev && top - prevEnd < cur.offsetTop - top) COL.back?.();
+    else go(cur.offsetTop);
+  }
+}
+
+/** Puts the slots in the box: the view stays where it was, then moves on to the current card (at once when `instant`). */
+function fillColumn(g: HTMLElement, list: HTMLElement[], curKey: string, instant: boolean): void {
+  const was = COL.anchor;
+  g.replaceChildren(...list);
+  const place = () => {
+    const cur = list.find((s) => s.dataset.key === curKey)!;
+    const from = was ? list.find((s) => s.dataset.key === was.key) : undefined;
+    if (from && from !== cur && !instant && !from.classList.contains('locked')) {
+      g.scrollTop = from.offsetTop + was!.offset;
+      g.scrollTo({ top: cur.offsetTop, behavior: reduceMotion() ? 'auto' : 'smooth' });
+    } else {
+      g.scrollTop = cur.offsetTop + (from === cur ? was!.offset : 0);
+    }
+    noteView(g);
+  };
+  // A new screen puts the box into the page only after this; place it then.
+  if (g.isConnected) place();
+  else queueMicrotask(place);
+}
+
+function slot(key: string, role: 'prev' | 'cur' | 'next', content: HTMLElement[], locked = false): HTMLElement {
+  return h(`div.slot.${role}${role === 'cur' ? '.lit' : ''}${locked ? '.locked' : ''}`, {
+    'data-key': key, inert: role !== 'cur', 'aria-hidden': role !== 'cur' ? 'true' : undefined,
+  }, content);
+}
+
+const cardKey = (c: Card) => `card:${c.flow}:${c.id}`;
+
+/** A neighbour as it will look: a card, or the heading of the screen after it. No test ids, no actions. */
+function peekSlot(app: App, p: { screen: Screen; title?: string }, role: 'prev' | 'next', locked = false): HTMLElement {
+  const s = p.screen;
+  let body: HTMLElement;
+  let key: string;
+  if (s.kind === 'card') {
+    body = cardBody(app, s.card, null);
+    key = cardKey(s.card);
+  } else {
+    const title = s.kind === 'exit' ? EXIT_TITLE[s.exitKind] : p.title ?? '';
+    body = h('div.step', h('h2', title), s.kind === 'exit' ? h('p', s.message) : null);
+    key = `screen:${s.kind}:${title}`;
+  }
+  for (const x of [body, ...body.querySelectorAll('[data-test]')]) x.removeAttribute('data-test');
+  return slot(key, role, locked ? [h('div.lockhint', 'Answer above to go on'), body] : [body], locked);
+}
+
+/**
+ * A card's text: kicker, title, text, details, answers and the answer given. `live`: the actions
+ * of the current card; null draws a neighbour (a div, so `article.step` is the current card only).
+ */
+function cardBody(app: App, card: Card, live: { tap: (id: string) => void; textOnly: boolean } | null): HTMLElement {
+  const chosenBtn = card.buttons.find((b) => b.id === card.chosen);
+  const textOnly = live?.textOnly ?? app.store.data.textOnly;
   const verdict = card.chosen !== undefined
     ? h(`div.verdict.${card.chosenTone === 'bad' ? 'bad' : card.chosenTone === 'good' ? 'good' : 'info'}`, { 'data-test': 'verdict' },
       h('b', card.chosenTone === 'bad' ? (card.nextEnabled && !card.nextAnswers ? 'Take note' : 'Fix this first') : 'Your answer'),
@@ -260,18 +397,17 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
       card.chosenText ? h('p', card.chosenText) : null,
       card.nextAnswers && chosenBtn ? h('p.s', { 'data-test': 'fixed-hint' }, 'Once it is fixed, tap Next.') : null,
       h('div.actions',
-        card.solution?.length ? h('button.btn.primary', { 'data-test': 'solution', onclick: () => app.stage.playSolution(card.solution!) }, card.nextAnswers && !textOnly ? 'Play again' : 'Show solution') : null,
-        h('button.link', { 'data-test': 'again', onclick: () => app.act((x) => x.untap()) }, 'Choose again'),
+        card.solution?.length ? h('button.btn.primary', { 'data-test': 'solution', onclick: live ? () => app.stage.playSolution(card.solution!) : undefined }, card.nextAnswers && !textOnly ? 'Play again' : 'Show solution') : null,
+        h('button.link', { 'data-test': 'again', onclick: live ? () => app.act((x) => x.untap()) : undefined }, 'Choose again'),
       ),
       card.solution?.length && textOnly ? h('div.solution', card.solution.map((a: any) => h('span', `▶ ${a.caption ?? ''}`))) : null,
     )
     : null;
-
-  const step = h(`article.step${app.moved === 'next' ? '.in-next' : app.moved === 'back' ? '.in-back' : ''}`, { 'data-test': `card-${card.id}`, 'data-flow': card.flowKind },
+  return h(live ? 'article.step' : 'div.step', { 'data-test': `card-${card.id}`, 'data-flow': card.flowKind },
     h('div.kicker',
       h('span', `${card.kindLabel}${card.position ? ` · ${card.position.n} of ${card.position.of}` : ''}`),
       h('span.sp'),
-      h('button.notebtn', { 'data-test': 'note', onclick: () => app.openOverlay({ k: 'feedback' }) }, 'Note'),
+      h('button.notebtn', { 'data-test': 'note', onclick: live ? () => app.openOverlay({ k: 'feedback' }) : undefined }, 'Note'),
     ),
     card.jumped ? h('p.jumpnote', 'You jumped ahead in this guide to put the bike back.') : null,
     card.warnings.map((w) => h('div.standing', w)),
@@ -280,129 +416,81 @@ function renderCard(app: App, j: Journey, card: Card): HTMLElement {
     h('p', card.text),
     card.details.map((d) => h('p.detail', d)),
     card.buttons.length && card.chosen === undefined
-      ? h('div.q', h('div.kicker', card.question ?? 'What do you see?'), card.buttons.map((b) => h('button.opt', { 'data-test': `btn-${b.id}`, onclick: () => tap(b.id) }, b.label)))
+      ? h('div.q', h('div.kicker', card.question ?? 'What do you see?'), card.buttons.map((b) => h('button.opt', { 'data-test': `btn-${b.id}`, onclick: live ? () => live.tap(b.id) : undefined }, b.label)))
       : null,
     verdict,
   );
+}
 
-  const guide = h('div.guide', step);
-  // Swipe down does what Back does, but never leaves the flow from its first screen.
-  const onNext = () => card.nextEnabled && app.advance((x) => x.next(), 'next');
-  const onBack = () => j.canBack && app.back();
-  attachSwipe(guide, onNext, onBack);
+/** Shows the card on the stage, fills the column, and builds the parts around it that change per card. */
+function cardParts(app: App, j: Journey, card: Card): { gtop: HTMLElement; progress: HTMLElement; pager: HTMLElement } {
+  const textOnly = app.store.data.textOnly;
+  if (!textOnly) {
+    app.stage.show({
+      id: `${card.flow}:${card.id}`, chosen: card.chosen, bike: app.bikeName,
+      focus: card.stage.focus, show: card.stage.show, view: card.stage.view, animation: card.stage.animation, labels: card.stage.labels, labelsBefore: card.stage.labelsBefore, facts: (app.journey?.bikeFacts ?? {}),
+    });
+  }
+  // On a card where Next answers, a problem's solution plays at once; the button replays it.
+  const tap = (id: string) => {
+    app.act((x) => x.tap(id));
+    const s = app.journey?.screen();
+    if (!textOnly && s?.kind === 'card' && s.card.nextAnswers && s.card.solution?.length) app.stage.playSolution(s.card.solution);
+  };
 
-  const appEl = h(`main.app${textOnly ? '.textonly' : ''}`,
-    textOnly ? null : app.stage.el,
-    h('section.side.cardside',
-      h('div.progress', { role: 'progressbar', 'aria-orientation': 'vertical', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(card.progress * 100) }, h('i', { style: `height:${Math.round(card.progress * 100)}%` })),
-      h('div.sidemain',
-        guide,
-        h('div.pager',
-          h('button.btn', { 'data-test': 'back', onclick: () => app.back() }, 'Back'),
-          h('button.btn.primary', { 'data-test': 'next', disabled: !card.nextEnabled, onclick: () => app.advance((x) => x.next(), 'next') }, card.nextLabel),
-        ),
-      ),
-    ),
-  );
-  attachWheel(appEl, guide, onNext, onBack);
+  const prev = j.peekBack();
+  const next = j.peekNext();
+  const list = [
+    prev ? peekSlot(app, prev, 'prev') : null,
+    slot(cardKey(card), 'cur', [cardBody(app, card, { tap, textOnly })]),
+    next ? peekSlot(app, next, 'next', !next.open) : null,
+  ].filter((x): x is HTMLElement => !!x);
+  COL.next = () => app.act((x) => x.next(), 'next');
+  COL.back = () => app.act((x) => x.backCard(), 'back');
+  fillColumn(guideEl(), list, cardKey(card), app.instant);
+
   const flowTitle = card.flowKind === 'tutorial' ? app.c.jobTitle(app.c.ix.tutorials.get(card.flow)?.job ?? card.flow) : card.flowKind === 'diagnosis' ? app.c.ix.diagnoses.get(card.flow)?.symptom ?? card.flow : app.c.ix.checks.get(card.flow)?.title ?? card.flow;
-  return h('section.screen',
-    h('div.gtop',
+  return {
+    gtop: h('div.gtop',
       h('button.ib', { 'aria-label': 'Close', 'data-test': 'close', onclick: () => app.closeJourney() }, icon(ICON.close)),
       h('div.t', `${app.bikeName} · ${flowTitle}`),
       h('button.toggle', { 'aria-pressed': String(textOnly), 'data-test': 'text-only', onclick: () => app.setTextOnly(!textOnly) }, textOnly ? '3D view' : 'Text only'),
     ),
-    appEl,
+    progress: h('div.progress', { role: 'progressbar', 'aria-orientation': 'vertical', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.round(card.progress * 100) }, h('i', { style: `height:${Math.round(card.progress * 100)}%` })),
+    pager: h('div.pager',
+      h('button.btn', { 'data-test': 'back', onclick: () => app.back() }, 'Back'),
+      h('button.btn.primary', { 'data-test': 'next', disabled: !card.nextEnabled, onclick: () => app.advance((x) => x.next(), 'next') }, card.nextLabel),
+    ),
+  };
+}
+
+function renderCard(app: App, j: Journey, card: Card): HTMLElement {
+  const textOnly = app.store.data.textOnly;
+  const p = cardParts(app, j, card);
+  return h('section.screen.cardscreen', { 'data-textonly': String(textOnly) },
+    p.gtop,
+    h(`main.app${textOnly ? '.textonly' : ''}`,
+      textOnly ? null : app.stage.el,
+      h('section.side.cardside', p.progress, h('div.sidemain', guideEl(), p.pager)),
+    ),
   );
 }
 
 /**
- * Swipe up on the text for the next step, swipe down for the previous one. A swipe up counts only
- * if it starts when the text is already scrolled to its end, a swipe down only if it starts at the
- * top, and neither if the text scrolled during it, so reading or scrolling back never changes the
- * step by itself. The 3D view is outside `el`, so dragging it never counts. Touch events, because
- * the browser takes over a vertical drag as a scroll and then sends no pointer events.
- * The swipe is timed by the events' own time stamps (when the finger moved), not by when a busy
- * page got round to handling them, so a quick swipe still counts while the 3D view is slow.
- * Safari on iOS lets a scrollable text bounce past its top and end (scrollTop below 0 or past the
- * end while the finger pulls), for example a card whose answer buttons make it taller than the
- * box. The scroll position is clamped, so a bounce does not count as scrolling.
+ * From one card to another (or the same card after a tap), the screen is updated in place instead
+ * of being built anew, so the text box stays in the page. False when the screen is not a card, or
+ * the last screen was not one in the same layout; then the app renders as usual.
  */
-function attachSwipe(el: HTMLElement, onNext: () => void, onBack: () => void): void {
-  let x0 = 0;
-  let y0 = 0;
-  let t0 = 0;
-  let top0 = 0;
-  let atEnd = false;
-  let atTop = false;
-  const scrolled = () => Math.min(Math.max(el.scrollTop, 0), Math.max(0, el.scrollHeight - el.clientHeight));
-  el.addEventListener('touchstart', (e) => {
-    const t = e.touches[0];
-    const one = e.touches.length === 1;
-    atEnd = one && scrolled() + el.clientHeight >= el.scrollHeight - 2;
-    atTop = one && scrolled() <= 2;
-    x0 = t.clientX;
-    y0 = t.clientY;
-    t0 = e.timeStamp;
-    top0 = scrolled();
-  }, { passive: true });
-  el.addEventListener('touchend', (e) => {
-    const up = atEnd;
-    const down = atTop;
-    atEnd = atTop = false;
-    if (!up && !down) return;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - x0;
-    const dy = t.clientY - y0;
-    if (Math.abs(dy) <= Math.abs(dx) * 1.5 || e.timeStamp - t0 >= 900 || Math.abs(scrolled() - top0) >= 2) return;
-    if (up && dy < -60) onNext();
-    else if (down && dy > 60) onBack();
-  });
-  el.addEventListener('touchcancel', () => (atEnd = atTop = false));
-}
-
-/**
- * The same with a touchpad or a mouse wheel, anywhere on the card (text or 3D view): scrolling
- * on past the text's end goes to the next step, scrolling up past its top to the previous one.
- * One gesture (wheel events less than GAP apart, so a touchpad's coasting counts as part of it)
- * moves one step at most, and none if it scrolled the text, so reading to the end of a long text
- * never turns the page by itself. The gesture is kept across screens, because its coasting goes
- * on into the next card. Pinch zoom (ctrl) and sideways scrolling don't count, nor the full-screen
- * 3D explorer, where the wheel zooms.
- */
-const WHEEL = { last: -1e9, sum: 0, read: false, done: false };
-const GAP = 220;
-const WHEEL_STEP = 80;
-
-function attachWheel(area: HTMLElement, text: HTMLElement, onNext: () => void, onBack: () => void): void {
-  area.addEventListener('wheel', (e) => {
-    const target = e.target as Element;
-    if (e.ctrlKey || target.closest?.('.stage3d.explore')) return;
-    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? text.clientHeight : 1);
-    if (Math.abs(dy) <= Math.abs(e.deltaX)) return;
-    if (e.timeStamp - WHEEL.last > GAP) Object.assign(WHEEL, { sum: 0, read: false, done: false });
-    WHEEL.last = e.timeStamp;
-    if (WHEEL.done) {
-      e.preventDefault(); // the coasting of a gesture that turned the page must not scroll the new text
-      return;
-    }
-    const room = text.scrollHeight - text.clientHeight;
-    const canScroll = dy > 0 ? text.scrollTop < room - 2 : text.scrollTop > 2;
-    if (canScroll) {
-      // this gesture reads the text and never changes the step; over the 3D view or the
-      // buttons it scrolls the text too, as it would over the text
-      WHEEL.read = true;
-      if (target.closest?.('.guide') !== text) text.scrollTop += dy;
-      return;
-    }
-    if (WHEEL.read) return;
-    if (WHEEL.sum && Math.sign(WHEEL.sum) !== Math.sign(dy)) WHEEL.sum = 0;
-    WHEEL.sum += dy;
-    if (Math.abs(WHEEL.sum) < WHEEL_STEP) return;
-    WHEEL.done = true;
-    if (WHEEL.sum > 0) onNext();
-    else onBack();
-  }, { passive: false });
+export function patchCard(app: App): boolean {
+  const s = app.journey?.screen();
+  if (!app.journey || s?.kind !== 'card') return false;
+  const old = app.root.querySelector<HTMLElement>(':scope > section.cardscreen');
+  if (!old || app.root.querySelector(':scope > .modal') || old.dataset.textonly !== String(app.store.data.textOnly) || !COL.guide?.isConnected) return false;
+  const p = cardParts(app, app.journey, s.card);
+  old.querySelector('.gtop')?.replaceWith(p.gtop);
+  old.querySelector('.cardside > .progress')?.replaceWith(p.progress);
+  old.querySelector('.sidemain > .pager')?.replaceWith(p.pager);
+  return true;
 }
 
 // ---------------------------------------------------------------- exits, job, shop

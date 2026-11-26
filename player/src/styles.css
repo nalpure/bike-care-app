@@ -189,16 +189,16 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
 .stage3d.explore .xui { display: flex; }
 .chip { position: absolute; left: 10px; top: 10px; background: var(--panel); border: 1px solid var(--line); padding: 6px 8px; border-radius: 8px; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
 .side { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
-.guide { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+/* The card column (ui/flow.ts): previous, current and next card in one snapping scroll box; the ones not in view are dimmed. */
+.guide { flex: 1; min-height: 0; position: relative; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scroll-snap-type: y mandatory; scrollbar-width: none; }
+.guide::-webkit-scrollbar { display: none; }
+.slot { min-height: 100%; scroll-snap-align: start; scroll-snap-stop: always; opacity: .38; transition: opacity .3s; }
+.slot.lit { opacity: 1; }
+.slot + .slot { border-top: 1px dashed var(--line); }
+/* the next card while this one waits for an answer: its top shows, the box does not stop there */
+.slot.locked { min-height: 0; max-height: 42%; overflow: hidden; scroll-snap-align: none; opacity: .38; -webkit-mask-image: linear-gradient(#000 40%, transparent); mask-image: linear-gradient(#000 40%, transparent); }
+.lockhint { font: 500 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); padding-block: 10px 4px; }
 .step { display: flex; flex-direction: column; gap: 9px; padding-block: 2px 12px; }
-.step.in-next { animation: in-next .24s ease-out; }
-.step.in-back { animation: in-back .24s ease-out; }
-.step.out-next { animation: out-next .17s ease-in forwards; }
-.step.out-back { animation: out-back .17s ease-in forwards; }
-@keyframes in-next { from { transform: translateY(46px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes in-back { from { transform: translateY(-46px); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes out-next { to { transform: translateY(-46px); opacity: 0; } }
-@keyframes out-back { to { transform: translateY(46px); opacity: 0; } }
 .kicker { font: 500 11.5px/1.25 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--accent-text); display: flex; align-items: center; gap: 8px; }
 .kicker .sp { flex: 1; }
 .step h2 { font-family: var(--f-display); font-weight: 700; font-size: clamp(24px, 6.6vw, 33px); line-height: 1.02; letter-spacing: .005em; text-wrap: balance; }
@@ -268,7 +268,7 @@ textarea.text { padding: 10px 14px; min-height: 110px; resize: vertical; }
   .screen:has(.exitapp) .wh { max-width: none; margin-inline: -8px 0; }
   .exitapp .scroll, .exitapp .cta { max-width: none; }
 }
-@media (prefers-reduced-motion: reduce) { .step.in-next, .step.in-back, .step.out-next, .step.out-back { animation: none; } .progress i { transition: none; } .assist { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .slot { transition: none; } .progress i { transition: none; } .assist { transition: none; } }
 
 /* Garage list: a picture of the bike next to its name. */
 .bikecard { flex-direction: row; align-items: center; gap: 12px; }

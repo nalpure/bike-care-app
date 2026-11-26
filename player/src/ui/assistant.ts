@@ -12,7 +12,7 @@ const PAD = 8;
 /** Elements the button must not cover. */
 const PROTECTED = '.pager, .cta, .q, .qopts, .verdict .actions, .tabbar, .helpbtn, .wh .ib, .gtop button, .tabs2, .stage3d .fabs, .stage3d .pfabs';
 /** Text it should not cover if there is room elsewhere. */
-const TEXT = '.step h2, .step p, .step .kicker, .step .needs, .step .verdict, .step .standing';
+const TEXT = 'article.step h2, article.step p, article.step .kicker, article.step .needs, article.step .verdict, article.step .standing';
 
 function bounds(): { min: number; max: number } {
   const tab = document.querySelector<HTMLElement>('.tabbar');

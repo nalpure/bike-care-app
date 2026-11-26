@@ -7,7 +7,7 @@ import { Journey, Session, type Start } from '../engine/journey.js';
 import type { Value } from '../../../tools/lib/conditions.js';
 import type { Bike, Finding, Store } from '../engine/store.js';
 import { h, icon, ICON } from './dom.js';
-import { renderJourney } from './flow.js';
+import { patchCard, renderJourney } from './flow.js';
 import { endPreview, renderBike } from './bike.js';
 import { renderGarage, renderHome, renderNotes, renderShopTab } from './home.js';
 import { placeSoon, assistantButton } from './assistant.js';
@@ -43,7 +43,7 @@ export class App {
   /** the sitting of the open journey */
   private sitting = new Session();
   overlay: Overlay = null;
-  /** direction of the last card move, for the slide animation */
+  /** direction of the last card move */
   moved: 'next' | 'back' | null = null;
   private toastTimer = 0;
 
@@ -71,8 +71,6 @@ export class App {
   private sentinel = false;
   /** when our own edge swipe last went back, so the browser's gesture is not counted twice */
   lastEdgeBack = -1e9;
-  /** a card is sliding out; ignore further taps until it is gone */
-  private busy = false;
 
   /** What Back does on this screen, or null where there is nowhere to go back to (the main tabs). */
   backTarget(): (() => void) | null {
@@ -89,28 +87,24 @@ export class App {
     }
   }
 
-  /** Does what the back arrow does; false on a main tab. `instant`: the screen has already moved away, so no slide. */
+  /** Does what the back arrow does; false on a main tab. `instant`: the screen has already moved away (the browser's own back gesture), so the card column does not scroll there. */
   goBack(instant = false): boolean {
     const t = this.backTarget();
-    this.noSlide = instant;
-    t?.();
-    this.noSlide = false;
+    this.instant = instant;
+    try {
+      t?.();
+    } finally {
+      this.instant = false;
+    }
     return !!t;
   }
 
-  private noSlide = false;
+  /** set while a move should show the new card at once, without the card column's scroll */
+  instant = false;
 
-  /** Runs a card move after the text has slid out (at once with reduced motion). */
+  /** A card move (Next, Back, the arrow keys). The card column scrolls to the new card by itself (`ui/flow.ts`). */
   advance(fn: (j: Journey) => void, dir: 'next' | 'back'): void {
-    const el = this.root.querySelector<HTMLElement>('.step');
-    if (this.busy) return;
-    if (!el || this.noSlide || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return this.act(fn, dir);
-    this.busy = true;
-    el.classList.add(dir === 'next' ? 'out-next' : 'out-back');
-    window.setTimeout(() => {
-      this.busy = false;
-      this.act(fn, dir);
-    }, 170);
+    this.act(fn, dir);
   }
 
   go(view: View): void {
@@ -239,6 +233,12 @@ export class App {
   // ------------------------------------------------------------ render
 
   render(): void {
+    // From card to card the screen is updated in place, so the text box (and a touchpad gesture on it) lives on.
+    if (this.view.k === 'journey' && !this.overlay && patchCard(this)) {
+      this.root.dataset.view = this.viewKey();
+      placeSoon(this);
+      return;
+    }
     const keepScroll = this.root.querySelector<HTMLElement>('.scroll')?.scrollTop ?? 0;
     const sameView = this.root.dataset.view === this.viewKey();
     // The bike page owns the 3D stage while it is open; any other screen lets it go (a card takes it by itself).

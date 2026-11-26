@@ -42,6 +42,17 @@ async function view(page: Page): Promise<string> {
   return (await page.locator('#root').getAttribute('data-view')) ?? '';
 }
 
+/** The screen once it is no longer `from`: the card column moves on only when its scroll has come to rest. */
+async function viewAfter(page: Page, from: string, ms = 3000): Promise<string> {
+  const end = Date.now() + ms;
+  let v = await view(page);
+  while (v === from && Date.now() < end) {
+    await page.waitForTimeout(100);
+    v = await view(page);
+  }
+  return v;
+}
+
 async function click(page: Page, test: string): Promise<void> {
   // The guides sit in a collapsed list on the repair menu.
   if (test.startsWith('tutorial-')) {
@@ -53,16 +64,13 @@ async function click(page: Page, test: string): Promise<void> {
 
 /**
  * A one-finger drag by touch (the browser's own touch events, like a thumb), for the swipe tests.
- * Each event carries its own time stamp, 16 ms apart (one frame), as a thumb's would. Without them
- * the events are stamped when CDP delivers them, one per rendered frame, and with software WebGL
- * the swipe took up to 1.5 s and missed the app's 900 ms limit.
+ * The text box scrolls with it; headless Chrome does not snap after these events, so the card
+ * column settles by itself once the box is still (`ui/flow.ts`).
  */
 async function swipe(page: Page, from: [number, number], to: [number, number]): Promise<void> {
   const cdp = await page.context().newCDPSession(page);
-  const t0 = Date.now() / 1000;
-  let k = 0;
   const send = (type: string, p?: [number, number]) =>
-    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p[0], y: p[1] }] : [], timestamp: t0 + 0.016 * k++ });
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: p ? [{ x: p[0], y: p[1] }] : [] });
   await send('touchStart', from);
   for (let i = 1; i <= 8; i++) await send('touchMove', [from[0] + ((to[0] - from[0]) * i) / 8, from[1] + ((to[1] - from[1]) * i) / 8]);
   await send('touchEnd');
@@ -466,22 +474,28 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     // One element on every screen, so it does not slide in from its default place on a new screen.
     expect(await page.evaluate(() => document.querySelector('.assist') === (window as any).__fab), 'a new screen made a new assistant button');
 
-    // A card: swipe up for the next step; the 3D view does not count.
+    // A card: the text box is a column of cards (ui/flow.ts). Swipe up for the next step; the 3D view does not count.
     await page.locator('.tabbar button', { hasText: 'Repair' }).click();
     await click(page, 'diagnosis-gears-shift-badly');
     await click(page, 'pick-road-bike-stand');
     expect((await view(page)).startsWith('journey:card'), `no card after choosing the bike (${await view(page)})`);
     const first = await view(page);
+    const slots = () => page.evaluate(() => [...document.querySelectorAll('.guide > .slot')].map((s) => s.className.replace('slot ', '').replace(' lit', '')).join(','));
+    expect(!(await slots()).includes('prev'), `the first card has a card above it (${await slots()})`);
     await page.locator('[data-test^="btn-"]').first().click();
+    expect((await slots()) === 'cur,next', `after the answer the next card is not drawn below (${await slots()})`);
+    expect(await page.locator('.guide > .slot.next [data-test]').count() === 0, 'the next card carries test ids (taps would reach it)');
     const guide = (await page.locator('.guide').boundingBox())!;
     const mid = guide.x + guide.width / 2;
     const stage = await page.locator('.stage').boundingBox();
     if (stage) await swipe(page, [stage.x + stage.width / 2, stage.y + stage.height - 20], [stage.x + stage.width / 2, stage.y + 20]);
+    await page.waitForTimeout(700);
     expect(await view(page) === first, 'a swipe on the 3D view went to the next step');
     expect(await page.locator('.cardside .progress').count() === 1, 'no progress bar beside the text');
     await swipe(page, [mid, guide.y + guide.height - 30], [mid, guide.y + 20]);
-    const second = await view(page);
+    const second = await viewAfter(page, first);
     expect(second !== first && second.startsWith('journey:card'), `a swipe up did not go to the next step (${first} -> ${second})`);
+    expect((await slots()).startsWith('prev,cur'), `the previous card is not drawn above (${await slots()})`);
     // The assistant button keeps clear of Back and Next.
     const clear = await page.evaluate(() => {
       const a = document.querySelector('.assist')!.getBoundingClientRect();
@@ -492,36 +506,34 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     });
     expect(clear, 'the assistant button covers Back or Next');
     await shot('03-card-after-swipe');
-    // Swipe down for the previous step: back to the first card, with its answer still there. Also
-    // while the card still waits for an answer (Next disabled) and its text is taller than the box.
+    // A card waiting for an answer: the next card shows only its top ("locked") or not at all, and a swipe up stays.
     expect(await page.locator('[data-test="next"]').isDisabled(), 'Next is enabled before the second card is answered');
+    expect(!(await slots()).split(',').includes('next'), `the next card is open before the answer (${await slots()})`);
+    await swipe(page, [mid, guide.y + guide.height - 30], [mid, guide.y + 20]);
+    await page.waitForTimeout(900);
+    expect(await view(page) === second, `a swipe up went on before the answer (${await view(page)})`);
+    // Swipe down for the previous step: back to the first card, with its answer still there. Also
+    // when the text is taller than the box.
     await page.addStyleTag({ content: '.guide { flex: none !important; height: 160px !important; }' });
     expect(await page.evaluate(() => { const g = document.querySelector('.guide')!; return g.scrollHeight > g.clientHeight; }), 'the shortened text box does not scroll');
+    // the view at the top of the card (shrinking the box left it further down)
+    await page.evaluate(() => { const g = document.querySelector<HTMLElement>('.guide')!; g.scrollTop = g.querySelector<HTMLElement>('.slot.cur')!.offsetTop; });
+    await page.waitForTimeout(300);
     const g2 = (await page.locator('.guide').boundingBox())!;
     await swipe(page, [mid, g2.y + 20], [mid, g2.y + g2.height - 20]);
+    await viewAfter(page, second);
     await page.evaluate(() => document.querySelectorAll('style').forEach((s) => s.textContent?.includes('height: 160px') && s.remove()));
     expect(await view(page) === first, `a swipe down did not go to the previous step (${second} -> ${await view(page)})`);
     expect(await page.locator('[data-test="verdict"]').count() === 1, 'the swipe down did not keep the answer on the previous card');
     await shot('04-card-after-swipe-down');
     const g3 = (await page.locator('.guide').boundingBox())!;
     await swipe(page, [mid, g3.y + g3.height - 30], [mid, g3.y + 20]);
-    expect(await view(page) === second, `a second swipe up did not go to the next step (${await view(page)})`);
-
-    // A touchpad or mouse wheel does the same, one step per gesture; a gesture that scrolls the
-    // text does not count, so a long first card may take a second one.
-    const wheelTo = async (dy: number, want: string) => {
-      const g = (await page.locator('.guide').boundingBox())!;
-      await page.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
-      for (let i = 0; i < 6 && (await view(page)) !== want; i++) {
-        await page.mouse.wheel(0, dy);
-        await page.waitForTimeout(400); // longer than a gesture's gap
-      }
-      return view(page);
-    };
-    let wv = await wheelTo(-300, first);
-    expect(wv === first, `scrolling up did not go to the previous step (${second} -> ${wv})`);
-    wv = await wheelTo(300, second);
-    expect(wv === second, `scrolling down did not go to the next step (${first} -> ${wv})`);
+    expect(await viewAfter(page, first) === second, `a second swipe up did not go to the next step (${await view(page)})`);
+    // Next and Back go the same way (the column scrolls there).
+    await click(page, 'back');
+    expect(await viewAfter(page, second) === first, `Back did not go to the previous step (${await view(page)})`);
+    await click(page, 'next');
+    expect(await viewAfter(page, first) === second, `Next did not go to the next step (${await view(page)})`);
 
     // Back by the left screen edge, as the arrow does.
     await swipe(page, [4, 400], [280, 410]);
@@ -539,6 +551,54 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
     // No edge swipe on a main tab: nothing to go back to.
     await swipe(page, [4, 400], [280, 410]);
     expect(await view(page) === 'home', 'an edge swipe on the repair menu changed the screen');
+    return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
+  } catch (e: any) {
+    await shot_fail(page, dir);
+    return { id, ending: 'crashed', expected: 'ok', error: String(e?.message ?? e).split('\n')[0] };
+  } finally {
+    await ctx.close();
+  }
+}
+
+/**
+ * A laptop (no touch, the 3D view on): the touchpad or mouse wheel scrolls the card column, the
+ * next card waiting below, one card per turn. Over and over without moving the pointer, which
+ * used to stall when every card replaced the text box under it.
+ */
+async function laptop(browser: import('playwright').Browser): Promise<Result> {
+  const id = 'extras/laptop-wheel';
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  const dir = join(SHOTS, 'laptop', 'extras');
+  mkdirSync(dir, { recursive: true });
+  const expect = (ok: boolean, what: string) => ok || errors.push(what);
+  try {
+    await page.goto(URL);
+    await click(page, 'notice-ok');
+    await click(page, 'diagnosis-gears-shift-badly');
+    await click(page, 'pick-road-bike-stand');
+    const first = await view(page);
+    await page.locator('[data-test^="btn-"]').first().click();
+    const g = (await page.locator('.guide').boundingBox())!;
+    await page.mouse.move(g.x + g.width / 2, g.y + g.height / 2);
+    // A long card may take more than one turn of the wheel.
+    const wheelTo = async (dy: number, want: string) => {
+      for (let i = 0; i < 6 && (await view(page)) !== want; i++) {
+        await page.mouse.wheel(0, dy);
+        await viewAfter(page, await view(page), 1500);
+      }
+      return view(page);
+    };
+    await page.mouse.wheel(0, 400);
+    const second = await viewAfter(page, first);
+    expect(second !== first && second.startsWith('journey:card'), `the wheel did not go to the next step (${first} -> ${second})`);
+    await page.screenshot({ path: join(dir, '01-after-wheel.png') });
+    let wv = await wheelTo(-400, first);
+    expect(wv === first, `the wheel did not go back to the previous step (${second} -> ${wv})`);
+    wv = await wheelTo(400, second);
+    expect(wv === second, `the wheel did not go to the next step again (${first} -> ${wv})`);
     return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
   } catch (e: any) {
     await shot_fail(page, dir);
@@ -616,6 +676,7 @@ async function main(): Promise<void> {
     if (wanted('extras/feedback-assistant-garage')) results.push(await extras(browser));
     if (wanted('extras/bike-page')) results.push(await bikePage(browser));
     if (wanted('extras/navigation')) results.push(await navigation(browser));
+    if (wanted('extras/laptop-wheel')) results.push(await laptop(browser));
   } finally {
     await browser.close();
     server.kill();
