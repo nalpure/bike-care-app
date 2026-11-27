@@ -555,6 +555,15 @@ export class BikeModel {
     spinPulleys(this);
   }
 
+  /**
+   * Forgets how far the sprocket block and the pulleys have turned (they keep their angle from frame to frame),
+   * so the next `setDer` lays them from the chain alone, as on a new bike. For a held clip (ThreeStage.holdClip).
+   */
+  restSpin(): void {
+    this.cassetteSpin = this.cassetteShift = 0;
+    if (this.der) this.der.spin = { u: 0, l: 0, shift: 0 };
+  }
+
   /** z of the derailleur for sprocket i. */
   zOf(i: number): number {
     const { zs, n } = this.spec;

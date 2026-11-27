@@ -15,7 +15,7 @@ import { Contours } from './contour.js';
 import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
 import { addHeld, shownParts, visTargets } from './visibility.js';
 import { BARREL_FACT, BARREL_HOLDERS, barrelPick, pickedParts, turnKey, turnPart, type BarrelPick } from './barrel.js';
-import { CLIPS, HELD_PARTS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
+import { CLIPS, HELD_PARTS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, showPartsOf, VIEWS, type Pose } from './registry.js';
 import { mixPose, poseVals, type PoseVals } from './pose.js';
 import { PARK_HIDES } from './park.js';
 import { buildWall, wallFor } from './wall.js';
@@ -30,6 +30,9 @@ const ICON_CLOSE = 'M6 6l12 12|M18 6L6 18';
 const BASE_TAN = Math.tan((17.5 * Math.PI) / 180);
 
 interface Playing { anim?: Anim; caption: string; view?: string }
+
+/** How far parts sit from each edge of the 3D view (framing). */
+type Box = { left: number; right: number; top: number; bottom: number; behind: number };
 
 /** What the user tapped in the garage preview. */
 export interface PreviewPick {
@@ -411,7 +414,7 @@ export class ThreeStage implements Stage {
     // A card without show keeps the old rule (the rest of the bike stays, faded).
     this.shown = null;
     if (v.show && !fallback) {
-      this.shown = addHeld(addHeld(shownParts(this.hotParts, v.show, parts, (p) => m.has(p)), BARREL_HOLDERS, (p) => m.has(p)), HELD_PARTS, (p) => m.has(p));
+      this.shown = addHeld(addHeld(shownParts(this.hotParts, v.show, (n) => pickedParts(n, pick, showPartsOf), (p) => m.has(p)), BARREL_HOLDERS, (p) => m.has(p)), HELD_PARTS, (p) => m.has(p));
     }
     this.cardHot = new Set(this.hotParts);
     this.cardShown = this.shown && new Set(this.shown);
@@ -665,20 +668,115 @@ export class ThreeStage implements Stage {
    * camera are counted in `behind`, not in the box; no subject gives an empty `subject` and zeros.
    * Uses the camera as it is now, so call it once the camera has settled. `marked` is the same box for the
    * marked parts alone (a close-up frames them, not everything drawn), with their ids and one box per part (`each`);
-   * null when none is drawn.
+   * null when none is drawn. A box does not see what covers a part: with `{ seen: true }` each marked part also gets
+   * `seen`, the share of it in sight (see seenShare; a few small extra pictures, so only once the camera has settled).
+   * `playing`: a clip moves parts now, so the numbers change with it (holdClip holds it).
    */
-  framing(): { parts: string[]; subject: string[]; left: number; right: number; top: number; bottom: number; behind: number; marked: { ids: string[]; left: number; right: number; top: number; bottom: number; behind: number; each: Record<string, ReturnType<ThreeStage['boxOf']>> } | null } | null {
+  framing(opts: { seen?: boolean } = {}): { parts: string[]; subject: string[]; playing: boolean; left: number; right: number; top: number; bottom: number; behind: number; marked: { ids: string[]; left: number; right: number; top: number; bottom: number; behind: number; each: Record<string, Box & { seen?: number | null }> } | null } | null {
     const m = this.model;
     if (!m) return null;
     const parts = [...m.parts.values()].filter((p) => p.visT > 0.5).map((p) => p.id);
     const subject = this.shown ? parts : parts.filter((id) => this.hotParts.has(id));
     const hot = parts.filter((id) => this.hotParts.has(id));
-    const marked = hot.length ? { ids: hot, ...this.boxOf(hot), each: Object.fromEntries(hot.map((id) => [id, this.boxOf([id])])) } : null;
-    return { parts, subject, ...this.boxOf(subject), marked };
+    const seen = opts.seen && hot.length && this.gl ? this.seenShare(hot) : null;
+    const marked = hot.length ? { ids: hot, ...this.boxOf(hot), each: Object.fromEntries(hot.map((id) => [id, { ...this.boxOf([id]), ...(seen ? { seen: seen[id] } : {}) }])) } : null;
+    return { parts, subject, playing: this.playing(), ...this.boxOf(subject), marked };
+  }
+
+  /**
+   * How much of each part is in sight, for framing's `seen`: a small picture where every drawn mesh has the colour
+   * of its part, against one picture per part with only that part drawn. 1: nothing covers it; 0.3: something in
+   * front covers 70 % of it. Everything drawn covers (the stand too); faded parts, see-through helpers and lines do
+   * not. null: the part has no pixel in view (outside it, or smaller than a pixel); the box numbers tell which.
+   */
+  private seenShare(ids: string[]): Record<string, number | null> {
+    const gl = this.gl!;
+    const m = this.model!;
+    const k = Math.min(1, 480 / Math.max(this.el.clientWidth, this.el.clientHeight, 1));
+    const W = Math.max(1, Math.round(this.el.clientWidth * k));
+    const H = Math.max(1, Math.round(this.el.clientHeight * k));
+    // a mesh belongs to the part whose material it has (BikeModel.add gives each mesh its own, and may hang the
+    // mesh under another part's frame), else to its nearest part group
+    const matPart = new Map<T.Material, string>();
+    const groupPart = new Map<T.Object3D, string>();
+    for (const p of m.parts.values()) {
+      groupPart.set(p.group, p.id);
+      for (const mt of p.mats) matPart.set(mt, p.id);
+    }
+    const partOf = (o: T.Mesh) => {
+      const mt = Array.isArray(o.material) ? o.material[0] : o.material;
+      if (matPart.has(mt)) return matPart.get(mt)!;
+      for (let x: T.Object3D | null = o; x; x = x.parent) if (groupPart.has(x)) return groupPart.get(x)!;
+      return null;
+    };
+    // colour codes: 0 nothing, 1 anything else drawn, 2.. the parts asked about
+    const code = new Map(ids.map((id, i) => [id, i + 2]));
+    const mats = new Map<string, T.MeshBasicMaterial>();
+    const matFor = (c: number, side: T.Side) => {
+      const key = `${c}|${side}`;
+      let mt = mats.get(key);
+      if (!mt) mats.set(key, (mt = new T.MeshBasicMaterial({ color: new T.Color((c & 255) / 255, (c >> 8) / 255, 0), side, toneMapped: false, fog: false })));
+      return mt;
+    };
+    const meshes: Array<{ o: T.Mesh; mat: T.Material | T.Material[]; c: number | null }> = [];
+    const hide: T.Object3D[] = [];
+    this.scene.traverseVisible((o) => {
+      const mesh = o as T.Mesh;
+      if (!mesh.isMesh) {
+        if ((o as T.Line).isLine || (o as T.Points).isPoints || (o as T.Sprite).isSprite) hide.push(o);
+        return;
+      }
+      const mat0 = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+      const inSight = mat0 && mat0.visible && mat0.colorWrite && (!mat0.transparent || mat0.opacity >= 0.5);
+      const id = partOf(mesh);
+      meshes.push({ o: mesh, mat: mesh.material, c: inSight ? (id && code.get(id)) || 1 : null });
+    });
+    const target = new T.WebGLRenderTarget(W, H);
+    const bg = this.scene.background;
+    const clearCol = gl.getClearColor(new T.Color());
+    const clearA = gl.getClearAlpha();
+    const px = new Uint8Array(W * H * 4);
+    // not drawn in a picture: a material that writes nothing (hiding the mesh would hide meshes inside it too)
+    const none = new T.MeshBasicMaterial({ colorWrite: false, depthWrite: false });
+    const count = (only: number | null): number[] => {
+      for (const it of meshes) {
+        const drawn = it.c !== null && (only === null || it.c === only);
+        it.o.material = drawn ? matFor(it.c!, (Array.isArray(it.mat) ? it.mat[0] : it.mat).side) : none;
+      }
+      gl.setRenderTarget(target);
+      gl.clear();
+      gl.render(this.scene, this.camera);
+      gl.readRenderTargetPixels(target, 0, 0, W, H, px);
+      const n = new Array(ids.length + 2).fill(0);
+      for (let i = 0; i < px.length; i += 4) {
+        const c = px[i] + px[i + 1] * 256;
+        if (c < n.length) n[c]++;
+      }
+      return n;
+    };
+    try {
+      for (const o of hide) o.visible = false;
+      this.scene.background = null;
+      gl.setClearColor(0x000000, 1);
+      const all = count(null);
+      return Object.fromEntries(ids.map((id, i) => {
+        const alone = count(i + 2)[i + 2];
+        return [id, alone ? Math.min(1, all[i + 2] / alone) : null];
+      }));
+    } finally {
+      for (const it of meshes) it.o.material = it.mat;
+      for (const o of hide) o.visible = true;
+      this.scene.background = bg;
+      gl.setRenderTarget(null);
+      gl.setClearColor(clearCol, clearA);
+      target.dispose();
+      none.dispose();
+      for (const mt of mats.values()) mt.dispose();
+    }
   }
 
   /** How far the parts sit from each edge of the 3D view now (see framing). */
-  private boxOf(ids: string[]): { left: number; right: number; top: number; bottom: number; behind: number } {
+  private boxOf(ids: string[]): Box {
     const m = this.model!;
     const pts = this.shownPoints(new Set(ids));
     if (!pts.length) return { left: 0, right: 0, top: 0, bottom: 0, behind: 0 };
@@ -1085,6 +1183,7 @@ export class ThreeStage implements Stage {
         p = s.list[s.i];
         if (s.list.length > 1 && p.view && this.model) this.goCam(this.vpose(p.view), false);
       }
+      if (this.heldT !== null) return { play: p, t: Math.min(Math.max(0, this.heldT), dur) };
       return { play: p, t: now - s.t0 };
     }
     const p = this.stepAnim;
@@ -1095,11 +1194,26 @@ export class ThreeStage implements Stage {
   }
 
   /**
-   * For pictures (`npm run shots -- --at`): holds the step's clip at t seconds, or lets it run again (null).
+   * For pictures and numbers (`npm run shots`): holds the step's clip, or a playing solution's first clip, at
+   * t seconds, or lets it run again (null). While held, the derailleur jumps to its place and the crank, wheels,
+   * sprockets and pulleys stand still at their start angle (also on a card without a clip), so the same card and
+   * t give the same picture on every run.
    * Not used by the app.
    */
   holdClip(t: number | null): void {
+    const s = this.sol;
+    if (s && t !== null && s.i !== 0) {
+      s.i = 0;
+      const vn = s.list[0].view;
+      if (vn && this.model) this.goCam(this.vpose(vn), false);
+    }
+    if (s && t === null && this.heldT !== null) s.t0 = nowS();
     this.heldT = t;
+  }
+
+  /** Whether a clip plays now (a step's clip or a solution): its parts move, so `framing` changes with it. */
+  playing(): boolean {
+    return !!(this.sol?.list.length ? this.sol.list.some((p) => p.anim) : this.stepAnim?.anim);
   }
 
   private applyPose(fr: Frame, dt: number): void {
@@ -1249,17 +1363,27 @@ export class ThreeStage implements Stage {
 
     // pose, then everything that moves on the bike
     this.applyPose(fr, dt);
-    const follow = 1 - Math.exp(-dt * 7);
+    // A held clip (holdClip) is the same picture on every run: the derailleur sits where the frame
+    // puts it, and the crank, the wheels, the sprockets and the pulleys stand at their start angle
+    // instead of keeping what the cards before turned them to.
+    const held = this.heldT !== null;
+    const follow = held ? 1 : 1 - Math.exp(-dt * 7);
     if (fr.derZ !== undefined) this.derTarget = fr.derZ;
     else if (this.restZ !== undefined) this.derTarget = this.restZ;
     const derZ = m.derZ + (this.derTarget - m.derZ) * follow;
     this.gapNow += ((fr.gap ?? GAP_OK) - this.gapNow) * follow;
     const crank = fr.crankSpeed ?? 0;
-    this.crankAngle += crank * dt;
+    if (held) {
+      this.crankAngle = 0;
+      this.wheelAngle.rear_wheel = this.wheelAngle.front_wheel = 0;
+      m.restSpin();
+    } else {
+      this.crankAngle += crank * dt;
+      // a freewheel: the rear wheel only turns with the pedals going forward
+      this.wheelAngle.rear_wheel += wheelStep(Math.max(0, crank) * m.spec.rc / m.rAtZ(derZ) + (fr.wheelSpeed?.rear_wheel ?? 0), dt);
+      this.wheelAngle.front_wheel += wheelStep(fr.wheelSpeed?.front_wheel ?? 0, dt);
+    }
     m.chainShift = -this.crankAngle * m.spec.rc;
-    // a freewheel: the rear wheel only turns with the pedals going forward
-    this.wheelAngle.rear_wheel += wheelStep(Math.max(0, crank) * m.spec.rc / m.rAtZ(derZ) + (fr.wheelSpeed?.rear_wheel ?? 0), dt);
-    this.wheelAngle.front_wheel += wheelStep(fr.wheelSpeed?.front_wheel ?? 0, dt);
     m.setDer(derZ, this.gapNow);
     m.setCrank(-this.crankAngle);
     m.rearHub.rotation.z = -this.wheelAngle.rear_wheel;

@@ -148,6 +148,22 @@ export function partsOf(node: string): string[] {
   return NODE_PARTS[node] ?? [node];
 }
 
+/** Parts of the work stand, not of the bike: `show: [bike]` does not draw them. */
+export const STAND_PARTS: readonly string[] = ['stand_clamp'];
+
+let bikeParts: string[] | null = null;
+
+/**
+ * What a node in a card's `show` draws: `bike` is every part of the bike (every node's parts, without the
+ * work stand's), anything else `partsOf`. Only for `show`: `focus: [bike]` still marks nothing, and
+ * `partsOf('bike')` stays `['bike']` (an animation on `bike` moves the whole bike, anim.ts).
+ */
+export function showPartsOf(node: string): string[] {
+  if (node !== 'bike') return partsOf(node);
+  bikeParts ??= [...new Set(Object.keys(NODES).filter((n) => n !== 'bike').flatMap(partsOf))].filter((p) => !STAND_PARTS.includes(p));
+  return bikeParts;
+}
+
 /** The node a tapped part is shown as in the garage preview: a sprocket as the sprockets, the upper wheel as the derailleur. */
 export function previewNode(part: string): string {
   for (const [node, parts] of Object.entries(NODE_PARTS)) if (node !== part && !GROUP_NODES.includes(node) && parts.includes(part)) return node;

@@ -13,7 +13,11 @@
 // For every card it also prints the framing: how far the card's subject (focus parts, plus show
 // parts on a card with show) sits from the left, right, top and bottom edge of the 3D view (% of
 // its width or height; negative is cut off), and with --card the subject and all parts drawn. Check framing with these numbers first; look at a picture only to confirm.
-// "marked" is the same for the marked parts alone: the numbers to read on a close-up.
+// "marked" is the same for the marked parts alone: the numbers to read on a close-up, with "seen": the share of
+// the part in sight (100: nothing in front of it; a box can't tell a part hidden behind another one).
+// The numbers are read with the card held (a clip at 0 s: "clip held at 0 s"; the turning parts at their start
+// angle), so they are the same on every run and can be compared before and after a change. The picture is
+// taken after that, with the clip playing.
 //
 // Which paths: each entry of BIKES below is a demo bike of the garage (or an unknown bike, answering the
 // bike questions from `answers`), with facts set on it first and a way of holding it. On a card it taps the
@@ -144,10 +148,22 @@ try {
         }
         return f;
       };
+      // The numbers to report, the same on every run: read with the card held (stage.holdClip(0)): a clip stands
+      // at 0 s, and crank, wheels, sprockets and pulleys at their start angle (else they keep the angle the cards
+      // before left them at). Then let go for the picture. With the share of each marked part in sight.
+      const measure = async (id: string) => {
+        const playing = await page.evaluate(() => (window as any).__app.stage.playing?.() ?? false);
+        await page.evaluate(() => (window as any).__app.stage.holdClip?.(0));
+        await settle(id);
+        const f = await page.evaluate(() => (window as any).__app.stage.framing?.({ seen: true }) ?? null);
+        await page.evaluate(() => (window as any).__app.stage.holdClip?.(null));
+        return f && { ...f, held: playing };
+      };
+      const seen = (b: any) => (b.seen === undefined ? '' : b.seen === null ? '  not in view' : `  seen${pct(b.seen)}`);
       const report = (id: string, f: any) => {
         const where = f && !f.subject.length ? `no focus parts  ${f.parts.length} parts drawn` : f ? `${box(f)}  ${f.parts.length} parts drawn` : 'no 3D view';
-        console.log(`  ${String(n).padStart(2, '0')} ${id.padEnd(32)} ${where}`);
-        if (f?.marked) for (const [part, b] of Object.entries<any>(f.marked.each ?? {})) console.log(`     marked ${part.padEnd(22)} ${box(b)}`);
+        console.log(`  ${String(n).padStart(2, '0')} ${id.padEnd(32)} ${where}${f?.held ? '  (clip held at 0 s)' : ''}`);
+        if (f?.marked) for (const [part, b] of Object.entries<any>(f.marked.each ?? {})) console.log(`     marked ${part.padEnd(22)} ${box(b)}${seen(b)}`);
         if (f && cards.length) console.log(`     subject: ${f.subject.join(' ')}\n     drawn:   ${f.parts.join(' ')}`);
       };
       for (let guard = 0; guard < 80; guard++) {
@@ -173,7 +189,7 @@ try {
         }
         n++;
         if (wantCard(id)) {
-          const f = await settle(id);
+          const f = await measure(id);
           await shot(id);
           for (const at of atTimes) {
             // the parts jump to the held moment; colours and outlines ease in over a few pictures
@@ -187,7 +203,7 @@ try {
           if (sol) {
             // the problem answer plays its solution at once (its own view and clip); the card stays
             await page.click(`[data-test="btn-${sol}"]`);
-            const g = await settle(`${id} ${sol}`);
+            const g = await measure(`${id} ${sol}`);
             await shot(`${id}-${sol}`);
             report(`${id} -> ${sol}`, g);
           }

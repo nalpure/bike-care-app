@@ -14,7 +14,7 @@ import { chordLength } from '../src/stage/pins.js';
 import { RIG } from '../src/stage/rd-kin.js';
 import { RD_RIG } from '../src/stage/rd-rig.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
-import { CLIPS, GROUP_NODES, HELD_PARTS, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, SPLIT_PARTS, VIEWS } from '../src/stage/registry.js';
+import { CLIPS, GROUP_NODES, HELD_PARTS, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, showPartsOf, SPLIT_PARTS, STAND_PARTS, VIEWS } from '../src/stage/registry.js';
 import { addHeld, FADED, shownParts, visTargets, type VisCard } from '../src/stage/visibility.js';
 import { barrelClose, fitPose, FIT_VIEWS, viewPose } from '../src/stage/views.js';
 
@@ -212,6 +212,26 @@ describe('bike builder', () => {
     const missing = Object.keys(NODES).filter((n) => n !== 'bike' && !partsOf(n).some((p) => m.has(p)));
     expect(missing).toEqual([]);
     for (const n of Object.keys(NODES)) if (n !== 'bike') expect(m.anchors.has(n) || m.anchors.has(partsOf(n)[0]), n).toBe(true);
+  });
+
+  it('show: [bike] draws every part of the bike, not the work stand clamp, and marks nothing', () => {
+    for (const facts of [
+      { 'bike.category': 'trekking_city', 'bike.ebike': true, 'drive.gear_type': 'derailleur' },
+      { 'bike.category': 'road_gravel', 'bike.handlebar': 'drop', 'drive.gear_type': 'derailleur', 'drive.rear_speeds': 11 },
+    ]) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const has = (p: string) => m.has(p);
+      const shown = addHeld(addHeld(shownParts([], ['bike'], showPartsOf, has), BARREL_HOLDERS, has), HELD_PARTS, has);
+      expect([...m.parts.keys()].filter((p) => !shown.has(p))).toEqual([...STAND_PARTS].filter(has));
+      const { targets } = visTargets({ ...card(m, [], null), shown });
+      for (const [id, t] of targets) {
+        expect(t.vis, id).toBe(STAND_PARTS.includes(id) ? 0 : 1);
+        expect(t.hot, id).toBe(0);
+      }
+      m.dispose();
+    }
+    // only show expands it: an animation on bike moves the whole bike as one (anim.ts)
+    expect(partsOf('bike')).toEqual(['bike']);
   });
 
   it('groups the drivetrain and the rear end, and builds the parts cut out of the frame and the rear wheel', () => {

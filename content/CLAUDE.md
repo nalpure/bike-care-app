@@ -38,7 +38,7 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 
 ## 3D view
 
-- `focus` lists the small parts the step marks in colour; `show` lists the parts drawn plain; the 3D view will hide every other part (decisions.md, 2026-11-22). A node goes in one list only, and the check rejects both. `show: [bike]` draws nothing (it is not expanded): for the whole bike list the nodes (`frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain`); `drivetrain` and `rear_end` are groups. `show` is optional; a step without it keeps the old 3D look until it gets one.
+- `focus` lists the small parts the step marks in colour; `show` lists the parts drawn plain; the 3D view will hide every other part (decisions.md, 2026-11-22). A node goes in one list only, and the check rejects both. `show: [bike]` draws the whole bike (every part, not the work stand clamp); `drivetrain` and `rear_end` are groups. `show` is optional; a step without it keeps the old 3D look until it gets one.
 
 ## Safety
 
