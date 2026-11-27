@@ -252,18 +252,6 @@
       "additionalProperties": false,
       "dependentRequired": { "when": ["if_unknown"], "if_unknown": ["when"], "question": ["buttons"] }
     },
-    "flowItem": {
-      "description": "Exactly one of step, procedure, inspect. outcomes only with inspect.",
-      "type": "object",
-      "properties": {
-        "step": { "$ref": "#/$defs/id" },
-        "procedure": { "$ref": "#/$defs/id" },
-        "inspect": { "$ref": "#/$defs/id" },
-        "outcomes": { "$ref": "#/$defs/outcomes" }
-      },
-      "minProperties": 1,
-      "additionalProperties": false
-    },
     "outcomes": {
       "description": "Per state of the inspection: continue, block or exit.",
       "type": "object",

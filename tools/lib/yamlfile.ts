@@ -59,12 +59,3 @@ export function listYaml(root: string, dir: string): string[] {
     .sort()
     .map((n) => `${dir}/${n}`);
 }
-
-/** Sorted sub-directories of dir. */
-export function listDirs(root: string, dir: string): string[] {
-  const abs = join(root, dir);
-  if (!existsSync(abs)) return [];
-  return readdirSync(abs)
-    .filter((n) => statSync(join(abs, n)).isDirectory())
-    .sort();
-}
