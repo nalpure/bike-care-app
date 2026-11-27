@@ -9,7 +9,7 @@ import YAML from 'yaml';
 import { dirSign, makeAnim, partStatus, placeMoved, TOUR, type AnimCtx } from '../src/stage/anim.js';
 import { BARREL_HOLDERS, barrelPick, frontPlace, pickedParts, turnKey, turnPart } from '../src/stage/barrel.js';
 import { barrelTurn, inlineRun } from '../src/stage/derailleur.js';
-import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_BIG, GAP_OK, GAP_SMALL, GEOMETRY_RANGES, GROUND, PITCH, RP, type BikeSpec } from '../src/stage/bike.js';
+import { batteryLine, BikeModel, bikeSpec, distSeg, GAP_BIG, GAP_OK, GAP_SMALL, GEOMETRY_RANGES, GROUND, PITCH, RP, STEER_PARTS, type BikeSpec } from '../src/stage/bike.js';
 import { chordLength } from '../src/stage/pins.js';
 import { RIG } from '../src/stage/rd-kin.js';
 import { RD_RIG } from '../src/stage/rd-rig.js';
@@ -1019,5 +1019,216 @@ describe('views and animations', () => {
     const an = makeAnim({ target: 'bike', motion: 'rotate', caption: 'x' }, { ...ctxFor(m), poseBefore: 'flipped', pose: 'ground' })!;
     expect(an.frame(0).pose).toEqual({ from: 'flipped', to: 'ground', k: 0 });
     expect(an.frame(an.duration).pose?.k).toBe(1);
+  });
+});
+
+describe('steering hinge (BikeModel.steer, setSteer)', () => {
+  const A = 0.17;
+  /** every kind of bike: the three bars, every category with every gear type, an e-bike */
+  const BIKES: Array<Record<string, unknown>> = [
+    ...(['drop', 'flat', 'riser'] as const).map((bar) => ({ 'bike.handlebar': bar, 'drive.gear_type': 'derailleur' })),
+    ...['mtb', 'road_gravel', 'trekking_city', 'cargo', 'unknown'].flatMap((cat) => ['derailleur', 'hub_gear', 'single_speed', 'gearbox'].map((gt) => ({ 'bike.category': cat, 'drive.gear_type': gt }))),
+    { 'bike.category': 'trekking_city', 'bike.ebike': true, 'drive.gear_type': 'derailleur' },
+  ];
+  const build = () => BIKES.map((f) => new BikeModel(bikeSpec(f), mat));
+  const name = (m: BikeModel) => `${m.spec.kind} ${m.spec.bar} ${m.spec.gears}${m.spec.motor ? ' e-bike' : ''}`;
+  /** the hinge as setSteer's doc says, built here on its own: a turn by a about the line from HB up to HT (z = 0) */
+  const hinge = (B: BikeSpec, a: number) => {
+    const p = new T.Vector3(B.HB[0], B.HB[1], 0);
+    const d = new T.Vector3(B.HT[0] - B.HB[0], B.HT[1] - B.HB[1], 0).normalize();
+    return new T.Matrix4().makeTranslation(p.x, p.y, p.z).multiply(new T.Matrix4().makeRotationAxis(d, a)).multiply(new T.Matrix4().makeTranslation(-p.x, -p.y, -p.z));
+  };
+  const inSteer = (m: BikeModel, o: T.Object3D) => {
+    for (let a: T.Object3D | null = o; a; a = a.parent) if (a === m.steer) return true;
+    return false;
+  };
+  const meshes = (m: BikeModel) => {
+    const out: T.Mesh[] = [];
+    m.bike.traverse((o: any) => o.isMesh && out.push(o));
+    return out;
+  };
+  /** every mesh's world matrix (the bike is not posed in tests: world space is bike space) */
+  const worlds = (m: BikeModel) => {
+    m.bike.updateMatrixWorld(true);
+    return new Map(meshes(m).map((o) => [o, o.matrixWorld.clone()]));
+  };
+  const closeM = (a: T.Matrix4, b: T.Matrix4, label: string) => a.elements.forEach((v, i) => expect(v, label).toBeCloseTo(b.elements[i], 9));
+  const closeV = (a: ArrayLike<number>, b: ArrayLike<number>, label: string) => [0, 1, 2].forEach((i) => expect(a[i], label).toBeCloseTo(b[i], 9));
+  const pos = (o: T.Object3D) => new T.Vector3().setFromMatrixPosition(o.matrixWorld);
+  const turned = (p: ArrayLike<number>, H: T.Matrix4) => new T.Vector3(p[0], p[1], p[2]).applyMatrix4(H).toArray();
+
+  it('covers every kind of bike: three bars, a kickstand, a motor, every gear type', () => {
+    const ms = build();
+    expect(new Set(ms.map((m) => m.spec.bar))).toEqual(new Set(['drop', 'flat', 'riser']));
+    expect(new Set(ms.map((m) => m.spec.gears))).toEqual(new Set(['derailleur', 'hub', 'single', 'gearbox']));
+    expect(ms.some((m) => m.spec.kickstand) && ms.some((m) => m.spec.motor)).toBe(true);
+    for (const m of ms) m.dispose();
+  });
+
+  it('builds exactly the parts of STEER_PARTS in the hinge, with their meshes, anchors and turns', () => {
+    for (const m of build()) {
+      const label = name(m);
+      expect(m.steer.parent, label).toBe(m.bike);
+      expect(inSteer(m, m.frontHub), label).toBe(true);
+      for (const p of m.parts.values()) expect(inSteer(m, p.group), `${label}: ${p.id}`).toBe(STEER_PARTS.includes(p.id));
+      for (const o of meshes(m)) expect(inSteer(m, o), `${label}: mesh of ${o.userData.partId}`).toBe(STEER_PARTS.includes(o.userData.partId));
+      for (const [id, a] of m.anchors) expect(inSteer(m, a), `${label}: anchor ${id}`).toBe(STEER_PARTS.includes(id));
+      for (const [id, t] of m.turns) expect(inSteer(m, t.spin), `${label}: turn ${id}`).toBe(STEER_PARTS.includes(id));
+      for (const id of ['fork', 'front_wheel', 'handlebar', 'brake_lever']) expect(m.has(id), `${label}: ${id}`).toBe(true);
+      m.dispose();
+    }
+  });
+
+  it('is the identity at 0, and turning there and back gives every mesh and the cable back exactly', () => {
+    for (const m of build()) {
+      const label = name(m);
+      expect(m.steerAngle).toBe(0);
+      expect(m.steer.matrix.equals(new T.Matrix4()), label).toBe(true);
+      const w0 = worlds(m);
+      const route0 = m.cableRoute.map((p) => [...p]);
+      const cable0 = m.cable ? [...(m.cable.mesh.geometry.attributes.position.array as Float32Array)] : null;
+      m.setSteer(A);
+      m.setSteer(0);
+      expect(m.steer.matrix.equals(new T.Matrix4()), label).toBe(true);
+      const w = worlds(m);
+      expect(w.size, label).toBe(w0.size);
+      for (const [o, mw] of w) expect(mw.equals(w0.get(o)!), `${label}: ${o.userData.partId}`).toBe(true);
+      expect(m.cableRoute, label).toEqual(route0);
+      if (cable0) expect([...(m.cable!.mesh.geometry.attributes.position.array as Float32Array)], label).toEqual(cable0);
+      m.dispose();
+    }
+  });
+
+  it('turns the steering parts rigidly about the steering axis, to the left for a positive angle, and nothing else', () => {
+    for (const m of build()) {
+      const B = m.spec;
+      const label = name(m);
+      const w0 = worlds(m);
+      const geo0 = new Map(meshes(m).map((o) => [o, o.geometry]));
+      const anchors0 = new Map([...m.anchors].map(([id, a]) => [id, pos(a)]));
+      const turns0 = new Map([...m.turns].map(([id, t]) => [id, t.spin.matrixWorld.clone()]));
+      // the bar's ends (its vertices furthest left and right) and the front of the tyre, found at 0
+      type Vx = { o: T.Mesh; i: number };
+      const extremes = (id: string) => {
+        const best: Record<'lo' | 'hi' | 'front', { v: number; at: Vx | null }> = { lo: { v: Infinity, at: null }, hi: { v: -Infinity, at: null }, front: { v: -Infinity, at: null } };
+        m.parts.get(id)!.group.traverse((o: any) => {
+          if (!o.isMesh || o.userData.partId !== id) return;
+          const ps = o.geometry.attributes.position;
+          const v = new T.Vector3();
+          for (let i = 0; i < ps.count; i++) {
+            v.fromBufferAttribute(ps, i).applyMatrix4(o.matrixWorld);
+            if (v.z < best.lo.v) best.lo = { v: v.z, at: { o, i } };
+            if (v.z > best.hi.v) best.hi = { v: v.z, at: { o, i } };
+            if (v.x > best.front.v) best.front = { v: v.x, at: { o, i } };
+          }
+        });
+        return { lo: best.lo.at!, hi: best.hi.at!, front: best.front.at! };
+      };
+      const at = (x: Vx) => new T.Vector3().fromBufferAttribute(x.o.geometry.attributes.position as T.BufferAttribute, x.i).applyMatrix4(x.o.matrixWorld);
+      const bar = extremes('handlebar');
+      const tyre = extremes('front_wheel').front;
+      const [left0, right0, tyre0] = [at(bar.lo), at(bar.hi), at(tyre)];
+      const H = hinge(B, A);
+
+      m.setSteer(A);
+      expect(m.steerAngle).toBe(A);
+      m.bike.updateMatrixWorld(true);
+      closeM(m.steer.matrix, H, `${label}: hinge`);
+      // points on the steering axis stay: the head tube's ends and a point below it
+      for (const t of [0, 1, -0.5]) {
+        const p = new T.Vector3(B.HB[0] + (B.HT[0] - B.HB[0]) * t, B.HB[1] + (B.HT[1] - B.HB[1]) * t, 0);
+        expect(p.clone().applyMatrix4(m.steer.matrixWorld).distanceTo(p), `${label}: axis point ${t}`).toBeLessThan(1e-12);
+      }
+      for (const [o, mw] of worlds(m)) {
+        if (STEER_PARTS.includes(o.userData.partId)) closeM(mw, w0.get(o)!.clone().premultiply(H), `${label}: ${o.userData.partId} turns with the hinge`);
+        else expect(mw.equals(w0.get(o)!), `${label}: ${o.userData.partId} stays`).toBe(true);
+        // only the cable's main run is laid again
+        expect(o.geometry === geo0.get(o), `${label}: geometry of ${o.userData.partId}`).toBe(o !== m.cable?.mesh);
+      }
+      // the bar's ends move: the left end (-z) back towards the rider, the right end forward; the front of the tyre goes left (-z)
+      const [left, right, tyreA] = [at(bar.lo), at(bar.hi), at(tyre)];
+      expect(left.x - left0.x, `${label}: left bar end back`).toBeLessThan(-0.03);
+      expect(right.x - right0.x, `${label}: right bar end forward`).toBeGreaterThan(0.03);
+      expect(tyreA.z - tyre0.z, `${label}: front of the tyre to the left`).toBeLessThan(-0.05);
+      // tag anchors and turns of steering parts follow the hinge, the others stay
+      for (const [id, a] of m.anchors) {
+        if (STEER_PARTS.includes(id)) closeV(pos(a).toArray(), anchors0.get(id)!.clone().applyMatrix4(H).toArray(), `${label}: anchor ${id}`);
+        else expect(pos(a).equals(anchors0.get(id)!), `${label}: anchor ${id} stays`).toBe(true);
+      }
+      for (const [id, t] of m.turns) {
+        if (STEER_PARTS.includes(id)) closeM(t.spin.matrixWorld, turns0.get(id)!.clone().premultiply(H), `${label}: turn ${id}`);
+        else expect(t.spin.matrixWorld.equals(turns0.get(id)!), `${label}: turn ${id} stays`).toBe(true);
+      }
+      m.dispose();
+    }
+  });
+
+  it('the cable follows the bar at its cockpit end and stays on the frame, laid again only when the angle changes', () => {
+    const ms = build();
+    expect(ms.filter((m) => m.cable).length).toBeGreaterThan(10);
+    for (const m of ms.filter((x) => x.cable)) {
+      const B = m.spec;
+      const label = name(m);
+      const c = m.cable!;
+      const route0 = m.cableRoute.map((p) => [...p]);
+      const shifter = m.parts.get('shifter_rear')!.group;
+      const inShifter = (p: ArrayLike<number>) => shifter.worldToLocal(new T.Vector3(p[0], p[1], p[2])).toArray();
+      const first0 = inShifter(route0[0]);
+      const rear0 = m.der ? [m.der.housing, ...m.der.wire].map((o) => o.matrixWorld.clone()) : [];
+      let disposed = 0;
+      c.mesh.geometry.addEventListener('dispose', () => disposed++);
+
+      m.setSteer(A);
+      m.bike.updateMatrixWorld(true);
+      const H = hinge(B, A);
+      const geoA = c.mesh.geometry;
+      expect(disposed, `${label}: the old cable is disposed`).toBe(1);
+      expect(m.cableRoute.length).toBe(c.pts.length);
+      // the first point stays where the cable starts: on the shifter (the hood of a drop bar), at the front barrel's head (flat, riser)
+      closeV(m.cableRoute[0], turned(route0[0], H), `${label}: first point`);
+      closeV(inShifter(m.cableRoute[0]), first0, `${label}: first point on the shifter`);
+      if (B.bar !== 'drop' && m.turns.has('front_barrel')) {
+        const t = m.turns.get('front_barrel')!;
+        // within 0.05 mm: the cable's head uses the barrel's axis as written (not quite unit), the barrel its normalised one
+        const head = t.spin.parent!.localToWorld(new T.Vector3(0, -t.len / 2, 0));
+        expect(head.distanceTo(new T.Vector3(...m.cableRoute[0])), `${label}: at the front barrel's head`).toBeLessThan(1e-4);
+      }
+      // cockpit points turn with the hinge, frame points stay exactly
+      c.pts.forEach((q, i) => {
+        if (q.steer === 1) closeV(m.cableRoute[i], turned(q.p, H), `${label}: cockpit point ${i}`);
+        if (q.steer === 0) expect(m.cableRoute[i], `${label}: frame point ${i}`).toEqual(route0[i]);
+      });
+      expect(c.pts.filter((q) => q.steer === 0).length, label).toBeGreaterThan(1);
+      // cableRoute is the path as drawn: the tube's first ring sits around its first point
+      const ring = new T.Vector3();
+      for (let i = 0; i < 8; i++) ring.add(new T.Vector3().fromBufferAttribute(geoA.attributes.position as T.BufferAttribute, i));
+      expect(ring.divideScalar(8).distanceTo(new T.Vector3(...m.cableRoute[0])), label).toBeLessThan(1e-4);
+      // the derailleur's end of the cable (placed by setDer) does not change
+      if (m.der) [m.der.housing, ...m.der.wire].forEach((o, i) => expect(o.matrixWorld.equals(rear0[i]), `${label}: rear housing and wire`).toBe(true));
+      // the same angle again: nothing is laid again
+      m.setSteer(A);
+      expect(c.mesh.geometry).toBe(geoA);
+      m.dispose();
+    }
+  });
+
+  it('keeps the cable clear of the head tube with the bar turned 15 deg either way', () => {
+    for (const m of build().filter((x) => x.cable)) {
+      const B = m.spec;
+      const axis = new T.Line3(new T.Vector3(B.HB[0], B.HB[1], 0), new T.Vector3(B.HT[0], B.HT[1], 0));
+      const q = new T.Vector3();
+      for (const a of [-0.26, 0.26]) {
+        m.setSteer(a);
+        const curve = new T.CatmullRomCurve3(m.cableRoute.map((p) => new T.Vector3(...p)));
+        for (let i = 0; i <= 600; i++) {
+          const p = curve.getPointAt(i / 600);
+          const t = axis.closestPointToPointParameter(p, false);
+          if (t < 0 || t > 1) continue;
+          // head tube radius 0.04, cable radius 0.006
+          expect(p.distanceTo(axis.at(t, q)), `${name(m)} at ${a}`).toBeGreaterThan(0.046);
+        }
+      }
+      m.dispose();
+    }
   });
 });
