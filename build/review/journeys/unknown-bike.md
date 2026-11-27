@@ -124,6 +124,8 @@ Put the bike on its kickstand, or lean it against a wall at the rear wheel, with
 
 <sub>3D: focus kickstand, rear_wheel · view whole_bike</sub>
 
+Animation: "Lean the rear wheel against the wall" (clip park-at-wall)
+
 ##### 4. Ride into the hardest gear · `ride-to-smallest-sprocket` · action · 2 min
 
 Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Listen to the chain, then stop and park the bike as before.

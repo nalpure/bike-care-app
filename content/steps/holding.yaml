@@ -76,3 +76,4 @@ steps:
     forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
     focus: [kickstand, rear_wheel]
     view: whole_bike
+    animation: { clip: park-at-wall, caption: "Lean the rear wheel against the wall" }

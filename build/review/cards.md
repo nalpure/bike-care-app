@@ -258,13 +258,15 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 ### Park the bike
 
-<sub>Unit `card:step:park-bike` · hash `21a5d584ca7c` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:park-bike` · hash `91886468e7d5` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 1 min</sub>
 
 Put the bike on its kickstand, or lean it against a wall at the rear wheel, with the gears facing you. Never lean it on the handlebar: it can turn, and the bike falls.
 
 <sub>3D: focus kickstand, rear_wheel · view whole_bike</sub>
+
+Animation: "Lean the rear wheel against the wall" (clip park-at-wall)
 
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 

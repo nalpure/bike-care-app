@@ -32,6 +32,8 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-22 Next is never locked** on such a card, and stays a plain "Next": after a problem answer it means "fixed now". No "all good" button. An answer that exits still exits.
 - **2026-11-22 Defaults for inspections.** An inspection may name a default state (with a short question); in tutorials that state has no button and Next takes it. Diagnoses and the routine check keep explicit answers.
 - **2026-11-22 What is safety relevant.** Of the limit screws only L (the chain must not fall towards the spokes) is a safety check; H is a plain check. Safety steps get a red label next to the title.
+- **2026-11-26 Parked at a wall.** On "Park the bike" (clip `park-at-wall`, only there) the bike leans slightly on a full wall with its rear tyre only; the wall stands at an angle so the bar and pedals stay off it. Bar and front wheel turn towards the wall, the kickstand is not drawn, the camera looks from the drive side, behind and above; the bike eases in and back upright. The garage has no wall.
+- **2026-11-26 Steering hinge.** Everything that turns with the bar is one group in the 3D bike, turned in one call.
 
 ## Where approach.md is out of date
 

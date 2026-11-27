@@ -50,6 +50,8 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Scrolling between cards works over the text only**, not over the 3D view (the wheel there does nothing on a card). `ui/flow.ts`.
 - **Cable clamp bolt (`cable_bolt`)** is drawn whenever the derailleur is drawn (`HELD_PARTS`, like the rear barrel), so cards look as before; it is marked only when content names it. `registry.ts`, `derailleur.ts`.
 - **`check-low-limit-by-hand` plays clip `limit-push-past`** instead of the generic push (only clips may mark red); one gear past the largest sprocket, cut to what the links reach on wide cassettes. `content/steps/rear-shifting.yaml`, `anim.ts`.
+- **Parked at the wall:** lean 3 deg, bar 10 deg, every other part 5 mm off the wall (wall angle 14 deg road, about 19 deg the others); wall 5 m x 2.2 m x 15 cm in a darker `--stage2`; caption "Lean the rear wheel against the wall". `park.ts`, `wall.ts`, `content/steps/holding.yaml`.
+- **Gear cable at the steering hinge:** the loop of housing in front of the head tube follows half the bar's turn. `cockpit.ts` (`FREE`).
 
 ## Questions for the owner
 

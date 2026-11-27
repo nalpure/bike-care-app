@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "027502c920504711",
+  "content_hash": "e2741bc1e0868099",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1184,7 +1184,11 @@
         "kickstand",
         "rear_wheel"
       ],
-      "view": "whole_bike"
+      "view": "whole_bike",
+      "animation": {
+        "clip": "park-at-wall",
+        "caption": "Lean the rear wheel against the wall"
+      }
     },
     {
       "id": "shift-to-smallest-sprocket",
