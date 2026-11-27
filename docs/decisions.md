@@ -24,6 +24,9 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-27 Tutorial.** It can be swiped from start to end; only a tap on a problem can lead to an exit. At the end the matching to-do is marked done.
 - **2026-11-27 One file per job.** A job file holds the header (covers, shop, service), then the flow as a short outline that branches only where the ways differ, then each of the job's cards once. Jobs are split by mechanism (electronic shifting, hub gears, front derailleur are separate jobs); shared sequences, cards and checks stay in shared files. Diagnoses and the routine check keep their own files.
 - **2026-11-27 Tutorials tab.** No grouping: it lists every tutorial. A tutorial that does not fit the chosen bike explains why and asks the user to change the bike.
+- **2026-11-27 Disc brake pads.** Diagnosis and routine check only look (wheel in, light from above), with a third answer "I can't see it clearly"; worn and unclear both lead to one tutorial, "Check and replace the brake pads". The pads come out only there; a compare card then decides between the same pads back and new pads, so nothing is put together only to be taken apart again. New pads are optional on the parts screen, with a warning that worn pads without new ones leave the bike unrideable. After a diagnosis that found them worn, the compare card is skipped.
+- **2026-11-27 Holding options per job.** A job offers only the ways of holding that suit it (SR-08 accepted).
+- **2026-11-27 Agents' choices.** No commit trailers. An agent states each choice in its final message with context, effects, the other options and how to undo it. A choice that is hard to undo: stop and ask.
 - **2026-11-26 Shifting stops on a tap.** The cable-tension card shows the pedals turning and the chain going through every gear until a problem is tapped; then the pedals stand still while the barrel turns.
 
 ## 3D view
@@ -41,6 +44,10 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-22 What is safety relevant.** Of the limit screws only L (the chain must not fall towards the spokes) is a safety check; H is a plain check. Safety steps get a red label next to the title.
 - **2026-11-26 Parked at a wall.** On "Park the bike" (clip `park-at-wall`, only there) the bike leans slightly on a full wall with its rear tyre only; the wall stands at an angle so the bar and pedals stay off it. Bar and front wheel turn towards the wall, the kickstand is not drawn, the camera looks from the drive side, behind and above; the bike eases in and back upright. The garage has no wall.
 - **2026-11-26 Steering hinge.** Everything that turns with the bar is one group in the 3D bike, turned in one call.
+
+## Tools for review
+
+- **2026-11-27 Review grid.** On a laptop, several phone screens side by side with one Next for all; a column whose path has fewer steps waits until the others reach the next shared step. Default columns: one test bike, every way of holding it; a dropdown switches to another test bike the job covers. Tapping a problem in one column shows its solution and animation there.
 
 ## Where approach.md is out of date
 

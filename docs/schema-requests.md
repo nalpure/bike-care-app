@@ -55,4 +55,5 @@ Entry format:
 - Needed for: a disc-pad tutorial's wheel-out way (pads that come out only with the wheel out), and any job that needs the wheel off the ground.
 - What cannot be expressed: `choices: [hold_bike]` always offers every option, including "On its wheels". A combination that no way matches is a build error, and covers' `not_covered` would end the run with a message instead of not offering the option.
 - Closest allowed form used meanwhile: none needed yet; the sketch would give the wheel-out way only stand, hang and upside down and add a `not_covered` entry for the rest.
+- Owner: accepted 2026-11-27.
 - Proposal: `choices: [{ hold_bike: [stand, hang, upside_down] }]` in the job header, or a `when` per way that the choice screen reads to grey out options with a short reason.

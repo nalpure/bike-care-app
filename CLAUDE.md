@@ -73,7 +73,7 @@ A large task: read, then propose the plan in a few lines and the split into part
 
 ## Decisions
 
-- **Your own choices are not decisions.** When you choose something without the owner, take the cautious default, carry on, and add it to "Choices made without the owner" in `docs/open.md` (what, the default, where, two lines) and to your final message. Questions you could not settle go under "Questions for the owner" with a recommended answer. Never write your own choice into `decisions.md`, `idea.md` or `approach.md`. Keep `open.md` short: remove an item once the owner has answered it.
+- **Your own choices are not decisions.** When you choose something without the owner, take the cautious default, carry on, and add it to "Choices made without the owner" in `docs/open.md` (what, the default, where, two lines) and to your final message. In the final message give each choice a little context: why, what it affects, the other options and how to undo it, so the owner can revert it. A choice that is hard to undo is not yours: stop and ask (rule 8). Questions you could not settle go under "Questions for the owner" with a recommended answer. Never write your own choice into `decisions.md`, `idea.md` or `approach.md`. Keep `open.md` short: remove an item once the owner has answered it.
 - **An owner decision** that will matter for future work gets one or two lines in `docs/decisions.md`, with the date. Say so in your final message. Do not record what the code, the schema or a guide already shows.
 - **A doubt about mechanics** goes to `content/review/<job>.md`, never into the content as a fact.
 - **A missing schema construct** goes to `docs/schema-requests.md` (hard rule 2).
@@ -92,6 +92,6 @@ These apply to every task. The numbering is the repo's: rules 4, 5, 6, 11 and 12
 2. Do not invent schema constructs. If the schema cannot express something, add an entry to `docs/schema-requests.md` and use the closest allowed form. A schema change the owner asks for is not inventing.
 3. Never invent safety values (torque, fluid, wear limits, part compatibility). Use a placeholder with wording that sends the user to the part. Dimensions used only to draw (tooth shape, chain width) are drawing data, never presented as facts about a part.
 7. Not everything is covered. Any bike, part or symptom outside the content ends on a clear "not covered yet" screen that offers a shop and the assistant. Never show a guess.
-8. Do not stop to ask the owner in the middle of a task. Take the cautious default, continue, and report the choice (see Decisions). Questions you have before starting go to the owner in one batch.
+8. Do not stop to ask the owner in the middle of a task. Take the cautious default, continue, and report the choice (see Decisions). Questions you have before starting go to the owner in one batch. The exception: a choice that would be hard to undo (deleting what cannot be recovered from git, a published or outward-facing change, a format others build on). Stop and ask for that one.
 9. Mechanics in this repo are unverified drafts. The test build shows a notice saying so.
 10. Texts are written in English, short, one action per step, easy to translate into German.
