@@ -113,6 +113,7 @@ export const CLIPS = [
   'cable-tension-shift',
   'hanger-bend',
   'barrel-tour',
+  'park-at-wall',
 ] as const;
 
 /** Generic motions on any node. */
@@ -126,8 +127,11 @@ export const HELD_PARTS: Record<string, string[]> = {
   cable_bolt: ['rear_derailleur'],
 };
 
-/** How the bike is held: ground (on its wheels), stand, hung, flipped (upside down). */
-export type Pose = 'ground' | 'stand' | 'hung' | 'flipped';
+/**
+ * How the bike is held: ground (on its wheels), stand, hung, flipped (upside down), parked (on its wheels, leaning on a
+ * wall; only the clip park-at-wall sets it, no state label does).
+ */
+export type Pose = 'ground' | 'stand' | 'hung' | 'flipped' | 'parked';
 
 /**
  * What a session state label changes in the scene. The content has no label -> scene mapping

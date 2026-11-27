@@ -17,6 +17,8 @@ import { addHeld, shownParts, visTargets } from './visibility.js';
 import { BARREL_FACT, BARREL_HOLDERS, barrelPick, pickedParts, turnKey, turnPart, type BarrelPick } from './barrel.js';
 import { CLIPS, HELD_PARTS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
 import { mixPose, poseVals, type PoseVals } from './pose.js';
+import { PARK_HIDES } from './park.js';
+import { buildWall, wallFor } from './wall.js';
 import { fitPose, FIT_VIEWS, previewPose, viewPose, type ViewPose } from './views.js';
 
 const nowS = () => performance.now() / 1000;
@@ -88,6 +90,9 @@ export class ThreeStage implements Stage {
   private root = new T.Group();
   private grid = new T.GridHelper(9, 36, 0x888888, 0x888888);
   private standMat = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.6, metalness: 0.2 });
+  /** the wall a parked bike leans on (wall.ts): built for the model the first time it parks; null when none fits */
+  private wall: T.Mesh | null | undefined;
+  private wallMat = new T.MeshStandardMaterial({ color: 0x888888, roughness: 0.95, metalness: 0, transparent: true });
   private controls: OrbitControls | null = null;
   private model: BikeModel | null = null;
   private specKey = '';
@@ -138,6 +143,8 @@ export class ThreeStage implements Stage {
   private poseFrom: PoseVals = poseVals('ground', bikeSpec({}));
   private poseNow: PoseVals = poseVals('ground', bikeSpec({}));
   private poseK = 1;
+  /** the last frame's pose came from the clip (Frame.pose): when it stops, the bike eases back */
+  private clipPosed = false;
   private moved = new Set<string>();
   /** rest outlines a clip asks for (Frame.contour), one per model */
   private contours: Contours | null = null;
@@ -158,7 +165,8 @@ export class ThreeStage implements Stage {
   private camVp: ViewPose | null = null;
 
   // tags, explore
-  private tagList: Array<{ el: HTMLElement; obj: T.Object3D; w?: number; h?: number }> = [];
+  /** the tags of the card's nodes: where each sits, and the parts it names (a tag hides while none of them is drawn) */
+  private tagList: Array<{ el: HTMLElement; obj: T.Object3D; parts: Part[]; w?: number; h?: number }> = [];
   private tagTimer = 0;
   private noteTimer = 0;
   private exploring = false;
@@ -299,6 +307,8 @@ export class ThreeStage implements Stage {
     this.COL.contour.set(g('--contour', '#1F5FBF'));
     (this.grid.material as T.LineBasicMaterial).color.copy(this.COL.part);
     this.standMat.color.copy(this.COL.part).multiplyScalar(0.7);
+    // the lights are strong (the prototype's look): a darker shade of the stage's second colour reads as a plain wall
+    this.wallMat.color.set(g('--stage2', '#C9D4DB')).multiplyScalar(0.72);
   }
 
   private rebuild(spec: BikeSpec): void {
@@ -307,6 +317,11 @@ export class ThreeStage implements Stage {
       this.scene.remove(this.model.standG, this.model.hookG);
       this.model.dispose();
     }
+    if (this.wall) {
+      this.scene.remove(this.wall);
+      this.wall.geometry.dispose();
+    }
+    this.wall = undefined;
     const m = new BikeModel(spec, this.standMat);
     this.model = m;
     this.specKey = JSON.stringify(spec);
@@ -540,7 +555,7 @@ export class ThreeStage implements Stage {
       if (!obj || !partsOf(at).some((p) => m.has(p))) continue;
       const el = h('div.tag', NODES[n].label);
       this.tagsEl.append(el);
-      this.tagList.push({ el, obj });
+      this.tagList.push({ el, obj, parts: partsOf(at).flatMap((p) => m.parts.get(p) ?? []) });
     }
     clearTimeout(this.tagTimer);
     this.tagTimer = window.setTimeout(() => this.revealTags(), 700);
@@ -1095,14 +1110,26 @@ export class ThreeStage implements Stage {
       vals = mixPose(poseVals(fr.pose.from, m.spec), poseVals(fr.pose.to, m.spec), fr.pose.k);
       shown = fr.pose.k < 0.5 ? fr.pose.from : fr.pose.to;
     } else {
+      if (this.clipPosed) {
+        // the clip that held the bike has stopped: ease back to the card's pose from where the bike is
+        this.poseFrom = { ...this.poseNow };
+        this.poseK = reduceMotion() ? 1 : 0;
+      }
       this.poseK = Math.min(1, this.poseK + dt / 1.4);
       vals = mixPose(this.poseFrom, poseVals(this.poseTo, m.spec), ease(this.poseK));
       shown = this.poseK < 0.5 ? this.posePrev : this.poseTo;
     }
+    this.clipPosed = !!fr.pose;
     this.poseNow = vals;
+    this.placeWall(vals.wall);
+    m.setSteer(vals.steer);
+    for (const id of PARK_HIDES) {
+      const p = m.parts.get(id);
+      if (p) p.fade = 1 - vals.wall;
+    }
     this.holder.position.set(vals.hx, vals.hy, 0);
     this.holder.rotation.set(0, 0, vals.hrz);
-    this.root.position.set(vals.rx, vals.ry, 0);
+    this.root.position.set(vals.rx, vals.ry, vals.rz);
     this.root.rotation.set(vals.rrx, 0, 0);
     this.scene.updateMatrixWorld(true);
     this.standVis += ((this.frameGone ? 0 : 1) - this.standVis) * (1 - Math.exp(-dt * 6));
@@ -1118,6 +1145,19 @@ export class ThreeStage implements Stage {
       hook.position.set(at.x, at.y + 0.05, at.z);
       seg(m.rope, new T.Vector3(at.x, at.y + 0.1, at.z), new T.Vector3(at.x, at.y + 3, at.z));
     }
+  }
+
+  /** The parked bike's wall, drawn as much as the pose says (0..1); built for this model the first time it is needed. */
+  private placeWall(k: number): void {
+    if (k > 0.001 && this.wall === undefined) {
+      const line = wallFor(this.model!);
+      this.wall = line ? buildWall(this.model!, line, this.wallMat) : null;
+      if (this.wall) this.scene.add(this.wall);
+    }
+    if (!this.wall) return;
+    this.wall.visible = k > 0.01;
+    this.wallMat.opacity = k;
+    this.wallMat.depthWrite = k > 0.98;
   }
 
   private applyNodeMotion(fr: Frame): void {
@@ -1301,7 +1341,8 @@ export class ThreeStage implements Stage {
         return { tg, x: (pv.x * 0.5 + 0.5) * w, y: (-pv.y * 0.5 + 0.5) * hgt, z: pv.z };
       }).sort((a, b) => b.y - a.y);
       for (const { tg, x, y, z } of items) {
-        const off = z > 1 || x < 12 || x > w - 12 || y < 24 || y > hgt - 12;
+        const gone = !tg.parts.some((p) => p.vis * p.fade > 0.05);
+        const off = gone || z > 1 || x < 12 || x > w - 12 || y < 24 || y > hgt - 12;
         tg.el.style.visibility = off ? 'hidden' : 'visible';
         if (off) continue;
         const tw = tg.w ?? 0;

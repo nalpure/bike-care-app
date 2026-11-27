@@ -6,7 +6,9 @@ import * as T from 'three';
 import { PEDAL, CRANK_SPIN, WHEEL_MAX_STEP, wheelStep } from '../src/stage/anim.js';
 import { BikeModel, bikeSpec, GEOMETRY_RANGES, GROUND } from '../src/stage/bike.js';
 import { MOUNTS as M } from '../src/stage/mounts.js';
-import { poseVals, type PoseVals } from '../src/stage/pose.js';
+import { mixPose, poseVals, type PoseVals } from '../src/stage/pose.js';
+import { PARK_HIDES, PARK_STEER, WALL_GAP, wallDist } from '../src/stage/park.js';
+import { wallFor } from '../src/stage/wall.js';
 import { RING_T, xfPt } from '../src/stage/spec.js';
 import { chainringGeo, sprocketGeo } from '../src/stage/geo.js';
 
@@ -30,7 +32,7 @@ function world(v: PoseVals, p: ArrayLike<number>): [number, number, number] {
   const y1 = c * p[1] - s * p[2] + v.ry;
   const ch = Math.cos(v.hrz);
   const sh = Math.sin(v.hrz);
-  return [ch * x1 - sh * y1 + v.hx, sh * x1 + ch * y1 + v.hy, s * p[1] + c * p[2]];
+  return [ch * x1 - sh * y1 + v.hx, sh * x1 + ch * y1 + v.hy, s * p[1] + c * p[2] + v.rz];
 }
 
 /** every vertex of the meshes of a part (or of the whole bike) in bike space; the dense library meshes every `stride`-th */
@@ -170,6 +172,55 @@ describe('how the bike is held', () => {
       expect(t).toBeGreaterThan(0.05);
       expect(t).toBeLessThan((B.saddleH[1] - B.ST[1]) / B.seatD[1] - 0.05);
       expect(clamp.x).toBeCloseTo(B.ST[0] + B.seatD[0] * t, 2);
+    }
+  });
+
+  // the three budget bikes (drop, flat with a kickstand, riser) and the unknown bike (flat, kickstand, hub gear)
+  const PARKED = [...BUDGET.map((b) => b.facts), {}, { 'bike.category': 'trekking_city', 'drive.gear_type': 'hub', 'bike.handlebar': 'riser' }];
+
+  it('parked, the bike leans on the wall with its rear tyre only, and stands on both tyres', () => {
+    for (const facts of PARKED) {
+      const m = new BikeModel(bikeSpec(facts), mat);
+      const line = wallFor(m)!;
+      expect(line).not.toBeNull();
+      // a wall at an angle, closest at the rear, but not across the bike
+      expect(line.angle).toBeGreaterThan(0);
+      expect(line.angle).toBeLessThan(0.4);
+      const v = poseVals('parked', m.spec);
+      m.setSteer(v.steer);
+      const pts = (id: string | null) => vertices(m, id, 1).map((p) => world(v, [p.x, p.y, p.z]));
+      const near = (id: string | null) => pts(id).reduce((a, p) => Math.min(a, wallDist(line, [p[0], p[2]])), Infinity);
+      // the rear tyre touches the wall (its mesh lies on the torus the wall was placed by) and does not go into it
+      expect(near('rear_wheel')).toBeGreaterThan(-1e-6);
+      expect(near('rear_wheel')).toBeLessThan(0.005);
+      // every other part that is drawn stays off it
+      for (const id of m.parts.keys()) {
+        if (id === 'rear_wheel' || PARK_HIDES.includes(id)) continue;
+        expect(near(id), id).toBeGreaterThanOrEqual(WALL_GAP - 1e-9);
+      }
+      // both tyres still stand on the ground: the lean is about the line they stand on, the turned front wheel dips little
+      const lowest = (id: string) => pts(id).reduce((a, p) => Math.min(a, p[1]), Infinity);
+      expect(Math.abs(lowest('rear_wheel') - GROUND)).toBeLessThan(0.002);
+      expect(Math.abs(lowest('front_wheel') - GROUND)).toBeLessThan(0.006);
+      // it leans towards the wall: the saddle moves to -z
+      expect(v.rrx).toBeLessThan(0);
+    }
+  });
+
+  it('parking eases in without lifting the bike, and only the parked pose has a wall and a turned bar', () => {
+    const B = bikeSpec({});
+    for (const p of ['ground', 'stand', 'hung', 'flipped'] as const) {
+      expect(poseVals(p, B).wall).toBe(0);
+      expect(poseVals(p, B).steer).toBe(0);
+    }
+    const g = poseVals('ground', B);
+    const pk = poseVals('parked', B);
+    expect(pk.wall).toBe(1);
+    expect(pk.steer).toBe(PARK_STEER);
+    for (const k of [0, 0.25, 0.5, 0.75, 1]) {
+      const mid = mixPose(g, pk, k);
+      expect(mid.hy).toBe(0);
+      expect(mid.wall).toBeCloseTo(k, 12);
     }
   });
 });

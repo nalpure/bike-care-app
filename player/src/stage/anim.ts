@@ -7,6 +7,7 @@ import * as T from 'three';
 import { GAP_BIG, GAP_OK, GAP_SMALL, rAt, type BikeSpec } from './bike.js';
 import type { BarrelPick } from './barrel.js';
 import { derLayout, fitFor } from './derailleur.js';
+import { parkCam } from './park.js';
 import { CLIPS, MOTIONS, NODES, partsOf, type Pose } from './registry.js';
 import { barrelClose, type ViewPose } from './views.js';
 
@@ -319,6 +320,13 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
           return { node: nm, contour, marks: Math.abs(k) > 0.12 ? ['derailleur_hanger'] : undefined };
         },
       };
+    }
+
+    case 'park-at-wall': {
+      // The bike leans on a wall at its rear tyre and the bar turns towards the wall (pose 'parked', park.ts), seen
+      // from the drive side, behind and above. It stays there; when the clip stops, the bike eases back upright.
+      const cam = parkCam(spec);
+      return { duration: 1.6, once: true, frame: (t) => ({ pose: { from: ctx.pose, to: 'parked', k: ramp(t, 0.3, 1.6) }, cam }) };
     }
   }
   return undefined;

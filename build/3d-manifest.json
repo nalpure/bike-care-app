@@ -53,7 +53,8 @@
     "b-gap-adjust",
     "cable-tension-shift",
     "hanger-bend",
-    "barrel-tour"
+    "barrel-tour",
+    "park-at-wall"
   ],
   "motions": [
     "rotate",
