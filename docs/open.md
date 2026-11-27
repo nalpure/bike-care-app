@@ -48,6 +48,8 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Garage full screen** is an in-app overlay like explore (not the browser's Fullscreen API, which Safari on iPhone lacks); same camera, so the bike is small in portrait until pinched. `three-stage.ts` (`setFull`).
 - **Card column:** neighbours dimmed to 38 %; a locked next card shows up to 42 % of the box with "Answer above to go on"; no card above when Back would only undo this card's answer (first card). The slide-in animation is gone. `ui/flow.ts`, `styles.css`.
 - **Scrolling between cards works over the text only**, not over the 3D view (the wheel there does nothing on a card). `ui/flow.ts`.
+- **Cable clamp bolt (`cable_bolt`)** is drawn whenever the derailleur is drawn (`HELD_PARTS`, like the rear barrel), so cards look as before; it is marked only when content names it. `registry.ts`, `derailleur.ts`.
+- **`check-low-limit-by-hand` plays clip `limit-push-past`** instead of the generic push (only clips may mark red); one gear past the largest sprocket, cut to what the links reach on wide cassettes. `content/steps/rear-shifting.yaml`, `anim.ts`.
 
 ## Questions for the owner
 

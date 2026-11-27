@@ -383,22 +383,22 @@ function screw(m: BikeModel, id: string, p: T.Vector3, d: T.Vector3, len: number
 }
 
 /**
- * The clamp bolt under the lower body (CLAMP): shank, washer and an M4 socket head, made in code. The washer
- * stands one wire's thickness off the body's face, so the wire is pinched between them, beside the shank.
+ * The clamp bolt under the lower body (CLAMP), part `cable_bolt`: shank, washer and an M4 socket head with the
+ * same hex socket as the H and L screws, made in code and turnable. The washer stands one wire's thickness off
+ * the body's face, so the wire is pinched between them, beside the shank. It hangs in the lower body's frame, so
+ * it moves with the derailleur, but it is a part of its own: marking the derailleur does not mark it.
  */
 function cableClamp(m: BikeModel, lower: T.Object3D): void {
-  const q = new T.Quaternion().setFromUnitVectors(UP, CLAMP.d);
+  // screwing in goes into the face, against CLAMP.d; the turnable's local -y (the head side) is out of the face
+  const spin = m.turnable('cable_bolt', { pos: CLAMP.p.toArray() as V3, axis: CLAMP.d.clone().negate().toArray() as V3, len: 0.008 }, lower);
   // a cylinder on the bolt axis, from `from` to `from + h` out of the face
-  const disc = (r: number, h: number, from: number, k: number, dark = false) => {
-    const mesh = m.add(D, new T.CylinderGeometry(r, r, h, 18), null, null, { parent: lower, k, dark });
-    mesh.position.copy(CLAMP.p).addScaledVector(CLAMP.d, from + h / 2);
-    mesh.quaternion.copy(q);
-  };
+  const disc = (r: number, h: number, from: number, k: number, sides: number, dark = false) =>
+    m.add('cable_bolt', new T.CylinderGeometry(r, r, h, sides), [0, -(from + h / 2), 0], null, { parent: spin, k, dark });
   const washer = 2 * WIRE_R;
-  disc(0.004, washer + 0.001, -0.001, 1.15); // shank, from inside the face to the washer
-  disc(0.0085, 0.001, washer, 1.2); // washer
-  disc(0.0068, 0.006, washer + 0.001, 1.25); // head
-  disc(0.0029, 0.0008, washer + 0.007, 1, true); // hex socket
+  disc(0.004, washer + 0.001, -0.001, 1.15, 10); // shank, from inside the face to the washer
+  disc(0.0085, 0.001, washer, 1.2, 18); // washer
+  disc(0.0068, 0.006, washer + 0.001, 1.25, 18); // head
+  disc(0.0029, 0.0008, washer + 0.0068, 1, 6, true); // hex socket, as on the H and L screws
 }
 
 /**

@@ -77,6 +77,7 @@ const CTX: Record<string, string[]> = {
   h_screw: ['drive', 'rear'],
   l_screw: ['drive', 'rear'],
   b_screw: ['drive', 'rear'],
+  cable_bolt: ['drive', 'rear', 'cable'],
   rear_barrel: ['drive', 'rear', 'cable'],
   front_barrel: ['cable', 'cockpit'],
   shift_cable: ['cable'],
@@ -92,7 +93,7 @@ interface MatOpt {
 }
 
 /** Parts drawn with outlines: the small mechanical ones a step points at. */
-const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'rear_barrel', 'front_barrel', 'shifter_rear', 'brake_lever', 'crank', 'chainring', 'cassette', 'smallest_sprocket', 'largest_sprocket', 'kickstand', 'stand_clamp']);
+const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'cable_bolt', 'rear_barrel', 'front_barrel', 'shifter_rear', 'brake_lever', 'crank', 'chainring', 'cassette', 'smallest_sprocket', 'largest_sprocket', 'kickstand', 'stand_clamp']);
 
 
 /** One generated bike, with the work stand and the hook it can be held by. */

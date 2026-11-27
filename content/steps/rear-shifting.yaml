@@ -188,7 +188,7 @@ steps:
     focus: [upper_pulley, largest_sprocket, l_screw]
     show: [rear_derailleur, derailleur_hanger, cassette, chain, chainring]
     view: derailleur_from_behind
-    animation: { target: rear_derailleur, motion: push, direction: towards_spokes, amount: "as far as it goes", caption: "Push the derailleur in by hand" }
+    animation: { clip: limit-push-past, caption: "Push the derailleur in by hand" }
     buttons:
       - id: too-far-in
         label: "Yes, past the largest sprocket"

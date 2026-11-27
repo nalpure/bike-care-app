@@ -14,7 +14,7 @@ import { chordLength } from '../src/stage/pins.js';
 import { RIG } from '../src/stage/rd-kin.js';
 import { RD_RIG } from '../src/stage/rd-rig.js';
 import { buildPath, newPath } from '../src/stage/chain.js';
-import { CLIPS, GROUP_NODES, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, SPLIT_PARTS, VIEWS } from '../src/stage/registry.js';
+import { CLIPS, GROUP_NODES, HELD_PARTS, LABEL_SCENES, manifest, modelOf, MOTIONS, NODE_PARTS, NODES, partsOf, previewNode, SPLIT_PARTS, VIEWS } from '../src/stage/registry.js';
 import { addHeld, FADED, shownParts, visTargets, type VisCard } from '../src/stage/visibility.js';
 import { barrelClose, fitPose, FIT_VIEWS, viewPose } from '../src/stage/views.js';
 
@@ -723,6 +723,19 @@ describe('barrel adjusters (barrel.ts)', () => {
     m.dispose();
   });
 
+  it('the cable clamp bolt is its own part: drawn with the derailleur, not marked with it, turnable like the limit screws', () => {
+    const m = new BikeModel(bikeSpec(BARS[1].facts), mat);
+    const has = (p: string) => m.has(p);
+    expect(m.has('cable_bolt')).toBe(true);
+    expect(partsOf('rear_derailleur')).not.toContain('cable_bolt');
+    expect(m.turns.has('cable_bolt')).toBe(true);
+    expect(addHeld(shownParts([], ['rear_derailleur'], partsOf, has), HELD_PARTS, has).has('cable_bolt')).toBe(true);
+    const { targets } = visTargets(card(m, ['rear_derailleur'], ['rear_derailleur', 'cassette']));
+    expect(targets.get('cable_bolt')?.hot, 'marking the derailleur does not mark the bolt').toBe(0);
+    expect(targets.get('rear_derailleur')?.hot).toBe(1);
+    m.dispose();
+  });
+
   it('every barrel turns about an axis from the side where the cable goes in, and its close-up looks at that side', () => {
     for (const { bar, facts } of BARS) {
       const m = new BikeModel(bikeSpec(facts), mat);
@@ -902,6 +915,26 @@ describe('views and animations', () => {
     expect(zs.size).toBe(m.spec.n);
     expect(an.frame(0).derZ).toBeCloseTo(m.zOf(0));
     expect(an.frame(an.duration).derZ).toBeCloseTo(m.zOf(0));
+  });
+
+  it('limit-push-past: from in line with the largest sprocket, in by about one more gear and back; the upper wheel red only while out of line', () => {
+    const an = makeAnim({ clip: 'limit-push-past', caption: 'x' }, ctxFor(m))!;
+    const large = m.zOf(m.spec.n - 1);
+    const step = large - m.zOf(m.spec.n - 2);
+    let far = 0;
+    for (let t = 0; t <= an.duration; t += 0.05) {
+      const f = an.frame(t);
+      const off = f.derZ! - large;
+      expect(Math.sign(off) * Math.sign(step), 'never out of the largest sprocket\'s line away from the spokes').toBeGreaterThanOrEqual(0);
+      expect(Math.abs(off)).toBeLessThanOrEqual(Math.abs(step) + 1e-9);
+      far = Math.max(far, Math.abs(off));
+      if (f.marks) expect(f.marks).toEqual(['upper_pulley']);
+      if (Math.abs(off) < 1e-9) expect(f.marks).toBeUndefined();
+      if (Math.abs(off) > Math.abs(step) * 0.5) expect(f.marks).toEqual(['upper_pulley']);
+    }
+    expect(far, 'it goes about one more gear in').toBeGreaterThan(Math.abs(step) * 0.8);
+    expect(an.frame(0).derZ).toBeCloseTo(large);
+    expect(an.frame(an.duration).derZ).toBeCloseTo(large);
   });
 
   it('generic motions never mark parts or draw contours; only clips do', () => {

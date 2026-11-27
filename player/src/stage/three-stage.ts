@@ -15,7 +15,7 @@ import { Contours } from './contour.js';
 import { BikeModel, bikeSpec, GAP_OK, GROUND, HP, LIFT, RP, seg, type BikeSpec, type Part } from './bike.js';
 import { addHeld, shownParts, visTargets } from './visibility.js';
 import { BARREL_FACT, BARREL_HOLDERS, barrelPick, pickedParts, turnKey, turnPart, type BarrelPick } from './barrel.js';
-import { CLIPS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
+import { CLIPS, HELD_PARTS, LABEL_SCENES, modelOf, MOTIONS, NODES, partsOf, previewNode, VIEWS, type Pose } from './registry.js';
 import { mixPose, poseVals, type PoseVals } from './pose.js';
 import { fitPose, FIT_VIEWS, previewPose, viewPose, type ViewPose } from './views.js';
 
@@ -396,7 +396,7 @@ export class ThreeStage implements Stage {
     // A card without show keeps the old rule (the rest of the bike stays, faded).
     this.shown = null;
     if (v.show && !fallback) {
-      this.shown = addHeld(shownParts(this.hotParts, v.show, parts, (p) => m.has(p)), BARREL_HOLDERS, (p) => m.has(p));
+      this.shown = addHeld(addHeld(shownParts(this.hotParts, v.show, parts, (p) => m.has(p)), BARREL_HOLDERS, (p) => m.has(p)), HELD_PARTS, (p) => m.has(p));
     }
     this.cardHot = new Set(this.hotParts);
     this.cardShown = this.shown && new Set(this.shown);
@@ -591,7 +591,7 @@ export class ThreeStage implements Stage {
       if (this.shown) {
         for (const p of this.hotParts) this.shown.add(p);
         for (const n of sc.show ?? []) for (const p of parts(n)) this.shown.add(p);
-        this.shown = addHeld(this.shown, BARREL_HOLDERS, (p) => m.has(p));
+        this.shown = addHeld(addHeld(this.shown, BARREL_HOLDERS, (p) => m.has(p)), HELD_PARTS, (p) => m.has(p));
       }
     }
     this.applyFocus();

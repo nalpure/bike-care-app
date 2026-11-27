@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "5707dee8e3e86fb2",
+  "content_hash": "027502c920504711",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1582,10 +1582,7 @@
       ],
       "view": "derailleur_from_behind",
       "animation": {
-        "target": "rear_derailleur",
-        "motion": "push",
-        "direction": "towards_spokes",
-        "amount": "as far as it goes",
+        "clip": "limit-push-past",
         "caption": "Push the derailleur in by hand"
       },
       "buttons": [

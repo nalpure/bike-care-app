@@ -49,6 +49,7 @@ export const NODES: Record<string, NodeInfo> = {
   upper_pulley: { label: 'Upper wheel', name: 'Upper jockey wheel', aliases: 'Also called the guide pulley', about: 'The upper of the two small toothed wheels on the derailleur.' },
   h_screw: { label: 'H', name: 'Limit screw H', aliases: 'Marked H on the derailleur', about: 'Sets how far out the derailleur can go.' },
   l_screw: { label: 'L', name: 'Limit screw L', aliases: 'Marked L on the derailleur', about: 'Sets how far in, towards the spokes, the derailleur can go.' },
+  cable_bolt: { label: 'Cable bolt', name: 'Cable clamp bolt', aliases: 'Also called the cable anchor bolt', about: 'Clamps the gear cable to the derailleur.' },
   b_screw: { label: 'B screw', name: 'B screw', aliases: 'Also called the B-tension screw', about: 'Sets the gap between the upper wheel and the sprockets.' },
   barrel_adjuster: { label: 'Barrel adjuster', name: 'Barrel adjuster', aliases: 'Also called the cable adjuster', about: 'Changes the cable tension in small steps.' },
   rear_barrel: { label: 'Barrel adjuster', name: 'Barrel adjuster at the derailleur', aliases: 'Also called the cable adjuster', about: 'Changes the cable tension in small steps.' },
@@ -75,7 +76,7 @@ export const NODE_PARTS: Record<string, string[]> = {
   rear_derailleur: ['rear_derailleur', 'upper_pulley'],
   drivetrain: [
     'chainring', 'crank', 'chain', 'cassette', 'smallest_sprocket', 'largest_sprocket',
-    'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'rear_barrel',
+    'rear_derailleur', 'upper_pulley', 'derailleur_hanger', 'h_screw', 'l_screw', 'b_screw', 'cable_bolt', 'rear_barrel',
   ],
   rear_end: ['frame_dropout', 'rear_hub'],
   // the barrel the fact drive.barrel_adjuster picks (barrel.ts); both while it is unknown
@@ -107,6 +108,7 @@ export const CLIPS = [
   'shift-through-gears',
   'shift-test-ride',
   'limit-screw-align',
+  'limit-push-past',
   'b-gap-adjust',
   'cable-tension-shift',
   'hanger-bend',
@@ -115,6 +117,14 @@ export const CLIPS = [
 
 /** Generic motions on any node. */
 export const MOTIONS = ['rotate', 'push', 'pull', 'slide', 'squeeze', 'remove', 'insert'] as const;
+
+/**
+ * Small parts drawn whenever one of their holders is drawn, though content does not name them (visibility.ts,
+ * addHeld; the barrel adjusters have their own list, barrel.ts). Marking the holder does not mark them.
+ */
+export const HELD_PARTS: Record<string, string[]> = {
+  cable_bolt: ['rear_derailleur'],
+};
 
 /** How the bike is held: ground (on its wheels), stand, hung, flipped (upside down). */
 export type Pose = 'ground' | 'stand' | 'hung' | 'flipped';

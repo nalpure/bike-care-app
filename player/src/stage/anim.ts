@@ -226,6 +226,22 @@ export function clip(name: string, a: any, ctx: AnimCtx): Anim | undefined {
       };
     }
 
+    case 'limit-push-past': {
+      // The inner limit checked by hand: the derailleur starts in line with the largest sprocket and is pushed
+      // towards the spokes as far as the next gear would be if there were one more sprocket (an L screw set too far
+      // in), held there, and let back. The upper wheel is red while it is out of line with the largest sprocket.
+      // Cut to what the links can reach. Drawing data, not how far a real derailleur goes.
+      const step = n > 1 ? large - ctx.zOf(n - 2) : spec.sp;
+      const o = Math.sign(step) * Math.min(Math.abs(step), Math.abs(derLayout(spec, large + step, GAP_OK).gz - large));
+      return {
+        duration: 4.6,
+        frame: (t) => {
+          const k = ramp(t, 0.8, 1.8) - ramp(t, 3.2, 4.0);
+          return { derZ: large + o * k, marks: k > 0.15 ? ['upper_pulley'] : undefined };
+        },
+      };
+    }
+
     case 'b-gap-adjust': {
       // Screwing in the B screw opens a gap that is too small; unscrewing closes one too big.
       const start = sign > 0 ? GAP_SMALL : GAP_BIG;

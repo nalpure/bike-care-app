@@ -168,7 +168,7 @@ Push the rear derailleur by hand towards the spokes, as far as it goes. Look fro
 
 <sub>3D: focus upper_pulley, largest_sprocket, l_screw · show rear_derailleur, derailleur_hanger, cassette, chain, chainring · view derailleur_from_behind</sub>
 
-Animation: "Push the derailleur in by hand" (rear_derailleur push, towards_spokes, as far as it goes)
+Animation: "Push the derailleur in by hand" (clip limit-push-past)
 
 Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.)
 
