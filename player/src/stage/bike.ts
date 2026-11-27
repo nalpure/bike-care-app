@@ -1,5 +1,6 @@
 // The generated bike: BikeModel builds the meshes, one part per registry node (frame, wheels,
-// fork, stand, hook, name decal), and moves the derailleur, the chain and the cranks (setDer).
+// fork, stand, hook, name decal), and moves the derailleur, the chain and the cranks (setDer). What turns with the
+// handlebar is built in one hinge group, `steer` (STEER_PARTS), turned by setSteer.
 // bikeSpec() (spec.ts) turns the bike's facts into dimensions. The rest is split by area:
 // drivetrain.ts (chainring, cranks, sprockets, chain), derailleur.ts, cockpit.ts, geo.ts.
 // This file re-exports every name it exported before the split.
@@ -9,13 +10,13 @@
 // links (see the rules in bikeSpec).
 
 import * as T from 'three';
-import { buildCockpit, buildShiftCable } from './cockpit.js';
+import { buildCockpit, buildShiftCable, layShiftCable, steerPose, type CablePt } from './cockpit.js';
 import { buildChain, buildCrankset, layChain, rAt } from './drivetrain.js';
 import { buildDerailleur, derLayout, moveDerailleur, spinPulleys, type DerParts, type Turn } from './derailleur.js';
 import { curveGeoSplit, disposeTree, hullShape, slabGeo, tubeGeo, UP } from './geo.js';
 import { libGeo } from './library.js';
 import { MOUNTS as M } from './mounts.js';
-import { batteryLine, GAP_OK, GROUND, HP, LIFT, stayPts, stayZ, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
+import { batteryLine, GAP_OK, GROUND, HP, LIFT, stayPts, stayZ, steerAxis, TAU, type BikeSpec, type V2, type V3 } from './spec.js';
 import { SPLIT_PARTS } from './registry.js';
 import { newPath, type Circle } from './chain.js';
 import type { Pins } from './pins.js';
@@ -84,6 +85,13 @@ const CTX: Record<string, string[]> = {
   shifter_rear: ['cable', 'cockpit'],
 };
 
+/**
+ * The parts that turn with the handlebar about the steering axis (BikeModel.setSteer). Their builders put them, their
+ * tag anchors and their turns in `BikeModel.steer`; everything else stays on the frame. stage.test.ts checks this list
+ * against what is built under `steer`.
+ */
+export const STEER_PARTS: readonly string[] = ['fork', 'front_wheel', 'handlebar', 'brake_lever', 'shifter_rear', 'front_barrel'];
+
 interface MatOpt {
   k?: number;
   dark?: boolean;
@@ -100,6 +108,13 @@ const OUTLINED = new Set(['rear_derailleur', 'upper_pulley', 'derailleur_hanger'
 export class BikeModel {
   /** the bike itself, in bike space */
   readonly bike = new T.Group();
+  /**
+   * The steering hinge, a child of `bike`: the parts of STEER_PARTS, the front hub, their anchors and turns are built
+   * in it. Identity at angle 0, so everything in it keeps its bike-space coordinates. Turned by setSteer.
+   */
+  readonly steer = new T.Group();
+  /** the steering angle drawn now (radians, see setSteer) */
+  steerAngle = 0;
   /** work stand and hook, in world space */
   readonly standG = new T.Group();
   readonly hookG = new T.Group();
@@ -125,6 +140,8 @@ export class BikeModel {
   der: DerParts | null = null;
   /** the gear cable's path (bike space), from the shifter to the derailleur, as built: the barrel tour follows it */
   cableRoute: V3[] = [];
+  /** @internal builder state: the gear cable's main mesh, and its points with how much of the steering each follows (cockpit.ts) */
+  cable: { mesh: T.Mesh; pts: CablePt[] } | null = null;
   /** @internal builder state */
   chainInner!: T.InstancedMesh;
   /** @internal builder state */
@@ -152,6 +169,7 @@ export class BikeModel {
 
   constructor(readonly spec: BikeSpec, readonly standMat: T.Material) {
     this.derZ = spec.zs[Math.floor(spec.n / 2)];
+    this.bike.add(this.steer);
     this.build();
     this.buildStand();
     this.buildHook();
@@ -185,6 +203,21 @@ export class BikeModel {
     disposeTree(this.standG, this.standMat);
     disposeTree(this.hookG, this.standMat);
     if (this.decal) this.decal.tex.dispose();
+  }
+
+  /**
+   * Turns the handlebar to `a` (radians) about the steering axis (steerAxis: through HB, up the head tube to HT).
+   * Positive turns the bar and the front wheel to the rider's left: the front of the wheel moves to -z, the non-drive
+   * side (+z is the drive side: chain, sprockets, derailleur). Everything in `steer` turns as one. When the angle
+   * changes, the gear cable is laid again: its cockpit end follows the bar, its frame points stay, `cableRoute` is
+   * the path as drawn. 0 is the bike as built.
+   */
+  setSteer(a: number): void {
+    if (a === this.steerAngle) return;
+    this.steerAngle = a;
+    steerPose(this.spec, a, this.steer.position, this.steer.quaternion);
+    this.steer.updateMatrixWorld(true);
+    if (this.cable) layShiftCable(this, a);
   }
 
   /** Turns the crank to theta (about the bottom bracket); the pedals turn the other way and stay level. */
@@ -273,13 +306,12 @@ export class BikeModel {
     const B = this.spec;
     const road = B.kind === 'road';
     const { ST, HT, HB, rx, huby, bby, zDrop: zD } = B;
-    const [hx, hy] = HT;
     const FX = B.FX;
 
     // Wheels: built around their hubs so they can turn.
-    const wheel = (id: string, hub: T.Group, cx: number) => {
+    const wheel = (id: string, hub: T.Group, cx: number, parent: T.Object3D) => {
       hub.position.set(cx, huby, 0);
-      this.bike.add(hub);
+      parent.add(hub);
       this.part(id, hub);
       // the rear hub is a part of its own (node rear_end); it turns with the wheel
       const rear = id === 'rear_wheel';
@@ -300,10 +332,10 @@ export class BikeModel {
         const a = (i / 18) * TAU;
         this.add(id, tubeGeo([0, 0, i % 2 ? 0.03 : -0.03], [(rim - 0.01) * Math.cos(a), (rim - 0.01) * Math.sin(a), 0], 0.004), null, null, { k: 1.2 });
       }
-      this.anchor(id, this.bike, [cx, huby + B.rt * 0.72, 0.05]);
+      this.anchor(id, parent, [cx, huby + B.rt * 0.72, 0.05]);
     };
-    wheel('rear_wheel', this.rearHub, rx);
-    wheel('front_wheel', this.frontHub, FX);
+    wheel('rear_wheel', this.rearHub, rx, this.bike);
+    wheel('front_wheel', this.frontHub, FX, this.steer);
 
     // Frame
     this.part('frame');
@@ -356,11 +388,11 @@ export class BikeModel {
     this.add('saddle', libGeo('saddle'), [sx - M.saddle.head[0], sy - M.saddle.head[1], 0], null, { dark: true });
     this.anchor('saddle', this.bike, [sx + 0.1, sy + M.saddle.topY - M.saddle.head[1] + 0.01, 0]);
 
-    // Fork
-    this.part('fork');
+    // Fork, along the steering axis: the crown 4 cm below the head tube
+    this.part('fork', this.steer);
     {
-      const dl = Math.hypot(hx - HB[0], hy - HB[1]);
-      const Cr: V2 = [HB[0] - ((hx - HB[0]) / dl) * 0.04, HB[1] - ((hy - HB[1]) / dl) * 0.04];
+      const { d } = steerAxis(B);
+      const Cr: V2 = [HB[0] - d[0] * 0.04, HB[1] - d[1] * 0.04];
       if (B.forkKind === 'susp') {
         const fz = 0.095;
         const M: V2 = [FX + (Cr[0] - FX) * 0.5, huby + (Cr[1] - huby) * 0.5];

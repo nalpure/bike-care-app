@@ -2,6 +2,8 @@
 // brake levers, the right shifter, and the gear cable that runs from the shifter to the derailleur (or hub, or gearbox).
 // Stem, bar and grips are one rigid piece placed by BikeSpec.xf (spec.ts: cockpitXf); the levers and the shifter sit at the
 // spots measured on the bar (mounts.ts).
+// Everything here but the cable is built in the steering hinge (BikeModel.steer, steerPose); the cable spans it: its points
+// on the cockpit follow the turn, those on the frame stay (layShiftCable).
 // Session area: E (other parts).
 
 import * as T from 'three';
@@ -10,17 +12,29 @@ import { barrelTurn, buildWireTail, inlineRun, WIRE_R } from './derailleur.js';
 import { curveGeo, plate, tubeGeo } from './geo.js';
 import { libGeo, type LibName } from './library.js';
 import { MOUNTS as M } from './mounts.js';
-import { HP, stayPts, xfPt, type V3 } from './spec.js';
+import { HP, stayPts, steerAxis, xfPt, type BikeSpec, type V3 } from './spec.js';
 import type { BikeModel } from './bike.js';
 
-/** Stem, bar, levers and the right shifter. */
+/**
+ * The steering hinge turned by `a` radians (BikeModel.setSteer: positive to the rider's left) as a pose: a point p in the
+ * hinge goes to quat·p + pos in bike space. A turn about the steering axis (steerAxis); exactly the identity at 0.
+ */
+export function steerPose(B: BikeSpec, a: number, pos = new T.Vector3(), quat = new T.Quaternion()): { pos: T.Vector3; quat: T.Quaternion } {
+  const { p, d } = steerAxis(B);
+  const P = new T.Vector3(...p);
+  quat.setFromAxisAngle(new T.Vector3(...d), a);
+  pos.copy(P).sub(P.applyQuaternion(quat));
+  return { pos, quat };
+}
+
+/** Stem, bar, levers and the right shifter, in the steering hinge. */
 export function buildCockpit(m: BikeModel): void {
   const B = m.spec;
   const { HT, C, S, xf } = B;
   const hasShifter = B.gears !== 'single';
-  m.part('handlebar');
-  m.part('brake_lever');
-  if (hasShifter) m.part('shifter_rear');
+  m.part('handlebar', m.steer);
+  m.part('brake_lever', m.steer);
+  if (hasShifter) m.part('shifter_rear', m.steer);
   const turn = Math.atan2(xf.s, xf.c);
   /** a library part of the cockpit, in the cockpit's place */
   const put = (lib: LibName, opt: { k?: number; dark?: boolean }) => m.add('handlebar', libGeo(lib), [xf.tx, xf.ty, 0], [0, 0, turn], opt);
@@ -47,7 +61,7 @@ export function buildCockpit(m: BikeModel): void {
         m.add('shifter_rear', curveGeo([[C[0] + 0.188, C[1] - 0.01, z], [C[0] + 0.198, C[1] - 0.07, z - 0.004], [C[0] + 0.182, C[1] - 0.12, z - 0.012]], 0.0065, 16), null, null, { k: 0.7 });
       }
     }
-    m.anchor('brake_lever', m.bike, [C[0] + 0.22, C[1] - 0.09, 0.21]);
+    m.anchor('brake_lever', m.steer, [C[0] + 0.22, C[1] - 0.09, 0.21]);
   } else {
     // Flat and riser bars are the same library bar and grips (the riser on spacers, see bikeSpec).
     put('bar_flat', { k: 1 });
@@ -73,12 +87,43 @@ export function buildCockpit(m: BikeModel): void {
       plate(trig, [S[0] + 0.022, S[1] - 0.008, S[2] + 0.004], [S[0] + 0.042, S[1] - 0.026, S[2] + 0.03], [1, 0, 0]);
       m.add('shifter_rear', new T.BoxGeometry(0.004, 0.016, 0.026), [S[0] - 0.031, S[1] + 0.004, S[2]], null, { dark: true });
     }
-    m.anchor('brake_lever', m.bike, [g[0] + 0.07, g[1], M.lever.z + 0.06]);
+    m.anchor('brake_lever', m.steer, [g[0] + 0.07, g[1], M.lever.z + 0.06]);
   }
-  if (hasShifter) m.anchor('shifter_rear', m.bike, [S[0], S[1] + 0.05, S[2]]);
+  if (hasShifter) m.anchor('shifter_rear', m.steer, [S[0], S[1] + 0.05, S[2]]);
 }
 
-/** Gear cable from the shifter to the derailleur (or the hub, or the gearbox). */
+/** One point of the gear cable's path, and how much of the steering turn it follows: 1 on the cockpit, 0 on the frame. */
+export interface CablePt { p: V3; steer: number }
+
+/**
+ * How much of the turn the free housing in front of the head tube follows: between the bar and the frame, it swings
+ * part of the way, so the curve stays smooth and keeps its distance from the steering axis. Drawing data.
+ */
+const FREE = 0.5;
+
+/** The cable's path with the bar turned by `a` (setSteer): each point turned about the steering axis by its share of `a`. */
+export function cablePath(B: BikeSpec, pts: CablePt[], a: number): V3[] {
+  const pose = { pos: new T.Vector3(), quat: new T.Quaternion() };
+  return pts.map(({ p, steer }) => {
+    if (steer * a === 0) return [...p] as V3;
+    steerPose(B, steer * a, pose.pos, pose.quat);
+    return new T.Vector3(...p).applyQuaternion(pose.quat).add(pose.pos).toArray() as V3;
+  });
+}
+
+/** Lays the gear cable's main run for the steering angle `a`: a new tube along cablePath (the old one disposed), and `cableRoute`. */
+export function layShiftCable(m: BikeModel, a: number): void {
+  const c = m.cable!;
+  const path = cablePath(m.spec, c.pts, a);
+  c.mesh.geometry.dispose();
+  c.mesh.geometry = curveGeo(path, 0.006, 360);
+  m.cableRoute = path;
+}
+
+/**
+ * Gear cable from the shifter to the derailleur (or the hub, or the gearbox). It spans the steering hinge: the main run is
+ * laid by layShiftCable from points tagged with their share of the turn; the derailleur's end (setDer) stays on the frame.
+ */
 export function buildShiftCable(m: BikeModel): void {
   const B = m.spec;
   const { ST, HT, HB, C, S, rx, huby, bby, zDrop: zD, chainline: zc } = B;
@@ -95,22 +140,26 @@ export function buildShiftCable(m: BikeModel): void {
   const cs = stayPts(B, 'chain', 1);
   const ss = stayPts(B, 'seat', 1);
   const along = (a: V3, b: V3, t: number, dy: number, dz: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t + dy, a[2] + (b[2] - a[2]) * t + dz];
-  let start: V3[];
+  // the points on the cockpit (they turn with the bar), the free housing in front of the head tube, the frame's
+  const bar = (...p: V3[]): CablePt[] => p.map((q) => ({ p: q, steer: 1 }));
+  const free = (p: V3): CablePt => ({ p, steer: FREE });
+  const frame = (...p: V3[]): CablePt[] => p.map((q) => ({ p: q, steer: 0 }));
+  let start: CablePt[];
   if (B.bar === 'drop') {
     // from the hood along the bar, then out behind it through a straight run (the inline adjuster's place)
     const { a, b } = inlineRun(B);
-    start = [[S[0] - 0.035, S[1] - 0.02, S[2] - 0.005], [C[0] + 0.07, C[1] - 0.012, 0.2], a, bt.pos, b];
+    start = [...bar([S[0] - 0.035, S[1] - 0.02, S[2] - 0.005], [C[0] + 0.07, C[1] - 0.012, 0.2], a, bt.pos, b), free([HB[0] + 0.02, HB[1] + 0.01, 0.07])];
   } else {
     const head: V3 = [bt.pos[0] - bt.axis[0] * bt.len / 2, bt.pos[1], bt.pos[2] - bt.axis[2] * bt.len / 2];
-    start = [head, [head[0] + 0.02, head[1] - 0.03, head[2] - 0.17], [hx + 0.1, hy - 0.05, 0.09]];
+    start = [...bar(head, [head[0] + 0.02, head[1] - 0.03, head[2] - 0.17]), free([hx + 0.1, hy - 0.05, 0.09])];
   }
-  const path: V3[] = B.bar === 'drop'
-    ? [...start, [HB[0] + 0.02, HB[1] + 0.01, 0.07], [HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, bby - 0.07, 0.05], along(cs[2], cs[4], 0.1, 0.035, 0.02), along(cs[2], cs[4], 0.6, 0.035, 0.022), ...loop, end]
+  const pts: CablePt[] = B.bar === 'drop'
+    ? [...start, ...frame([HB[0] * 0.7, dt(0.7)[1], 0.06], dt(0.35), [0.05, bby - 0.07, 0.05], along(cs[2], cs[4], 0.1, 0.035, 0.02), along(cs[2], cs[4], 0.6, 0.035, 0.022), ...loop, end)]
     : B.gears === 'gearbox'
-      ? [...start, [HB[0] - 0.08, HB[1] - 0.05, 0.07], dt(0.4), end]
-      : [...start, tt(HT[0] - 0.25, 0.08), tt(HT[0] - 0.45, 0.05), tt(-0.05, 0.05), tt(ST[0] + 0.02, 0.06), along(ss[0], ss[1], 0.4, 0.03, 0.02), along(ss[0], ss[1], 0.75, 0.03, 0.022), ...loop, end];
-  m.add('shift_cable', curveGeo(path, 0.006, 360), null, null, { k: 0.6 });
-  m.cableRoute = path;
+      ? [...start, ...frame([HB[0] - 0.08, HB[1] - 0.05, 0.07], dt(0.4), end)]
+      : [...start, ...frame(tt(HT[0] - 0.25, 0.08), tt(HT[0] - 0.45, 0.05), tt(-0.05, 0.05), tt(ST[0] + 0.02, 0.06), along(ss[0], ss[1], 0.4, 0.03, 0.02), along(ss[0], ss[1], 0.75, 0.03, 0.022), ...loop, end)];
+  m.cable = { mesh: m.add('shift_cable', new T.BufferGeometry(), null, null, { k: 0.6 }), pts };
+  layShiftCable(m, m.steerAngle);
   if (m.der) buildFrontBarrel(m);
   m.anchor('shift_cable', m.bike, B.bar === 'drop' ? along(cs[2], cs[4], 0.3, 0.05, 0.02) : tt(-0.05, 0.08));
   if (m.der) {
@@ -130,7 +179,7 @@ export function buildShiftCable(m: BikeModel): void {
 function buildFrontBarrel(m: BikeModel): void {
   const B = m.spec;
   const bt = barrelTurn(B, 'front_barrel');
-  const spin = m.turnable('front_barrel', bt, m.bike);
+  const spin = m.turnable('front_barrel', bt, m.steer);
   const L = bt.len;
   if (frontPlace(B.bar) === 'shifter') {
     const br = 0.011;

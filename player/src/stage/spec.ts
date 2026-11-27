@@ -98,6 +98,16 @@ export function cockpitXf(HT: V2, ha: number, spacer: number): Xf {
   return { c, s, tx, ty };
 }
 
+/**
+ * The steering axis: through the head tube's bottom `p` (HB, z = 0), `d` the unit direction up the head tube to HT.
+ * The fork and the cockpit sit on it (cockpitXf puts the stem's axis on the head tube); BikeModel.setSteer turns about it.
+ */
+export function steerAxis(B: { HB: V2; HT: V2 }): { p: V3; d: V3 } {
+  const { HB, HT } = B;
+  const l = Math.hypot(HT[0] - HB[0], HT[1] - HB[1]);
+  return { p: [HB[0], HB[1], 0], d: [(HT[0] - HB[0]) / l, (HT[1] - HB[1]) / l, 0] };
+}
+
 /** A library-space point (x, y) in bike space. */
 export const xfPt = (f: Xf, p: ArrayLike<number>): V2 => [f.c * p[0] - f.s * p[1] + f.tx, f.s * p[0] + f.c * p[1] + f.ty];
 
