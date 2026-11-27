@@ -2,7 +2,7 @@
 
 Read first, in this order: `docs/idea.md` (what the app should be), `docs/decisions.md` (owner decisions; where `approach.md` is out of date), and `docs/approach.md` from "Building blocks" to "Build tool". These win over anything in `legacy/`.
 
-Everything the user reads about repairs lives here. The schema in `schema/` defines every field; the golden example (`diagnoses/gears-shift-badly.yaml`, `tutorials/adjust-rear-shifting/`) shows how they are used. Copy its patterns, not its mechanics: they are unverified.
+Everything the user reads about repairs lives here. The schema in `schema/` defines every field; the golden example (`diagnoses/gears-shift-badly.yaml`, `jobs/adjust-rear-shifting.yaml`) shows how they are used. Copy its patterns, not its mechanics: they are unverified.
 
 ## Workflow
 
@@ -48,9 +48,10 @@ Everything the user reads about repairs lives here. The schema in `schema/` defi
 ## Structure
 
 - Diagnoses and the routine check: `hands_off` inspections only, cheapest and most likely first.
-- Tutorials: one per job. One branch by mechanism, plus at most one nested branch where the order of work differs. Hands-off checks that every case needs before the work go once in the tutorial's `checks`, not in each case file (hard rule 12 hides them after a diagnosis). In each case: the work ending with the safety checks, then `finish`.
-- Anything not covered ends in `not_covered` with a clear message (hard rule 7). Which bikes a job covers is written once, in the job's `covers` (`jobs.yaml`). Its tutorial reads it before any case; a diagnosis reads it with `covers_like: <job>`. Tutorial cases then only split the covered bikes. The not-covered screen offers a shop and the assistant itself, so the texts say only why.
-- Write each thing once. Shared steps go in `steps/`; a run used by more than one tutorial is a procedure. Never copy a text or a condition into a second file.
+- **One file per job** (decisions.md, 2026-11-27): `jobs/<job id>.yaml`, read top to bottom. `job`: the header (covers, service, shop; with a tutorial also difficulty and choices). `flow`: the tutorial as a short outline. `cards`: the job's own cards, each once, in the order the flow first uses them (the check warns otherwise). A job without a tutorial has only `job`. Jobs are split by mechanism, so a file stays a few hundred lines.
+- **The flow:** `checks` (hands-off checks every way needs before the work; hard rule 12 hides them after a diagnosis), then `work` ending with the safety checks, then `finish`. An item is a card id, `{ procedure: id }` (a shared sequence) or `{ inspect: id, outcomes }` (a shared check). Where the order of work differs (by mechanism or how the bike is held), `ways` names each way with its `when` (first match wins), and a `branch` at each point where they differ lists every way's items (`[]` for none). No branch inside a branch.
+- Anything not covered ends in `not_covered` with a clear message (hard rule 7). Which bikes a job covers is written once, in the job file's `covers`. Its tutorial reads it before any way; a diagnosis reads it with `covers_like: <job>`. The ways then only split the covered bikes. The not-covered screen offers a shop and the assistant itself, so the texts say only why.
+- Write each thing once. A card two jobs use, or a procedure uses, goes in `steps/` (the check rejects a job's own card anywhere else); a run used by more than one job is a procedure. Card ids differ from every inspection and procedure id. Never copy a text or a condition into a second file.
 
 ## Hard rules for content
 

@@ -53,6 +53,10 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Parked at the wall:** lean 3 deg, bar 10 deg, every other part 5 mm off the wall (wall angle 14 deg road, about 19 deg the others); wall 5 m x 2.2 m x 15 cm in a darker `--stage2`; caption "Lean the rear wheel against the wall". `park.ts`, `wall.ts`, `content/steps/holding.yaml`.
 - **Gear cable at the steering hinge:** the loop of housing in front of the head tube follows half the bar's turn. `cockpit.ts` (`FREE`).
 - **`show: [bike]`** draws every part of the bike but the work stand's clamp (it is not part of the bike). The whole-bike cards (barrel-adjuster-present, barrel-adjuster-search, shift-test-ride and the three whole-bike steps in `content/jobs/adjust-rear-shifting.yaml`) use it; the old lists left out brake levers on some of them, so those now draw them too. `registry.ts` (`showPartsOf`, `STAND_PARTS`).
+- **Job file names:** `flow` has `checks`, `ways` (name → `when`), `work`, `finish`; a split point is `- branch: { <way>: [...] }`. Items: a bare card id, `{ procedure }`, `{ inspect, outcomes }` (not the sketch's `use:` / `check:`). `cards` is a list of `- id:` like `steps/`, not a map. `schema/job.schema.json`.
+- **Flat ways instead of the nested branch:** a way's `when` may combine a fact and a choice; a branch names every way (`[]` for none), no branch in a branch. A flow without `ways` has one way, `main`. `tools/lib/jobfile.ts`.
+- **Bundle after the job-file move:** the steps list is now in flow order, so `content_hash` changed; the data is otherwise identical. The tree review hash changed too (cards' hashes did not). Header-only files for `chain-care` and `derailleur-check-at-shop`.
+- **Job-file rules:** a job's own card used by another job or a procedure is an error (`card-outside-job`); cards out of flow order only warn (`card-order`); card ids may not equal an inspection or procedure id (`duplicate-id`). `refs.ts`, `content.ts`.
 
 ## Questions for the owner
 

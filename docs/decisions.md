@@ -44,6 +44,7 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 
 ## Where approach.md is out of date
 
+- **Content files:** one file per job (2026-11-27) replaces `jobs.yaml`, `tutorials/<job>/` with its case files, and the job's own steps file; the format is in `content/CLAUDE.md` and `schema/job.schema.json`.
 - **Ending a flow:** one construct, `exit: { kind: unsafe | not_covered | not_needed | shop_only, text, show_how_from? }`, replaces `stop`, `end`, and `shop` / `not_covered` on cases. `block` is unchanged. The schema is the reference.
 - **Review:** review units (cards, flow trees, journeys), each with a hash and signed in `reviews/ledger.yaml`, replace walkthroughs per path and "sign-off follows paths".
 - **Session state labels** cover anything to undo before riding, including a bike in a stand, hung or upside down.

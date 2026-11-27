@@ -19,7 +19,7 @@ The rule behind it: **all repair knowledge lives in `content/`; the player has n
 | Folder | What | Guide |
 | --- | --- | --- |
 | `docs/` | `idea.md` what the app should be, `decisions.md` what you decided, `open.md` what is still undecided (agent choices and questions for you) | |
-| `content/`, `profiles/`, `schema/` | repair content, test bikes, the JSON Schema for every field | `content/CLAUDE.md` |
+| `content/`, `profiles/`, `schema/` | repair content (one file per job in `content/jobs/`, shared building blocks beside it), test bikes, the JSON Schema for every field | `content/CLAUDE.md` |
 | `tools/` | the build tool, review sign-off, path viewer, clean-up | `tools/CLAUDE.md` |
 | `tools/assets/` | turns source 3D models into the parts library | `tools/assets/CLAUDE.md` |
 | `player/` | the web app (Vite, TypeScript, three.js) | `player/CLAUDE.md`, and one per part: `src/engine/`, `src/ui/`, `src/stage/` |

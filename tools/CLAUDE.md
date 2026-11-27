@@ -6,12 +6,13 @@ Read first: `docs/decisions.md` (the section "Where approach.md is out of date")
 
 | Stage | Files |
 | --- | --- |
-| 1 Load and schema | `lib/content.ts`, `lib/schema.ts`, `lib/yamlfile.ts` (YAML 1.2, keeps lines for errors) |
+| 1 Load and schema | `lib/content.ts`, `lib/jobfile.ts` (a job file into the job, a tutorial with one case per way, and steps), `lib/schema.ts`, `lib/yamlfile.ts` (YAML 1.2, keeps lines for errors) |
 | 2 References and static rules | `lib/refs.ts` |
 | 3 Expand, simulate, coverage, profile journeys | `lib/expand.ts`, `lib/resolve.ts`, `lib/flows.ts`, `lib/journeys.ts` |
 | 4 Output | `lib/output.ts`, `lib/render.ts` (what reviewers read), `lib/review.ts` (review units, hashes, ledger), `lib/bundle.ts` |
 
 - **Shared with the player:** `lib/conditions.ts` and `lib/resolve.ts`. They are dependency-free and work on bundle data. Change them only with the player in mind, and run `npm test` (the player tests use them).
+- **Job files are expanded at load time** (`lib/jobfile.ts`), so everything after stage 1 sees the old shapes: a tutorial, its cases (one per way, named after it) and steps. The tutorial and cases are views of the job file (`YamlFile.toDoc` maps their paths into it): always get lines through `lineAt(file, path)`, never from `file.doc` with their paths.
 - **`lib/journeys.ts` is independent on purpose.** The player tests compare the app's journeys with it. Do not make one call the other.
 - **A new rule:** add it to `lib/rules.ts` with a one-line meaning, report it through `lib/issues.ts` in the one-line format, and add a test in `test/check.test.ts`. `test/helpers.ts` copies the content to a temp folder so a test can break it on purpose.
 - **A schema change touches:** `schema/*.schema.json`, the content, `render.ts` (so reviewers see the new field), the bundle, and the player if it reads the field. Say any bundle change in your final message.
