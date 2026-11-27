@@ -57,6 +57,9 @@ What the agent chose (the cautious default), and where it lives. The owner can o
 - **Flat ways instead of the nested branch:** a way's `when` may combine a fact and a choice; a branch names every way (`[]` for none), no branch in a branch. A flow without `ways` has one way, `main`. `tools/lib/jobfile.ts`.
 - **Bundle after the job-file move:** the steps list is now in flow order, so `content_hash` changed; the data is otherwise identical. The tree review hash changed too (cards' hashes did not). Header-only files for `chain-care` and `derailleur-check-at-shop`.
 - **Job-file rules:** a job's own card used by another job or a procedure is an error (`card-outside-job`); cards out of flow order only warn (`card-order`); card ids may not equal an inspection or procedure id (`duplicate-id`). `refs.ts`, `content.ts`.
+- **"Tutorials tab" = the "All guides" list on the Repair tab** (no separate tab); it already listed every tutorial, ungrouped, whatever the bike. `ui/home.ts`.
+- **Wrong-bike screen** for a tutorial started on its own: "This guide does not fit this bike", the job's `not_covered` text (else "This guide does not cover this bike yet."), then "Choose another bike" (back to the bike choice, same tutorial), shop, assistant. From a garage to-do (no bike choice) the button is left out. Diagnosis exits unchanged. `ui/flow.ts`, `app.ts`, `journey.ts`.
+- **Known facts decide first:** a later known fact that rules the job out ends the tutorial before an earlier unknown one is asked; the text is the first `not_covered` entry the known facts match, the general line if none does yet. `knownCoverageExit` (`resolve.ts`), `decide` (`conditions.ts`).
 
 ## Questions for the owner
 
