@@ -22,6 +22,8 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-27 Diagnosis.** Every check must be answered and has a help icon (why, how, ask the assistant). Fine: shown as good, then on by itself. A finding ends it: what is wrong, a to-do, maybe unrideable, then shop, tutorial or later. All fine: text on what it could still be, maybe unrideable, always a to-do.
 - **2026-11-27 Routine check.** Same look as a diagnosis, but a finding does not end it: explained, to-do (maybe unrideable), then on. A check that needs riding after an unrideable finding is skipped with a warning. At the end an overview of all to-dos with shop price, tutorial time and parts; "no estimate yet" while prices are placeholders.
 - **2026-11-27 Tutorial.** It can be swiped from start to end; only a tap on a problem can lead to an exit. At the end the matching to-do is marked done.
+- **2026-11-27 One file per job.** A job file holds the header (covers, shop, service), then the flow as a short outline that branches only where the ways differ, then each of the job's cards once. Jobs are split by mechanism (electronic shifting, hub gears, front derailleur are separate jobs); shared sequences, cards and checks stay in shared files. Diagnoses and the routine check keep their own files.
+- **2026-11-27 Tutorials tab.** No grouping: it lists every tutorial. A tutorial that does not fit the chosen bike explains why and asks the user to change the bike.
 - **2026-11-26 Shifting stops on a tap.** The cable-tension card shows the pedals turning and the chain going through every gear until a problem is tapped; then the pedals stand still while the barrel turns.
 
 ## 3D view
