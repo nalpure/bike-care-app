@@ -9,8 +9,8 @@ import { lineAt, type YamlFile, type YPath } from './yamlfile.js';
 const BASE = 'https://bike-app.invalid/schema/';
 
 export type SchemaName =
-  | 'facts' | 'choices' | 'states' | 'tools' | 'inspections' | 'jobs' | 'steps' | 'procedures'
-  | 'tutorial' | 'case' | 'diagnosis' | 'check' | 'profile' | 'ledger';
+  | 'facts' | 'choices' | 'states' | 'tools' | 'inspections' | 'job' | 'steps' | 'procedures'
+  | 'diagnosis' | 'check' | 'profile' | 'ledger';
 
 export class SchemaValidator {
   private ajv: Ajv2020;
@@ -71,7 +71,7 @@ export function nearestId(data: any, path: YPath): string {
 
 function singular(c: string): string {
   const map: Record<string, string> = {
-    steps: 'step', inspections: 'inspection', facts: 'fact', fact_groups: 'fact group', tools: 'tool', parts: 'part',
+    steps: 'step', cards: 'step', inspections: 'inspection', facts: 'fact', fact_groups: 'fact group', tools: 'tool', parts: 'part',
     jobs: 'job', procedures: 'procedure', states: 'state', choices: 'choice', options: 'option',
     tutorial: 'tutorial', diagnosis: 'diagnosis', check: 'check', profile: 'profile', journeys: 'journey',
   };

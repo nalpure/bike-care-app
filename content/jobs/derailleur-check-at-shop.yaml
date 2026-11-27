@@ -1,0 +1,10 @@
+# A shop-only job: what a diagnosis sends to the shop when the user cannot fix it. No tutorial.
+# The price is a placeholder until a curated price table exists.
+
+job:
+  id: derailleur-check-at-shop
+  title: "Have the rear gears checked"
+  shop:
+    tell: "The rear gears do not work as they should. Please check the rear derailleur, the part that holds it, and the gear cable."
+    price_eur: "<range>"
+    price_source: "<source, date>"

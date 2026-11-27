@@ -1,0 +1,11 @@
+# Clean and oil the chain. No tutorial yet: the header only, for the shop route and the service light.
+# Prices and the service interval are unverified placeholders (owner, 2026-11-20); see content/review/chain-care.md.
+
+job:
+  id: chain-care
+  title: "Clean and oil the chain"
+  service: { interval_km: 300, source: "<source, date>" }
+  shop:
+    tell: "The chain is dry, dirty or rusty. Please clean and oil it, and check it for wear."
+    price_eur: "<range>"
+    price_source: "<source, date>"

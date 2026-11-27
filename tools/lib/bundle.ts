@@ -24,22 +24,17 @@ export function bundleOf(c: Content): BundleView {
       return e.def;
     });
 
+  // Each case gets its way's sequence and finish inlined as `case` (the shape resolve.ts reads).
   const tutorials = [...c.tutorials.values()].map((t) => {
-    const resolve = (cs: any, path: (string | number)[]): any => {
-      const out: any = { ...cs };
-      where.set(out, { file: t.file, path });
-      if (cs.include) {
-        const cf = t.cases.get(cs.include);
-        if (cf) {
-          delete out.include;
-          out.case = { name: cs.include.replace(/^cases\//, '').replace(/\.yaml$/, ''), sequence: cf.data.sequence ?? [], finish: cf.data.finish ?? [] };
-          where.set(out.case, { file: cf, path: [] });
-        }
-      }
-      if (cs.cases) out.cases = cs.cases.map((x: any, i: number) => resolve(x, [...path, 'cases', i]));
+    const cases = t.def.cases.map((cs: any, i: number) => {
+      const { way, ...out } = cs;
+      where.set(out, { file: t.file, path: [...t.path, 'cases', i] });
+      const cf = t.cases.get(way)!;
+      out.case = { name: way, sequence: cf.data.sequence, finish: cf.data.finish ?? [] };
+      where.set(out.case, { file: cf, path: [] });
       return out;
-    };
-    const node = { ...t.def, cases: t.def.cases.map((cs: any, i: number) => resolve(cs, [...t.path, 'cases', i])) };
+    });
+    const node = { ...t.def, cases };
     where.set(node, { file: t.file, path: t.path });
     return node;
   });

@@ -312,12 +312,8 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
 
   // Branches
   L.push('## Branches', '', 'Evaluated top to bottom; the first match wins.', '');
-  const caseLine = (cs: any, indent: string) => {
-    const target = cs.include ? `case \`${cs.include.replace(/^cases\//, '').replace(/\.yaml$/, '')}\`` : 'nested branch:';
-    L.push(`${indent}- when ${cond(cs.when)} → ${target}`);
-    for (const leaf of cs.cases ?? []) caseLine(leaf, `${indent}  `);
-  };
-  for (const cs of def.cases) caseLine(cs, '');
+  // One case per way of the job file's flow.
+  for (const cs of def.cases) L.push(`- when ${cs.when ? cond(cs.when) : 'always'} → case \`${cs.way}\``);
   L.push('');
 
   const outcomeLines = (it: any, indent = '   '): string[] =>
@@ -341,8 +337,7 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   }
 
   // Each case once
-  for (const [inc, cf] of t.cases) {
-    const name = inc.replace(/^cases\//, '').replace(/\.yaml$/, '');
+  for (const [name, cf] of t.cases) {
     const paths = flow.paths.filter((p) => p.run.caseLabel === name);
     const complete = paths.filter((p) => p.variant.ending === 'complete' && !p.variant.skip);
     const choices = [...new Set(complete.map((p) => p.combo.asked.filter((k) => k.startsWith('choice.')).map((k) => String(p.combo.assign[k])).join(', ')))].filter(Boolean);
@@ -429,11 +424,11 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   return { lines: L, structure };
 }
 
-/** The bikes a job covers, and the not-covered texts for the others (jobs.yaml, covers). */
+/** The bikes a job covers, and the not-covered texts for the others (the covers in its job file). */
 function coverageLines(c: Content, jobId: string, via?: string): string[] {
   const cv = c.jobs.get(jobId)?.def.covers;
   if (!cv) return [];
-  const L = ['## Bikes covered', '', `${via ? `${via} ` : ''}From job \`${jobId}\` (jobs.yaml). Covers bikes where ${cond(cv.when)}. Any other bike ends at the first match:`, ''];
+  const L = ['## Bikes covered', '', `${via ? `${via} ` : ''}From job \`${jobId}\` (content/jobs/${jobId}.yaml). Covers bikes where ${cond(cv.when)}. Any other bike ends at the first match:`, ''];
   for (const nc of cv.not_covered) L.push(`- when ${cond(nc.when)} → ${exitTag('not_covered')}: "${nc.text}"`);
   L.push('');
   return L;

@@ -4,17 +4,19 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import type { Issues } from './issues.js';
 import { SchemaValidator, type SchemaName } from './schema.js';
-import { lineAt, listDirs, listYaml, parseYamlFile, type YamlFile, type YPath } from './yamlfile.js';
+import { expandJobFile } from './jobfile.js';
+import { lineAt, listYaml, parseYamlFile, type YamlFile, type YPath } from './yamlfile.js';
 
 export interface Entry<T = any> {
   def: T;
   file: YamlFile;
   path: YPath;
+  /** a card: the job whose file defines it; unset for a shared card in content/steps/ */
+  job?: string;
 }
 
 export interface TutorialEntry extends Entry {
-  dir: string;
-  /** include path (cases/x.yaml) -> parsed case file */
+  /** way name -> the way's case (a view of the job file with sequence and finish) */
   cases: Map<string, YamlFile>;
 }
 
@@ -130,8 +132,6 @@ export function loadContent(root: string, issues: Issues): Content | null {
   }
   const inspF = load('content/inspections.yaml', 'inspections');
   if (inspF) register(c.inspections, 'inspection', inspF, 'inspections');
-  const jobsF = load('content/jobs.yaml', 'jobs');
-  if (jobsF) register(c.jobs, 'job', jobsF, 'jobs');
   const procF = load('content/procedures.yaml', 'procedures');
   if (procF) register(c.procedures, 'procedure', procF, 'procedures');
 
@@ -140,40 +140,40 @@ export function loadContent(root: string, issues: Issues): Content | null {
     if (f) register(c.steps, 'step', f, 'steps');
   }
 
-  for (const dir of listDirs(root, 'content/tutorials')) {
-    const tdir = `content/tutorials/${dir}`;
-    const f = load(`${tdir}/tutorial.yaml`, 'tutorial');
-    if (!f?.data?.tutorial) continue;
-    // The folder names the job; the tutorial's id is the job's id, and the job gets its tutorial.
-    f.data.tutorial.id = dir;
-    f.data.tutorial.job = dir;
-    const job = c.jobs.get(dir);
-    if (job) job.def.tutorial = dir;
-    single(c.tutorials as Map<string, Entry>, 'tutorial', f, 'tutorial');
-    const entry = c.tutorials.get(dir);
-    if (!entry || entry.file !== f) continue;
-    entry.dir = tdir;
-    entry.cases = new Map();
-    const includes: string[] = [];
-    for (const top of f.data.tutorial.cases ?? []) {
-      if (top.include) includes.push(top.include);
-      for (const leaf of top.cases ?? []) if (leaf.include) includes.push(leaf.include);
+  // One file per job: the header, the flow (the tutorial) and the job's own cards, expanded into a job entry,
+  // a tutorial with one case per way, and steps (jobfile.ts).
+  for (const rel of listYaml(root, 'content/jobs')) {
+    const f = load(rel, 'job');
+    const header = f?.data?.job;
+    if (!f || !header || typeof header.id !== 'string') continue;
+    const name = posix.basename(rel).replace(/\.ya?ml$/, '');
+    if (name !== header.id) {
+      issues.error(rel, `job ${header.id}`, 'job-file-name', `The file is named "${name}", but the job's id is "${header.id}". Name the file after its job.`, lineAt(f, ['job', 'id']));
+      ok = false;
+      continue;
     }
-    for (const inc of includes) {
-      if (entry.cases.has(inc)) continue;
-      const rel = posix.join(tdir, inc);
-      if (!existsSync(join(root, rel))) {
-        issues.error(f.rel, `tutorial ${f.data.tutorial.id}`, 'missing-include', `include ${inc} does not exist (${rel}).`);
-        ok = false;
-        continue;
-      }
-      const cf = load(rel, 'case');
-      if (cf) entry.cases.set(inc, cf);
+    const x = expandJobFile(f, issues);
+    if (!x) {
+      ok = false;
+      continue;
     }
-    for (const rel of listYaml(root, `${tdir}/cases`)) {
-      const inc = rel.slice(tdir.length + 1);
-      if (!includes.includes(inc)) {
-        issues.warn(rel, '-', 'unused-case', `This case file is not included by ${tdir}/tutorial.yaml.`);
+    c.jobs.set(header.id, { def: x.job, file: f, path: ['job'] });
+    if (x.tutorial) {
+      x.job.tutorial = header.id;
+      c.tutorials.set(header.id, { def: x.tutorial.def, file: x.tutorial.file, path: ['tutorial'], cases: x.tutorial.cases });
+    }
+    const before = c.steps.size;
+    register(c.steps, 'step', f, 'cards');
+    const own = (f.data.cards ?? []).map((s: any) => s?.id).filter((s: unknown) => typeof s === 'string');
+    for (const e of c.steps.values()) if (e.file === f) e.job = header.id;
+    if (c.steps.size - before === own.length) {
+      // The cards in the order the flow first uses them, so the file reads top to bottom.
+      const order = x.firstUse.filter((s) => own.includes(s));
+      const rest = own.filter((s: string) => !order.includes(s));
+      const want = [...order, ...rest];
+      const i = own.findIndex((s: string, k: number) => s !== want[k]);
+      if (i >= 0) {
+        issues.warn(rel, `step ${want[i]}`, 'card-order', `Card ${want[i]} should come before card ${own[i]}: the flow uses it first. Keep the cards in the order the flow first uses them (${want.join(', ')}).`, lineAt(f, ['cards', own.indexOf(want[i])]));
       }
     }
   }

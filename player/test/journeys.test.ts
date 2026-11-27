@@ -72,7 +72,7 @@ describe('profile journeys in the player', () => {
     const box = new Sandbox();
     try {
       const r = box
-        .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-low-limit-by-hand').buttons.push({
+        .edit('content/jobs/adjust-rear-shifting.yaml', (d) => step(d, 'check-low-limit-by-hand').buttons.push({
           id: 'caught', label: 'It catches in the spokes',
           exit: { kind: 'unsafe', text: 'Do not ride. Put the bike back on its wheels and take it to a shop.', show_how_from: 'release-bike' },
         }))

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bike-app.invalid/schema/job.schema.json",
+  "title": "content/jobs/<job id>.yaml: one repair job, read top to bottom. job: the header. flow: the tutorial as a short outline, when the job has one. cards: the job's own cards, each once, in the order the flow first uses them.",
+  "$defs": {
+    "item": {
+      "description": "A card id (the job's own card or a shared one in content/steps/), { procedure: id } for a shared sequence (content/procedures.yaml), or { inspect: id, outcomes } for a shared check (content/inspections.yaml).",
+      "type": ["string", "object"],
+      "pattern": "^[a-z0-9<>]+(-[a-z0-9<>]+)*$",
+      "properties": {
+        "procedure": { "$ref": "common.schema.json#/$defs/id" },
+        "inspect": { "$ref": "common.schema.json#/$defs/id" },
+        "outcomes": { "$ref": "common.schema.json#/$defs/outcomes" }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "flowItem": {
+      "description": "An item, or { branch } at a point where the ways differ: per way (flow.ways) the items for that way, an empty list for none. A branch names every way and holds no branch of its own.",
+      "type": ["string", "object"],
+      "pattern": "^[a-z0-9<>]+(-[a-z0-9<>]+)*$",
+      "properties": {
+        "procedure": { "$ref": "common.schema.json#/$defs/id" },
+        "inspect": { "$ref": "common.schema.json#/$defs/id" },
+        "outcomes": { "$ref": "common.schema.json#/$defs/outcomes" },
+        "branch": {
+          "type": "object",
+          "minProperties": 2,
+          "propertyNames": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "additionalProperties": { "type": "array", "items": { "$ref": "#/$defs/item" } }
+        }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "job": {
+      "type": "object",
+      "properties": {
+        "id": { "description": "The job's id, the same as the file name.", "$ref": "common.schema.json#/$defs/id" },
+        "title": { "$ref": "common.schema.json#/$defs/text" },
+        "params": { "$ref": "common.schema.json#/$defs/params" },
+        "difficulty": { "description": "Needed when the job has a flow.", "type": "integer", "minimum": 1, "maximum": 5 },
+        "choices": {
+          "description": "Run choices (content/choices.yaml) the tutorial asks before the start.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+        },
+        "parts": {
+          "description": "Parts to have ready before the start (content/tools.yaml, parts).",
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "covers": {
+          "description": "Which bikes this job covers, written once. Its tutorial and every diagnosis with covers_like this job read it. A bike outside when ends at the first not_covered entry that matches.",
+          "type": "object",
+          "properties": {
+            "when": { "$ref": "common.schema.json#/$defs/condition" },
+            "not_covered": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "when": { "$ref": "common.schema.json#/$defs/condition" },
+                  "text": { "$ref": "common.schema.json#/$defs/text" }
+                },
+                "required": ["when", "text"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["when", "not_covered"],
+          "additionalProperties": false
+        },
+        "service": {
+          "description": "How often the job is due, for the garage's service light. Until a mechanic confirms the number, source is the placeholder <source, date> and the number is unverified.",
+          "type": "object",
+          "properties": {
+            "interval_km": { "type": "integer", "minimum": 1 },
+            "source": { "type": "string", "description": "Source and date, or the placeholder <source, date>." }
+          },
+          "required": ["interval_km", "source"],
+          "additionalProperties": false
+        },
+        "shop": {
+          "type": "object",
+          "properties": {
+            "tell": { "$ref": "common.schema.json#/$defs/text" },
+            "price_eur": { "type": "string", "description": "A range such as 20-35, or the placeholder <range>." },
+            "price_source": { "type": "string", "description": "Source and date, or the placeholder <source, date>." }
+          },
+          "required": ["tell", "price_eur", "price_source"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["id", "title", "shop"],
+      "additionalProperties": false
+    },
+    "flow": {
+      "description": "The tutorial, in the user's order: checks, then the work, then the finish. Bikes outside the job's covers end before it.",
+      "type": "object",
+      "properties": {
+        "checks": {
+          "description": "Hands-off inspection calls that run before the work, in every way. One the user already answered in this session (in a diagnosis) is not shown again (hard rule 12).",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "inspect": { "$ref": "common.schema.json#/$defs/id" },
+              "outcomes": { "$ref": "common.schema.json#/$defs/outcomes" }
+            },
+            "required": ["inspect", "outcomes"],
+            "additionalProperties": false
+          }
+        },
+        "ways": {
+          "description": "Where the order of work differs (one branch by mechanism or by how the bike is held): each way's name and when. Evaluated top to bottom; the first match wins. Without ways the flow has one way and no branch.",
+          "type": "object",
+          "minProperties": 2,
+          "propertyNames": { "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "additionalProperties": {
+            "type": "object",
+            "properties": { "when": { "$ref": "common.schema.json#/$defs/condition" } },
+            "required": ["when"],
+            "additionalProperties": false
+          }
+        },
+        "work": {
+          "description": "The work, ending with the safety checks.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/flowItem" }
+        },
+        "finish": {
+          "description": "Good path only: test ride, bed-in, success. Skipped after an exit.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/flowItem" }
+        }
+      },
+      "required": ["work"],
+      "additionalProperties": false
+    },
+    "cards": {
+      "description": "The job's own cards, each once, in the order the flow first uses them. A card used by more than one job, or by a procedure, goes in content/steps/.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "common.schema.json#/$defs/card" }
+    }
+  },
+  "required": ["job"],
+  "additionalProperties": false,
+  "dependentRequired": { "cards": ["flow"] },
+  "if": { "required": ["flow"] },
+  "then": { "properties": { "job": { "type": "object", "required": ["difficulty"] } } }
+}

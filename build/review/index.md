@@ -27,16 +27,16 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:step:turn-bike-upright` | Turn the bike back over | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:park-bike` | Park the bike | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:shift-to-smallest-sprocket` | Shift to the hardest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:shift-to-largest-sprocket` | Shift to the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:check-cable-tension` | Set the cable tension | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:ride-to-smallest-sprocket` | Ride into the hardest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:ride-to-largest-sprocket` | Ride into the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:check-cable-tension-riding` | Set the cable tension on short rides | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:step:test-ride-gears` | Test ride the gears | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-high-limit` | Set the outer limit (H screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:shift-to-largest-sprocket` | Shift to the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:ride-to-largest-sprocket` | Ride into the easiest gear | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-low-limit` | Set the inner limit (L screw) | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-low-limit-by-hand` | Double-check the inner limit | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:check-b-gap` | Check the gap to the sprockets | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:check-cable-tension` | Set the cable tension | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:check-cable-tension-riding` | Set the cable tension on short rides | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:step:test-ride-gears` | Test ride the gears | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:bike.category` | Question: bike.category | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:bike.ebike` | Question: bike.ebike | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.gear_type` | Question: drive.gear_type | — | ⬜ not reviewed | [cards.md](cards.md) |

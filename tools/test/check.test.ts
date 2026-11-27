@@ -1,7 +1,7 @@
 // Tests of the build tool. Each test breaks one rule on purpose in a copy of the real content
 // and expects a one-line error that names the file, the id and the rule.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatIssue } from '../lib/issues.js';
@@ -17,6 +17,9 @@ const heldStop = (showHowFrom?: string) => (d: any) =>
     label: 'It catches in the spokes',
     exit: { kind: 'unsafe', text: 'Do not ride. Take it to a shop.', ...(showHowFrom ? { show_how_from: showHowFrom } : {}) },
   });
+
+/** The job file of the golden example. */
+const JOB = 'content/jobs/adjust-rear-shifting.yaml';
 
 const ERROR_LINE = /^ERROR [^\s|]+(:\d+)? \| [^|]+ \| [a-z0-9-]+ \| .+$/;
 
@@ -73,8 +76,8 @@ describe('the real content', () => {
     const r = runCheck(REPO, { write: false });
     // No content branches on an ask: never fact today, so add one: the job does not cover hex screws.
     const r2 = sandbox()
-      .edit('content/jobs.yaml', (d) => {
-        const cv = d.jobs.find((j: any) => j.id === 'adjust-rear-shifting').covers;
+      .edit(JOB, (d) => {
+        const cv = d.job.covers;
         cv.when['drive.rear_derailleur_screws'] = ['cross', 'unknown'];
         cv.not_covered.push({ when: { 'drive.rear_derailleur_screws': ['hex'] }, text: 'Not covered.' });
       })
@@ -91,7 +94,7 @@ describe('the real content', () => {
 
   it('checks show nodes like focus nodes, rejects one listed in both, and carries show into the bundle', () => {
     const ok = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => { step(d, 'check-high-limit').show = ['frame', 'chain']; })
+      .edit(JOB, (d) => { step(d, 'check-high-limit').show = ['frame', 'chain']; })
       .edit('content/inspections.yaml', (d) => { d.inspections[0].show = ['frame']; })
       .run();
     expect(show(ok)).toBe('');
@@ -100,7 +103,7 @@ describe('the real content', () => {
     expect(b.inspections[0].show).toEqual(['frame']);
 
     const unknown = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => { step(d, 'check-high-limit').show = ['frame', 'no_such_part']; })
+      .edit(JOB, (d) => { step(d, 'check-high-limit').show = ['frame', 'no_such_part']; })
       .run();
     const [e] = errorsOf(unknown, 'unknown-node');
     expect(unknown.issues.errors).toHaveLength(1);
@@ -108,7 +111,7 @@ describe('the real content', () => {
     expect(formatIssue(e)).toContain('Show node "no_such_part"');
 
     const both = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => { step(d, 'check-high-limit').show = ['upper_pulley']; })
+      .edit(JOB, (d) => { step(d, 'check-high-limit').show = ['upper_pulley']; })
       .run();
     expect(both.issues.errors).toHaveLength(1);
     expect(formatIssue(errorsOf(both, 'show-and-focus')[0])).toContain('list it once, in focus');
@@ -117,8 +120,9 @@ describe('the real content', () => {
   it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {
     // No tutorial calls an inspection after the work any more, so the test puts one in the finish.
     const r = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/cases/wheel-free.yaml', (d) => {
-        d.finish.unshift({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } });
+      .edit(JOB, (d) => {
+        const inspect = { inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } };
+        d.flow.finish.unshift({ branch: { 'wheel-free': [inspect], 'test-rides': [] } });
       })
       .run();
     expect(show(r)).toBe('');
@@ -199,7 +203,7 @@ describe('review units and the ledger', () => {
   - { unit: "${card.id}", hash: "${card.hash}", role: mechanic, by: "test", date: "2026-11-17", verdict: approved }
   - { unit: "${tree.id}", hash: "${tree.hash}", role: mechanic, by: "test", date: "2026-11-17", verdict: approved }
 `);
-    b.edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').text = 'Look from the side at the small gap between the upper toothed wheel and the largest sprocket. Keep the screwdriver at hand.'));
+    b.edit(JOB, (d) => (step(d, 'check-b-gap').text = 'Look from the side at the small gap between the upper toothed wheel and the largest sprocket. Keep the screwdriver at hand.'));
     const after = b.run();
     expect(unit(after, card.id).byRole.mechanic.status).toBe('changed');
     expect(unit(after, tree.id).byRole.mechanic.status).toBe('approved');
@@ -209,10 +213,10 @@ describe('review units and the ledger', () => {
   it('reordering steps invalidates the flow tree', () => {
     const b = sandbox();
     const before = b.run();
-    b.edit('content/tutorials/adjust-rear-shifting/cases/test-rides.yaml', (d) => {
-      const i = d.sequence.findIndex((x: any) => x.step === 'check-b-gap');
-      const [item] = d.sequence.splice(i, 1);
-      d.sequence.splice(i + 1, 0, item);
+    b.edit(JOB, (d) => {
+      const i = d.flow.work.indexOf('check-b-gap');
+      const [item] = d.flow.work.splice(i, 1);
+      d.flow.work.splice(i + 1, 0, item);
     });
     const after = b.run();
     expect(unit(after, 'tree:tutorial:adjust-rear-shifting').unit.hash).not.toBe(unit(before, 'tree:tutorial:adjust-rear-shifting').unit.hash);
@@ -227,32 +231,126 @@ describe('review units and the ledger', () => {
   });
 });
 
+describe('job files', () => {
+  /** A second job with a flow of one way, written as a file in the sandbox. */
+  const second = (b: Sandbox, name: string, body: string) =>
+    writeFileSync(join(b.root, `content/jobs/${name}.yaml`), `job:\n  id: ${name}\n  title: "Test job"\n  difficulty: 1\n  shop: { tell: "Test.", price_eur: "<range>", price_source: "<source, date>" }\n${body}`);
+
+  it('expands each way into its case and points issues in a branch at the line of the item', () => {
+    const r = sandbox()
+      .edit(JOB, (d) => (d.flow.work[0].branch['test-rides'][1] = 'no-such-card'))
+      .run();
+    const [e] = errorsOf(r, 'unknown-step');
+    expect(e, show(r)).toBeDefined();
+    expect(e.file).toBe(JOB);
+    // the sandbox wrote the file back without comments, so the line is found by its text
+    const lines = readFileSync(join(box!.root, JOB), 'utf8').split('\n');
+    expect(lines[e.line! - 1]).toContain('no-such-card');
+  });
+
+  it('a branch names every way, and only ways', () => {
+    const unknown = sandbox()
+      .edit(JOB, (d) => {
+        const b = d.flow.work[0].branch;
+        b.ground = b['test-rides'];
+        delete b['test-rides'];
+      })
+      .run();
+    const [e] = errorsOf(unknown, 'branch-ways');
+    expect(formatIssue(e), show(unknown)).toMatch(ERROR_LINE);
+    expect(e.message).toContain('names ground, which is not a way and misses test-rides');
+    box!.dispose();
+    const none = sandbox()
+      .edit(JOB, (d) => delete d.flow.ways)
+      .run();
+    expect(errorsOf(none, 'branch-ways')[0]?.message, show(none)).toContain('needs the ways');
+  });
+
+  it('a job with a flow of one way, and a job with only a header', () => {
+    const b = sandbox();
+    second(b, 'one-way', 'flow:\n  work: [only-card]\ncards:\n  - { id: only-card, kind: action, title: "Do it", minutes: 1, text: "Do it." }\n');
+    writeFileSync(join(b.root, 'content/jobs/header-only.yaml'), 'job:\n  id: header-only\n  title: "Shop only"\n  shop: { tell: "Test.", price_eur: "<range>", price_source: "<source, date>" }\n');
+    const r = b.run();
+    expect(show(r)).toBe('');
+    const bundle = JSON.parse(r.bundle!);
+    const t = bundle.tutorials.find((x: any) => x.id === 'one-way');
+    expect(t.cases).toEqual([{ case: { name: 'main', sequence: [{ step: 'only-card' }], finish: [] } }]);
+    expect(bundle.jobs.find((j: any) => j.id === 'one-way')).toMatchObject({ tutorial: 'one-way' });
+    expect(bundle.jobs.find((j: any) => j.id === 'header-only').tutorial).toBeUndefined();
+    expect(bundle.tutorials.some((x: any) => x.id === 'header-only')).toBe(false);
+  });
+
+  it('a flow needs a difficulty, and the file is named after its job', () => {
+    const b = sandbox();
+    writeFileSync(join(b.root, 'content/jobs/no-level.yaml'), 'job:\n  id: no-level\n  title: "x"\n  shop: { tell: "Test.", price_eur: "<range>", price_source: "<source, date>" }\nflow:\n  work: [check-b-gap]\n');
+    writeFileSync(join(b.root, 'content/jobs/wrong-name.yaml'), 'job:\n  id: other-name\n  title: "x"\n  shop: { tell: "Test.", price_eur: "<range>", price_source: "<source, date>" }\n');
+    const r = b.run();
+    expect(errorsOf(r, 'missing-key').some((e) => e.file === 'content/jobs/no-level.yaml' && e.message.includes('difficulty')), show(r)).toBe(true);
+    expect(errorsOf(r, 'job-file-name')[0]?.file).toBe('content/jobs/wrong-name.yaml');
+  });
+
+  it('card ids are unique across cards, inspections and procedures', () => {
+    const r = sandbox()
+      .edit(JOB, (d) => {
+        d.cards.push({ ...step(d, 'check-b-gap'), id: 'derailleur-alignment' });
+        d.cards.push({ ...step(d, 'check-b-gap'), id: 'park-bike' });
+      })
+      .run();
+    const e = errorsOf(r, 'duplicate-id');
+    expect(e.map((x) => x.message).join(' '), show(r)).toContain('step "park-bike" is already defined in content/steps/holding.yaml');
+    box!.dispose();
+    const r2 = sandbox()
+      .edit(JOB, (d) => d.cards.push({ ...step(d, 'check-b-gap'), id: 'derailleur-alignment' }))
+      .run();
+    expect(errorsOf(r2, 'duplicate-id')[0]?.message, show(r2)).toContain('has the id of an inspection');
+  });
+
+  it("a job's own card is used only by its own flow", () => {
+    const b = sandbox();
+    second(b, 'borrows', 'flow:\n  work: [check-b-gap]\n');
+    const r = b.run();
+    const [e] = errorsOf(r, 'card-outside-job');
+    expect(e?.file, show(r)).toBe('content/jobs/borrows.yaml');
+    expect(e.message).toContain('goes in content/steps/');
+  });
+
+  it('warns when the cards are not in the order the flow first uses them', () => {
+    const r = sandbox()
+      .edit(JOB, (d) => d.cards.push(d.cards.shift()))
+      .run();
+    expect(show(r)).toBe('');
+    const w = r.issues.warnings.filter((x) => x.rule === 'card-order');
+    expect(w).toHaveLength(1);
+    expect(w[0].message).toContain('Card shift-to-smallest-sprocket should come before card ride-to-smallest-sprocket');
+  });
+});
+
 describe('rules broken on purpose', () => {
   it('a fourth button', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-cable-tension').buttons.push({ id: 'noise', label: 'It makes a strange noise', text: 'Listen again.' }, { id: 'hum', label: 'It hums', text: 'Listen again.' }))
+      .edit(JOB, (d) => step(d, 'check-cable-tension').buttons.push({ id: 'noise', label: 'It makes a strange noise', text: 'Listen again.' }, { id: 'hum', label: 'It hums', text: 'Listen again.' }))
       .run();
     const e = errorsOf(r, 'max-buttons');
     expect(e, show(r)).toHaveLength(1);
-    expect(e[0].file).toBe('content/steps/rear-shifting.yaml');
+    expect(e[0].file).toBe(JOB);
     expect(e[0].id).toBe('step check-cable-tension');
     expect(e[0].message).toContain('at most 3');
   });
 
   it('an exit reached with the bike held, without show_how_from', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', heldStop())
+      .edit(JOB, heldStop())
       .run();
     const e = errorsOf(r, 'exit-needs-show-how-from');
     expect(e.length, show(r)).toBe(3); // stand, hang, upside down
-    expect(e[0].file).toBe('content/steps/rear-shifting.yaml');
+    expect(e[0].file).toBe(JOB);
     expect(e[0].id).toContain('check-low-limit-by-hand');
     expect(e.map((x) => x.message).join(' ')).toMatch(/bike_in_stand/);
   });
 
   it('an unknown tool', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-high-limit').tools.required = ['sonic-screwdriver']))
+      .edit(JOB, (d) => (step(d, 'check-high-limit').tools.required = ['sonic-screwdriver']))
       .run();
     const e = errorsOf(r, 'unknown-tool');
     expect(e, show(r)).toHaveLength(1);
@@ -281,15 +379,15 @@ describe('rules broken on purpose', () => {
 
   it('a show_how_from that does not lie ahead', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', heldStop('shift-to-smallest-sprocket'))
+      .edit(JOB, heldStop('shift-to-smallest-sprocket'))
       .run();
     expect(errorsOf(r, 'show-how-from-not-ahead').length, show(r)).toBeGreaterThan(0);
   });
 
   it('a path that ends with the bike still upside down', () => {
     const r = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/cases/wheel-free.yaml', (d) => {
-        d.sequence = d.sequence.filter((x: any) => x.procedure !== 'release-bike');
+      .edit(JOB, (d) => {
+        for (const it of d.flow.work) if (it.branch) it.branch['wheel-free'] = it.branch['wheel-free'].filter((x: any) => x.procedure !== 'release-bike');
       })
       .run();
     const e = errorsOf(r, 'end-with-state');
@@ -299,7 +397,7 @@ describe('rules broken on purpose', () => {
 
   it('a step that runs while a state it forbids holds', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-high-limit').forbidden_while = ['bike_in_stand']))
+      .edit(JOB, (d) => (step(d, 'check-high-limit').forbidden_while = ['bike_in_stand']))
       .run();
     const e = errorsOf(r, 'forbidden-while');
     expect(e.length, show(r)).toBe(1);
@@ -308,8 +406,8 @@ describe('rules broken on purpose', () => {
 
   it('a combination with no case and no not_covered', () => {
     const r = sandbox()
-      .edit('content/jobs.yaml', (d) => {
-        const cv = d.jobs.find((j: any) => j.id === 'adjust-rear-shifting').covers;
+      .edit(JOB, (d) => {
+        const cv = d.job.covers;
         cv.not_covered = cv.not_covered.filter((x: any) => !x.when['drive.gear_type']?.includes('gearbox'));
       })
       .run();
@@ -317,12 +415,12 @@ describe('rules broken on purpose', () => {
     const e = errorsOf(r, 'coverage');
     expect(e.map((x) => x.id).sort(), show(r)).toEqual(['diagnosis gears-shift-badly', 'tutorial adjust-rear-shifting']);
     expect(e[0].message).toContain('drive.gear_type=gearbox');
-    expect(e[0].file).toBe('content/jobs.yaml');
+    expect(e[0].file).toBe(JOB);
   });
 
   it('an unsafe exit in a step that is not a safety check', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => {
+      .edit(JOB, (d) => {
         const b = step(d, 'check-cable-tension').buttons[0];
         delete b.text;
         delete b.solution;
@@ -334,7 +432,7 @@ describe('rules broken on purpose', () => {
 
   it('a not-needed exit on a plain check is allowed and adds a path', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => {
+      .edit(JOB, (d) => {
         step(d, 'check-cable-tension').buttons.push({
           id: 'smooth',
           label: 'Every shift is quick and quiet',
@@ -349,7 +447,7 @@ describe('rules broken on purpose', () => {
 
   it('a step without a title, and a button without an id', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => {
+      .edit(JOB, (d) => {
         delete step(d, 'check-b-gap').title;
         delete step(d, 'check-b-gap').buttons[1].id;
       })
@@ -361,7 +459,7 @@ describe('rules broken on purpose', () => {
 
   it('two buttons with the same id', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[1].id = 'touching'))
+      .edit(JOB, (d) => (step(d, 'check-b-gap').buttons[1].id = 'touching'))
       .run();
     expect(errorsOf(r, 'duplicate-id'), show(r)).toHaveLength(1);
   });
@@ -404,7 +502,7 @@ describe('rules broken on purpose', () => {
 
   it('a placeholder without fallback wording', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').text += ' See the manual for {drive.rear_derailleur_model}.'))
+      .edit(JOB, (d) => (step(d, 'check-b-gap').text += ' See the manual for {drive.rear_derailleur_model}.'))
       .run();
     expect(errorsOf(r, 'placeholder-fallback'), show(r)).toHaveLength(1);
   });
@@ -423,16 +521,16 @@ describe('rules broken on purpose', () => {
 
   it('a follow-up is another inspection, and its outcomes match its states', () => {
     const r = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/tutorial.yaml', (d) => {
-        const o = d.tutorial.checks.find((c: any) => c.inspect === 'barrel-adjuster-present').outcomes;
+      .edit(JOB, (d) => {
+        const o = d.flow.checks.find((c: any) => c.inspect === 'barrel-adjuster-present').outcomes;
         o['cant-find'].inspect = 'barrel-adjuster-present';
       })
       .run();
     expect(errorsOf(r, 'follow-up').length, show(r)).toBe(1);
     box!.dispose();
     const r2 = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/tutorial.yaml', (d) => {
-        const o = d.tutorial.checks.find((c: any) => c.inspect === 'barrel-adjuster-present').outcomes;
+      .edit(JOB, (d) => {
+        const o = d.flow.checks.find((c: any) => c.inspect === 'barrel-adjuster-present').outcomes;
         delete o['cant-find'].outcomes['on-cable'];
         o['cant-find'].outcomes['found'] = 'continue';
       })
@@ -462,7 +560,7 @@ describe('rules broken on purpose', () => {
 
   it('an unknown key, including on: which YAML 1.2 keeps as a string', () => {
     const r = sandbox()
-      .replace('content/tutorials/adjust-rear-shifting/tutorial.yaml', '      outcomes:\n        straight: continue', '      on:\n        straight: continue')
+      .replace(JOB, '      outcomes:\n        straight: continue', '      on:\n        straight: continue')
       .run();
     const e = errorsOf(r, 'unknown-key');
     expect(e.length, show(r)).toBeGreaterThan(0);
@@ -471,7 +569,7 @@ describe('rules broken on purpose', () => {
 
   it('two buttons of a step with the same result', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => {
+      .edit(JOB, (d) => {
         const s = step(d, 'test-ride-gears');
         s.buttons[1].exit = { ...s.buttons[0].exit };
       })
@@ -485,8 +583,9 @@ describe('rules broken on purpose', () => {
   it('two states of an inspection call that end the same way; several continues are fine', () => {
     const exit = { kind: 'shop_only', text: 'Your gears still do not shift cleanly. A shop can check it.' };
     const r = sandbox()
-      .edit('content/tutorials/adjust-rear-shifting/cases/wheel-free.yaml', (d) => {
-        d.finish.unshift({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': { exit }, 'slow-to-smaller': { exit: { ...exit } } } });
+      .edit(JOB, (d) => {
+        const inspect = { inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': { exit }, 'slow-to-smaller': { exit: { ...exit } } } };
+        d.flow.finish.unshift({ branch: { 'wheel-free': [inspect], 'test-rides': [] } });
       })
       .run();
     const e = errorsOf(r, 'same-outcome');
@@ -496,7 +595,7 @@ describe('rules broken on purpose', () => {
 
   it('a valid skip adds a path without the skipped step', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))
+      .edit(JOB, (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))
       .run();
     expect(show(r)).toBe('');
     const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-touching');
@@ -506,7 +605,7 @@ describe('rules broken on purpose', () => {
 
   it('a skip over a safety check', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-high-limit').buttons[0].skips = ['check-low-limit-by-hand']))
+      .edit(JOB, (d) => (step(d, 'check-high-limit').buttons[0].skips = ['check-low-limit-by-hand']))
       .run();
     const e = errorsOf(r, 'skip-unsafe');
     expect(e, show(r)).toHaveLength(1);
@@ -515,7 +614,7 @@ describe('rules broken on purpose', () => {
 
   it('a skip of a step that is not ahead', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').buttons[0].skips = ['shift-to-smallest-sprocket']))
+      .edit(JOB, (d) => (step(d, 'check-b-gap').buttons[0].skips = ['shift-to-smallest-sprocket']))
       .run();
     expect(errorsOf(r, 'skip-not-ahead').length, show(r)).toBeGreaterThan(0);
   });
@@ -533,7 +632,7 @@ describe('rules broken on purpose', () => {
   it('a profile journey that reaches a safety check without saying what the owner taps', () => {
     const r = sandbox()
       // an old-style step (no question): the buttons decide the path, so a journey must say which one
-      .edit('content/steps/rear-shifting.yaml', (d) => {
+      .edit(JOB, (d) => {
         const s = step(d, 'check-low-limit-by-hand');
         delete s.question;
         s.buttons.unshift({ id: 'in-line', label: 'In line with the largest sprocket', text: 'The inner limit is safe.' });
@@ -556,13 +655,13 @@ describe('rules broken on purpose', () => {
 
   it('a step with a question has 1 to 3 problem answers, and needs at least one', () => {
     const one = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-high-limit').buttons.splice(1))
+      .edit(JOB, (d) => step(d, 'check-high-limit').buttons.splice(1))
       .run();
     expect(errorsOf(one, 'check-needs-buttons'), show(one)).toHaveLength(0);
     box!.dispose();
     const none = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-b-gap').question = 'Not right?'))
-      .edit('content/steps/rear-shifting.yaml', (d) => step(d, 'check-b-gap').buttons.splice(0))
+      .edit(JOB, (d) => (step(d, 'check-b-gap').question = 'Not right?'))
+      .edit(JOB, (d) => step(d, 'check-b-gap').buttons.splice(0))
       .run();
     expect(errorsOf(none).length, show(none)).toBeGreaterThan(0);
   });
@@ -591,7 +690,7 @@ describe('rules broken on purpose', () => {
   });
 
   it('writes no bundle when there are errors', () => {
-    const b = sandbox().edit('content/steps/rear-shifting.yaml', (d) => (step(d, 'check-high-limit').tools.required = ['sonic-screwdriver']));
+    const b = sandbox().edit(JOB, (d) => (step(d, 'check-high-limit').tools.required = ['sonic-screwdriver']));
     const r = b.run(true);
     expect(r.issues.errors.length).toBeGreaterThan(0);
     expect(existsSync(join(b.root, 'build/bundle.json'))).toBe(false);
@@ -599,7 +698,7 @@ describe('rules broken on purpose', () => {
 
   it('prints every error on one line with file, id and rule', () => {
     const r = sandbox()
-      .edit('content/steps/rear-shifting.yaml', (d) => {
+      .edit(JOB, (d) => {
         step(d, 'check-cable-tension').buttons.push({ id: 'fourth', label: 'Fourth', text: 'x' });
         step(d, 'check-high-limit').tools.required = ['sonic-screwdriver'];
       })

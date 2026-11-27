@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `c4d200de8ff2` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `5d9877b443b4` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -15,7 +15,7 @@ To read one complete path as the user sees it: `npm run walk -- --list`, then `n
 
 ## Bikes covered
 
-From job `adjust-rear-shifting` (jobs.yaml). Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical. Any other bike ends at the first match:
+From job `adjust-rear-shifting` (content/jobs/adjust-rear-shifting.yaml). Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical. Any other bike ends at the first match:
 
 - when drive.gear_type is hub_gear → **EXIT, not covered**: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
 - when drive.gear_type is gearbox → **EXIT, not covered**: "Gearboxes at the pedals are not covered yet."

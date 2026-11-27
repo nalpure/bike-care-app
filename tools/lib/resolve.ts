@@ -13,7 +13,7 @@ import { evaluate, substCondition, substParams, UNKNOWN, type Condition, type Va
 
 // ---------------------------------------------------------------- bundle data
 
-/** The content lists of build/bundle.json. Tutorials have their case files inlined as `case`. */
+/** The content lists of build/bundle.json. Each tutorial case has its way's sequence and finish inlined as `case`. */
 export interface BundleData {
   /** { id, label, icon }: a fact's group is the part of its key before the first dot */
   fact_groups: any[];
@@ -368,7 +368,7 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
     return run;
   }
   run.caseLabel = cf.name;
-  // The tutorial's checks run first, in every case (declared once, not per case file).
+  // The tutorial's checks run first, in every case (declared once in the job file's flow).
   const pre: any[] = t.checks ?? [];
   for (let i = 0; i < pre.length; i++) expandItem(ix, pre[i], 'sequence', loc(t, 'checks', i), r, params, run, t.id, loc, undefined, (...s) => loc(t, 'checks', i, ...s));
   for (const list of ['sequence', 'finish'] as const) {

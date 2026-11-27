@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "a09f0064a6e976f5",
+  "content_hash": "98e855905428a6c8",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1182,76 +1182,6 @@
       }
     },
     {
-      "id": "shift-to-largest-sprocket",
-      "kind": "action",
-      "title": "Shift to the easiest gear",
-      "minutes": 1,
-      "text": "Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.",
-      "focus": [
-        "largest_sprocket",
-        "chain"
-      ],
-      "show": [
-        "drivetrain"
-      ],
-      "view": "drive_side",
-      "animation": {
-        "clip": "shift-to-largest",
-        "caption": "Shift one gear at a time"
-      }
-    },
-    {
-      "id": "check-cable-tension",
-      "kind": "check",
-      "title": "Set the cable tension",
-      "minutes": 5,
-      "text": "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.",
-      "question": "Slow or noisy?",
-      "focus": [
-        "chain"
-      ],
-      "show": [
-        "drivetrain"
-      ],
-      "view": "drive_side",
-      "animation": {
-        "clip": "shift-through-gears",
-        "caption": "Shift through every gear and back"
-      },
-      "buttons": [
-        {
-          "id": "slow-easier",
-          "label": "Slow or noisy shifting to easier gears",
-          "text": "The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.",
-          "solution": [
-            {
-              "target": "barrel_adjuster",
-              "motion": "rotate",
-              "direction": "counterclockwise",
-              "amount": "a quarter turn",
-              "view": "barrel_adjuster_close",
-              "caption": "Turn the barrel adjuster counterclockwise a quarter turn"
-            }
-          ]
-        },
-        {
-          "id": "slow-harder",
-          "label": "Slow or noisy shifting to harder gears",
-          "text": "The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.",
-          "solution": [
-            {
-              "target": "barrel_adjuster",
-              "motion": "rotate",
-              "direction": "clockwise",
-              "amount": "a quarter turn",
-              "view": "barrel_adjuster_close",
-              "caption": "Turn the barrel adjuster clockwise a quarter turn"
-            }
-          ]
-        }
-      ]
-    },
-    {
       "id": "ride-to-smallest-sprocket",
       "kind": "action",
       "title": "Ride into the hardest gear",
@@ -1270,128 +1200,6 @@
         "bike"
       ],
       "view": "drive_side"
-    },
-    {
-      "id": "ride-to-largest-sprocket",
-      "kind": "action",
-      "title": "Ride into the easiest gear",
-      "minutes": 2,
-      "text": "Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once.",
-      "forbidden_while": [
-        "bike_in_stand",
-        "bike_hung",
-        "bike_upside_down"
-      ],
-      "focus": [
-        "shifter_rear",
-        "largest_sprocket"
-      ],
-      "show": [
-        "bike"
-      ],
-      "view": "drive_side"
-    },
-    {
-      "id": "check-cable-tension-riding",
-      "kind": "check",
-      "title": "Set the cable tension on short rides",
-      "minutes": 10,
-      "text": "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.",
-      "question": "Slow or noisy?",
-      "forbidden_while": [
-        "bike_in_stand",
-        "bike_hung",
-        "bike_upside_down"
-      ],
-      "focus": [
-        "chain"
-      ],
-      "show": [
-        "drivetrain"
-      ],
-      "view": "drive_side",
-      "buttons": [
-        {
-          "id": "slow-easier",
-          "label": "Slow or noisy shifting to easier gears",
-          "text": "The cable is too loose. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then ride and shift again. Never turn it all the way out.",
-          "solution": [
-            {
-              "target": "barrel_adjuster",
-              "motion": "rotate",
-              "direction": "counterclockwise",
-              "amount": "a quarter turn",
-              "view": "barrel_adjuster_close",
-              "caption": "Turn the barrel adjuster counterclockwise a quarter turn"
-            }
-          ]
-        },
-        {
-          "id": "slow-harder",
-          "label": "Slow or noisy shifting to harder gears",
-          "text": "The cable is too tight. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.",
-          "solution": [
-            {
-              "target": "barrel_adjuster",
-              "motion": "rotate",
-              "direction": "clockwise",
-              "amount": "a quarter turn",
-              "view": "barrel_adjuster_close",
-              "caption": "Turn the barrel adjuster clockwise a quarter turn"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "test-ride-gears",
-      "kind": "safety_check",
-      "title": "Test ride the gears",
-      "minutes": 3,
-      "text": "Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.",
-      "question": "Something wrong?",
-      "forbidden_while": [
-        "bike_in_stand",
-        "bike_hung",
-        "bike_upside_down"
-      ],
-      "details": [
-        {
-          "needs": [
-            "drive.rear_speeds"
-          ],
-          "text": "Your bike has {drive.rear_speeds} gears at the rear."
-        }
-      ],
-      "focus": [
-        "chain"
-      ],
-      "show": [
-        "bike"
-      ],
-      "view": "drive_side",
-      "animation": {
-        "clip": "shift-test-ride",
-        "caption": "Shift one gear at a time while you ride"
-      },
-      "buttons": [
-        {
-          "id": "rattles",
-          "label": "It shifts slowly or rattles in some gears",
-          "exit": {
-            "kind": "shop_only",
-            "text": "Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause."
-          }
-        },
-        {
-          "id": "chain-off",
-          "label": "The chain jumps or falls off",
-          "exit": {
-            "kind": "unsafe",
-            "text": "Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump."
-          }
-        }
-      ]
     },
     {
       "id": "check-high-limit",
@@ -1450,6 +1258,45 @@
           ]
         }
       ]
+    },
+    {
+      "id": "shift-to-largest-sprocket",
+      "kind": "action",
+      "title": "Shift to the easiest gear",
+      "minutes": 1,
+      "text": "Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.",
+      "focus": [
+        "largest_sprocket",
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
+      ],
+      "view": "drive_side",
+      "animation": {
+        "clip": "shift-to-largest",
+        "caption": "Shift one gear at a time"
+      }
+    },
+    {
+      "id": "ride-to-largest-sprocket",
+      "kind": "action",
+      "title": "Ride into the easiest gear",
+      "minutes": 2,
+      "text": "Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once.",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "focus": [
+        "shifter_rear",
+        "largest_sprocket"
+      ],
+      "show": [
+        "bike"
+      ],
+      "view": "drive_side"
     },
     {
       "id": "check-low-limit",
@@ -1618,6 +1465,159 @@
               "caption": "Turn the B screw counterclockwise a little"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "check-cable-tension",
+      "kind": "check",
+      "title": "Set the cable tension",
+      "minutes": 5,
+      "text": "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.",
+      "question": "Slow or noisy?",
+      "focus": [
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
+      ],
+      "view": "drive_side",
+      "animation": {
+        "clip": "shift-through-gears",
+        "caption": "Shift through every gear and back"
+      },
+      "buttons": [
+        {
+          "id": "slow-easier",
+          "label": "Slow or noisy shifting to easier gears",
+          "text": "The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.",
+          "solution": [
+            {
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "counterclockwise",
+              "amount": "a quarter turn",
+              "view": "barrel_adjuster_close",
+              "caption": "Turn the barrel adjuster counterclockwise a quarter turn"
+            }
+          ]
+        },
+        {
+          "id": "slow-harder",
+          "label": "Slow or noisy shifting to harder gears",
+          "text": "The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.",
+          "solution": [
+            {
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "clockwise",
+              "amount": "a quarter turn",
+              "view": "barrel_adjuster_close",
+              "caption": "Turn the barrel adjuster clockwise a quarter turn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "check-cable-tension-riding",
+      "kind": "check",
+      "title": "Set the cable tension on short rides",
+      "minutes": 10,
+      "text": "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.",
+      "question": "Slow or noisy?",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "focus": [
+        "chain"
+      ],
+      "show": [
+        "drivetrain"
+      ],
+      "view": "drive_side",
+      "buttons": [
+        {
+          "id": "slow-easier",
+          "label": "Slow or noisy shifting to easier gears",
+          "text": "The cable is too loose. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then ride and shift again. Never turn it all the way out.",
+          "solution": [
+            {
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "counterclockwise",
+              "amount": "a quarter turn",
+              "view": "barrel_adjuster_close",
+              "caption": "Turn the barrel adjuster counterclockwise a quarter turn"
+            }
+          ]
+        },
+        {
+          "id": "slow-harder",
+          "label": "Slow or noisy shifting to harder gears",
+          "text": "The cable is too tight. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.",
+          "solution": [
+            {
+              "target": "barrel_adjuster",
+              "motion": "rotate",
+              "direction": "clockwise",
+              "amount": "a quarter turn",
+              "view": "barrel_adjuster_close",
+              "caption": "Turn the barrel adjuster clockwise a quarter turn"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "test-ride-gears",
+      "kind": "safety_check",
+      "title": "Test ride the gears",
+      "minutes": 3,
+      "text": "Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.",
+      "question": "Something wrong?",
+      "forbidden_while": [
+        "bike_in_stand",
+        "bike_hung",
+        "bike_upside_down"
+      ],
+      "details": [
+        {
+          "needs": [
+            "drive.rear_speeds"
+          ],
+          "text": "Your bike has {drive.rear_speeds} gears at the rear."
+        }
+      ],
+      "focus": [
+        "chain"
+      ],
+      "show": [
+        "bike"
+      ],
+      "view": "drive_side",
+      "animation": {
+        "clip": "shift-test-ride",
+        "caption": "Shift one gear at a time while you ride"
+      },
+      "buttons": [
+        {
+          "id": "rattles",
+          "label": "It shifts slowly or rattles in some gears",
+          "exit": {
+            "kind": "shop_only",
+            "text": "Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause."
+          }
+        },
+        {
+          "id": "chain-off",
+          "label": "The chain jumps or falls off",
+          "exit": {
+            "kind": "unsafe",
+            "text": "Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump."
+          }
         }
       ]
     }

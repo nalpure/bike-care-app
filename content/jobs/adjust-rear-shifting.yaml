@@ -1,0 +1,296 @@
+# Adjust the rear gears (mechanical rear derailleur).
+# Golden example for the content format: the header, the flow, then the job's own cards.
+# Mechanics are unverified drafts: see content/review/adjust-rear-shifting.md.
+# Raw material for the cards: the prototype in legacy/Bikefix-garage-guide v2.html, rewritten to the writing rules.
+#
+# Turning: clockwise or counterclockwise, as seen looking at the head of the screw. The barrel
+# adjuster is seen from the side where the cable goes in. Positions are "in line with", not "below",
+# because the bike may be upside down.
+# Limit screws, the owner's method (2026-11-20): shift to the matching sprocket (H: smallest, L: largest) and
+# turn the screw until the upper toothed wheel is in line with that sprocket. If the chain then
+# rattles or jumps towards the next sprocket, turn the screw counterclockwise until the wheel is
+# in line again and the chain runs quietly. Clockwise moves the wheel inwards
+# for H and outwards for L, so clockwise always narrows the range and counterclockwise widens it.
+# Then the hand push towards the spokes double-checks the inner limit.
+# Gear words: "easier gear" always means a bigger sprocket, "harder gear" a smaller one.
+
+# Prices are placeholders until a curated price table exists. The app shows "no estimate yet".
+# The service interval is an unverified placeholder (owner, 2026-11-20) until a mechanic gives a source.
+job:
+  id: adjust-rear-shifting
+  title: "Adjust the rear gears"
+  difficulty: 2
+  choices: [hold_bike]
+  # Only a mechanical derailleur is covered, so the flow has no branch by mechanism.
+  # Every diagnosis with covers_like this job reads these covers too.
+  covers:
+    when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
+    not_covered:
+      - when: { drive.gear_type: [hub_gear] }
+        text: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
+      - when: { drive.gear_type: [gearbox] }
+        text: "Gearboxes at the pedals are not covered yet."
+      - when: { drive.gear_type: [single_speed] }
+        text: "Your bike has only one gear, so there are no gears to adjust. If the chain is loose, skips or clunks, a shop can help."
+      - when: { drive.gear_type: [unknown] }
+        text: "We need to know what kind of gears your bike has. Look at the rear wheel and come back."
+      - when: { drive.shifting: [electronic] }
+        text: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
+      - when: { drive.shifting: [unknown] }
+        text: "We need to know whether your gears use a cable. Look at the right shifter and come back."
+  service: { interval_km: 1500, source: "<source, date>" }
+  shop:
+    tell: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
+    price_eur: "<range>"
+    price_source: "<source, date>"
+
+flow:
+  # Before the work, in every way. After a diagnosis that already looked, they are not shown again.
+  checks:
+    - inspect: derailleur-alignment
+      outcomes:
+        straight: continue
+        crooked:
+          exit:
+            kind: unsafe
+            text: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
+    - inspect: barrel-adjuster-present
+      outcomes:
+        at-derailleur: continue
+        at-shifter: continue
+        cant-find:
+          inspect: barrel-adjuster-search
+          outcomes:
+            on-cable: continue
+            not-found:
+              exit:
+                kind: not_covered
+                text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+  # The ways differ by how the bike is held: with the rear wheel free the user turns the pedals
+  # by hand; on its wheels the user adjusts while the bike stands and tests with short rides.
+  ways:
+    wheel-free: { when: { choice.hold_bike: [stand, hang, upside_down] } }
+    test-rides: { when: { choice.hold_bike: [ground] } }
+  work:
+    - branch:
+        wheel-free: [{ procedure: hold-bike }, shift-to-smallest-sprocket]   # hold-bike sets bike_in_stand, bike_hung or bike_upside_down
+        test-rides: [park-bike, ride-to-smallest-sprocket]
+    - check-high-limit                   # with the wheel free: block while the derailleur sits outside the smallest sprocket
+    - branch:
+        wheel-free: [shift-to-largest-sprocket]
+        # The ride warns to stop pedalling at once if the chain moves towards the spokes.
+        test-rides: [ride-to-largest-sprocket]
+    - check-low-limit
+    - check-low-limit-by-hand            # double-check of the inner limit: block while a push takes it past the largest sprocket
+    - check-b-gap
+    - branch:
+        wheel-free: [check-cable-tension, { procedure: release-bike }]       # release-bike clears the holding label
+        test-rides: [check-cable-tension-riding]
+  finish:
+    - test-ride-gears                    # safety check; both problems end at a shop
+
+cards:
+  - id: shift-to-smallest-sprocket
+    kind: action
+    title: "Shift to the hardest gear"
+    minutes: 1
+    text: "Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear."
+    focus: [chain]
+    show: [drivetrain]
+    view: drive_side
+    animation: { clip: shift-to-smallest, caption: "Shift while the pedals turn" }
+
+  - id: ride-to-smallest-sprocket
+    kind: action
+    title: "Ride into the hardest gear"
+    minutes: 2
+    text: "Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Listen to the chain, then stop and park the bike as before."
+    forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
+    focus: [shifter_rear, smallest_sprocket]
+    show: [bike]
+    view: drive_side
+
+  # Answers are the exception (owner, 2026-11-22): the text states the goal, Next means it is met,
+  # and the buttons are only the problems. Only the inner limit (L) is safety relevant.
+  - id: check-high-limit
+    kind: check
+    title: "Set the outer limit (H screw)"
+    minutes: 3
+    text: "The chain is on the smallest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the smallest sprocket."
+    question: "Not in line?"
+    tools: { one_of: [derailleur-screw-tool] }
+    focus: [upper_pulley, smallest_sprocket, h_screw]
+    show: [rear_derailleur, derailleur_hanger, cassette, chain, chainring]
+    view: derailleur_from_behind
+    buttons:
+      - id: too-far-out
+        label: "Further out, away from the spokes"
+        text: "The chain can fall off the outside and jam. With the screwdriver or hex key, turn the screw marked H clockwise a quarter turn at a time, until the toothed wheel is in line."
+        solution:
+          - { target: h_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw clockwise a quarter turn" }
+      - id: too-far-in
+        label: "Further in, towards the spokes"
+        text: "The chain rattles or jumps to a bigger sprocket. With the screwdriver or hex key, turn the screw marked H counterclockwise a quarter turn at a time, until the toothed wheel is in line. If it does not move, stop turning: the cable holds it, and a later step sets the cable."
+        solution:
+          - { target: h_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the H screw counterclockwise a quarter turn" }
+
+  - id: shift-to-largest-sprocket
+    kind: action
+    title: "Shift to the easiest gear"
+    minutes: 1
+    text: "Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once."
+    focus: [largest_sprocket, chain]
+    show: [drivetrain]
+    view: drive_side
+    animation: { clip: shift-to-largest, caption: "Shift one gear at a time" }
+
+  - id: ride-to-largest-sprocket
+    kind: action
+    title: "Ride into the easiest gear"
+    minutes: 2
+    text: "Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once."
+    forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
+    focus: [shifter_rear, largest_sprocket]
+    show: [bike]
+    view: drive_side
+
+  - id: check-low-limit
+    kind: check
+    title: "Set the inner limit (L screw)"
+    minutes: 3
+    text: "The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket."
+    question: "Not in line?"
+    tools: { one_of: [derailleur-screw-tool] }
+    focus: [upper_pulley, largest_sprocket, l_screw]
+    show: [rear_derailleur, derailleur_hanger, cassette, chain, chainring]
+    view: derailleur_from_behind
+    buttons:
+      - id: too-far-in
+        label: "Further in, towards the spokes"
+        text: "The chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn at a time, until the toothed wheel is in line."
+        solution:
+          - { target: l_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw clockwise a quarter turn" }
+      - id: too-far-out
+        label: "Further out, away from the spokes"
+        text: "The chain rattles or slips off the largest sprocket. With the screwdriver or hex key, turn the screw marked L counterclockwise a quarter turn at a time, until the toothed wheel is in line."
+        solution:
+          - { target: l_screw, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw counterclockwise a quarter turn" }
+
+  - id: check-low-limit-by-hand
+    kind: safety_check
+    title: "Double-check the inner limit"
+    minutes: 2
+    text: "Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket."
+    question: "Does it go further in?"
+    tools: { one_of: [derailleur-screw-tool] }
+    focus: [upper_pulley, largest_sprocket, l_screw]
+    show: [rear_derailleur, derailleur_hanger, cassette, chain, chainring]
+    view: derailleur_from_behind
+    animation: { clip: limit-push-past, caption: "Push the derailleur in by hand" }
+    buttons:
+      - id: too-far-in
+        label: "Yes, past the largest sprocket"
+        block: "Do not ride like this: the chain can fall into the spokes. With the screwdriver or hex key, turn the screw marked L clockwise a quarter turn, then push and look again."
+        solution:
+          - { target: l_screw, motion: rotate, direction: clockwise, amount: "a quarter turn", view: derailleur_from_behind, caption: "Turn the L screw clockwise a quarter turn" }
+
+  - id: check-b-gap
+    kind: check
+    title: "Check the gap to the sprockets"
+    minutes: 3
+    text: "Keep the chain on the largest sprocket. Look from the side: the gap between the upper toothed wheel of the derailleur and the sprocket should be small, and the teeth should not touch."
+    question: "Wrong gap?"
+    details:
+      - needs: [drive.rear_derailleur_model]
+        text: "The manual for {drive.rear_derailleur_model} gives the exact gap."
+    tools: { one_of: [derailleur-screw-tool] }
+    focus: [upper_pulley, largest_sprocket, b_screw]
+    show: [rear_derailleur, derailleur_hanger, cassette, chain]
+    view: derailleur_side_close
+    buttons:
+      - id: touching
+        label: "The wheel touches the sprocket, or almost"
+        text: "With the screwdriver or hex key, turn the B screw at the back of the derailleur clockwise, a little at a time, until there is a small gap."
+        solution:
+          - { target: b_screw, motion: rotate, direction: clockwise, amount: "a little", view: derailleur_side_close, caption: "Turn the B screw clockwise a little" }
+      - id: wide-gap
+        label: "A big gap, and shifting here was slow"
+        text: "With the screwdriver or hex key, turn the B screw counterclockwise, a little at a time, until the gap is small but the teeth do not touch."
+        solution:
+          - { target: b_screw, motion: rotate, direction: counterclockwise, amount: "a little", view: derailleur_side_close, caption: "Turn the B screw counterclockwise a little" }
+
+  - id: check-cable-tension
+    kind: check
+    title: "Set the cable tension"
+    minutes: 5
+    text: "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet."
+    question: "Slow or noisy?"
+    # 3D: the card is about shifting, so the pedals turn and the chain goes through every gear until a problem is
+    # tapped; the solution's clip then stops the pedals and adds the barrel the bike's facts pick, with what is around it.
+    focus: [chain]
+    show: [drivetrain]
+    view: drive_side
+    animation: { clip: shift-through-gears, caption: "Shift through every gear and back" }
+    buttons:
+      - id: slow-easier
+        label: "Slow or noisy shifting to easier gears"
+        text: "The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out."
+        solution:
+          - { target: barrel_adjuster, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: barrel_adjuster_close, caption: "Turn the barrel adjuster counterclockwise a quarter turn" }
+      - id: slow-harder
+        label: "Slow or noisy shifting to harder gears"
+        text: "The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable."
+        solution:
+          - { target: barrel_adjuster, motion: rotate, direction: clockwise, amount: "a quarter turn", view: barrel_adjuster_close, caption: "Turn the barrel adjuster clockwise a quarter turn" }
+
+  - id: check-cable-tension-riding
+    kind: check
+    title: "Set the cable tension on short rides"
+    minutes: 10
+    text: "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything."
+    question: "Slow or noisy?"
+    forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
+    # 3D: as check-cable-tension
+    focus: [chain]
+    show: [drivetrain]
+    view: drive_side
+    buttons:
+      - id: slow-easier
+        label: "Slow or noisy shifting to easier gears"
+        text: "The cable is too loose. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then ride and shift again. Never turn it all the way out."
+        solution:
+          - { target: barrel_adjuster, motion: rotate, direction: counterclockwise, amount: "a quarter turn", view: barrel_adjuster_close, caption: "Turn the barrel adjuster counterclockwise a quarter turn" }
+      - id: slow-harder
+        label: "Slow or noisy shifting to harder gears"
+        text: "The cable is too tight. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable."
+        solution:
+          - { target: barrel_adjuster, motion: rotate, direction: clockwise, amount: "a quarter turn", view: barrel_adjuster_close, caption: "Turn the barrel adjuster clockwise a quarter turn" }
+
+  # The last check of every way, after the work, with the bike on its wheels (owner, 2026-11-26): a safety check,
+  # and each problem ends at a shop. Slow or rattling shifting may be ridden carefully; a chain that jumps or falls
+  # off may not. The causes named in the exits are unverified: review R-23.
+  - id: test-ride-gears
+    kind: safety_check
+    title: "Test ride the gears"
+    minutes: 3
+    text: "Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets."
+    question: "Something wrong?"
+    forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
+    details:
+      - needs: [drive.rear_speeds]
+        text: "Your bike has {drive.rear_speeds} gears at the rear."
+    focus: [chain]
+    show: [bike]
+    view: drive_side
+    animation: { clip: shift-test-ride, caption: "Shift one gear at a time while you ride" }
+    buttons:
+      - id: rattles
+        label: "It shifts slowly or rattles in some gears"
+        exit:
+          kind: shop_only
+          text: "Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause."
+      - id: chain-off
+        label: "The chain jumps or falls off"
+        exit:
+          kind: unsafe
+          text: "Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump."

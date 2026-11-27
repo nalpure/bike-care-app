@@ -1,5 +1,5 @@
 // Collects errors and warnings. Every issue prints on one line:
-//   ERROR content/steps/rear-shifting.yaml:42 | step check-low-limit | max-buttons | message
+//   ERROR content/jobs/adjust-rear-shifting.yaml:42 | step check-low-limit | max-buttons | message
 // so an agent can fix it without reading the build tool's code.
 
 export type Severity = 'error' | 'warning';

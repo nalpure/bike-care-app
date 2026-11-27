@@ -290,43 +290,6 @@ Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
 
-### Shift to the easiest gear
-
-<sub>Unit `card:step:shift-to-largest-sprocket` · hash `84010c3d43a1` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>action · 1 min</sub>
-
-Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.
-
-<sub>3D: focus largest_sprocket, chain · show drivetrain · view drive_side</sub>
-
-Animation: "Shift one gear at a time" (clip shift-to-largest)
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
-
-### Set the cable tension
-
-<sub>Unit `card:step:check-cable-tension` · hash `825f49f70849` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>check · 5 min</sub>
-
-Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
-
-<sub>3D: focus chain · show drivetrain · view drive_side</sub>
-
-Animation: "Shift through every gear and back" (clip shift-through-gears)
-
-- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
-  - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
-- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
-
 ### Ride into the hardest gear
 
 <sub>Unit `card:step:ride-to-smallest-sprocket` · hash `852e7f1bd03e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
@@ -342,67 +305,6 @@ Ride slowly on a quiet path and shift into the hardest gear, the smallest sprock
 <sub>Appears in:</sub>
 
 - <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
-
-### Ride into the easiest gear
-
-<sub>Unit `card:step:ride-to-largest-sprocket` · hash `90395c756aef` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>action · 2 min</sub>
-
-Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once.
-
-<sub>3D: focus shifter_rear, largest_sprocket · show bike · view drive_side</sub>
-
-<sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
-
-### Set the cable tension on short rides
-
-<sub>Unit `card:step:check-cable-tension-riding` · hash `cca05def3dce` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>check · 10 min</sub>
-
-Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.
-
-<sub>3D: focus chain · show drivetrain · view drive_side</sub>
-
-<sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
-
-- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then ride and shift again. Never turn it all the way out.
-  - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
-- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.
-  - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
-
-### Test ride the gears
-
-<sub>Unit `card:step:test-ride-gears` · hash `adc36640ba27` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>safety check · 3 min</sub>
-
-Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
-
-> _When drive.rear_speeds is known:_ Your bike has {drive.rear_speeds} gears at the rear.
-
-<sub>3D: focus chain · show bike · view drive_side</sub>
-
-Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
-
-<sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
-
-- [ ] **It shifts slowly or rattles in some gears** <sub>`rattles`</sub> → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause.
-- [ ] **The chain jumps or falls off** <sub>`chain-off`</sub> → **EXIT, unsafe**: Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump.
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case wheel-free, finish; when holding: stand, hang, upside_down; before it: nothing apart</sub>
-- <sub>tutorial adjust-rear-shifting: case test-rides, finish; when holding: ground; before it: nothing apart</sub>
 
 ### Set the outer limit (H screw)
 
@@ -424,6 +326,38 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 <sub>Appears in:</sub>
 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
+- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
+
+### Shift to the easiest gear
+
+<sub>Unit `card:step:shift-to-largest-sprocket` · hash `84010c3d43a1` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+
+<sub>action · 1 min</sub>
+
+Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.
+
+<sub>3D: focus largest_sprocket, chain · show drivetrain · view drive_side</sub>
+
+Animation: "Shift one gear at a time" (clip shift-to-largest)
+
+<sub>Appears in:</sub>
+
+- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
+
+### Ride into the easiest gear
+
+<sub>Unit `card:step:ride-to-largest-sprocket` · hash `90395c756aef` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+
+<sub>action · 2 min</sub>
+
+Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once.
+
+<sub>3D: focus shifter_rear, largest_sprocket · show bike · view drive_side</sub>
+
+<sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
+
+<sub>Appears in:</sub>
+
 - <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
 
 ### Set the inner limit (L screw)
@@ -493,6 +427,72 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 - <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
 - <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
+
+### Set the cable tension
+
+<sub>Unit `card:step:check-cable-tension` · hash `825f49f70849` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+
+<sub>check · 5 min</sub>
+
+Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
+
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
+
+Animation: "Shift through every gear and back" (clip shift-through-gears)
+
+- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then shift again. Never turn it all the way out.
+  - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
+- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then shift again. If four turns do not help, a shop can check the cable.
+  - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
+
+<sub>Appears in:</sub>
+
+- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: bike_in_stand / bike_hung / bike_upside_down</sub>
+
+### Set the cable tension on short rides
+
+<sub>Unit `card:step:check-cable-tension-riding` · hash `cca05def3dce` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+
+<sub>check · 10 min</sub>
+
+Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.
+
+<sub>3D: focus chain · show drivetrain · view drive_side</sub>
+
+<sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
+
+- [ ] **Slow or noisy shifting to easier gears** <sub>`slow-easier`</sub> → The cable is too loose. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it counterclockwise a quarter turn, then ride and shift again. Never turn it all the way out.
+  - Show solution: "Turn the barrel adjuster counterclockwise a quarter turn" (barrel_adjuster rotate, counterclockwise, a quarter turn)
+- [ ] **Slow or noisy shifting to harder gears** <sub>`slow-harder`</sub> → The cable is too tight. Park the bike. Look at the barrel adjuster from the side where the cable goes in, turn it clockwise a quarter turn, then ride and shift again. If four turns do not help, a shop can check the cable.
+  - Show solution: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
+
+<sub>Appears in:</sub>
+
+- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
+
+### Test ride the gears
+
+<sub>Unit `card:step:test-ride-gears` · hash `adc36640ba27` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+
+<sub>safety check · 3 min</sub>
+
+Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
+
+> _When drive.rear_speeds is known:_ Your bike has {drive.rear_speeds} gears at the rear.
+
+<sub>3D: focus chain · show bike · view drive_side</sub>
+
+Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
+
+<sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
+
+- [ ] **It shifts slowly or rattles in some gears** <sub>`rattles`</sub> → **EXIT, shop only**: Your gears still do not shift cleanly. You can ride carefully, but take the bike to a shop soon. Most often the gear cable is the cause: the inner cable can be dirty, rusty or frayed, and its outer cover can be worn or kinked. The derailleur, or the hanger that holds it, can also be bent so little that you cannot see it. Other parts can cause this too. A shop can find the cause.
+- [ ] **The chain jumps or falls off** <sub>`chain-off`</sub> → **EXIT, unsafe**: Stop riding: a chain that jumps can make you fall, and a chain that falls inwards can catch in the spokes and lock the wheel. Push the bike to a shop. Often the derailleur, or the hanger that holds it, is bent so little that you cannot see it. A worn chain or worn sprockets can also make the chain jump.
+
+<sub>Appears in:</sub>
+
+- <sub>tutorial adjust-rear-shifting: case wheel-free, finish; when holding: stand, hang, upside_down; before it: nothing apart</sub>
+- <sub>tutorial adjust-rear-shifting: case test-rides, finish; when holding: ground; before it: nothing apart</sub>
 
 ## Questions
 

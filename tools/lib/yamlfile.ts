@@ -13,6 +13,11 @@ export interface YamlFile {
   data: any;
   doc: YAML.Document;
   lc: LineCounter;
+  /**
+   * A view: data built from another file (a job file expanded into a tutorial and its cases).
+   * doc and lc are that file's; toDoc maps a path in data to the path in doc it came from.
+   */
+  toDoc?: (path: YPath) => YPath;
 }
 
 export function parseYamlFile(root: string, rel: string, issues: Issues): YamlFile | null {
@@ -36,7 +41,8 @@ export function parseYamlFile(root: string, rel: string, issues: Issues): YamlFi
 }
 
 /** Line of the deepest existing node along path. */
-export function lineAt(f: YamlFile, path: YPath): number | undefined {
+export function lineAt(f: YamlFile, at: YPath): number | undefined {
+  const path = f.toDoc ? f.toDoc(at) : at;
   for (let n = path.length; n >= 0; n--) {
     const node = n === 0 ? f.doc.contents : f.doc.getIn(path.slice(0, n), true);
     if (node && isNode(node) && node.range) return f.lc.linePos(node.range[0]).line;

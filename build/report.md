@@ -7,7 +7,7 @@
 ## Summary
 
 - Result: **passed**, 0 warning(s)
-- Files validated: 18
+- Files validated: 16
 - 3D names checked against: `build/3d-manifest.json`
 - Bundle: `build/bundle.json`
 
@@ -88,8 +88,11 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 | `missing-key` | pass | Required keys are present. |
 | `max-buttons` | pass | At most three buttons per step. |
 | `max-states` | pass | At most three states per inspection. |
-| `duplicate-id` | pass | Ids are unique within their kind. |
-| `missing-include` | pass | Every case a tutorial includes exists. |
+| `duplicate-id` | pass | Ids are unique within their kind; card ids also differ from every inspection and procedure id. |
+| `job-file-name` | pass | Each job file in content/jobs/ is named after its job. |
+| `branch-ways` | pass | A branch in a job's flow names every way in flow.ways, and only those. |
+| `card-outside-job` | pass | A job's own card is used only by that job's flow; a card two jobs or a procedure use is in content/steps/. |
+| `card-order` | pass | A job file's cards come in the order its flow first uses them (warning). |
 | `unknown-step` | pass | Every step referenced exists. |
 | `unknown-procedure` | pass | Every procedure referenced exists. |
 | `unknown-inspection` | pass | Every inspection referenced exists. |
@@ -99,7 +102,7 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 | `unknown-part` | pass | Every part referenced exists. |
 | `unknown-fact` | pass | Every fact key referenced exists in facts.yaml. |
 | `unknown-choice` | pass | Every run choice referenced exists. |
-| `unknown-job` | pass | Every leads_to, no_hit and covers_like names an existing job, and every tutorial folder is named after one. |
+| `unknown-job` | pass | Every leads_to, no_hit and covers_like names an existing job. |
 | `unknown-tutorial` | pass | Every tutorial a profile journey starts exists. |
 | `unknown-state-label` | pass | Every state label in sets, clears and forbidden_while exists in states.yaml. |
 | `skip-unsafe` | pass | Buttons skip only later plain steps: never safety checks, inspection calls or steps that change state labels. |
@@ -128,14 +131,13 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 | `same-outcome` | pass | Each button leads somewhere different: no two buttons of a step, and no two states of an inspection call that block or exit, have the same result. |
 | `generic-needs-text` | pass | if_unknown: generic comes with generic_text. |
 | `animation-kind` | pass | An animation is a generic motion or a named clip. |
-| `item-kind` | pass | Each case item is exactly one of step, procedure, inspect. |
+| `item-kind` | pass | Each flow item is exactly one of a card, procedure, inspect or branch. |
 | `inspect-needs-outcomes` | pass | Each inspection call in a tutorial maps its states to outcomes. |
 | `outcomes-match-states` | pass | Outcomes name exactly the states of the inspection. |
 | `outcome-kind` | pass | An outcome is continue, block, exit, or a follow-up inspection. |
 | `follow-up` | pass | A follow-up inspection is another inspection and has no follow-up of its own. |
 | `sets-fact` | pass | An inspection state sets only facts that no condition reads (no question, not ask: never), to allowed values; no two states set the same. |
 | `jump-in-finish` | pass | No jump-ahead from finish. |
-| `case-target` | pass | A case has exactly one of include, cases. |
 | `hands-off-only` | pass | Diagnoses, the routine check and a tutorial's checks use only hands-off inspections. |
 | `profile-missing-answer` | pass | Every question a profile journey reaches is answered. |
 | `profile-missing-sees` | pass | Every inspection and safety check a profile journey reaches has an answer, unless Next answers it (a step with a question, an inspection with a default in a tutorial). |

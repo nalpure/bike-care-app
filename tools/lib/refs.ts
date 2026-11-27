@@ -272,7 +272,7 @@ function checkButtons(x: Ctx, step: any, loc: Loc): void {
       for (const target of b.skips) {
         const t = x.c.steps.get(target);
         if (!t) {
-          err(x, bl, 'unknown-step', `skips names step "${target}", which is not defined in content/steps/.`);
+          err(x, bl, 'unknown-step', `skips names step "${target}", which is not a card of a job file or of content/steps/.`);
           continue;
         }
         if (t.def.kind === 'safety_check' || t.def.sets?.length || t.def.clears?.length) {
@@ -343,7 +343,7 @@ function checkInspection(x: Ctx, e: Entry): void {
   checkText(x, d.question, sub(loc, 'question'));
   d.states.forEach((s: any, i: number) => {
     const sl = sub(loc, 'states', i);
-    if (s.leads_to && !x.c.jobs.has(s.leads_to.job)) err(x, sl, 'unknown-job', `leads_to names job "${s.leads_to.job}", which is not in content/jobs.yaml.`);
+    if (s.leads_to && !x.c.jobs.has(s.leads_to.job)) err(x, sl, 'unknown-job', `leads_to names job "${s.leads_to.job}", which has no file in content/jobs/.`);
     checkText(x, s.label, sl);
     checkText(x, s.meaning, sl);
     for (const [k, v] of Object.entries<any>(s.sets ?? {})) {
@@ -385,19 +385,19 @@ function checkProcedure(x: Ctx, e: Entry): void {
   });
 }
 
-/** Items of a case file's sequence or finish, or of the tutorial's checks (base ['tutorial', 'checks']). */
+/** Items of a way's sequence or finish (a view of the job file's flow), or of the tutorial's checks (base ['tutorial', 'checks']). */
 function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list: 'sequence' | 'finish', tid: string): void {
   items.forEach((it, i) => {
     const loc: Loc = { file, path: [...base, i], id: `tutorial ${tid}` };
     const kinds = ['step', 'procedure', 'inspect'].filter((k) => it[k] !== undefined);
     if (kinds.length !== 1) {
-      err(x, loc, 'item-kind', `Each item has exactly one of step, procedure, inspect; this one has ${kinds.join(', ') || 'none'}.`);
+      err(x, loc, 'item-kind', `Each item is a card id, or has exactly one of procedure, inspect; this one has ${kinds.join(', ') || 'none'}.`);
       return;
     }
     if (it.outcomes && !it.inspect) err(x, loc, 'outcomes-only-on-inspect', 'outcomes belong to an inspect item only. Steps carry their own buttons.');
     if (it.step) {
       loc.id = `tutorial ${tid} / step ${it.step}`;
-      if (!stepExists(x.c, it.step)) err(x, loc, 'unknown-step', `Step "${it.step}" is not defined in content/steps/.`);
+      if (!stepExists(x.c, it.step)) err(x, loc, 'unknown-step', `Step "${it.step}" is not a card of this job file or of content/steps/.`);
     }
     if (it.procedure) {
       loc.id = `tutorial ${tid} / procedure ${it.procedure}`;
@@ -465,7 +465,6 @@ function followUps(outcomes: any): Array<[string, any]> {
 
 function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile> }): void {
   const loc = locOf(e, 'tutorial');
-  if (!x.c.jobs.has(t.job)) err(x, loc, 'unknown-job', `The folder content/tutorials/${t.job} names job "${t.job}", which is not in content/jobs.yaml. Name the folder after its job.`);
   (t.choices ?? []).forEach((ch: string, i: number) => {
     if (!x.c.choices.has(ch)) err(x, sub(loc, 'choices', i), 'unknown-choice', `Choice "${ch}" is not in content/choices.yaml.`);
   });
@@ -485,12 +484,8 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
       }
     }
   });
-  t.cases.forEach((cs: any, i: number) => {
-    const l = sub(loc, 'cases', i);
-    if ((cs.include === undefined) === (cs.cases === undefined)) err(x, l, 'case-target', 'A case has exactly one of include, cases.');
-    checkCondition(x, cs.when, sub(l, 'when'));
-    (cs.cases ?? []).forEach((leaf: any, j: number) => checkCondition(x, leaf.when, sub(l, 'cases', j, 'when')));
-  });
+  // One case per way of the job file's flow (jobfile.ts).
+  t.cases.forEach((cs: any, i: number) => checkCondition(x, cs.when, sub(loc, 'cases', i, 'when')));
   for (const [, cf] of e.cases ?? new Map()) {
     checkFlowItems(x, cf.data.sequence ?? [], cf, ['sequence'], 'sequence', t.id);
     checkFlowItems(x, cf.data.finish ?? [], cf, ['finish'], 'finish', t.id);
@@ -585,6 +580,32 @@ function checkProfile(x: Ctx, e: Entry): void {
   });
 }
 
+/**
+ * Card ids are unique across cards, inspections and procedures, so a name in a flow is never ambiguous;
+ * and a job's own card is used only by that job's flow. A card two jobs or a procedure use is a shared card.
+ */
+function checkCards(x: Ctx): void {
+  for (const [id, e] of x.c.steps) {
+    const other = x.c.inspections.has(id) ? 'an inspection' : x.c.procedures.has(id) ? 'a procedure' : '';
+    if (other) err(x, locOf(e, 'step'), 'duplicate-id', `Card "${id}" has the id of ${other}. Ids are unique across cards, inspections and procedures; rename one.`);
+  }
+  const ownerOf = (id: string) => x.c.steps.get(id)?.job;
+  const misplaced = (id: string) => `Card "${id}" is a card of job ${ownerOf(id)} (content/jobs/${ownerOf(id)}.yaml). A card used by more than one job or by a procedure goes in content/steps/.`;
+  for (const t of x.c.tutorials.values())
+    for (const cf of t.cases.values())
+      for (const list of ['sequence', 'finish'] as const)
+        (cf.data[list] ?? []).forEach((it: any, i: number) => {
+          const owner = it.step ? ownerOf(it.step) : undefined;
+          if (owner && owner !== t.def.job) err(x, { file: cf, path: [list, i], id: `tutorial ${t.def.id} / step ${it.step}` }, 'card-outside-job', misplaced(it.step));
+        });
+  for (const p of x.c.procedures.values())
+    p.def.implementations.forEach((impl: any, i: number) =>
+      impl.steps.forEach((it: any, j: number) => {
+        if (typeof it === 'string' && ownerOf(it)) err(x, sub(locOf(p, 'procedure'), 'implementations', i, 'steps', j), 'card-outside-job', misplaced(it));
+      }),
+    );
+}
+
 export function checkStatic(c: Content, issues: Issues): void {
   const x: Ctx = { c, issues };
   for (const e of c.toolSets.values()) checkToolSet(x, e);
@@ -595,6 +616,7 @@ export function checkStatic(c: Content, issues: Issues): void {
   for (const e of c.diagnoses.values()) checkDiagnosis(x, e);
   for (const e of c.checks.values()) checkRoutine(x, e);
   for (const e of c.profiles.values()) checkProfile(x, e);
+  checkCards(x);
   for (const e of c.jobs.values()) {
     const loc = locOf(e, 'job');
     if (e.def.covers) {

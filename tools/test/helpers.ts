@@ -53,8 +53,9 @@ export function show(r: RunResult): string {
   return r.issues.errors.map(formatIssue).join('\n');
 }
 
+/** A card of a job file (cards) or of a shared steps file (steps). */
 export function step(data: any, id: string): any {
-  const s = data.steps.find((x: any) => x.id === id);
+  const s = (data.cards ?? data.steps).find((x: any) => x.id === id);
   if (!s) throw new Error(`step ${id} not found`);
   return s;
 }

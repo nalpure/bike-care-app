@@ -11,7 +11,7 @@ Symptom: "My gears don't shift cleanly"
 
 ## Bikes covered
 
-The same bikes as the job (covers_like). From job `adjust-rear-shifting` (jobs.yaml). Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical. Any other bike ends at the first match:
+The same bikes as the job (covers_like). From job `adjust-rear-shifting` (content/jobs/adjust-rear-shifting.yaml). Covers bikes where drive.gear_type is derailleur and drive.shifting is mechanical. Any other bike ends at the first match:
 
 - when drive.gear_type is hub_gear → **EXIT, not covered**: "Hub gears are not covered yet. They are adjusted differently from gears with a derailleur."
 - when drive.gear_type is gearbox → **EXIT, not covered**: "Gearboxes at the pedals are not covered yet."
