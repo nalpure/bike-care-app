@@ -138,6 +138,19 @@ export class App {
     if (!this.sessions.has(bike.id)) this.sessions.set(bike.id, this.sitting);
   }
 
+  /** The flow was started from the bike picker, so the user can pick another bike for it. */
+  get canChangeBike(): boolean {
+    return this.origin.k === 'pick';
+  }
+
+  /** Back to the bike picker, then into the same flow on the bike chosen there. */
+  changeBike(): void {
+    if (this.origin.k !== 'pick') return;
+    const start = this.origin.start;
+    this.journey = null;
+    this.go({ k: 'pick', start, step: { k: 'list' } });
+  }
+
   openTodo(bike: Bike, f: Finding): void {
     this.start({ job: f.job!, urgency: f.urgency, params: f.pos ? { pos: f.pos } : {} }, bike);
   }

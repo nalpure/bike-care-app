@@ -60,6 +60,21 @@ export function renderJourney(app: App, j: Journey): HTMLElement {
     case 'exit':
       return renderExit(app, s);
     case 'not-covered':
+      if (s.wrongBike) {
+        // The why comes from the job's not_covered text; the line below it is only for when none matches.
+        const change = app.canChangeBike;
+        return screenWith(app, top(app, app.bikeName, 'End of this guide'), [
+          h('h1.h2q', 'This guide does not fit this bike'),
+          h('p', { 'data-test': 'why' }, s.message || 'This guide does not cover this bike yet.'),
+          h('p.lead', change
+            ? 'Choose another bike, or get help: a shop can do it, or ask the assistant.'
+            : 'We do not show a guess. A shop can help, or ask the assistant.'),
+        ], [
+          change ? h('button.btn.primary.wide', { 'data-test': 'change-bike', onclick: () => app.changeBike() }, 'Choose another bike') : null,
+          h(change ? 'button.btn.wide' : 'button.btn.primary.wide', { 'data-test': 'find-shop', onclick: () => app.act((x) => x.exitFindShop()) }, 'Find a shop'),
+          h('button.btn.wide', { 'data-test': 'ask', onclick: () => app.openOverlay({ k: 'assistant' }) }, 'Ask the assistant'),
+        ]);
+      }
       return screenWith(app, top(app, app.bikeName, 'End of this guide'), [
         h('h1.h2q', 'Not covered yet'),
         h('p', s.message),

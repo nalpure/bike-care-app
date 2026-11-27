@@ -9,7 +9,7 @@
 
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
 import {
-  combined, enumerate, findJumpTarget, hiddenFollowUps, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, stateFromFacts,
+  combined, enumerate, findJumpTarget, hiddenFollowUps, knownCoverageExit, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, stateFromFacts,
   type DiagnosisRun, type PathItem, type Reader, type ToolList, type ToolSetUse, type TutorialRun, mergeTools,
 } from '../../../tools/lib/resolve.js';
 import type { Content } from './content.js';
@@ -90,7 +90,11 @@ export type Screen =
   | { kind: 'tools'; required: string[]; oneOf: ToolSetUse[]; helpful: string[]; ticked: string[]; canBack: boolean }
   | { kind: 'card'; card: Card }
   | { kind: 'exit'; exitKind: ExitKind; message: string; canJump: boolean; putBack: string[]; /** state labels still set; the stage shows the bike as it is held */ labels: string[]; canBack: boolean }
-  | { kind: 'not-covered'; message: string; canBack: boolean }
+  /**
+   * wrongBike: a tutorial started on its own (the tutorials list or a garage to-do) does not fit this
+   * bike's facts; the UI offers to change the bike. message is the job's not_covered text, '' when none matches.
+   */
+  | { kind: 'not-covered'; message: string; wrongBike?: boolean; canBack: boolean }
   | { kind: 'job'; job: any; urgency?: string; diy?: { minutes: string | null; difficulty?: number }; tell: string; findings: string[]; price: string; canBack: boolean }
   | { kind: 'shop'; summary: ShopSummary; canBack: boolean }
   | { kind: 'done'; title: string; minutes: number; askFixed: boolean; canBack: boolean }
@@ -180,6 +184,8 @@ export class Journey {
   /** the garage bike chosen at the start; null for an unknown bike until the user saves it */
   private home: Bike | null;
   private offer: Offer = 'ask';
+  /** the tutorial this journey was started as (not one reached from a diagnosis or a job screen) */
+  private readonly ownTutorial: string | undefined;
   private history: Snapshot[] = [];
   private progressMax = 0;
   /** ids of the cards shown, in order, for feedback notes and the assistant */
@@ -198,6 +204,7 @@ export class Journey {
     preset: Record<string, Value> = {},
   ) {
     this.home = bike;
+    this.ownTutorial = 'tutorial' in start ? start.tutorial : undefined;
     this.bike = bike
       ? { ...bike, facts: { ...bike.facts, ...preset }, findings: clone(bike.findings), done: { ...bike.done } }
       : { id: 'unknown', name: 'Unknown bike', facts: { ...preset }, findings: [], added: '', done: {} };
@@ -1036,7 +1043,25 @@ export class Journey {
 
   // ------------------------------------------------------------ tutorial pre-steps
 
+  /**
+   * A tutorial started on its own that does not fit the bike: the job's not_covered text for it.
+   * Decided from the known facts alone, so a fact that cannot change the outcome is never asked
+   * first; the resolver asks the facts still needed, and then this screen follows from the answer.
+   */
+  private wrongBike(t: TutState, def: any): Screen | null {
+    if (this.ownTutorial !== t.id || !def.job) return null;
+    const known = (k: string): Value | undefined => {
+      if (k.startsWith('choice.')) return t.choices[k.slice(7)];
+      if (k.startsWith('tool.')) return undefined;
+      return this.known(k) ?? (neverAsked(this.c.ix, k) ? UNKNOWN : undefined);
+    };
+    const ex = knownCoverageExit(this.c.ix, def.job, known, t.params);
+    return ex ? { kind: 'not-covered', message: ex.message, wrongBike: true, canBack: this.canBack } : null;
+  }
+
   private preScreen(t: TutState, def: any): Screen {
+    const early = this.wrongBike(t, def);
+    if (early) return early;
     const pos = this.positionOf(def.params, t.params);
     if (pos) return pos;
     const res = this.tutRun(t);

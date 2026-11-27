@@ -2,7 +2,7 @@
 // These tests make sure that gives exactly what the build tool expanded from the YAML files.
 
 import { describe, expect, it } from 'vitest';
-import { UNKNOWN, type Value } from '../lib/conditions.js';
+import { decide, UNKNOWN, type Value } from '../lib/conditions.js';
 import { enumerate, resolveDiagnosis, resolveTutorial } from '../lib/expand.js';
 import * as R from '../lib/resolve.js';
 import { runCheck } from '../lib/run.js';
@@ -65,5 +65,19 @@ describe('shared resolver on the written bundle', () => {
         expect(fromBundle.checks.map((x) => [x.id, x.skipped, x.hits])).toEqual(e.result.checks.map((x) => [x.id, x.skipped, x.hits]));
       }
     }
+  });
+});
+
+describe('decide: a condition from the known values alone', () => {
+  const k = (m: Record<string, Value>) => (key: string) => m[key];
+  it('is false as soon as one known key fails, whatever is not known yet', () => {
+    expect(decide({ a: [1], b: [2] }, k({ b: 3 }))).toBe(false);
+    expect(decide({ a: [1], b: [2] }, k({ b: 2 }))).toBeUndefined();
+    expect(decide({ a: [1], b: [2] }, k({ a: 1, b: 2 }))).toBe(true);
+  });
+  it('reads any_of as one of them', () => {
+    expect(decide({ any_of: [{ a: [1] }, { b: [2] }] }, k({ b: 2 }))).toBe(true);
+    expect(decide({ any_of: [{ a: [1] }, { b: [2] }] }, k({ b: 3 }))).toBeUndefined();
+    expect(decide({ any_of: [{ a: [1] }, { b: [2] }] }, k({ a: 0, b: 3 }))).toBe(false);
   });
 });

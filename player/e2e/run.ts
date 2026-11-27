@@ -584,6 +584,49 @@ async function navigation(browser: import('playwright').Browser): Promise<Result
 }
 
 /**
+ * Every tutorial is in the list; one started on a bike it does not fit says why at once and
+ * offers another bike, which leads back into the same tutorial.
+ */
+async function wrongBike(browser: import('playwright').Browser): Promise<Result> {
+  const id = 'extras/wrong-bike';
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
+  const page = await ctx.newPage();
+  const dir = join(SHOTS, 'portrait', 'wrong-bike');
+  mkdirSync(dir, { recursive: true });
+  try {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const expect = (ok: boolean, what: string) => ok || errors.push(what);
+    await page.goto(URL);
+    await click(page, 'notice-ok');
+    await page.addStyleTag({ content: '.toast { display: none !important; }' });
+    await page.evaluate(() => (window as any).__app.setTextOnly(true));
+    const bundle = JSON.parse(readFileSync(join(REPO, 'build/bundle.json'), 'utf8'));
+    const tutorialIds = new Set(bundle.tutorials.map((t: any) => t.id));
+    const tutorials = bundle.jobs.filter((j: any) => tutorialIds.has(j.tutorial)).length;
+    expect(await page.locator('details.guides [data-test^="tutorial-"]').count() === tutorials, 'the guides list does not show every tutorial');
+    await click(page, 'tutorial-adjust-rear-shifting');
+    await click(page, 'pick-e-trekking-hub-gear');
+    expect(await view(page) === 'journey:not-covered:', `the hub-gear bike did not end on the wrong-bike screen first (${await view(page)})`);
+    expect(((await page.locator('[data-test="why"]').textContent()) ?? '').length > 0, 'the wrong-bike screen gives no reason');
+    for (const b of ['change-bike', 'find-shop', 'ask']) expect(await page.locator(`[data-test="${b}"]`).count() === 1, `the wrong-bike screen has no ${b} button`);
+    await page.screenshot({ path: join(dir, '01-wrong-bike.png') });
+    await click(page, 'change-bike');
+    expect(await view(page) === 'pick:list', `"Choose another bike" did not open the bike choice (${await view(page)})`);
+    await click(page, 'pick-road-bike-stand');
+    const v = await view(page);
+    expect(v.startsWith('journey:') && v !== 'journey:not-covered:', `the other bike did not start the tutorial (${v})`);
+    expect(((await page.locator('.wh small').first().textContent()) ?? '').length > 0, 'no header on the tutorial');
+    return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
+  } catch (e: any) {
+    await shot_fail(page, dir);
+    return { id, ending: 'crashed', expected: 'ok', error: String(e?.message ?? e).split('\n')[0] };
+  } finally {
+    await ctx.close();
+  }
+}
+
+/**
  * A laptop (no touch, the 3D view on): the touchpad or mouse wheel scrolls the card column, the
  * next card waiting below, one card per turn. Over and over without moving the pointer, which
  * used to stall when every card replaced the text box under it.
@@ -726,6 +769,7 @@ async function main(): Promise<void> {
     if (wanted('extras/feedback-assistant-garage')) results.push(await extras(browser));
     if (wanted('extras/bike-page')) results.push(await bikePage(browser));
     if (wanted('extras/navigation')) results.push(await navigation(browser));
+    if (wanted('extras/wrong-bike')) results.push(await wrongBike(browser));
     if (wanted('extras/laptop-wheel')) results.push(await laptop(browser));
   } finally {
     await browser.close();

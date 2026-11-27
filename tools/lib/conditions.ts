@@ -26,6 +26,29 @@ export function evaluate(cond: Condition | undefined, lookup: Lookup): boolean {
   return true;
 }
 
+/**
+ * What the known values alone say about a condition: true or false when they decide it, undefined
+ * when it needs a key not known yet. Unlike evaluate, a later key can decide before an earlier
+ * unknown one (the player uses it to say "does not fit" before asking anything).
+ */
+export function decide(cond: Condition | undefined, known: (key: string) => Value | undefined): boolean | undefined {
+  if (!cond) return true;
+  let open = false;
+  for (const [key, allowed] of Object.entries(cond)) {
+    let r: boolean | undefined;
+    if (key === 'any_of') {
+      const rs = (allowed as Condition[]).map((c) => decide(c, known));
+      r = rs.some((x) => x === true) ? true : rs.every((x) => x === false) ? false : undefined;
+    } else {
+      const v = known(key);
+      r = v === undefined ? undefined : (allowed as Value[]).some((a) => String(a) === String(v));
+    }
+    if (r === false) return false;
+    if (r === undefined) open = true;
+  }
+  return open ? undefined : true;
+}
+
 /** Every key a condition can read, in written order (including inside any_of). */
 export function conditionKeys(cond: Condition | undefined): string[] {
   if (!cond) return [];

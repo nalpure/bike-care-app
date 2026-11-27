@@ -9,7 +9,7 @@
 // Source locations: every result carries `src` values made by a `locate` callback. The build tool
 // passes one that maps bundle objects back to their YAML file and line; the player passes none.
 
-import { evaluate, substCondition, substParams, UNKNOWN, type Condition, type Value } from './conditions.js';
+import { decide, evaluate, substCondition, substParams, UNKNOWN, type Condition, type Value } from './conditions.js';
 
 // ---------------------------------------------------------------- bundle data
 
@@ -334,6 +334,21 @@ export function coverageExit<S = unknown>(ix: Index, jobId: string, r: Reader, p
     if (evaluate(substCondition(ncs[i].when, params), r.ask)) return { kind: 'not_covered', message: ncs[i].text, src: loc(job, 'covers', 'not_covered', i) };
   }
   return { kind: 'uncovered', message: `Job ${jobId} does not cover this bike, and none of its not_covered entries matches.`, src: loc(job, 'covers') };
+}
+
+/**
+ * The coverage exit the known facts already decide, before any question: the first not_covered
+ * entry they decide to match, or 'uncovered' (with no message) when none is decided yet.
+ * undefined while the job may still cover the bike. Only the player uses it; the build reads
+ * coverage with coverageExit.
+ */
+export function knownCoverageExit(ix: Index, jobId: string, known: (key: string) => Value | undefined, params: Record<string, string> = {}): Exit | undefined {
+  const cv = ix.jobs.get(jobId)?.covers;
+  if (!cv || decide(substCondition(cv.when, params), known) !== false) return undefined;
+  for (const nc of cv.not_covered ?? []) {
+    if (decide(substCondition(nc.when, params), known) === true) return { kind: 'not_covered', message: nc.text, src: undefined };
+  }
+  return { kind: 'uncovered', message: '', src: undefined };
 }
 
 /** Resolves one tutorial (a bundle tutorial) for one bike, choice set and parameter set. */

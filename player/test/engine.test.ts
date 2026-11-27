@@ -224,3 +224,60 @@ describe('an inspection that tells a fact, with a follow-up', () => {
     }
   });
 });
+
+describe('a tutorial started on a bike it does not fit', () => {
+  const demo = (id: string) => JSON.parse(raw).demo_bikes.find((d: any) => d.id === id).facts;
+  const start = (facts: Record<string, any> | null, change: (b: any) => void = () => {}) => {
+    const b = JSON.parse(raw);
+    change(b);
+    const c = new Content(b);
+    const store = new Store(memoryKV());
+    const bike = facts ? store.addBike('Test bike', facts) : null;
+    return { j: new Journey(c, store, bike, new Session(), { tutorial: 'adjust-rear-shifting' }), c };
+  };
+  const hubText = (c: Content) => c.job('adjust-rear-shifting').covers.not_covered.find((n: any) => n.when['drive.gear_type']?.[0] === 'hub_gear').text;
+
+  it('says why at once when the known facts rule it out', () => {
+    const { j, c } = start(demo('e-trekking-hub-gear'));
+    const s = j.screen();
+    expect(s.kind).toBe('not-covered');
+    expect(s.kind === 'not-covered' && s.wrongBike).toBe(true);
+    expect(s.kind === 'not-covered' && s.message).toBe(hubText(c));
+  });
+
+  it('asks no question first when a later known fact already rules it out', () => {
+    // drive.gear_type is read first in covers.when, but it is not known; the shifting is.
+    const { j, c } = start({ 'drive.shifting': 'electronic' });
+    const s = j.screen();
+    expect(s.kind).toBe('not-covered');
+    const text = c.job('adjust-rear-shifting').covers.not_covered.find((n: any) => n.when['drive.shifting']?.[0] === 'electronic').text;
+    expect(s.kind === 'not-covered' && s.message).toBe(text);
+    expect(s.kind === 'not-covered' && s.wrongBike).toBe(true);
+  });
+
+  it('asks a needed fact first, then says why once the answer rules it out', () => {
+    const { j, c } = start(null);
+    const q = j.screen();
+    expect(q.kind === 'question' && q.key).toBe('drive.gear_type');
+    j.answerFact('drive.gear_type', 'hub_gear');
+    if (j.screen().kind === 'keep') j.keepSkip();
+    const s = j.screen();
+    expect(s.kind === 'not-covered' && s.wrongBike).toBe(true);
+    expect(s.kind === 'not-covered' && s.message).toBe(hubText(c));
+  });
+
+  it('gives no message when no not_covered text matches (the UI shows a general line)', () => {
+    const { j } = start(demo('e-trekking-hub-gear'), (b) => {
+      const job = (Array.isArray(b.jobs) ? b.jobs : Object.values(b.jobs)).find((x: any) => x.id === 'adjust-rear-shifting');
+      job.covers.not_covered = job.covers.not_covered.filter((n: any) => !n.when['drive.gear_type']);
+    });
+    const s = j.screen();
+    expect(s.kind === 'not-covered' && s.wrongBike).toBe(true);
+    expect(s.kind === 'not-covered' && s.message).toBe('');
+  });
+
+  it('starts as before on a bike it fits', () => {
+    const { j } = start(demo('road-bike-stand'));
+    expect(j.screen().kind).not.toBe('not-covered');
+  });
+});
