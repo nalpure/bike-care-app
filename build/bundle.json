@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "e2741bc1e0868099",
+  "content_hash": "a09f0064a6e976f5",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -721,17 +721,7 @@
         "barrel_adjuster"
       ],
       "show": [
-        "frame",
-        "fork",
-        "front_wheel",
-        "rear_wheel",
-        "handlebar",
-        "brake_lever",
-        "shifter_rear",
-        "shift_cable",
-        "saddle",
-        "seat_post",
-        "drivetrain"
+        "bike"
       ],
       "view": "barrel_adjuster_close",
       "animation": {
@@ -779,14 +769,7 @@
         "front_barrel"
       ],
       "show": [
-        "frame",
-        "fork",
-        "front_wheel",
-        "rear_wheel",
-        "handlebar",
-        "brake_lever",
-        "shifter_rear",
-        "drivetrain"
+        "bike"
       ],
       "view": "drive_side",
       "states": [
@@ -873,17 +856,7 @@
         "chain"
       ],
       "show": [
-        "frame",
-        "fork",
-        "front_wheel",
-        "rear_wheel",
-        "handlebar",
-        "brake_lever",
-        "shifter_rear",
-        "saddle",
-        "seat_post",
-        "shift_cable",
-        "drivetrain"
+        "bike"
       ],
       "view": "drive_side",
       "animation": {
@@ -1294,15 +1267,7 @@
         "smallest_sprocket"
       ],
       "show": [
-        "frame",
-        "fork",
-        "front_wheel",
-        "rear_wheel",
-        "handlebar",
-        "saddle",
-        "seat_post",
-        "shift_cable",
-        "drivetrain"
+        "bike"
       ],
       "view": "drive_side"
     },
@@ -1322,15 +1287,7 @@
         "largest_sprocket"
       ],
       "show": [
-        "frame",
-        "fork",
-        "front_wheel",
-        "rear_wheel",
-        "handlebar",
-        "saddle",
-        "seat_post",
-        "shift_cable",
-        "drivetrain"
+        "bike"
       ],
       "view": "drive_side"
     },
@@ -1410,15 +1367,7 @@
         "chain"
       ],
       "show": [
-        "frame",
-        "fork",
-        "front_wheel",
-        "rear_wheel",
-        "handlebar",
-        "saddle",
-        "seat_post",
-        "shift_cable",
-        "drivetrain"
+        "bike"
       ],
       "view": "drive_side",
       "animation": {

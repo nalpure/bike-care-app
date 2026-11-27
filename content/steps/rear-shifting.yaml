@@ -66,7 +66,7 @@ steps:
     text: "Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Listen to the chain, then stop and park the bike as before."
     forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
     focus: [shifter_rear, smallest_sprocket]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain]
+    show: [bike]
     view: drive_side
 
   - id: ride-to-largest-sprocket
@@ -76,7 +76,7 @@ steps:
     text: "Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once."
     forbidden_while: [bike_in_stand, bike_hung, bike_upside_down]
     focus: [shifter_rear, largest_sprocket]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain]
+    show: [bike]
     view: drive_side
 
   - id: check-cable-tension-riding
@@ -116,7 +116,7 @@ steps:
       - needs: [drive.rear_speeds]
         text: "Your bike has {drive.rear_speeds} gears at the rear."
     focus: [chain]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain]
+    show: [bike]
     view: drive_side
     animation: { clip: shift-test-ride, caption: "Shift one gear at a time while you ride" }
     buttons:

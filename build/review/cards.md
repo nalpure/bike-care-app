@@ -35,7 +35,7 @@ Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 ### Find the barrel adjuster
 
-<sub>Unit `card:inspection:barrel-adjuster-present` · hash `fd074b72fc9e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:barrel-adjuster-present` · hash `4e6f85b9e59a` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
@@ -43,7 +43,7 @@ Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus barrel_adjuster · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, shift_cable, saddle, seat_post, drivetrain · view barrel_adjuster_close</sub>
+<sub>3D: focus barrel_adjuster · show bike · view barrel_adjuster_close</sub>
 
 Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
 
@@ -62,7 +62,7 @@ Animation: "A small ribbed knob you can turn by hand, where the gear cable goes 
 
 ### Look along the cable
 
-<sub>Unit `card:inspection:barrel-adjuster-search` · hash `1c3855ec6432` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:barrel-adjuster-search` · hash `23cafcd33bd3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 1 min</sub>
 
@@ -70,7 +70,7 @@ Follow the gear cable from the right shifter to the rear derailleur. On some bik
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus shift_cable, front_barrel · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, drivetrain · view drive_side</sub>
+<sub>3D: focus shift_cable, front_barrel · show bike · view drive_side</sub>
 
 **Found it?**
 
@@ -111,7 +111,7 @@ Animation: "Turn the pedals backwards" (crank rotate, backward, slowly, two full
 
 ### Test ride the gears
 
-<sub>Unit `card:inspection:shift-test-ride` · hash `ed8fe4d43c4b` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:inspection:shift-test-ride` · hash `a4ee81a4e584` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>inspection · 3 min</sub>
 
@@ -119,7 +119,7 @@ Ride slowly on a quiet, flat path. Use only the right shifter and change one gea
 
 <sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
 
-<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show bike · view drive_side</sub>
 
 Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
@@ -329,13 +329,13 @@ Animation: "Shift through every gear and back" (clip shift-through-gears)
 
 ### Ride into the hardest gear
 
-<sub>Unit `card:step:ride-to-smallest-sprocket` · hash `64f83977a641` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:ride-to-smallest-sprocket` · hash `852e7f1bd03e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 2 min</sub>
 
 Ride slowly on a quiet path and shift into the hardest gear, the smallest sprocket. Listen to the chain, then stop and park the bike as before.
 
-<sub>3D: focus shifter_rear, smallest_sprocket · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus shifter_rear, smallest_sprocket · show bike · view drive_side</sub>
 
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 
@@ -345,13 +345,13 @@ Ride slowly on a quiet path and shift into the hardest gear, the smallest sprock
 
 ### Ride into the easiest gear
 
-<sub>Unit `card:step:ride-to-largest-sprocket` · hash `092e79998324` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:ride-to-largest-sprocket` · hash `90395c756aef` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>action · 2 min</sub>
 
 Ride slowly and shift one gear at a time into the easiest gear, the largest sprocket, then stop and park the bike as before. If the chain moves past it towards the spokes, stop pedalling at once.
 
-<sub>3D: focus shifter_rear, largest_sprocket · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus shifter_rear, largest_sprocket · show bike · view drive_side</sub>
 
 <sub>State: never while bike_in_stand · never while bike_hung · never while bike_upside_down</sub>
 
@@ -382,7 +382,7 @@ Ride slowly and shift one gear at a time, through all gears and back: every shif
 
 ### Test ride the gears
 
-<sub>Unit `card:step:test-ride-gears` · hash `5108730604a3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:test-ride-gears` · hash `adc36640ba27` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>safety check · 3 min</sub>
 
@@ -390,7 +390,7 @@ Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest
 
 > _When drive.rear_speeds is known:_ Your bike has {drive.rear_speeds} gears at the rear.
 
-<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show bike · view drive_side</sub>
 
 Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 

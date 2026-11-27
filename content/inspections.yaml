@@ -36,7 +36,7 @@ inspections:
     question: "Where is it?"
     # 3D: a tour from the derailleur along the cable to the front, every barrel place marked (clip barrel-tour).
     focus: [barrel_adjuster]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, shift_cable, saddle, seat_post, drivetrain]
+    show: [bike]
     view: barrel_adjuster_close
     animation: { clip: barrel-tour, caption: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." }
     states:
@@ -63,7 +63,7 @@ inspections:
     # 3D: the whole cable route; marked: the cable and the barrel place on it near the handlebar
     # (behind a drop bar, on the shifter of a flat bar).
     focus: [shift_cable, front_barrel]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, drivetrain]
+    show: [bike]
     view: drive_side
     states:
       - id: on-cable
@@ -105,7 +105,7 @@ inspections:
     default: fine
     question: "Slow or rattling?"
     focus: [chain]
-    show: [frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain]
+    show: [bike]
     view: drive_side
     animation: { clip: shift-test-ride, caption: "Shift one gear at a time while you ride" }
     states:

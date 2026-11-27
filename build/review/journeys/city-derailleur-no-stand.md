@@ -45,7 +45,7 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 
 Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.
 
-<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show bike · view drive_side</sub>
 
 - [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → result: **Adjust the rear gears** (soon) ◀ **this path**
 - [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → result: **Adjust the rear gears** (soon)
@@ -92,7 +92,7 @@ Time shown for this bike: 27 to 32 min (depends on how the bike is held).
 
 Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
 
-<sub>3D: focus barrel_adjuster · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, shift_cable, saddle, seat_post, drivetrain · view barrel_adjuster_close</sub>
+<sub>3D: focus barrel_adjuster · show bike · view barrel_adjuster_close</sub>
 
 Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
 
@@ -230,7 +230,7 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
 
-<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show bike · view drive_side</sub>
 
 Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
@@ -319,7 +319,7 @@ Look at the chain below the pedals. Turn the pedals backwards slowly to see all 
 
 Ride slowly on a quiet, flat path. Use only the right shifter and change one gear at a time, all the way up and down. Every gear should change quickly and run quietly.
 
-<sub>3D: focus chain · show frame, fork, front_wheel, rear_wheel, handlebar, brake_lever, shifter_rear, saddle, seat_post, shift_cable, drivetrain · view drive_side</sub>
+<sub>3D: focus chain · show bike · view drive_side</sub>
 
 - [ ] **Slow or rattling when shifting to easier gears** — The chain is slow to climb to the bigger sprockets, the easier gears. → to-do: **Adjust the rear gears** (soon) ◀ **this path**
 - [ ] **Slow or rattling when shifting to harder gears** — The chain is slow to drop to the smaller sprockets, the harder gears. → to-do: **Adjust the rear gears** (soon)
