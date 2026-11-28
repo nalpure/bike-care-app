@@ -15,7 +15,7 @@
 
 | Flow | Kind | Paths | Complete paths | Time of complete paths | Stop paths | Exits before the first step |
 | --- | --- | --- | --- | --- | --- | --- |
-| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 24 | 8 | 26 to 32 min | 16 | 6 |
+| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 36 | 12 | 24 to 29 min | 24 | 7 |
 | [gears-shift-badly](review/trees/gears-shift-badly.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 6 |
 | [routine-check](review/trees/routine-check.md) | routine check | - | - | - | - | - |
 
@@ -27,7 +27,7 @@ Details per unit in [review/index.md](review/index.md).
 
 | Unit kind | Units | Mechanic signed | Beginner signed | Changed since sign-off |
 | --- | --- | --- | --- | --- |
-| card | 43 | 0 of 33 | 0 of 43 | 0 |
+| card | 42 | 0 of 31 | 0 of 42 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
 | journey | 8 | — | 0 of 8 | 0 |
 
@@ -35,14 +35,18 @@ Details per unit in [review/index.md](review/index.md).
 
 | Flow | Combination | Time |
 | --- | --- | --- |
-| adjust-rear-shifting | `derailleur.mechanical.stand` | 26 min |
-| adjust-rear-shifting | `derailleur.mechanical.stand` | 27 min |
-| adjust-rear-shifting | `derailleur.mechanical.hang` | 27 min |
-| adjust-rear-shifting | `derailleur.mechanical.hang` | 28 min |
-| adjust-rear-shifting | `derailleur.mechanical.upside-down` | 26 min |
-| adjust-rear-shifting | `derailleur.mechanical.upside-down` | 27 min |
-| adjust-rear-shifting | `derailleur.mechanical.ground` | 31 min |
-| adjust-rear-shifting | `derailleur.mechanical.ground` | 32 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.stand` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.hang` | 25 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.upside-down` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.ground` | 29 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.stand` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.hang` | 25 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.upside-down` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.ground` | 29 min |
+| adjust-rear-shifting | `derailleur.mechanical.inline.stand` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.inline.hang` | 25 min |
+| adjust-rear-shifting | `derailleur.mechanical.inline.upside-down` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.inline.ground` | 29 min |
 
 ## Where bikes end at a shop or not covered
 
@@ -50,6 +54,7 @@ Use this list to decide what to cover next.
 
 | Flow | Bike | Exit | Message |
 | --- | --- | --- | --- |
+| adjust-rear-shifting | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.barrel_adjuster` = unknown ("I cannot find it") | not_covered | Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you. |
 | adjust-rear-shifting | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = electronic ("Electronically") | not_covered | Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable. |
 | adjust-rear-shifting | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = unknown ("I'll check later") | not_covered | We need to know whether your gears use a cable. Look at the right shifter and come back. |
 | adjust-rear-shifting | `drive.gear_type` = hub_gear ("Hub gear") | not_covered | Hub gears are not covered yet. They are adjusted differently from gears with a derailleur. |
@@ -67,16 +72,16 @@ Use this list to decide what to cover next.
 
 | Profile | Journey | Ends | Time | Questions asked |
 | --- | --- | --- | --- | --- |
-| [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 30 min | 1 |
+| [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Slow shifting, adjusted at home with the bike upside down | tutorial complete | 29 min | 2 |
 | [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | The derailleur looks bent, so the owner goes to a shop | shop: Have the rear gears checked | 1 min | 1 |
 | [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Routine check finds slow shifting; the to-do item opens the guide | 1 to-do item(s) | 5 min | 0 |
 | [e-trekking-hub-gear](review/journeys/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
-| [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain falls off on the test ride | exit (unsafe) at test-ride-gears | 30 min | 0 |
-| [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | exit (not_covered) at barrel-adjuster-search | 3 min | 0 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain falls off on the test ride | exit (unsafe) at test-ride-gears | 29 min | 1 |
+| [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | not covered | 0 min | 1 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
-| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 36 min | 2 |
+| [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 34 min | 3 |
 
-Journeys that end at a shop, a stop or not covered: 2 of 8.
+Journeys that end at a shop, a stop or not covered: 3 of 8.
 
 ## Rules
 
@@ -107,13 +112,15 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 | `unknown-state-label` | pass | Every state label in sets, clears and forbidden_while exists in states.yaml. |
 | `skip-unsafe` | pass | Buttons skip only later plain steps: never safety checks, inspection calls or steps that change state labels. |
 | `unknown-show-how-from` | pass | Every show_how_from names an existing step or procedure. |
-| `unknown-node` | pass | Every focus node, show node and animation target exists in the 3D catalog. |
+| `unknown-node` | pass | Every focus node, show node and animation target (on cards, inspections and facts) exists in the 3D catalog. |
 | `show-and-focus` | pass | A node is listed once: in focus (marked) or in show (plain), not both. |
 | `unknown-view` | pass | Every view exists in the 3D catalog. |
 | `unknown-clip` | pass | Every clip exists in the 3D catalog. |
 | `unknown-state` | pass | Every inspection state referenced exists. |
 | `unknown-button` | pass | Every button a profile taps exists. |
 | `fact-needs-question` | pass | Every fact a condition reads has a beginner question. |
+| `fact-answers` | pass | An enum fact with answers has an answer text for every value; answers name only its values, or unknown (the wording of the unknown answer). |
+| `fact-3d` | pass | A fact with 3D fields (focus, show, view, animation) has a question: only asked facts show the 3D view. |
 | `fact-group` | pass | Every fact's group (the key before the first dot) has an entry in fact_groups, and every group has a fact. |
 | `fact-range` | pass | Number facts: min is below max, and every value in values and in profiles lies between them. |
 | `condition-value` | pass | Conditions use only allowed values (or unknown). |
@@ -137,6 +144,7 @@ Journeys that end at a shop, a stop or not covered: 2 of 8.
 | `outcome-kind` | pass | An outcome is continue, block, exit, or a follow-up inspection. |
 | `follow-up` | pass | A follow-up inspection is another inspection and has no follow-up of its own. |
 | `sets-fact` | pass | An inspection state sets only facts that no condition reads (no question, not ask: never), to allowed values; no two states set the same. |
+| `tutorial-learns-fact` | pass | A tutorial learns no facts about the bike, only its current state: no inspection a tutorial uses has a state with sets (owner, 2026-11-27). |
 | `jump-in-finish` | pass | No jump-ahead from finish. |
 | `hands-off-only` | pass | Diagnoses, the routine check and a tutorial's checks use only hands-off inspections. |
 | `profile-missing-answer` | pass | Every question a profile journey reaches is answered. |

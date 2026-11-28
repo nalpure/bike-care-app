@@ -54,6 +54,10 @@
                 "additionalProperties": false
               },
               "params": { "type": "object", "additionalProperties": { "type": "string" } },
+              "answers": {
+                "description": "What the owner answers on this journey only, over the profile's answers (for example where two journeys find a part in different places).",
+                "$ref": "#/$defs/factValues"
+              },
               "sees": {
                 "description": "Diagnosis or routine check: inspection id (plus .front or .rear where the check names positions) to the state id the owner sees.",
                 "type": "object",

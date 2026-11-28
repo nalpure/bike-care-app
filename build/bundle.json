@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "98e855905428a6c8",
+  "content_hash": "c0b59c234d9dd640",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -212,7 +212,15 @@
         "inline"
       ],
       "safety": false,
-      "note": "Where the rear gear cable's barrel adjuster is. Never asked as a question: the check barrel-adjuster-present (and its follow-up barrel-adjuster-search) sets it, and once known the check is not shown again. The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars.",
+      "note": "Where the rear gear cable's barrel adjuster is. Asked by the shifting tutorial only (its flow's covers), as the last question before the first card, with the 3D barrel tour (owner, 2026-11-27). 'I cannot find it' is the unknown answer: never stored, and the tutorial ends as not covered. The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars.",
+      "question": {
+        "en": "Where is the barrel adjuster?",
+        "de": "Wo ist der Zugeinsteller?"
+      },
+      "help": {
+        "en": "A small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either. If you find none, follow the gear cable from the right shifter to the rear derailleur: on some bikes the barrel adjuster sits in the cable itself, often near the handlebar.",
+        "de": "Ein kleiner geriffelter Knopf, wo der Schaltzug hineingeht. Schau am Schaltwerk nach, dann dort, wo der Schaltzug den rechten Schalthebel verlässt. Wenn an beiden Stellen einer ist, wähle einen davon. Wenn du keinen findest, folge dem Schaltzug vom rechten Schalthebel bis zum Schaltwerk: An manchen Fahrrädern sitzt der Zugeinsteller im Zug selbst, oft nahe am Lenker."
+      },
       "answers": {
         "derailleur": {
           "en": "At the derailleur",
@@ -225,7 +233,23 @@
         "inline": {
           "en": "On the cable",
           "de": "Im Schaltzug"
+        },
+        "unknown": {
+          "en": "I cannot find it",
+          "de": "Ich finde ihn nicht"
         }
+      },
+      "focus": [
+        "rear_barrel",
+        "front_barrel"
+      ],
+      "show": [
+        "bike"
+      ],
+      "view": "barrel_adjuster_close",
+      "animation": {
+        "clip": "barrel-tour",
+        "caption": "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar."
       }
     },
     {
@@ -702,89 +726,6 @@
             "job": "derailleur-check-at-shop",
             "urgency": "do_not_ride"
           }
-        }
-      ]
-    },
-    {
-      "id": "barrel-adjuster-present",
-      "title": "Find the barrel adjuster",
-      "applies_when": {
-        "drive.gear_type": [
-          "derailleur"
-        ]
-      },
-      "hands_off": true,
-      "minutes": 1,
-      "text": "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.",
-      "question": "Where is it?",
-      "focus": [
-        "barrel_adjuster"
-      ],
-      "show": [
-        "bike"
-      ],
-      "view": "barrel_adjuster_close",
-      "animation": {
-        "clip": "barrel-tour",
-        "caption": "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar."
-      },
-      "states": [
-        {
-          "id": "at-derailleur",
-          "label": "At the derailleur",
-          "meaning": "The cable tension can be set at the derailleur.",
-          "sets": {
-            "drive.barrel_adjuster": "derailleur"
-          }
-        },
-        {
-          "id": "at-shifter",
-          "label": "At the shifter",
-          "meaning": "The cable tension can be set at the shifter. It works the same way.",
-          "sets": {
-            "drive.barrel_adjuster": "shifter"
-          }
-        },
-        {
-          "id": "cant-find",
-          "label": "I cannot find it",
-          "meaning": "Look along the cable next."
-        }
-      ]
-    },
-    {
-      "id": "barrel-adjuster-search",
-      "title": "Look along the cable",
-      "applies_when": {
-        "drive.gear_type": [
-          "derailleur"
-        ]
-      },
-      "hands_off": true,
-      "minutes": 1,
-      "text": "Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.",
-      "question": "Found it?",
-      "focus": [
-        "shift_cable",
-        "front_barrel"
-      ],
-      "show": [
-        "bike"
-      ],
-      "view": "drive_side",
-      "states": [
-        {
-          "id": "on-cable",
-          "label": "It is on the cable",
-          "meaning": "The cable tension can be set there. It works the same way.",
-          "sets": {
-            "drive.barrel_adjuster": "inline"
-          }
-        },
-        {
-          "id": "not-found",
-          "label": "I still cannot find it",
-          "meaning": "This bike may have no barrel adjuster."
         }
       ]
     },
@@ -1700,39 +1641,25 @@
       "choices": [
         "hold_bike"
       ],
-      "checks": [
-        {
-          "inspect": "derailleur-alignment",
-          "outcomes": {
-            "straight": "continue",
-            "crooked": {
-              "exit": {
-                "kind": "unsafe",
-                "text": "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-              }
-            }
-          }
+      "covers": {
+        "when": {
+          "drive.barrel_adjuster": [
+            "derailleur",
+            "shifter",
+            "inline"
+          ]
         },
-        {
-          "inspect": "barrel-adjuster-present",
-          "outcomes": {
-            "at-derailleur": "continue",
-            "at-shifter": "continue",
-            "cant-find": {
-              "inspect": "barrel-adjuster-search",
-              "outcomes": {
-                "on-cable": "continue",
-                "not-found": {
-                  "exit": {
-                    "kind": "not_covered",
-                    "text": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
-                  }
-                }
-              }
-            }
+        "not_covered": [
+          {
+            "when": {
+              "drive.barrel_adjuster": [
+                "unknown"
+              ]
+            },
+            "text": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
           }
-        }
-      ],
+        ]
+      },
       "cases": [
         {
           "when": {

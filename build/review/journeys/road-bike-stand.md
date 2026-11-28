@@ -7,7 +7,7 @@ Road bike, 11-speed mechanical rear derailleur. The owner has a work stand.
 | | |
 | --- | --- |
 | Known before the first flow | `bike.brand` = Corvana<br>`bike.line` = Strada<br>`bike.model` = SL 3<br>`bike.year` = 2020<br>`bike.handlebar` = drop ("Drop bar, curved down")<br>`bike.colour` = #1f4e79<br>`geometry.stack_mm` = 560<br>`geometry.reach_mm` = 385<br>`geometry.head_tube_mm` = 150<br>`geometry.seat_tube_mm` = 520<br>`geometry.top_tube_mm` = 550<br>`geometry.chainstay_mm` = 410<br>`geometry.wheelbase_mm` = 990<br>`geometry.bb_drop_mm` = 72<br>`geometry.head_angle_deg` = 73<br>`geometry.seat_angle_deg` = 73.5<br>`geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)")<br>`bike.category` = road_gravel ("Road or gravel bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.rear_speeds` = 11<br>`drive.rear_derailleur_model` = Shimano 105 RD-R7000 |
-| Answers when asked | none |
+| Answers when asked | `drive.barrel_adjuster` = derailleur ("At the derailleur") |
 | Tools with them | Bike work stand |
 
 ## Journey 1: Adjusting in the stand, but the chain falls off on the test ride
@@ -53,7 +53,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-smaller.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 27 to 32 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 24 to 29 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -62,7 +62,9 @@ The owner chooses: **Do it myself**.
 
 #### Before you start
 
-No questions: everything needed is already known.
+Questions:
+
+1. "Where is the barrel adjuster?" → At the derailleur <sub>(with the 3D view)</sub>
 
 **How will you hold the bike while you work?**
 
@@ -80,29 +82,11 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: Bike work stand ✓. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
 
-Time shown for this bike: 27 to 32 min (depends on how the bike is held).
+Time shown for this bike: 24 to 29 min (depends on how the bike is held).
 
 #### Steps
 
-##### – Look at the rear derailleur · `derailleur-alignment` · not shown again: answered earlier in this session ("It hangs straight down, in line with the sprockets")
-
-##### 1. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
-
-Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
-
-<sub>3D: focus barrel_adjuster · show bike · view barrel_adjuster_close</sub>
-
-Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
-
-**Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
-
-- [ ] **At the derailleur** — The cable tension can be set at the derailleur. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur ◀ **this path**
-- [ ] **At the shifter** — The cable tension can be set at the shifter. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
-- [ ] **I cannot find it** — Look along the cable next. → next card: "Look along the cable" (`barrel-adjuster-search`), shown only after this answer
-
-Learned for the bike: `drive.barrel_adjuster` = derailleur.
-
-##### 2. Clamp the bike in the stand · `clamp-in-stand` · action · 2 min · from procedure `hold-bike`
+##### 1. Clamp the bike in the stand · `clamp-in-stand` · action · 2 min · from procedure `hold-bike`
 
 Clamp the seat post in the stand so the rear wheel hangs free. With a heavy bike, ask someone to help you lift it.
 
@@ -114,7 +98,7 @@ Tools: Bike work stand
 
 <sub>State: +bike_in_stand → now: bike_in_stand</sub>
 
-##### 3. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
+##### 2. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
 
 Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.
 
@@ -122,7 +106,7 @@ Turn the pedals forward by hand and use the right shifter until the chain sits o
 
 Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
-##### 4. Set the outer limit (H screw) · `check-high-limit` · check · 3 min
+##### 3. Set the outer limit (H screw) · `check-high-limit` · check · 3 min
 
 The chain is on the smallest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the smallest sprocket.
 
@@ -138,7 +122,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met
 
-##### 5. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
+##### 4. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
 
 Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.
 
@@ -146,7 +130,7 @@ Turn the pedals slowly by hand and shift one gear at a time until the chain sits
 
 Animation: "Shift one gear at a time" (clip shift-to-largest)
 
-##### 6. Set the inner limit (L screw) · `check-low-limit` · check · 3 min
+##### 5. Set the inner limit (L screw) · `check-low-limit` · check · 3 min
 
 The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket.
 
@@ -162,7 +146,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 7. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
+##### 6. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
 
 Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket.
 
@@ -178,7 +162,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the L screw clockwise a quarter turn" (l_screw rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 8. Check the gap to the sprockets · `check-b-gap` · check · 3 min
+##### 7. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
 Keep the chain on the largest sprocket. Look from the side: the gap between the upper toothed wheel of the derailleur and the sprocket should be small, and the teeth should not touch.
 
@@ -196,7 +180,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the B screw counterclockwise a little" (b_screw rotate, counterclockwise, a little)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 9. Set the cable tension · `check-cable-tension` · check · 5 min
+##### 8. Set the cable tension · `check-cable-tension` · check · 5 min
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
 
@@ -212,7 +196,7 @@ Animation: "Shift through every gear and back" (clip shift-through-gears)
   - Plays at once: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 10. Take the bike out of the stand · `unclamp-from-stand` · action · 1 min · from procedure `release-bike`
+##### 9. Take the bike out of the stand · `unclamp-from-stand` · action · 1 min · from procedure `release-bike`
 
 Hold the bike, open the stand clamp and put the bike on its wheels. With a heavy bike, ask someone to help.
 
@@ -226,7 +210,7 @@ Tools: Bike work stand
 
 ##### Finish
 
-##### 11. Test ride the gears · `test-ride-gears` · safety check · 3 min
+##### 10. Test ride the gears · `test-ride-gears` · safety check · 3 min
 
 Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
 
@@ -255,7 +239,7 @@ Buttons: [Find a shop]
 - Stopped at: `test-ride-gears`, "chain-off"
 - Price: no estimate yet
 
-**Journey ends:** exit (unsafe) at test-ride-gears. **Time:** 30 min. **Questions asked:** 0.
+**Journey ends:** exit (unsafe) at test-ride-gears. **Time:** 29 min. **Questions asked:** 1.
 
 ---
 
@@ -263,83 +247,21 @@ Buttons: [Find a shop]
 
 <sub>journey id `no-barrel-adjuster`</sub>
 
+Answers on this journey: `drive.barrel_adjuster` = unknown ("I cannot find it")
+
 ### Tutorial: Adjust the rear gears
 
 #### Before you start
 
-No questions: everything needed is already known.
+Questions:
 
-**How will you hold the bike while you work?**
+1. "Where is the barrel adjuster?" → I cannot find it <sub>(with the 3D view)</sub>
 
-- In a work stand (recommended; needs: Bike work stand) ◀ **chosen**
-  - The easiest way. The rear wheel turns freely and the bike cannot fall.
-  - ⚠ Heavy bikes, such as e-bikes, can be too heavy for a small stand. Check the stand's maximum load.
-- Hanging from a hook or a rope (needs: Strong hook or rope that can carry the bike)
-  - The rear wheel hangs free, so you can turn the pedals by hand.
-  - ⚠ The hook or rope must carry the whole bike. A heavy bike can fall and hurt you.
-- Upside down, on saddle and handlebar
-  - Needs no tools. The rear wheel turns freely.
-  - ⚠ Turning a heavy bike over can hurt you. Ask someone to help.
-- On its wheels, and test with short rides
-  - Needs no tools, but takes longer. You adjust while the bike stands and test by riding.
-
-Tools picker. Needed: Bike work stand ✓. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: none. (✓ = the owner has it)
-
-Time shown for this bike: 27 to 32 min (depends on how the bike is held).
-
-#### Steps
-
-##### 1. Look at the rear derailleur · `derailleur-alignment` · inspection · 1 min
-
-Stand behind the bike and look at the rear derailleur, the part below the sprockets that guides the chain.
-
-<sub>3D: focus derailleur_hanger · show rear_derailleur, cassette, rear_end · view hanger_from_behind</sub>
-
-Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
-
-- [ ] **It hangs straight down, in line with the sprockets** — The derailleur does not look bent. → continue ◀ **this path**
-- [ ] **It leans towards the spokes, or looks twisted** — The derailleur or the part that holds it may be bent. → **EXIT, unsafe**: Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop.
-
-##### 2. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
-
-Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
-
-<sub>3D: focus barrel_adjuster · show bike · view barrel_adjuster_close</sub>
-
-Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
-
-**Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
-
-- [ ] **At the derailleur** — The cable tension can be set at the derailleur. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur
-- [ ] **At the shifter** — The cable tension can be set at the shifter. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
-- [ ] **I cannot find it** — Look along the cable next. → next card: "Look along the cable" (`barrel-adjuster-search`), shown only after this answer ◀ **this path**
-
-##### 3. Look along the cable · `barrel-adjuster-search` · inspection · 1 min
-
-Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.
-
-<sub>3D: focus shift_cable, front_barrel · show bike · view drive_side</sub>
-<sub>Shown only after the answer "I cannot find it" to `barrel-adjuster-present`.</sub>
-
-
-**Found it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
-
-- [ ] **It is on the cable** — The cable tension can be set there. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = On the cable
-- [ ] **I still cannot find it** — This bike may have no barrel adjuster. → **EXIT, not covered**: Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you. ◀ **this path**
-
-**Not covered yet** (the progress bar does not move): "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+**Not covered yet:** Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
 
 Buttons: [Find a shop] [Ask the assistant]
 
-**Shop summary** (to show or tell the mechanic):
-
-- Bike: Road bike with a work stand. `bike.brand` = Corvana; `bike.line` = Strada; `bike.model` = SL 3; `bike.year` = 2020; `bike.handlebar` = drop ("Drop bar, curved down"); `bike.colour` = #1f4e79; `geometry.stack_mm` = 560; `geometry.reach_mm` = 385; `geometry.head_tube_mm` = 150; `geometry.seat_tube_mm` = 520; `geometry.top_tube_mm` = 550; `geometry.chainstay_mm` = 410; `geometry.wheelbase_mm` = 990; `geometry.bb_drop_mm` = 72; `geometry.head_angle_deg` = 73; `geometry.seat_angle_deg` = 73.5; `geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)"); `bike.category` = road_gravel ("Road or gravel bike"); `bike.ebike` = false ("No motor"); `drive.gear_type` = derailleur ("Chain and derailleur"); `drive.shifting` = mechanical ("With a cable"); `drive.rear_speeds` = 11; `drive.rear_derailleur_model` = Shimano 105 RD-R7000
-- Job: Adjust the rear gears
-- Tell the mechanic: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable."
-- Stopped at: `barrel-adjuster-search`, "not-found"
-- Price: no estimate yet
-
-**Journey ends:** exit (not_covered) at barrel-adjuster-search. **Time:** 3 min. **Questions asked:** 0.
+**Journey ends:** not covered. **Time:** 0 min. **Questions asked:** 1.
 
 ---
 

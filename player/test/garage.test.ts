@@ -16,7 +16,7 @@ const c = new Content(JSON.parse(readFileSync(join(REPO, 'build/bundle.json'), '
 const demos = c.bundle.demo_bikes;
 const shifting = { tutorial: 'adjust-rear-shifting' };
 
-/** Answers the two questions the shifting guide asks a bike nothing is known about. */
+/** Answers the three questions the shifting guide asks a bike nothing is known about (the barrel's last, with 3D). */
 function answerShifting(j: Journey, gear: string = 'derailleur'): void {
   let s = j.screen();
   expect(s.kind === 'question' && s.key).toBe('drive.gear_type');
@@ -24,7 +24,12 @@ function answerShifting(j: Journey, gear: string = 'derailleur'): void {
   s = j.screen();
   expect(s.kind === 'question' && s.key).toBe('drive.shifting');
   j.answerFact('drive.shifting', 'mechanical');
+  s = j.screen();
+  expect(s.kind === 'question' && s.key).toBe('drive.barrel_adjuster');
+  j.answerFact('drive.barrel_adjuster', 'derailleur');
 }
+
+const LEARNED = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.barrel_adjuster': 'derailleur' };
 
 describe('store', () => {
   it('fills the garage with the test bikes, and a reset brings them back', () => {
@@ -122,9 +127,9 @@ describe('keeping what a flow learned', () => {
     expect(s.kind).toBe('keep');
     if (s.kind !== 'keep') return;
     expect(s.bike).toBe('Blue');
-    expect(s.learned.map(([k]) => k)).toEqual(['drive.gear_type', 'drive.shifting']);
+    expect(s.learned.map(([k]) => k)).toEqual(Object.keys(LEARNED));
     j.keepSave();
-    expect(b.facts).toEqual({ 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' });
+    expect(b.facts).toEqual(LEARNED);
     expect(j.screen().kind).toBe('choice');
   });
 
@@ -149,7 +154,7 @@ describe('keeping what a flow learned', () => {
     j.keepSave('   ');
     expect(store.garage()).toHaveLength(0);
     j.keepSave('Red one');
-    expect(store.garage().map((b) => [b.name, b.facts])).toEqual([['Red one', { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' }]]);
+    expect(store.garage().map((b) => [b.name, b.facts])).toEqual([['Red one', LEARNED]]);
     expect(j.garageBike?.name).toBe('Red one');
   });
 
@@ -171,9 +176,12 @@ describe('keeping what a flow learned', () => {
     const store = new Store(memoryKV());
     const road = demos.find((d) => d.id === 'road-bike-stand')!;
     const j = new Journey(c, store, null, new Session(), shifting, road.facts);
+    // the road bike's data does not say where its barrel adjuster is: that is asked first
+    expect(j.screen().kind === 'question').toBe(true);
+    j.answerFact('drive.barrel_adjuster', 'derailleur');
     const s = j.screen();
     expect(s.kind).toBe('keep');
-    if (s.kind === 'keep') expect(s.learned.length).toBe(Object.keys(road.facts).length);
+    if (s.kind === 'keep') expect(s.learned.length).toBe(Object.keys(road.facts).length + 1);
   });
 
   it('findings of a garage bike reach it without the offer', () => {

@@ -22,7 +22,7 @@ job:
   difficulty: 2
   choices: [hold_bike]
   # Only a mechanical derailleur is covered, so the flow has no branch by mechanism.
-  # Every diagnosis with covers_like this job reads these covers too.
+  # Every diagnosis with covers_like this job reads these covers too (not the flow's own covers below).
   covers:
     when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
     not_covered:
@@ -45,27 +45,15 @@ job:
     price_source: "<source, date>"
 
 flow:
-  # Before the work, in every way. After a diagnosis that already looked, they are not shown again.
-  checks:
-    - inspect: derailleur-alignment
-      outcomes:
-        straight: continue
-        crooked:
-          exit:
-            kind: unsafe
-            text: "Do not ride. The derailleur or the part that holds it may be bent, and it can catch in the spokes. Take the bike to a shop."
-    - inspect: barrel-adjuster-present
-      outcomes:
-        at-derailleur: continue
-        at-shifter: continue
-        cant-find:
-          inspect: barrel-adjuster-search
-          outcomes:
-            on-cable: continue
-            not-found:
-              exit:
-                kind: not_covered
-                text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+  # A tutorial runs no checks before the work (owner, 2026-11-27); the diagnosis is where they are run.
+  # Doing it yourself needs a barrel adjuster: its place is asked in the facts phase, as the last question,
+  # with the 3D view (the fact has 3D fields). "I cannot find it" is the unknown answer: never stored, so the
+  # next sitting asks again. A shop can still do the job, so the diagnosis does not read this.
+  covers:
+    when: { drive.barrel_adjuster: [derailleur, shifter, inline] }
+    not_covered:
+      - when: { drive.barrel_adjuster: [unknown] }
+        text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
   # The ways differ by how the bike is held: with the rear wheel free the user turns the pedals
   # by hand; on its wheels the user adjusts while the bike stands and tests with short rides.
   ways:

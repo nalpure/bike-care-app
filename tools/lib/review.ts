@@ -206,9 +206,15 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
     if (!f.question) continue;
     const body = [`"${f.question.en}"${f.question.de ? ` / "${f.question.de}"` : ''}`, '', `<sub>Label on the bike sheet: ${f.label.en}${f.label.de ? ` / ${f.label.de}` : ''}</sub>`, ''];
     if (f.help) body.push(`Help behind "?": ${f.help.en}${f.help.de ? ` / ${f.help.de}` : ''}`, '');
-    for (const [v, a] of Object.entries<any>(f.answers ?? {})) body.push(`- \`${v}\`: ${a.en}${a.de ? ` / ${a.de}` : ''}`);
-    body.push('- I\'ll check later (unknown)');
+    for (const [v, a] of Object.entries<any>(f.answers ?? {})) if (v !== 'unknown') body.push(`- \`${v}\`: ${a.en}${a.de ? ` / ${a.de}` : ''}`);
+    const u = f.answers?.unknown;
+    body.push(u ? `- \`unknown\`: ${u.en}${u.de ? ` / ${u.de}` : ''} <sub>(never stored on the bike)</sub>` : '- I\'ll check later (unknown)');
     if (f.question.picture) body.push('', `<sub>Picture set: ${f.question.picture}</sub>`);
+    // Optional 3D (owner, 2026-11-27): asked with the 3D view, after the plain questions.
+    const scene = sceneLine(f);
+    if (scene || f.animation) body.push('', '<sub>Asked with the 3D view, after every plain question of the flow.</sub>');
+    if (scene) body.push('', scene);
+    if (f.animation) body.push('', `Animation: ${anim(f.animation)}`);
     add('fact', key, `Question: ${key}`, f, ['beginner'], body);
   }
   const tr = (t: any) => `${t?.en ?? ''}${t?.de ? ` / ${t.de}` : ''}`;
@@ -309,6 +315,12 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   L.push(`- Run choices: ${(def.choices ?? []).map((x: string) => `\`${x}\``).join(', ') || 'none'}`, `- Difficulty ${def.difficulty}`, '');
 
   L.push(...coverageLines(c, def.job));
+  if (def.covers) {
+    // The flow's own covers: what doing it yourself needs; diagnoses do not read them.
+    L.push('## Bikes covered by the tutorial', '', `Read after the job's covers, by the tutorial only (a shop can still do the job). Covers bikes where ${cond(def.covers.when)}. Any other bike ends at the first match:`, '');
+    for (const nc of def.covers.not_covered) L.push(`- when ${cond(nc.when)} → ${exitTag('not_covered')}: "${nc.text}"`);
+    L.push('');
+  }
 
   // Branches
   L.push('## Branches', '', 'Evaluated top to bottom; the first match wins.', '');
@@ -342,7 +354,8 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
     const complete = paths.filter((p) => p.variant.ending === 'complete' && !p.variant.skip);
     const choices = [...new Set(complete.map((p) => p.combo.asked.filter((k) => k.startsWith('choice.')).map((k) => String(p.combo.assign[k])).join(', ')))].filter(Boolean);
     L.push(`## Case \`${name}\`${choices.length ? ` (${choices.join(' · ')})` : ''}`, '');
-    L.push(`Time of the complete path: ${complete.map((p) => `${p.minutes} min${p.combo.asked.some((k) => k.startsWith('choice.')) ? ` (${p.combo.asked.filter((k) => k.startsWith('choice.')).map((k) => p.combo.assign[k]).join(', ')})` : ''}`).join(', ') || '-'}`, '');
+    const times = complete.map((p) => `${p.minutes} min${p.combo.asked.some((k) => k.startsWith('choice.')) ? ` (${p.combo.asked.filter((k) => k.startsWith('choice.')).map((k) => p.combo.assign[k]).join(', ')})` : ''}`);
+    L.push(`Time of the complete path: ${[...new Set(times)].join(', ') || '-'}`, '');
     // what is apart before each case item, over all complete paths of this case
     const apartAt = (list: string, i: number): string => {
       const sets = new Set<string>();

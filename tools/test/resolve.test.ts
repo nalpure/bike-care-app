@@ -51,7 +51,7 @@ describe('shared resolver on the written bundle', () => {
 
   it('shows only the tool the bike data names, and every option otherwise', () => {
     const t = ix.tutorials.get('adjust-rear-shifting');
-    const base = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'choice.hold_bike': 'stand' };
+    const base = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.barrel_adjuster': 'derailleur', 'choice.hold_bike': 'stand' };
     const sets = (extra: Record<string, Value>) => R.mergeTools(R.combined(R.resolveTutorial(ix, t, fixedReader({ ...base, ...extra }))).map((it) => it.tools)).one_of;
     expect(sets({ 'drive.rear_derailleur_screws': 'hex' })).toEqual([{ set: 'derailleur-screw-tool', options: ['small-hex-keys'], decided: true }]);
     expect(sets({})).toEqual([{ set: 'derailleur-screw-tool', options: ['small-cross-screwdriver', 'small-hex-keys'], decided: false }]);

@@ -27,53 +27,6 @@ inspections:
         meaning: "The derailleur or the part that holds it may be bent."
         leads_to: { job: derailleur-check-at-shop, urgency: do_not_ride }
 
-  - id: barrel-adjuster-present
-    title: "Find the barrel adjuster"
-    applies_when: { drive.gear_type: [derailleur] }
-    hands_off: true
-    minutes: 1
-    text: "Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either."
-    question: "Where is it?"
-    # 3D: a tour from the derailleur along the cable to the front, every barrel place marked (clip barrel-tour).
-    focus: [barrel_adjuster]
-    show: [bike]
-    view: barrel_adjuster_close
-    animation: { clip: barrel-tour, caption: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." }
-    states:
-      - id: at-derailleur
-        label: "At the derailleur"
-        meaning: "The cable tension can be set at the derailleur."
-        sets: { drive.barrel_adjuster: derailleur }
-      - id: at-shifter
-        label: "At the shifter"
-        meaning: "The cable tension can be set at the shifter. It works the same way."
-        sets: { drive.barrel_adjuster: shifter }
-      - id: cant-find
-        label: "I cannot find it"
-        meaning: "Look along the cable next."
-
-  # Follow-up of barrel-adjuster-present, shown only after "I cannot find it".
-  - id: barrel-adjuster-search
-    title: "Look along the cable"
-    applies_when: { drive.gear_type: [derailleur] }
-    hands_off: true
-    minutes: 1
-    text: "Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar."
-    question: "Found it?"
-    # 3D: the whole cable route; marked: the cable and the barrel place on it near the handlebar
-    # (behind a drop bar, on the shifter of a flat bar).
-    focus: [shift_cable, front_barrel]
-    show: [bike]
-    view: drive_side
-    states:
-      - id: on-cable
-        label: "It is on the cable"
-        meaning: "The cable tension can be set there. It works the same way."
-        sets: { drive.barrel_adjuster: inline }
-      - id: not-found
-        label: "I still cannot find it"
-        meaning: "This bike may have no barrel adjuster."
-
   - id: chain-condition
     title: "Look at the chain"
     applies_when: { drive.gear_type: [derailleur, hub_gear, gearbox, single_speed] }

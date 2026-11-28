@@ -3,7 +3,7 @@
 // The loader expands it into the structures the rest of the build reads, so references, resolving,
 // simulation and the bundle work on the same shapes for every job:
 //  - the job entry: the header without the tutorial fields;
-//  - the tutorial (only when the file has a flow): the tutorial fields, the checks, and one case per way;
+//  - the tutorial (only when the file has a flow): the tutorial fields, the flow's own covers, the checks, and one case per way;
 //  - each way's case: the work and the finish with every branch resolved for that way;
 //  - the cards, as steps.
 // The tutorial and the cases are views of the job file (YamlFile.toDoc): an issue found in them points at
@@ -108,6 +108,7 @@ export function expandJobFile(f: YamlFile, issues: Issues): ExpandedJob | null {
   // The tutorial, in the shape the bundle has always had: tutorial fields, checks, cases, id, job.
   const def: any = {};
   for (const [k, v] of Object.entries(header)) if (TUTORIAL_KEYS.includes(k)) def[k] = v;
+  if (flow.covers) def.covers = flow.covers;
   if (flow.checks) def.checks = flow.checks;
   def.cases = ways.map((w) => (flow.ways ? { when: wayDefs[w].when, way: w } : { way: w }));
   def.id = id;
@@ -116,7 +117,7 @@ export function expandJobFile(f: YamlFile, issues: Issues): ExpandedJob | null {
     const [, k, ...rest] = p;
     if (k === undefined || k === 'id' || k === 'job') return ['flow'];
     if (TUTORIAL_KEYS.includes(k as string)) return ['job', k, ...rest];
-    if (k === 'checks') return ['flow', 'checks', ...rest];
+    if (k === 'checks' || k === 'covers') return ['flow', k, ...rest];
     if (k === 'cases') {
       const i = rest[0];
       if (!flow.ways || typeof i !== 'number') return ['flow', 'ways'];

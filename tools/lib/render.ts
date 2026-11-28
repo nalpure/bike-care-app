@@ -30,17 +30,28 @@ export function factLine(c: Content, key: string, value: Value): string {
   if (key.startsWith('tool.')) return `${toolName(c, key.slice(5))}: ${value ? 'has it' : 'does not have it'}`;
   const f = factDef(c, key);
   const ans = f?.def.answers?.[String(value)]?.en;
-  if (String(value) === UNKNOWN) return `\`${key}\` = unknown ("I'll check later")`;
+  if (String(value) === UNKNOWN) return `\`${key}\` = unknown ("${unknownAnswer(f?.def)}")`;
   return ans ? `\`${key}\` = ${value} ("${ans}")` : `\`${key}\` = ${value}`;
+}
+
+/** The unknown answer as the user reads it: the fact's own wording (answers.unknown), else the app's "I'll check later". */
+export function unknownAnswer(f: any): string {
+  return f?.answers?.unknown?.en ?? "I'll check later";
+}
+
+/** A fact asked with the 3D view (any of focus, show, view, animation): asked after the plain questions. */
+export function has3d(f: any): boolean {
+  return !!f && ['focus', 'show', 'view', 'animation'].some((k) => f[k] !== undefined);
 }
 
 export function questionLine(c: Content, key: string, value: Value): string {
   if (key.startsWith('choice.')) return factLine(c, key, value);
   const f = factDef(c, key);
   const q = f?.def.question?.en ?? key;
-  if (String(value) === UNKNOWN) return `"${q}" → I'll check later`;
+  const with3d = has3d(f?.def) ? ' <sub>(with the 3D view)</sub>' : '';
+  if (String(value) === UNKNOWN) return `"${q}" → ${unknownAnswer(f?.def)}${with3d}`;
   const ans = f?.def.answers?.[String(value)]?.en ?? String(value);
-  return `"${q}" → ${ans}`;
+  return `"${q}" → ${ans}${with3d}`;
 }
 
 function humanKind(it: PathItem): string {
@@ -179,7 +190,7 @@ export function setsText(c: Content, st: any): string {
     const f = c.facts.get(k)?.def;
     return `${f?.label?.en ?? k} = ${f?.answers?.[String(v)]?.en ?? v}`;
   });
-  return ` · learned for the bike (kept if the user agrees; then this card is not shown again): ${parts.join(', ')}`;
+  return ` · sets for the bike (the app does not read it yet; never in a tutorial): ${parts.join(', ')}`;
 }
 
 export function toolSummary(_c: Content, items: PathItem[]): ToolList {

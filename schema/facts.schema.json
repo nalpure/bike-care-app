@@ -69,7 +69,7 @@
             "additionalProperties": false
           },
           "answers": {
-            "description": "The answer button for each value, in the user's words.",
+            "description": "The answer button for each value, in the user's words. The key unknown words the answer for the unknown value instead of the app's \"I'll check later\" (for example \"I cannot find it\"); it is shown as an answer button and, like every unknown answer, never stored on the bike.",
             "type": "object",
             "additionalProperties": {
               "type": "object",
@@ -86,6 +86,18 @@
             "enum": ["when_needed", "never"]
           },
           "safety": { "type": "boolean" },
+          "focus": {
+            "description": "Optional 3D, as on a card (owner, 2026-11-27): the small parts the question marks in colour. A fact with any 3D field is asked with the 3D view, after every plain question of the flow; a fact without them stays a plain question.",
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/nodeName" }
+          },
+          "show": {
+            "description": "Optional 3D: the parts drawn plain. A name goes in one of focus and show, not both.",
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/nodeName" }
+          },
+          "view": { "description": "Optional 3D: the camera view.", "$ref": "common.schema.json#/$defs/nodeName" },
+          "animation": { "description": "Optional 3D: a clip or a generic motion, as on a card.", "$ref": "common.schema.json#/$defs/animation" },
           "note": { "type": "string", "description": "For authors. Never shown." }
         },
         "required": ["key", "type", "label", "safety"],

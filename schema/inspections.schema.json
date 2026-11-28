@@ -48,7 +48,7 @@
                 "meaning": { "$ref": "common.schema.json#/$defs/text" },
                 "leads_to": { "$ref": "common.schema.json#/$defs/leadsTo" },
                 "sets": {
-                  "description": "Tutorials only: lasting facts this answer tells about the bike, such as { drive.barrel_adjuster: shifter }. They are kept on the bike only if the user agrees (the keep screen). When they are already known, the inspection is answered from them and not shown.",
+                  "description": "Lasting facts this answer tells about the bike. Not allowed on an inspection a tutorial uses: a tutorial learns no facts about the bike, only its current state (owner, 2026-11-27); ask the fact in the facts phase instead. Diagnoses and the routine check do not read it yet.",
                   "type": "object",
                   "minProperties": 1,
                   "propertyNames": { "$ref": "common.schema.json#/$defs/factKey" },

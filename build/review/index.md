@@ -5,7 +5,7 @@
 One line per review unit. A sign-off counts only while the unit is unchanged (same hash).
 Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`. See `npm run review -- help`.
 
-- Cards: 0 of 43 fully approved
+- Cards: 0 of 42 fully approved
 - Flow trees: 0 of 3 fully approved
 - Journeys: 0 of 8 fully approved
 
@@ -15,8 +15,6 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `tree:diagnosis:gears-shift-badly` | Diagnosis: My gears don't shift cleanly | ⬜ not reviewed | — | [trees/gears-shift-badly.md](trees/gears-shift-badly.md) |
 | `tree:check:routine-check` | Routine check | ⬜ not reviewed | — | [trees/routine-check.md](trees/routine-check.md) |
 | `card:inspection:derailleur-alignment` | Look at the rear derailleur | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:inspection:barrel-adjuster-present` | Find the barrel adjuster | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
-| `card:inspection:barrel-adjuster-search` | Look along the cable | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:inspection:chain-condition` | Look at the chain | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:inspection:shift-test-ride` | Test ride the gears | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:step:clamp-in-stand` | Clamp the bike in the stand | ⬜ not reviewed | ⬜ not reviewed | [cards.md](cards.md) |
@@ -41,6 +39,7 @@ Sign with `npm run review -- sign <unit> --role mechanic|beginner --by "<name>"`
 | `card:fact:bike.ebike` | Question: bike.ebike | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.gear_type` | Question: drive.gear_type | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact:drive.shifting` | Question: drive.shifting | — | ⬜ not reviewed | [cards.md](cards.md) |
+| `card:fact:drive.barrel_adjuster` | Question: drive.barrel_adjuster | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact-group:bike` | Bike sheet: Bike / Fahrrad | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact-group:drive` | Bike sheet: Drivetrain / Antrieb | — | ⬜ not reviewed | [cards.md](cards.md) |
 | `card:fact-group:geometry` | Bike sheet: Geometry / Geometrie | — | ⬜ not reviewed | [cards.md](cards.md) |

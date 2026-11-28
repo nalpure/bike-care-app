@@ -7,7 +7,7 @@ Trekking-style city bike, mechanical rear derailleur, no motor. The owner knows 
 | | |
 | --- | --- |
 | Known before the first flow | `bike.brand` = Brightwater<br>`bike.model` = City 8<br>`bike.year` = 2021<br>`bike.handlebar` = flat ("Flat bar")<br>`bike.colour` = #2e7d32<br>`geometry.wheel_bsd_mm` = 622 ("28 or 29 inch, 700C (622 mm)")<br>`bike.category` = trekking_city ("Trekking or city bike")<br>`bike.ebike` = false ("No motor")<br>`drive.gear_type` = derailleur ("Chain and derailleur") |
-| Answers when asked | `drive.shifting` = mechanical ("With a cable") |
+| Answers when asked | `drive.shifting` = mechanical ("With a cable")<br>`drive.barrel_adjuster` = shifter ("At the shifter") |
 | Tools with them | none |
 
 ## Journey 1: Slow shifting, adjusted at home with the bike upside down
@@ -55,7 +55,7 @@ Finding stored on the bike: `shift-test-ride` = slow-to-bigger.
 
 ### Job screen: Adjust the rear gears · soon
 
-- **Do it myself**: tutorial `adjust-rear-shifting`, 27 to 32 min for this bike, difficulty 2
+- **Do it myself**: tutorial `adjust-rear-shifting`, 24 to 29 min for this bike, difficulty 2
 - **Take it to a shop**: "The rear gears shift slowly or noisily. Please adjust the rear derailleur and check the gear cable." Price: no estimate yet.
 
 The owner chooses: **Do it myself**.
@@ -64,7 +64,9 @@ The owner chooses: **Do it myself**.
 
 #### Before you start
 
-No questions: everything needed is already known.
+Questions:
+
+1. "Where is the barrel adjuster?" → At the shifter <sub>(with the 3D view)</sub>
 
 **How will you hold the bike while you work?**
 
@@ -82,29 +84,11 @@ No questions: everything needed is already known.
 
 Tools picker. Needed: none. One of these, depending on your part: Small cross-head screwdriver or Small hex keys (Look at the small screws on the back of the rear derailleur. A cross in the screw head needs the screwdriver. A six-sided hole needs a hex key.). Helpful: Soft mat or old blanket. (✓ = the owner has it)
 
-Time shown for this bike: 27 to 32 min (depends on how the bike is held).
+Time shown for this bike: 24 to 29 min (depends on how the bike is held).
 
 #### Steps
 
-##### – Look at the rear derailleur · `derailleur-alignment` · not shown again: answered earlier in this session ("It hangs straight down, in line with the sprockets")
-
-##### 1. Find the barrel adjuster · `barrel-adjuster-present` · inspection · 1 min
-
-Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
-
-<sub>3D: focus barrel_adjuster · show bike · view barrel_adjuster_close</sub>
-
-Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
-
-**Where is it?** <sub>A tap on an answer that goes on moves to the next card at once.</sub>
-
-- [ ] **At the derailleur** — The cable tension can be set at the derailleur. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur
-- [ ] **At the shifter** — The cable tension can be set at the shifter. It works the same way. → continue · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter ◀ **this path**
-- [ ] **I cannot find it** — Look along the cable next. → next card: "Look along the cable" (`barrel-adjuster-search`), shown only after this answer
-
-Learned for the bike: `drive.barrel_adjuster` = shifter.
-
-##### 2. Turn the bike over · `turn-upside-down` · action · 2 min · from procedure `hold-bike`
+##### 1. Turn the bike over · `turn-upside-down` · action · 2 min · from procedure `hold-bike`
 
 Lay a soft mat on the floor and turn the bike over onto its saddle and handlebar. With a heavy bike, ask someone to help.
 
@@ -116,7 +100,7 @@ Tools: Soft mat or old blanket (helpful)
 
 <sub>State: +bike_upside_down → now: bike_upside_down</sub>
 
-##### 3. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
+##### 2. Shift to the hardest gear · `shift-to-smallest-sprocket` · action · 1 min
 
 Turn the pedals forward by hand and use the right shifter until the chain sits on the smallest sprocket, the hardest gear.
 
@@ -124,7 +108,7 @@ Turn the pedals forward by hand and use the right shifter until the chain sits o
 
 Animation: "Shift while the pedals turn" (clip shift-to-smallest)
 
-##### 4. Set the outer limit (H screw) · `check-high-limit` · check · 3 min
+##### 3. Set the outer limit (H screw) · `check-high-limit` · check · 3 min
 
 The chain is on the smallest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the smallest sprocket.
 
@@ -140,7 +124,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the H screw counterclockwise a quarter turn" (h_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met
 
-##### 5. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
+##### 4. Shift to the easiest gear · `shift-to-largest-sprocket` · action · 1 min
 
 Turn the pedals slowly by hand and shift one gear at a time until the chain sits on the largest sprocket, the easiest gear. If the derailleur moves past it towards the spokes, stop turning the pedals at once.
 
@@ -148,7 +132,7 @@ Turn the pedals slowly by hand and shift one gear at a time until the chain sits
 
 Animation: "Shift one gear at a time" (clip shift-to-largest)
 
-##### 6. Set the inner limit (L screw) · `check-low-limit` · check · 3 min
+##### 5. Set the inner limit (L screw) · `check-low-limit` · check · 3 min
 
 The chain is on the largest sprocket. Look from directly behind the bike: the upper of the two small toothed wheels on the derailleur should be in line with the largest sprocket.
 
@@ -164,7 +148,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the L screw counterclockwise a quarter turn" (l_screw rotate, counterclockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met
 
-##### 7. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
+##### 6. Double-check the inner limit · `check-low-limit-by-hand` · safety check · 2 min
 
 Push the rear derailleur by hand towards the spokes, as far as it goes. Look from behind: the upper toothed wheel should stay in line with the largest sprocket.
 
@@ -182,7 +166,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
 
 The owner fixes it and taps Next (Next is never locked on a card with a question).
 
-##### 8. Check the gap to the sprockets · `check-b-gap` · check · 3 min
+##### 7. Check the gap to the sprockets · `check-b-gap` · check · 3 min
 
 Keep the chain on the largest sprocket. Look from the side: the gap between the upper toothed wheel of the derailleur and the sprocket should be small, and the teeth should not touch.
 
@@ -198,7 +182,7 @@ Tools: Small cross-head screwdriver or Small hex keys (Look at the small screws 
   - Plays at once: "Turn the B screw counterclockwise a little" (b_screw rotate, counterclockwise, a little)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 9. Set the cable tension · `check-cable-tension` · check · 5 min
+##### 8. Set the cable tension · `check-cable-tension` · check · 5 min
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
 
@@ -214,7 +198,7 @@ Animation: "Shift through every gear and back" (clip shift-through-gears)
   - Plays at once: "Turn the barrel adjuster clockwise a quarter turn" (barrel_adjuster rotate, clockwise, a quarter turn)
 - [ ] **Next** (no answer) → the goal in the text is met ◀ **this path**
 
-##### 10. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
+##### 9. Turn the bike back over · `turn-bike-upright` · action · 1 min · from procedure `release-bike`
 
 Turn the bike back onto its wheels. With a heavy bike, ask someone to help.
 
@@ -226,7 +210,7 @@ Animation: "Turn the bike back onto its wheels" (bike rotate, half a turn)
 
 ##### Finish
 
-##### 11. Test ride the gears · `test-ride-gears` · safety check · 3 min
+##### 10. Test ride the gears · `test-ride-gears` · safety check · 3 min
 
 Ride slowly on a quiet, flat path and shift one gear at a time, from the hardest to the easiest gear and back. Every gear should change quickly and run quietly, and the chain should stay on the sprockets.
 
@@ -242,9 +226,9 @@ Animation: "Shift one gear at a time while you ride" (clip shift-test-ride)
 
 #### End
 
-Done. Nothing is left apart. Tutorial time: 25 min.
+Done. Nothing is left apart. Tutorial time: 24 min.
 
-**Journey ends:** tutorial complete. **Time:** 30 min. **Questions asked:** 1.
+**Journey ends:** tutorial complete. **Time:** 29 min. **Questions asked:** 2.
 
 ---
 

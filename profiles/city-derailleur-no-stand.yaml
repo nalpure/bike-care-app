@@ -17,6 +17,7 @@ profile:
     drive.gear_type: derailleur
   answers:
     drive.shifting: mechanical
+    drive.barrel_adjuster: shifter
   tools: []
   journeys:
     - id: slow-shifting-upside-down
@@ -29,7 +30,6 @@ profile:
       job_choice: diy
       choices: { hold_bike: upside_down }
       tutorial_sees:
-        barrel-adjuster-present: at-shifter
         check-high-limit: too-far-in
         check-low-limit: too-far-in
         check-low-limit-by-hand: too-far-in

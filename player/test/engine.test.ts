@@ -16,19 +16,22 @@ function setup(change: (b: any) => void): Journey {
   change(b);
   const c = new Content(b);
   const store = new Store(memoryKV());
-  const bike = store.addBike('Test bike', { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' });
+  const bike = store.addBike('Test bike', KNOWN);
   const j = new Journey(c, store, bike, new Session(), { tutorial: 'adjust-rear-shifting' });
   j.choose('hold_bike', 'stand');
   j.startTutorial();
   return j;
 }
 
+/** A bike the shifting tutorial covers, with nothing left to ask. */
+const KNOWN = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.barrel_adjuster': 'derailleur' };
+
 /** Walks the cards, tapping the first button that lets the user go on, until `stopAt` or the end. */
 function walk(j: Journey, stopAt?: string, pick: Record<string, string> = {}): { ids: string[]; at?: Screen } {
   const ids: string[] = [];
   for (let i = 0; i < 60; i++) {
     const s = j.screen();
-    // A fact learned on the way (an inspection's sets) is offered once; the walk does not keep it.
+    // Facts asked before the first card are offered once; the walk does not keep them.
     if (s.kind === 'keep') {
       j.keepSkip();
       continue;
@@ -88,10 +91,11 @@ describe('engine', () => {
     const j = setup((b) => {
       b.states.find((s: any) => s.id === 'bike_in_stand').warning = 'The bike is clamped. Do not lean on it.';
     });
-    const first = j.screen();
-    expect(first.kind === 'card' && first.card.warnings).toEqual([]);
     const r = walk(j, 'check-b-gap');
     expect(r.at?.kind === 'card' && r.at.card.warnings).toEqual(['The bike is clamped. Do not lean on it.']);
+    // once the bike is out of the stand, the warning is gone
+    const end = walk(j, 'test-ride-gears');
+    expect(end.at?.kind === 'card' && end.at.card.warnings).toEqual([]);
   });
 
   it('keeps Next disabled on a block until a good state is tapped (step without a question)', () => {
@@ -134,8 +138,12 @@ describe('engine', () => {
     const insp = b.inspections.find((x: any) => x.id === 'derailleur-alignment');
     insp.default = 'straight';
     insp.question = 'Looks bent?';
+    // No tutorial runs a check since 2026-11-27, so the test gives the tutorial one.
+    b.tutorials.find((t: any) => t.id === 'adjust-rear-shifting').checks = [
+      { inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride.' } } } },
+    ];
     const store = new Store(memoryKV());
-    const bike = store.addBike('Test bike', { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' });
+    const bike = store.addBike('Test bike', KNOWN);
     const j = new Journey(new Content(b), store, bike, s, { tutorial: 'adjust-rear-shifting' });
     j.choose('hold_bike', 'stand');
     j.startTutorial();
@@ -160,68 +168,103 @@ describe('engine', () => {
   });
 });
 
-describe('an inspection that tells a fact, with a follow-up', () => {
-  function start(facts: Record<string, string> = {}): Journey {
+describe('the barrel adjuster: a fact with 3D, asked last in the facts phase (owner, 2026-11-27)', () => {
+  const BARREL = 'drive.barrel_adjuster';
+  function start(facts: Record<string, string> | null, change: (b: any) => void = () => {}, flow: { tutorial: string } | { diagnosis: string } = { tutorial: 'adjust-rear-shifting' }) {
+    const b = JSON.parse(raw);
+    change(b);
     const store = new Store(memoryKV());
-    const bike = store.addBike('Test bike', { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', ...facts });
-    const j = new Journey(new Content(JSON.parse(raw)), store, bike, new Session(), { tutorial: 'adjust-rear-shifting' });
+    const bike = facts ? store.addBike('Test bike', facts) : null;
+    return { j: new Journey(new Content(b), store, bike, new Session(), flow), store, bike };
+  }
+  /** Answers each question from `answers` until another screen comes; returns the keys asked, in order. */
+  function answer(j: Journey, answers: Record<string, any>): string[] {
+    const asked: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      const s = j.screen();
+      if (s.kind === 'keep') {
+        j.keepSkip();
+        continue;
+      }
+      if (s.kind !== 'question') break;
+      asked.push(s.key);
+      j.answerFact(s.key, answers[s.key]);
+    }
+    return asked;
+  }
+  const PLAIN = { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' };
+
+  it('asks the plain questions first, then the barrel with its 3D', () => {
+    const { j } = start(null);
+    const seen: any[] = [];
+    for (let i = 0; i < 4; i++) {
+      const s = j.screen();
+      if (s.kind !== 'question') break;
+      seen.push(s);
+      j.answerFact(s.key, { ...PLAIN, [BARREL]: 'shifter' }[s.key]);
+    }
+    expect(seen.map((s) => s.key)).toEqual(['drive.gear_type', 'drive.shifting', BARREL]);
+    expect(seen[0].stage).toBeUndefined();
+    const q = seen[2];
+    expect(q.stage.animation.clip).toBe('barrel-tour');
+    expect(q.stage.focus).toEqual(expect.arrayContaining(['rear_barrel', 'front_barrel']));
+    expect(q.fact.answers.unknown.en).toBe('I cannot find it');
+    // the answer is a fact of this flow, offered on the keep screen like any other
+    expect(j.screen().kind).toBe('keep');
+    expect(j.learned()).toContainEqual([BARREL, 'shifter']);
+  });
+
+  it('asks a plain question the flow reads after the barrel before the barrel', () => {
+    // No content reads a plain fact after the barrel today, so the test adds one to the tutorial's covers.
+    const { j } = start(PLAIN, (b) => {
+      const t = b.tutorials.find((x: any) => x.id === 'adjust-rear-shifting');
+      t.covers.when['bike.ebike'] = [false];
+      t.covers.not_covered.push({ when: { 'bike.ebike': [true, 'unknown'] }, text: 'Not covered.' });
+    });
+    expect(answer(j, { 'bike.ebike': false, [BARREL]: 'derailleur' })).toEqual(['bike.ebike', BARREL]);
+    // a plain fact read only after one of the barrel's answers is asked first too
+    const { j: k } = start(PLAIN, (b) => {
+      const t = b.tutorials.find((x: any) => x.id === 'adjust-rear-shifting');
+      t.covers.not_covered.unshift({ when: { [BARREL]: ['inline'], 'bike.ebike': [true] }, text: 'Not covered.' });
+      t.covers.when = { [BARREL]: ['derailleur', 'shifter'] };
+      t.covers.not_covered.push({ when: { [BARREL]: ['inline'] }, text: 'Not covered either.' });
+    });
+    expect(answer(k, { 'bike.ebike': false, [BARREL]: 'derailleur' })).toEqual(['bike.ebike', BARREL]);
+  });
+
+  it('"I cannot find it" ends on the not-covered screen before any work, and is never stored', () => {
+    const { j, store, bike } = start(PLAIN);
+    expect(answer(j, { [BARREL]: 'unknown' })).toEqual([BARREL]);
+    const s = j.screen();
+    expect(s.kind).toBe('not-covered');
+    expect(s.kind === 'not-covered' && s.message).toBe('Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.');
+    expect(j.shownPath).toEqual([]);
+    expect(BARREL in j.bikeFacts).toBe(false);
+    expect(BARREL in store.data.bikes.find((x) => x.id === bike!.id)!.facts).toBe(false);
+  });
+
+  it('is not asked when the bike knows it, and the cards get it for the 3D view', () => {
+    for (const v of ['derailleur', 'shifter', 'inline']) {
+      const { j } = start({ ...PLAIN, [BARREL]: v });
+      expect(j.screen().kind).toBe('choice');
+      j.choose('hold_bike', 'stand');
+      j.startTutorial();
+      expect(j.bikeFacts[BARREL]).toBe(v);
+    }
+  });
+
+  it('a tutorial runs no checks: the work starts at once', () => {
+    const { j } = start(KNOWN);
     j.choose('hold_bike', 'stand');
     j.startTutorial();
-    j.tap('straight'); // derailleur-alignment: the answer moves on at once
-    return j;
-  }
-  const id = (j: Journey) => {
     const s = j.screen();
-    return s.kind === 'card' ? s.card.id : s.kind;
-  };
-
-  it('shows every state as a button and moves on at once after an answer that goes on', () => {
-    const j = start();
-    const s = j.screen();
-    expect(s.kind === 'card' && s.card.id).toBe('barrel-adjuster-present');
-    expect(s.kind === 'card' && s.card.buttons.map((b) => b.id)).toEqual(['at-derailleur', 'at-shifter', 'cant-find']);
-    expect(s.kind === 'card' && s.card.question).toBe('Where is it?');
-    expect(s.kind === 'card' && s.card.nextEnabled).toBe(false);
-    j.tap('at-shifter');
-    // the learned fact is offered at once (the user agrees or not), then the tutorial goes on
-    const keep = j.screen();
-    expect(keep.kind === 'keep' && keep.learned).toEqual([['drive.barrel_adjuster', 'shifter']]);
-    j.keepSkip();
-    expect(id(j)).not.toBe('barrel-adjuster-present');
-    expect(id(j)).not.toBe('barrel-adjuster-search');
-    expect(id(j)).not.toBe('keep');
-    // Back returns to the card without the answer, and forgets the fact
-    for (let i = 0; i < 3 && id(j) !== 'barrel-adjuster-present'; i++) j.back();
-    const b = j.screen();
-    expect(b.kind === 'card' && b.card.id).toBe('barrel-adjuster-present');
-    expect(b.kind === 'card' && b.card.chosen).toBeUndefined();
-    expect(j.learned().some(([k]) => k === 'drive.barrel_adjuster')).toBe(false);
+    expect(s.kind === 'card' && s.card.itemKind).toBe('step');
   });
 
-  it('shows the follow-up only after "I cannot find it"', () => {
-    const j = start();
-    j.tap('cant-find');
-    expect(id(j)).toBe('barrel-adjuster-search');
-    j.tap('on-cable');
-    expect(id(j)).toBe('keep');
-    expect(j.learned()).toContainEqual(['drive.barrel_adjuster', 'inline']);
-    j.keepSave();
-    expect(id(j)).not.toBe('barrel-adjuster-search');
-    const k = start();
-    k.tap('cant-find');
-    k.tap('not-found');
-    const e = k.screen();
-    expect(e.kind === 'exit' && e.exitKind).toBe('not_covered');
-  });
-
-  it('is not shown when the bike already knows the fact', () => {
-    for (const v of ['derailleur', 'shifter', 'inline']) {
-      const j = start({ 'drive.barrel_adjuster': v });
-      expect(id(j)).not.toBe('barrel-adjuster-present');
-      expect(id(j)).not.toBe('barrel-adjuster-search');
-      // nothing new to keep
-      expect(j.learned().some(([k]) => k === 'drive.barrel_adjuster')).toBe(false);
-    }
+  it('the diagnosis does not ask it', () => {
+    const { j } = start(PLAIN, () => {}, { diagnosis: 'gears-shift-badly' });
+    const s = j.screen();
+    expect(s.kind === 'card' && s.card.id).toBe('derailleur-alignment');
   });
 });
 

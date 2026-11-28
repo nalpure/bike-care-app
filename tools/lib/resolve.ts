@@ -211,6 +211,8 @@ export interface Exit<S = unknown> {
   kind: ExitKind | 'uncovered';
   message: string;
   src: S;
+  /** from the tutorial's own covers (what doing it yourself needs), not the job's: a shop still can */
+  own?: boolean;
 }
 
 export interface Problem<S = unknown> {
@@ -327,13 +329,18 @@ export interface TutorialRun<S = unknown> {
  */
 export function coverageExit<S = unknown>(ix: Index, jobId: string, r: Reader, params: Record<string, string> = {}, loc: Locate<S> = noLocation): Exit<S> | undefined {
   const job = ix.jobs.get(jobId);
-  const cv = job?.covers;
+  return coversExit(job, `Job ${jobId}`, r, params, loc);
+}
+
+/** A covers block ({ when, not_covered }) on `node` (a job, or a tutorial with the flow's own covers). */
+function coversExit<S>(node: any, name: string, r: Reader, params: Record<string, string>, loc: Locate<S>): Exit<S> | undefined {
+  const cv = node?.covers;
   if (!cv || evaluate(substCondition(cv.when, params), r.ask)) return undefined;
   const ncs: any[] = cv.not_covered;
   for (let i = 0; i < ncs.length; i++) {
-    if (evaluate(substCondition(ncs[i].when, params), r.ask)) return { kind: 'not_covered', message: ncs[i].text, src: loc(job, 'covers', 'not_covered', i) };
+    if (evaluate(substCondition(ncs[i].when, params), r.ask)) return { kind: 'not_covered', message: ncs[i].text, src: loc(node, 'covers', 'not_covered', i) };
   }
-  return { kind: 'uncovered', message: `Job ${jobId} does not cover this bike, and none of its not_covered entries matches.`, src: loc(job, 'covers') };
+  return { kind: 'uncovered', message: `${name} does not cover this bike, and none of its not_covered entries matches.`, src: loc(node, 'covers') };
 }
 
 /**
@@ -357,6 +364,12 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
   const outside = coverageExit(ix, t.job, r, params, loc);
   if (outside) {
     run.exit = outside;
+    return run;
+  }
+  // The flow's own covers: what doing it yourself needs (a shop can still do the job). Read before any way.
+  const own = coversExit(t, `Tutorial ${t.id}`, r, params, loc);
+  if (own) {
+    run.exit = { ...own, own: true };
     return run;
   }
   const pick = (cases: any[]) => {
@@ -445,27 +458,6 @@ export function hiddenFollowUps<S>(all: PathItem<S>[], tapAt: (index: number) =>
     if (p < 0 || tapAt(p) !== it.after.state) out.add(i);
   });
   return out;
-}
-
-/** Does a state's `sets` match facts that are all known with those values? */
-function setsKnown(st: any, known: (key: string) => Value | undefined): boolean {
-  const e = Object.entries<any>(st?.sets ?? {});
-  return e.length > 0 && e.every(([k, v]) => { const kv = known(k); return kv !== undefined && String(kv) !== UNKNOWN && String(kv) === String(v); });
-}
-
-/**
- * The state of the inspection at `index` that facts already known on the bike give (its `sets`),
- * so the card is not shown. A state with a follow-up counts when a state of that follow-up matches.
- */
-export function stateFromFacts<S>(all: PathItem<S>[], index: number, known: (key: string) => Value | undefined): string | undefined {
-  const it = all[index];
-  if (it?.kind !== 'inspect') return undefined;
-  for (const st of it.def.states) {
-    if (setsKnown(st, known)) return st.id;
-    const f = all.find((x, j) => j > index && x.after?.id === it.id && x.after.state === st.id);
-    if (f && f.def.states.some((fs: any) => setsKnown(fs, known))) return st.id;
-  }
-  return undefined;
 }
 
 function pushStep<S>(ix: Index, id: string, list: 'sequence' | 'finish', src: S, r: Reader, params: Record<string, string>, out: PathItem<S>[], loc: Locate<S>, via?: string): void {

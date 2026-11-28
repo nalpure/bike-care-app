@@ -9,7 +9,7 @@
 
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
 import {
-  combined, enumerate, findJumpTarget, hiddenFollowUps, knownCoverageExit, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, stateFromFacts,
+  combined, enumerate, findJumpTarget, hiddenFollowUps, knownCoverageExit, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, domainOf,
   type DiagnosisRun, type PathItem, type Reader, type ToolList, type ToolSetUse, type TutorialRun, mergeTools,
 } from '../../../tools/lib/resolve.js';
 import type { Content } from './content.js';
@@ -83,7 +83,8 @@ export interface ShopSummary {
 
 export type Screen =
   | { kind: 'position'; param: string; values: string[]; canBack: boolean }
-  | { kind: 'question'; key: string; fact: any; n: number; canBack: boolean }
+  /** stage: the fact's optional 3D (owner, 2026-11-27); such a question comes after every plain one */
+  | { kind: 'question'; key: string; fact: any; n: number; canBack: boolean; stage?: { focus: string[]; show?: string[]; view?: string; animation?: any } }
   | { kind: 'tool-question'; tool: string; canBack: boolean }
   | { kind: 'choice'; choice: any; chosen?: string; canBack: boolean }
   | { kind: 'parts'; parts: any[]; canBack: boolean }
@@ -415,8 +416,10 @@ export class Journey {
     return undefined;
   };
 
-  private reader(t?: TutState): Reader {
+  /** assumed: facts taken as answered, to look past a question with 3D (`plainAhead`) */
+  private reader(t?: TutState, assumed: Record<string, Value> = {}): Reader {
     const ask = (key: string): Value => {
+      if (key in assumed) return assumed[key];
       if (key.startsWith('choice.')) {
         const v = t?.choices[key.slice(7)];
         if (v === undefined) throw new NeedKey(key);
@@ -429,6 +432,7 @@ export class Journey {
       throw new NeedKey(key);
     };
     const look = (key: string): Value => {
+      if (key in assumed) return assumed[key];
       if (key.startsWith('choice.')) return t?.choices[key.slice(7)] ?? UNKNOWN;
       if (key.startsWith('tool.')) return this.toolValue(key.slice(5), t, false);
       return this.known(key) ?? UNKNOWN;
@@ -467,7 +471,39 @@ export class Journey {
   private questionScreen(key: string): Screen {
     if (key.startsWith('tool.')) return { kind: 'tool-question', tool: key.slice(5), canBack: this.canBack };
     const asked = Object.keys(this.bike.facts).length;
-    return { kind: 'question', key, fact: this.c.fact(key), n: asked + 1, canBack: this.canBack };
+    const f = this.c.fact(key);
+    const stage = this.with3d(key) ? { focus: f.focus ?? [], show: f.show, view: f.view, animation: f.animation } : undefined;
+    return { kind: 'question', key, fact: f, n: asked + 1, canBack: this.canBack, ...(stage ? { stage } : {}) };
+  }
+
+  /** A fact asked with the 3D view: it has any of focus, show, view, animation. */
+  private with3d(key: string): boolean {
+    const f = key.startsWith('choice.') || key.startsWith('tool.') ? undefined : this.c.fact(key);
+    return !!f && ['focus', 'show', 'view', 'animation'].some((k) => f[k] !== undefined);
+  }
+
+  /**
+   * The fact to ask next. Questions with 3D come at the end of the facts phase, after every plain question the
+   * flow asks (owner, 2026-11-27). While the flow needs a fact with 3D, it is tried with each of its answers;
+   * a plain fact the flow then reads with any of them is asked first. Choices and tools end the look-ahead
+   * (they come after the facts phase), so do more than three facts with 3D in a row.
+   */
+  private nextQuestion(need: string, run: (r: Reader) => unknown, t?: TutState): string {
+    return this.with3d(need) ? this.plainAhead(run, t, {}, 0) ?? need : need;
+  }
+
+  private plainAhead(run: (r: Reader) => unknown, t: TutState | undefined, assumed: Record<string, Value>, depth: number): string | undefined {
+    const res = this.tryResolve(() => run(this.reader(t, assumed)));
+    if (!('need' in res)) return undefined;
+    const k = res.need;
+    if (k.startsWith('choice.') || k.startsWith('tool.')) return undefined;
+    if (!this.with3d(k)) return k;
+    if (depth >= 3) return undefined;
+    for (const v of domainOf(this.c.ix, k)) {
+      const p = this.plainAhead(run, t, { ...assumed, [k]: v }, depth + 1);
+      if (p) return p;
+    }
+    return undefined;
   }
 
   /** Answer to a fact question; "unknown" is "I'll check later" and is kept for this sitting only. */
@@ -605,8 +641,6 @@ export class Journey {
     if (s.k === 'diag' || s.k === 'routine') s.tap = undefined;
     else if (s.k === 'tut') {
       const idx = s.t.path[s.t.path.length - 1];
-      const res = this.tutRun(s.t);
-      if ('ok' in res) this.unlearn(combined(res.ok)[idx], s.t.taps[String(idx)]);
       delete s.t.taps[String(idx)];
       s.t.exitAt = undefined;
     }
@@ -647,7 +681,7 @@ export class Journey {
     const pos = this.positionOf(d.params, s.params);
     if (pos) return pos;
     const res = this.diagRun(s);
-    if ('need' in res) return this.questionScreen(res.need);
+    if ('need' in res) return this.questionScreen(this.nextQuestion(res.need, (r) => resolveDiagnosis(this.c.ix, d, r, s.params)));
     const run = res.ok;
     if (run.exit) return { kind: 'not-covered', message: run.exit.message, canBack: this.canBack };
     const ch = run.checks[s.i];
@@ -940,12 +974,6 @@ export class Journey {
       // A follow-up shows only after the answer it follows (taps so far, and answers passed on the way).
       if (it.after && hiddenFollowUps(all, tapAt).has(i)) continue;
       if (it.kind === 'inspect' && !workStarted) {
-        // Facts already known on the bike answer it (a state's sets): not shown.
-        const known = stateFromFacts(all, i, (k) => this.bike.facts[k]);
-        if (known !== undefined && this.outcomeOf(it, known).kind === 'continue') {
-          auto.push({ idx: i, state: known });
-          continue;
-        }
         const earlier = this.session.answers[it.id];
         if (earlier !== undefined) {
           const o = this.outcomeOf(it, earlier);
@@ -1069,7 +1097,9 @@ export class Journey {
       const key = res.need;
       if (!key.startsWith('choice.')) {
         // A tool question waits until the run choices are made (a choice may bring the tool).
-        if (!(key.startsWith('tool.') && (def.choices ?? []).some((c: string) => !(c in t.choices)))) return this.questionScreen(key);
+        if (!(key.startsWith('tool.') && (def.choices ?? []).some((c: string) => !(c in t.choices)))) {
+          return this.questionScreen(this.nextQuestion(key, (r) => resolveTutorial(this.c.ix, def, r, t.params), t));
+        }
       }
     } else if (res.ok.exit) {
       const ex = res.ok.exit;
@@ -1081,7 +1111,7 @@ export class Journey {
       if (!(ch in t.choices)) return { kind: 'choice', choice: this.c.ix.choices.get(ch), canBack: this.canBack };
     }
     if ('need' in res) {
-      return res.need.startsWith('choice.') ? { kind: 'not-covered', message: 'This guide is not available for this choice.', canBack: this.canBack } : this.questionScreen(res.need);
+      return res.need.startsWith('choice.') ? { kind: 'not-covered', message: 'This guide is not available for this choice.', canBack: this.canBack } : this.questionScreen(this.nextQuestion(res.need, (r) => resolveTutorial(this.c.ix, def, r, t.params), t));
     }
     if (!t.tools) {
       const tools = this.toolSummary(combined(res.ok));
@@ -1134,7 +1164,7 @@ export class Journey {
     t.started = true;
     const all = combined(res.ok);
     const first = this.nextIndex(t, all, res.ok, -1);
-    this.applyAuto(t, first.auto, all);
+    this.applyAuto(t, first.auto);
     if (first.idx === undefined) {
       this.finishTutorial(t, res.ok);
       return;
@@ -1143,17 +1173,8 @@ export class Journey {
     this.onArrive(t, all, first.idx);
   }
 
-  private applyAuto(t: TutState, auto: Array<{ idx: number; state: string }>, all: PathItem[]): void {
-    for (const a of auto) {
-      t.taps[String(a.idx)] = a.state;
-      this.learnFrom(all[a.idx], a.state);
-    }
-  }
-
-  /** An inspection state with sets tells lasting facts: learned now, kept only through the keep screen. */
-  private learnFrom(it: PathItem, state: string | undefined): void {
-    if (it.kind !== 'inspect' || state === undefined) return;
-    for (const [k, v] of Object.entries<any>(it.def.states.find((s: any) => s.id === state)?.sets ?? {})) this.bike.facts[k] = v;
+  private applyAuto(t: TutState, auto: Array<{ idx: number; state: string }>): void {
+    for (const a of auto) t.taps[String(a.idx)] = a.state;
   }
 
   private onArrive(t: TutState, all: PathItem[], idx: number): void {
@@ -1175,25 +1196,13 @@ export class Journey {
     const all = combined(res.ok);
     const idx = t.path[t.path.length - 1];
     const it = all[idx];
-    // A different answer replaces what the earlier one taught.
-    this.unlearn(it, t.taps[String(idx)]);
     t.taps[String(idx)] = id;
     const o = this.outcomeOf(it, id);
-    if (it.kind === 'inspect') {
-      this.session.answers[it.id] = id;
-      this.learnFrom(it, id);
-    }
+    // A tutorial learns no facts about the bike (owner, 2026-11-27): an answer is kept for this session only.
+    if (it.kind === 'inspect') this.session.answers[it.id] = id;
     t.exitAt = o.kind === 'exit' ? idx : undefined;
     // An inspection without a default (all its states are buttons): an answer that goes on moves on at once.
     if (it.kind === 'inspect' && it.def.default === undefined && o.kind === 'continue') this.tutNext(t);
-  }
-
-  private unlearn(it: PathItem, state: string | undefined): void {
-    if (it.kind !== 'inspect' || state === undefined) return;
-    for (const k of Object.keys(it.def.states.find((s: any) => s.id === state)?.sets ?? {})) {
-      if (this.home && k in this.home.facts) this.bike.facts[k] = this.home.facts[k];
-      else delete this.bike.facts[k];
-    }
   }
 
   private tutNext(t: TutState): void {
@@ -1207,14 +1216,12 @@ export class Journey {
     if (it.kind === 'inspect' && it.def.default !== undefined) {
       const tap = t.taps[String(idx)];
       if (tap === undefined || this.outcomeOf(it, tap).kind === 'block') {
-        this.unlearn(it, tap);
         t.taps[String(idx)] = it.def.default;
         this.session.answers[it.id] = it.def.default;
-        this.learnFrom(it, it.def.default);
       }
     }
     const nx = this.nextIndex(t, all, run, idx);
-    this.applyAuto(t, nx.auto, all);
+    this.applyAuto(t, nx.auto);
     const n = t.path.length;
     this.progressMax = Math.max(this.progressMax, n / (n + this.countRemaining(t, all, run, idx)));
     if (nx.idx === undefined) {

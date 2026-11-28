@@ -8,10 +8,10 @@ import {
   combined, findJumpTarget, resolveDiagnosis, resolveTutorial, type DiagnosisCheck, type Reader,
 } from './expand.js';
 import { tutorialTimeRange } from './flows.js';
-import { neverAsked } from './refs.js';
+import { factDef, neverAsked } from './refs.js';
 import type { Issues } from './issues.js';
 import {
-  choiceBlock, exitScreen, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
+  choiceBlock, exitScreen, factLine, has3d, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
   toolSummary, toolTiers, type Known,
 } from './render.js';
 import { lineAt } from './yamlfile.js';
@@ -93,7 +93,7 @@ class Run {
       if (key.startsWith('tool.')) return this.toolValue(key);
       if (this.known.has(key)) return this.known.get(key)!;
       if (neverAsked(this.c, key)) return UNKNOWN;
-      const answers = this.p.def.answers ?? {};
+      const answers = { ...(this.p.def.answers ?? {}), ...(this.j.answers ?? {}) };
       if (key in answers) {
         this.known.set(key, answers[key]);
         this.asked.push({ stage, key, value: answers[key] });
@@ -113,7 +113,10 @@ class Run {
   }
 
   questions(stage: string): string[] {
-    const qs = this.asked.filter((a) => a.stage === stage);
+    // Questions with 3D come last, after every plain question (owner, 2026-11-27). Written apart from the app on purpose:
+    // here the owner's answers are known, so the plain questions of this path are simply listed first.
+    const all = this.asked.filter((a) => a.stage === stage);
+    const qs = [...all.filter((a) => !has3d(factDef(this.c, a.key)?.def)), ...all.filter((a) => has3d(factDef(this.c, a.key)?.def))];
     if (!qs.length) return [];
     return [...qs.map((a, i) => `${i + 1}. ${questionLine(this.c, a.key, a.value)}`), ''];
   }
@@ -140,23 +143,6 @@ function shopSummary(c: Content, r: Run, jobId: string, extra: string[] = []): s
     `- Price: ${priceText(job)}`,
     '',
   ];
-}
-
-/**
- * The state of an inspection call that the bike's known facts already give (a state's sets, or a
- * state whose follow-up has a state with those sets). Written apart from the app on purpose.
- */
-function stateKnown(c: Content, it: any, known: Map<string, Value>): string | undefined {
-  const match = (st: any) => {
-    const e = Object.entries<any>(st.sets ?? {});
-    return e.length > 0 && e.every(([k, v]) => known.has(k) && String(known.get(k)) === String(v));
-  };
-  for (const st of it.def.states) {
-    if (match(st)) return st.id;
-    const o = it.outcomes?.[st.id];
-    if (o?.inspect && c.inspections.get(o.inspect)?.def.states.some(match)) return st.id;
-  }
-  return undefined;
 }
 
 function notCovered(message: string): string[] {
@@ -270,12 +256,10 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
     let chosen: string | undefined;
     let repeat = false;
     let outcome: { kind: 'continue' | 'block' | 'exit'; exitKind?: string; message?: string; showHowFrom?: string; good?: string } = { kind: 'continue' };
-    let fromFacts: string | undefined;
     if (it.kind === 'inspect') {
       repeat = !workStarted && r.session.has(it.id);
-      fromFacts = !workStarted && !repeat ? stateKnown(c, it, r.known) : undefined;
-      chosen = repeat ? r.session.get(it.id) : fromFacts ?? sees[it.id];
-      if (!repeat && fromFacts === undefined && chosen !== undefined) r.usedTutorialSees.add(it.id);
+      chosen = repeat ? r.session.get(it.id) : sees[it.id];
+      if (!repeat && chosen !== undefined) r.usedTutorialSees.add(it.id);
       // In a tutorial, Next takes the inspection's default state.
       if (chosen === undefined && it.def.default !== undefined) chosen = it.def.default;
       if (chosen !== undefined) taps.set(i, chosen);
@@ -309,20 +293,11 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
     if (repeat) {
       const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
       r.L.push(`##### – ${it.def.title} · \`${it.id}\` · not shown again: answered earlier in this session ("${label}")`, '');
-    } else if (fromFacts !== undefined) {
-      const label = it.def.states.find((s: any) => s.id === chosen)?.label ?? chosen;
-      r.L.push(`##### – ${it.def.title} · \`${it.id}\` · not shown: the bike's facts answer it ("${label}")`, '');
-      r.session.set(it.id, chosen!);
     } else {
       r.L.push(...renderCard(c, it, { number: n++, known: r.knownFn, chosen, before, after: new Set(state), level: 5, onPath: true }));
       r.minutes += it.def.minutes;
-      if (it.kind === 'inspect' && chosen !== undefined) {
-        r.session.set(it.id, chosen);
-        // An answer that tells a lasting fact: learned now, kept on the bike if the owner agrees.
-        const sets = Object.entries<any>(it.def.states.find((s: any) => s.id === chosen)?.sets ?? {});
-        for (const [k, v] of sets) r.known.set(k, v);
-        if (sets.length) r.L.push(`Learned for the bike: ${sets.map(([k, v]) => `\`${k}\` = ${v}`).join(', ')}.`, '');
-      }
+      // A tutorial learns no facts about the bike (owner, 2026-11-27): an answer is kept for this session only.
+      if (it.kind === 'inspect' && chosen !== undefined) r.session.set(it.id, chosen);
     }
 
     if (outcome.kind === 'block') {
@@ -431,6 +406,8 @@ export function runProfile(c: Content, p: Entry, issues: Issues): { markdown: st
   prof.journeys.forEach((j: any, ji: number) => {
     const r = new Run(c, p, j, ji, issues);
     r.L.push(`## Journey ${ji + 1}: ${j.title}`, '', `<sub>journey id \`${j.id}\`</sub>`, '');
+    const own = Object.entries<Value>(j.answers ?? {});
+    if (own.length) r.L.push(`Answers on this journey: ${own.map(([k, v]) => factLine(c, k, v)).join('; ')}`, '');
     let ending = '';
     if (j.start.diagnosis) {
       const d = c.diagnoses.get(j.start.diagnosis)!;

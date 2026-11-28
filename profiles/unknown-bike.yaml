@@ -8,6 +8,7 @@ profile:
   answers:
     drive.gear_type: derailleur
     drive.shifting: mechanical
+    drive.barrel_adjuster: inline
   tools: []
   journeys:
     - id: test-rides
@@ -20,6 +21,4 @@ profile:
       job_choice: diy
       choices: { hold_bike: ground }
       tutorial_sees:
-        barrel-adjuster-present: cant-find
-        barrel-adjuster-search: on-cable
         check-low-limit: too-far-out

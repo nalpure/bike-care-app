@@ -28,61 +28,8 @@ Animation: "A bent hanger tilts the derailleur" (clip hanger-bend)
 
 <sub>Appears in:</sub>
 
-- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: nothing apart</sub>
-- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
 - <sub>diagnosis gears-shift-badly: check 1; before it: nothing apart</sub>
 - <sub>routine check routine-check: item 1; before it: nothing apart</sub>
-
-### Find the barrel adjuster
-
-<sub>Unit `card:inspection:barrel-adjuster-present` · hash `4e6f85b9e59a` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>inspection · 1 min</sub>
-
-Find the barrel adjuster: a small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either.
-
-<sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
-
-<sub>3D: focus barrel_adjuster · show bike · view barrel_adjuster_close</sub>
-
-Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
-
-**Where is it?**
-
-- [ ] **At the derailleur** <sub>`at-derailleur`</sub> — The cable tension can be set at the derailleur. · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the derailleur
-- [ ] **At the shifter** <sub>`at-shifter`</sub> — The cable tension can be set at the shifter. It works the same way. · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = At the shifter
-- [ ] **I cannot find it** <sub>`cant-find`</sub> — Look along the cable next.
-
-<sub>What each state does in a tutorial is part of that tutorial's flow tree.</sub>
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: nothing apart</sub>
-- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
-
-### Look along the cable
-
-<sub>Unit `card:inspection:barrel-adjuster-search` · hash `23cafcd33bd3` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
-
-<sub>inspection · 1 min</sub>
-
-Follow the gear cable from the right shifter to the rear derailleur. On some bikes the barrel adjuster sits in the cable itself: a small ribbed knob, often near the handlebar.
-
-<sub>Hands-off: usable in diagnoses and the routine check. Only when drive.gear_type is derailleur.</sub>
-
-<sub>3D: focus shift_cable, front_barrel · show bike · view drive_side</sub>
-
-**Found it?**
-
-- [ ] **It is on the cable** <sub>`on-cable`</sub> — The cable tension can be set there. It works the same way. · learned for the bike (kept if the user agrees; then this card is not shown again): Barrel adjuster = On the cable
-- [ ] **I still cannot find it** <sub>`not-found`</sub> — This bike may have no barrel adjuster.
-
-<sub>What each state does in a tutorial is part of that tutorial's flow tree.</sub>
-
-<sub>Appears in:</sub>
-
-- <sub>tutorial adjust-rear-shifting: case wheel-free; when holding: stand, hang, upside_down; before it: nothing apart</sub>
-- <sub>tutorial adjust-rear-shifting: case test-rides; when holding: ground; before it: nothing apart</sub>
 
 ### Look at the chain
 
@@ -562,6 +509,27 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 <sub>Picture set: shifting-types</sub>
 
+### Question: drive.barrel_adjuster
+
+<sub>Unit `card:fact:drive.barrel_adjuster` · hash `000078534e30` · beginner: ⬜ not reviewed</sub>
+
+"Where is the barrel adjuster?" / "Wo ist der Zugeinsteller?"
+
+<sub>Label on the bike sheet: Barrel adjuster / Zugeinsteller</sub>
+
+Help behind "?": A small ribbed knob where the gear cable goes in. Look at the rear derailleur, then where the gear cable leaves the right shifter. If there is one at both, pick either. If you find none, follow the gear cable from the right shifter to the rear derailleur: on some bikes the barrel adjuster sits in the cable itself, often near the handlebar. / Ein kleiner geriffelter Knopf, wo der Schaltzug hineingeht. Schau am Schaltwerk nach, dann dort, wo der Schaltzug den rechten Schalthebel verlässt. Wenn an beiden Stellen einer ist, wähle einen davon. Wenn du keinen findest, folge dem Schaltzug vom rechten Schalthebel bis zum Schaltwerk: An manchen Fahrrädern sitzt der Zugeinsteller im Zug selbst, oft nahe am Lenker.
+
+- `derailleur`: At the derailleur / Am Schaltwerk
+- `shifter`: At the shifter / Am Schalthebel
+- `inline`: On the cable / Im Schaltzug
+- `unknown`: I cannot find it / Ich finde ihn nicht <sub>(never stored on the bike)</sub>
+
+<sub>Asked with the 3D view, after every plain question of the flow.</sub>
+
+<sub>3D: focus rear_barrel, front_barrel · show bike · view barrel_adjuster_close</sub>
+
+Animation: "A small ribbed knob you can turn by hand, where the gear cable goes in. Often at the rear derailleur or where the cable leaves the right shifter. On drop bars it can sit in the cable near the handlebar." (clip barrel-tour)
+
 ## Bike sheet
 
 ### Bike sheet: Bike / Fahrrad
@@ -584,7 +552,7 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 ### Bike sheet: Drivetrain / Antrieb
 
-<sub>Unit `card:fact-group:drive` · hash `96217826066b` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact-group:drive` · hash `54c2145882ca` · beginner: ⬜ not reviewed</sub>
 
 <sub>The bike sheet's group "Drivetrain / Antrieb", icon `drivetrain`. One line per fact: its label, then what the user can enter.</sub>
 
@@ -593,10 +561,7 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 - **Derailleur screw heads / Schraubenköpfe am Schaltwerk** <sub>`drive.rear_derailleur_screws`, enum, never asked, from the bike's data</sub>
   - `cross`: Cross-head screws / Kreuzschlitzschrauben
   - `hex`: Hex screws / Innensechskantschrauben
-- **Barrel adjuster / Zugeinsteller** <sub>`drive.barrel_adjuster`, enum, never asked</sub>
-  - `derailleur`: At the derailleur / Am Schaltwerk
-  - `shifter`: At the shifter / Am Schalthebel
-  - `inline`: On the cable / Im Schaltzug
+- **Barrel adjuster / Zugeinsteller** <sub>`drive.barrel_adjuster`, enum, asked when needed</sub>
 - **Rear speeds / Gänge hinten** <sub>`drive.rear_speeds`, number, 1 to 13, never asked</sub>
 - **Rear derailleur / Schaltwerk** <sub>`drive.rear_derailleur_model`, text, never asked</sub>
 - **Shifter / Schalthebel** <sub>`drive.shifter_model`, text, never asked</sub>

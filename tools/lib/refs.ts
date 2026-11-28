@@ -484,11 +484,49 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
       }
     }
   });
+  // The flow's own covers: what doing it yourself needs (read by the tutorial only).
+  if (t.covers) {
+    const cl = sub(loc, 'covers');
+    checkCondition(x, t.covers.when, sub(cl, 'when'));
+    t.covers.not_covered.forEach((nc: any, i: number) => {
+      checkCondition(x, nc.when, sub(cl, 'not_covered', i, 'when'));
+      checkText(x, nc.text, sub(cl, 'not_covered', i));
+    });
+  }
   // One case per way of the job file's flow (jobfile.ts).
   t.cases.forEach((cs: any, i: number) => checkCondition(x, cs.when, sub(loc, 'cases', i, 'when')));
   for (const [, cf] of e.cases ?? new Map()) {
     checkFlowItems(x, cf.data.sequence ?? [], cf, ['sequence'], 'sequence', t.id);
     checkFlowItems(x, cf.data.finish ?? [], cf, ['finish'], 'finish', t.id);
+  }
+}
+
+/** Every inspection a tutorial calls: its checks, its ways' items, and their follow-ups. */
+function inspectionsOf(t: { def: any; cases: Map<string, YamlFile> }): Set<string> {
+  const out = new Set<string>();
+  const add = (it: any) => {
+    if (!it?.inspect) return;
+    out.add(it.inspect);
+    for (const [, f] of followUps(it.outcomes)) out.add(f.inspect);
+  };
+  for (const it of t.def.checks ?? []) add(it);
+  for (const cf of t.cases.values()) for (const it of [...(cf.data.sequence ?? []), ...(cf.data.finish ?? [])]) add(it);
+  return out;
+}
+
+/** A tutorial learns no facts about the bike, only its current state (owner, 2026-11-27): no sets on what it uses. */
+function checkTutorialLearnsNoFacts(x: Ctx): void {
+  const users = new Map<string, string[]>();
+  for (const t of x.c.tutorials.values()) {
+    for (const id of inspectionsOf(t)) users.set(id, [...(users.get(id) ?? []), t.def.id]);
+  }
+  for (const [id, tids] of users) {
+    const insp = x.c.inspections.get(id);
+    if (!insp) continue;
+    insp.def.states.forEach((s: any, i: number) => {
+      if (!s.sets) return;
+      err(x, sub(locOf(insp, 'inspection'), 'states', i, 'sets'), 'tutorial-learns-fact', `State "${s.id}" sets ${Object.keys(s.sets).join(', ')}, but tutorial ${tids.join(', ')} uses this inspection. A tutorial learns no facts about the bike (owner, 2026-11-27): ask the fact in the facts phase (a question in content/facts.yaml, read by a condition such as the flow's covers), and take sets off.`);
+    });
   }
 }
 
@@ -525,9 +563,14 @@ function checkRoutine(x: Ctx, e: Entry): void {
 function checkProfile(x: Ctx, e: Entry): void {
   const p = e.def;
   const loc = locOf(e, 'profile');
-  for (const field of ['facts', 'answers'] as const) {
-    for (const [k, v] of Object.entries<any>(p[field] ?? {})) {
-      const l = sub(loc, field, k);
+  const lists: Array<{ field: 'facts' | 'answers'; values: Record<string, any>; at: YPath }> = [
+    { field: 'facts', values: p.facts ?? {}, at: ['facts'] },
+    { field: 'answers', values: p.answers ?? {}, at: ['answers'] },
+    ...p.journeys.map((j: any, i: number) => ({ field: 'answers' as const, values: j.answers ?? {}, at: ['journeys', i, 'answers'] })),
+  ];
+  for (const { field, values, at } of lists) {
+    for (const [k, v] of Object.entries<any>(values)) {
+      const l = sub(loc, ...at, k);
       const f = factDef(x.c, k);
       if (!f) {
         err(x, l, 'unknown-fact', `Fact "${k}" is not in content/facts.yaml.`);
@@ -617,6 +660,7 @@ export function checkStatic(c: Content, issues: Issues): void {
   for (const e of c.checks.values()) checkRoutine(x, e);
   for (const e of c.profiles.values()) checkProfile(x, e);
   checkCards(x);
+  checkTutorialLearnsNoFacts(x);
   for (const e of c.jobs.values()) {
     const loc = locOf(e, 'job');
     if (e.def.covers) {
@@ -645,6 +689,16 @@ export function checkStatic(c: Content, issues: Issues): void {
     const loc = locOf(e, 'fact');
     if (f.answers && f.values) {
       for (const v of f.values) if (!(String(v) in f.answers)) err(x, loc, 'fact-answers', `Fact ${f.key} has no answer text for value "${v}".`);
+    }
+    for (const k of Object.keys(f.answers ?? {})) {
+      const allowed = f.type === 'boolean' ? ['true', 'false'] : (f.values ?? []).map(String);
+      if (k !== 'unknown' && !allowed.includes(k)) err(x, sub(loc, 'answers', k), 'fact-answers', `Fact ${f.key} has an answer for "${k}", which is not one of its values (${allowed.join(', ') || 'none'}). Only its values, or unknown for the wording of the unknown answer.`);
+    }
+    // Optional 3D, as on a card (owner, 2026-11-27): only an asked fact shows it.
+    const has3d = ['focus', 'show', 'view', 'animation'].some((k) => f[k] !== undefined);
+    if (has3d) {
+      checkScene(x, f, loc);
+      if (!f.question) err(x, loc, 'fact-3d', `Fact ${f.key} has 3D fields but no question. Only an asked fact shows the 3D view; give it a question or drop the 3D fields.`);
     }
     const group = String(f.key).split('.')[0];
     groupsUsed.add(group);

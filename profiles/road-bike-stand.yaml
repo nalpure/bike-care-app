@@ -29,7 +29,8 @@ profile:
     drive.shifting: mechanical
     drive.rear_speeds: 11
     drive.rear_derailleur_model: "Shimano 105 RD-R7000"
-  answers: {}
+  answers:
+    drive.barrel_adjuster: derailleur
   tools: [bike-stand]
   journeys:
     - id: chain-falls-off-on-test-ride
@@ -42,18 +43,14 @@ profile:
       job_choice: diy
       choices: { hold_bike: stand }
       tutorial_sees:
-        barrel-adjuster-present: at-derailleur
         check-high-limit: too-far-out
         test-ride-gears: chain-off
 
     - id: no-barrel-adjuster
       title: "Opens the tutorial directly, but finds no barrel adjuster"
       start: { tutorial: adjust-rear-shifting }
-      choices: { hold_bike: stand }
-      tutorial_sees:
-        derailleur-alignment: straight
-        barrel-adjuster-present: cant-find
-        barrel-adjuster-search: not-found
+      answers:
+        drive.barrel_adjuster: unknown   # "I cannot find it"
 
     - id: routine-check-dirty-chain
       title: "Routine check finds a dirty chain"

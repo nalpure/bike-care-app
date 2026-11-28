@@ -34,27 +34,17 @@ describe('the real content', () => {
     const r = runCheck(REPO, { write: false });
     expect(show(r)).toBe('');
     const t = r.flows!.tutorials.find((f) => f.id === 'adjust-rear-shifting')!;
-    expect(t.paths).toHaveLength(24);
-    expect(t.paths.filter((p) => p.variant.ending === 'complete').map((p) => p.id)).toEqual([
-      'derailleur.mechanical.stand',
-      'derailleur.mechanical.stand--barrel-adjuster-present-cant-find',
-      'derailleur.mechanical.hang',
-      'derailleur.mechanical.hang--barrel-adjuster-present-cant-find',
-      'derailleur.mechanical.upside-down',
-      'derailleur.mechanical.upside-down--barrel-adjuster-present-cant-find',
-      'derailleur.mechanical.ground',
-      'derailleur.mechanical.ground--barrel-adjuster-present-cant-find',
-    ]);
-    // The follow-up is left out of the plain path and shown on the path through "I cannot find it".
-    const shown = (id: string) => {
-      const v = t.paths.find((p) => p.id === id)!.variant;
-      return v.items.filter((_x, i) => !v.hidden[i]).map((x) => x.id);
-    };
-    expect(shown('derailleur.mechanical.stand')).not.toContain('barrel-adjuster-search');
-    expect(shown('derailleur.mechanical.stand--barrel-adjuster-present-cant-find')).toContain('barrel-adjuster-search');
+    // The barrel's place is asked (the flow's covers), so each way has one path per place: the same cards, another barrel in 3D.
+    expect(t.paths).toHaveLength(36);
+    const holds = ['stand', 'hang', 'upside-down', 'ground'];
+    expect(t.paths.filter((p) => p.variant.ending === 'complete').map((p) => p.id)).toEqual(
+      ['derailleur', 'shifter', 'inline'].flatMap((b) => holds.map((h) => `derailleur.mechanical.${b}.${h}`)),
+    );
+    // A tutorial runs no checks (2026-11-27): every path starts with the work.
+    for (const p of t.paths) expect(p.variant.items[0].kind, p.id).toBe('step');
     // no stop is reached while the bike is held (2026-11-26), so no path jumps ahead
     expect(t.paths.filter((p) => p.variant.ending === 'jump')).toHaveLength(0);
-    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(6).fill('not_covered'));
+    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(7).fill('not_covered'));
     const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
     expect(d.paths).toHaveLength(6);
     expect(d.exits).toHaveLength(6);
@@ -66,7 +56,7 @@ describe('the real content', () => {
       'city-derailleur-no-stand/routine-check-slow-shifting': '1 to-do item(s)',
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
       'road-bike-stand/chain-falls-off-on-test-ride': 'exit (unsafe) at test-ride-gears',
-      'road-bike-stand/no-barrel-adjuster': 'exit (not_covered) at barrel-adjuster-search',
+      'road-bike-stand/no-barrel-adjuster': 'not covered',
       'road-bike-stand/routine-check-dirty-chain': '1 to-do item(s)',
       'unknown-bike/test-rides': 'tutorial complete',
     });
@@ -85,11 +75,11 @@ describe('the real content', () => {
     expect(r2.issues.errors.map(formatIssue)).toEqual([]);
     const unknown = r2.profiles.get('unknown-bike')!;
     expect(unknown.markdown).not.toContain('rear_derailleur_screws');
-    expect(unknown.results[0].questions).toBe(2);
+    expect(unknown.results[0].questions).toBe(3);
     const t = r2.flows!.tutorials[0];
-    const stand = t.paths.find((p) => p.id === 'derailleur.mechanical.stand')!;
+    const stand = t.paths.find((p) => p.id === 'derailleur.mechanical.derailleur.stand')!;
     expect(stand.combo.alt['drive.rear_derailleur_screws']).toEqual(['cross', 'unknown']);
-    expect(r.profiles.get('unknown-bike')!.results[0].questions).toBe(2);
+    expect(r.profiles.get('unknown-bike')!.results[0].questions).toBe(3);
   });
 
   it('checks show nodes like focus nodes, rejects one listed in both, and carries show into the bundle', () => {
@@ -118,9 +108,10 @@ describe('the real content', () => {
   });
 
   it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {
-    // No tutorial calls an inspection after the work any more, so the test puts one in the finish.
+    // No tutorial calls an inspection any more (2026-11-27), so the test puts one before the work and one in the finish.
     const r = sandbox()
       .edit(JOB, (d) => {
+        d.flow.checks = [{ inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' } } } }];
         const inspect = { inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } };
         d.flow.finish.unshift({ branch: { 'wheel-free': [inspect], 'test-rides': [] } });
       })
@@ -442,7 +433,7 @@ describe('rules broken on purpose', () => {
       .run();
     expect(show(r)).toBe('');
     const ids = r.flows!.tutorials[0].paths.map((p) => p.id);
-    expect(ids).toContain('derailleur.mechanical.stand--not-needed-check-cable-tension-smooth--jump');
+    expect(ids).toContain('derailleur.mechanical.derailleur.stand--not-needed-check-cable-tension-smooth--jump');
   });
 
   it('a step without a title, and a button without an id', () => {
@@ -508,59 +499,113 @@ describe('rules broken on purpose', () => {
   });
 
   it('an inspection sets only facts no condition reads, to allowed values', () => {
+    // chain-condition is used by the diagnosis and the routine check only, so sets is allowed there
     const r = sandbox()
       .edit('content/inspections.yaml', (d) => {
-        const st = d.inspections.find((i: any) => i.id === 'barrel-adjuster-present').states;
+        const st = d.inspections.find((i: any) => i.id === 'chain-condition').states;
         st[0].sets = { 'drive.shifting': 'mechanical' };
-        st[1].sets = { 'drive.barrel_adjuster': 'handlebar' };
+        st[1].sets = { 'drive.rear_derailleur_screws': 'slot' };
       })
       .run();
-    expect(errorsOf(r, 'sets-fact').length, show(r)).toBe(1);
+    expect(errorsOf(r, 'sets-fact').length, show(r)).toBe(2);
     expect(errorsOf(r, 'condition-value').length, show(r)).toBe(1);
+    expect(errorsOf(r, 'tutorial-learns-fact'), show(r)).toHaveLength(0);
+  });
+
+  it('a tutorial learns no facts: an inspection it uses has no sets (owner, 2026-11-27)', () => {
+    const r = sandbox()
+      .edit('content/inspections.yaml', (d) => {
+        d.inspections.find((i: any) => i.id === 'shift-test-ride').states[2].sets = { 'drive.rear_derailleur_model': 'Shimano' };
+      })
+      .edit(JOB, (d) => {
+        const exit = { kind: 'shop_only', text: 'Your gears still do not shift cleanly. A shop can check it.' };
+        const inspect = { inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': { exit }, 'slow-to-smaller': 'continue' } };
+        d.flow.finish.unshift({ branch: { 'wheel-free': [inspect], 'test-rides': [] } });
+      })
+      .run();
+    const e = errorsOf(r, 'tutorial-learns-fact');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].file).toBe('content/inspections.yaml');
+    expect(e[0].message).toContain('adjust-rear-shifting');
   });
 
   it('a follow-up is another inspection, and its outcomes match its states', () => {
+    // No content has a follow-up since 2026-11-27, so the test adds one to a work item.
+    const call = (follow: any) => ({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': follow, 'slow-to-smaller': 'continue' } });
     const r = sandbox()
-      .edit(JOB, (d) => {
-        const o = d.flow.checks.find((c: any) => c.inspect === 'barrel-adjuster-present').outcomes;
-        o['cant-find'].inspect = 'barrel-adjuster-present';
-      })
+      .edit(JOB, (d) => d.flow.finish.unshift({ branch: { 'wheel-free': [call({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } })], 'test-rides': [] } }))
       .run();
     expect(errorsOf(r, 'follow-up').length, show(r)).toBe(1);
     box!.dispose();
     const r2 = sandbox()
-      .edit(JOB, (d) => {
-        const o = d.flow.checks.find((c: any) => c.inspect === 'barrel-adjuster-present').outcomes;
-        delete o['cant-find'].outcomes['on-cable'];
-        o['cant-find'].outcomes['found'] = 'continue';
-      })
+      .edit(JOB, (d) => d.flow.finish.unshift({ branch: { 'wheel-free': [call({ inspect: 'chain-condition', outcomes: { clean: 'continue', 'dry-or-rusty': 'continue', found: 'continue' } })], 'test-rides': [] } }))
       .run();
     expect(errorsOf(r2, 'outcomes-match-states').length, show(r2)).toBe(2);
   });
 
-  it('a journey on a bike that already knows the fact does not see the check', () => {
-    const r = sandbox()
-      .edit('profiles/city-derailleur-no-stand.yaml', (d) => {
-        d.profile.facts['drive.barrel_adjuster'] = 'inline';
-        delete d.profile.journeys.find((j: any) => j.id === 'slow-shifting-upside-down').tutorial_sees['barrel-adjuster-present'];
-      })
-      .run();
-    expect(show(r)).toBe('');
-    const md = r.profiles.get('city-derailleur-no-stand')!.results.find((x) => x.journey === 'slow-shifting-upside-down')!.markdown;
-    expect(md).toContain("`barrel-adjuster-present` · not shown: the bike's facts answer it");
-    expect(md).toContain("`barrel-adjuster-search` · not shown: the bike's facts answer it");
-  });
-
   it("a tutorial's checks use only hands-off inspections", () => {
     const r = sandbox()
-      .edit('content/inspections.yaml', (d) => (d.inspections.find((i: any) => i.id === 'barrel-adjuster-present').hands_off = false))
+      .edit(JOB, (d) => (d.flow.checks = [{ inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' } } } }]))
+      .edit('content/inspections.yaml', (d) => (d.inspections.find((i: any) => i.id === 'derailleur-alignment').hands_off = false))
       .run();
     expect(errorsOf(r, 'hands-off-only').some((e) => e.message.includes("tutorial's checks")), show(r)).toBe(true);
   });
 
+  it('a fact may carry 3D fields, checked like a card', () => {
+    const r = sandbox()
+      .edit('content/facts.yaml', (d) => {
+        const f = d.facts.find((x: any) => x.key === 'drive.barrel_adjuster');
+        f.focus = ['rear_barrel', 'no_such_part'];
+        f.show = ['bike', 'rear_barrel'];
+        f.view = 'no_such_view';
+        f.animation = { clip: 'no-such-clip', caption: 'Where it is' };
+      })
+      .run();
+    expect(errorsOf(r, 'unknown-node').map((e) => e.id), show(r)).toEqual(['fact drive.barrel_adjuster']);
+    expect(errorsOf(r, 'show-and-focus'), show(r)).toHaveLength(1);
+    expect(errorsOf(r, 'unknown-view'), show(r)).toHaveLength(1);
+    expect(errorsOf(r, 'unknown-clip'), show(r)).toHaveLength(1);
+    box!.dispose();
+    // a fact without a question is never asked, so it never shows 3D
+    const r2 = sandbox()
+      .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'drive.rear_derailleur_model').focus = ['rear_derailleur']))
+      .run();
+    expect(errorsOf(r2, 'fact-3d'), show(r2)).toHaveLength(1);
+  });
+
+  it("a fact's answers name only its values, or unknown", () => {
+    const r = sandbox()
+      .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'drive.gear_type').answers.chain = { en: 'Chain' }))
+      .run();
+    const e = errorsOf(r, 'fact-answers');
+    expect(e, show(r)).toHaveLength(1);
+    expect(e[0].message).toContain('"chain"');
+  });
+
+  it('the barrel position is asked by the tutorial only: its own covers, not the diagnosis', () => {
+    const r = runCheck(REPO, { write: false });
+    const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
+    for (const p of d.paths) expect(p.combo.asked).not.toContain('drive.barrel_adjuster');
+    const t = r.flows!.tutorials.find((f) => f.id === 'adjust-rear-shifting')!;
+    const own = t.exits.filter((e) => e.exit.own);
+    expect(own.map((e) => e.exit.message)).toEqual(['Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.']);
+    // an uncovered value points at the flow's covers in the job file
+    const r2 = sandbox()
+      .edit(JOB, (d) => d.flow.covers.not_covered.splice(0))
+      .run();
+    expect(show(r2)).toContain('content/jobs/adjust-rear-shifting.yaml');
+  });
+
+  it('a journey may answer a question its own way, over the profile', () => {
+    const r = sandbox()
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys.find((j: any) => j.id === 'no-barrel-adjuster').answers = { 'drive.barrel_adjuster': 'bar' }))
+      .run();
+    expect(errorsOf(r, 'condition-value'), show(r)).toHaveLength(1);
+  });
+
   it('an unknown key, including on: which YAML 1.2 keeps as a string', () => {
     const r = sandbox()
-      .replace(JOB, '      outcomes:\n        straight: continue', '      on:\n        straight: continue')
+      .replace(JOB, '  ways:\n', '  on:\n    a: b\n  ways:\n')
       .run();
     const e = errorsOf(r, 'unknown-key');
     expect(e.length, show(r)).toBeGreaterThan(0);
@@ -598,7 +643,7 @@ describe('rules broken on purpose', () => {
       .edit(JOB, (d) => (step(d, 'check-b-gap').buttons[0].skips = ['check-cable-tension']))
       .run();
     expect(show(r)).toBe('');
-    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.stand--skip-check-b-gap-touching');
+    const skip = r.flows!.tutorials[0].paths.find((p) => p.id === 'derailleur.mechanical.derailleur.stand--skip-check-b-gap-touching');
     expect(skip, r.flows!.tutorials[0].paths.map((p) => p.id).join('\n')).toBeDefined();
     expect(skip!.variant.items.map((i) => i.id)).not.toContain('check-cable-tension');
   });
@@ -667,23 +712,28 @@ describe('rules broken on purpose', () => {
   });
 
   it("an inspection's default must continue in every tutorial call, and a journey may not tap it", () => {
-    const r = sandbox()
-      .edit('content/inspections.yaml', (d) => {
-        // a follow-up is checked like any call: its default may not exit
-        const i = d.inspections.find((x: any) => x.id === 'barrel-adjuster-search');
-        i.default = 'not-found';
-      })
-      .run();
-    expect(errorsOf(r, 'default-continues').length, show(r)).toBeGreaterThan(0);
-    box!.dispose();
-    const r2 = sandbox()
+    // No tutorial calls an inspection since 2026-11-27, so the test adds a call to the flow.
+    const exit = { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' };
+    const withCall = (b: Sandbox) => b.edit(JOB, (d) => (d.flow.checks = [{ inspect: 'derailleur-alignment', outcomes: { straight: { exit }, crooked: 'continue' } }]));
+    const r = withCall(sandbox())
       .edit('content/inspections.yaml', (d) => {
         const i = d.inspections.find((x: any) => x.id === 'derailleur-alignment');
         i.default = 'straight';
         i.question = 'Looks bent?';
       })
       .run();
-    // road-bike-stand / no-barrel-adjuster names "straight" in tutorial_sees; Next means it now
+    expect(errorsOf(r, 'default-continues').length, show(r)).toBeGreaterThan(0);
+    box!.dispose();
+    const r2 = withCall(sandbox())
+      .edit(JOB, (d) => (d.flow.checks[0].outcomes = { straight: 'continue', crooked: { exit } }))
+      .edit('content/inspections.yaml', (d) => {
+        const i = d.inspections.find((x: any) => x.id === 'derailleur-alignment');
+        i.default = 'straight';
+        i.question = 'Looks bent?';
+      })
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys.find((j: any) => j.id === 'no-barrel-adjuster').tutorial_sees = { 'derailleur-alignment': 'straight' }))
+      .run();
+    // the journey names "straight" in tutorial_sees; Next means it now
     const e = errorsOf(r2, 'unknown-button');
     expect(e.length, show(r2)).toBeGreaterThan(0);
     expect(e[0].message).toContain('Leave tutorial_sees.derailleur-alignment out');
