@@ -5,13 +5,13 @@
 import type { Content, Entry, TutorialEntry } from './content.js';
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from './conditions.js';
 import {
-  combined, findJumpTarget, resolveDiagnosis, resolveTutorial, type DiagnosisCheck, type Reader,
+  combined, factsAhead, findJumpTarget, NeedKey, nextQuestion, readRoutine, resolveDiagnosis, resolveTutorial, type DiagnosisCheck, type Reader,
 } from './expand.js';
 import { tutorialTimeRange } from './flows.js';
-import { factDef, neverAsked } from './refs.js';
+import { neverAsked } from './refs.js';
 import type { Issues } from './issues.js';
 import {
-  choiceBlock, exitScreen, factLine, has3d, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
+  choiceBlock, exitScreen, factLine, NOTICE, priceText, questionLine, renderCard, renderDiagnosisCheck, renderJobScreen, toolName,
   toolSummary, toolTiers, type Known,
 } from './render.js';
 import { lineAt } from './yamlfile.js';
@@ -112,11 +112,31 @@ class Run {
     return { ask, branch: look, peek: look };
   }
 
+  /**
+   * The facts phase (owner, 2026-11-27): asks, in the author's order (the flow's questions), every fact a path
+   * still ahead reads. Ahead means over every value of what is not known yet, choices and tools included, as
+   * the app sees it before its choices; the profile's own choices are not used here.
+   */
+  factsPhase(stage: string, order: string[] | undefined, resolve: (r: Reader) => unknown, params: Record<string, string> = {}): void {
+    const look = (assumed: Record<string, Value>): Reader => {
+      const ask = (key: string): Value => {
+        if (key in assumed) return assumed[key];
+        if (key.startsWith('choice.') || key.startsWith('tool.')) throw new NeedKey(key);
+        if (this.known.has(key)) return this.known.get(key)!;
+        if (neverAsked(this.c, key)) return UNKNOWN;
+        throw new NeedKey(key);
+      };
+      const peek = (key: string): Value => (key in assumed ? assumed[key] : this.known.get(key) ?? UNKNOWN);
+      return { ask, branch: peek, peek };
+    };
+    const reader = this.reader(stage);
+    for (let key = nextQuestion(order, factsAhead(this.c, resolve, look), params); key; key = nextQuestion(order, factsAhead(this.c, resolve, look), params)) {
+      reader.ask(key);
+    }
+  }
+
   questions(stage: string): string[] {
-    // Questions with 3D come last, after every plain question (owner, 2026-11-27). Written apart from the app on purpose:
-    // here the owner's answers are known, so the plain questions of this path are simply listed first.
-    const all = this.asked.filter((a) => a.stage === stage);
-    const qs = [...all.filter((a) => !has3d(factDef(this.c, a.key)?.def)), ...all.filter((a) => has3d(factDef(this.c, a.key)?.def))];
+    const qs = this.asked.filter((a) => a.stage === stage);
     if (!qs.length) return [];
     return [...qs.map((a, i) => `${i + 1}. ${questionLine(this.c, a.key, a.value)}`), ''];
   }
@@ -152,8 +172,8 @@ function notCovered(message: string): string[] {
 // ---------------------------------------------------------------- diagnosis
 
 function runDiagnosis(c: Content, r: Run, d: Entry): { job?: string; urgency?: string; ending?: string; remaining: DiagnosisCheck[] } {
-  const reader = r.reader('diagnosis');
-  const run = resolveDiagnosis(c, d, reader, r.j.params ?? {});
+  r.factsPhase('diagnosis', d.def.questions, (x) => resolveDiagnosis(c, d, x, r.j.params ?? {}), r.j.params ?? {});
+  const run = resolveDiagnosis(c, d, r.reader('diagnosis'), r.j.params ?? {});
   r.L.push(`### Symptom: "${d.def.symptom}"`, '');
   const qs = r.questions('diagnosis');
   r.L.push(qs.length ? 'Questions the app asks first:' : 'No questions: the app already knows what it needs.', '', ...qs);
@@ -190,9 +210,9 @@ function runDiagnosis(c: Content, r: Run, d: Entry): { job?: string; urgency?: s
 // ---------------------------------------------------------------- tutorial
 
 function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
-  const reader = r.reader('tutorial');
   const params = r.j.params ?? {};
-  const run = resolveTutorial(c, t, reader, params);
+  r.factsPhase('tutorial', t.def.questions, (x) => resolveTutorial(c, t, x, params), params);
+  const run = resolveTutorial(c, t, r.reader('tutorial'), params);
   const def = t.def;
   r.L.push(`### Tutorial: ${c.jobs.get(def.job)?.def.title ?? def.id}`, '');
   r.L.push('#### Before you start', '');
@@ -347,8 +367,11 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
 
 function runRoutine(c: Content, r: Run, id: string): string {
   const ch = c.checks.get(id)!.def;
+  r.factsPhase('check', ch.questions, (x) => readRoutine(c, c.checks.get(id)!, x));
   const reader = r.reader('check');
   r.L.push(`### ${ch.title}`, '');
+  const qs = r.questions('check');
+  if (qs.length) r.L.push('Questions the app asks first:', '', ...qs);
   const todo: string[] = [];
   let n = 1;
   for (const item of ch.inspections) {
@@ -380,8 +403,6 @@ function runRoutine(c: Content, r: Run, id: string): string {
       }
     }
   }
-  const qs = r.questions('check');
-  if (qs.length) r.L.push('Questions asked during the check:', '', ...qs);
   r.L.push('#### To-do list on the bike', '', ...(todo.length ? todo : ['Nothing to do.']), '');
   return todo.length ? `${todo.length} to-do item(s)` : 'no to-do items';
 }

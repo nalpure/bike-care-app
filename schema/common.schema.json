@@ -17,6 +17,13 @@
       "type": "string",
       "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_<>]+)+$"
     },
+    "questions": {
+      "description": "The facts this flow asks in its facts phase, in the order the author wants (owner, 2026-11-27); the app does not reorder them. A fact is asked only while a path still ahead reads it. Facts with 3D come after every plain one. npm run check requires every fact the flow can ask, and only those. <pos> stands for the run's position.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/factKey" }
+    },
     "stateLabel": {
       "description": "A session state label such as bike_in_stand or wheel_out.<pos>.",
       "type": "string",

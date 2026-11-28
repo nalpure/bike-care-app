@@ -109,6 +109,7 @@ export function expandJobFile(f: YamlFile, issues: Issues): ExpandedJob | null {
   const def: any = {};
   for (const [k, v] of Object.entries(header)) if (TUTORIAL_KEYS.includes(k)) def[k] = v;
   if (flow.covers) def.covers = flow.covers;
+  if (flow.questions) def.questions = flow.questions;
   def.cases = ways.map((w) => (flow.ways ? { when: wayDefs[w].when, way: w } : { way: w }));
   def.id = id;
   def.job = id;
@@ -116,7 +117,7 @@ export function expandJobFile(f: YamlFile, issues: Issues): ExpandedJob | null {
     const [, k, ...rest] = p;
     if (k === undefined || k === 'id' || k === 'job') return ['flow'];
     if (TUTORIAL_KEYS.includes(k as string)) return ['job', k, ...rest];
-    if (k === 'covers') return ['flow', k, ...rest];
+    if (k === 'covers' || k === 'questions') return ['flow', k, ...rest];
     if (k === 'cases') {
       const i = rest[0];
       if (!flow.ways || typeof i !== 'number') return ['flow', 'ways'];

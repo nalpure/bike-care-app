@@ -121,6 +121,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `fact-needs-question` | pass | Every fact a condition reads has a beginner question. |
 | `fact-answers` | pass | An enum fact with answers has an answer text for every value; answers name only its values, or unknown (the wording of the unknown answer). |
 | `fact-3d` | pass | A fact with 3D fields (focus, show, view, animation) has a question: only asked facts show the 3D view. |
+| `questions-3d-last` | pass | In a flow's questions, a fact with 3D fields comes after every plain fact (owner, 2026-11-27). |
 | `fact-group` | pass | Every fact's group (the key before the first dot) has an entry in fact_groups, and every group has a fact. |
 | `fact-range` | pass | Number facts: min is below max, and every value in values and in profiles lies between them. |
 | `condition-value` | pass | Conditions use only allowed values (or unknown). |
@@ -165,6 +166,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `skip-not-ahead` | pass | A button skips only steps that come later in the same sequence. |
 | `inspection-not-applicable` | pass | An inspection called on a path applies to that bike. |
 | `diagnosis-tutorial-coverage` | pass | A diagnosis that leads to a job with a tutorial is covered by that tutorial for the same bike. |
+| `questions-list` | pass | A flow's questions name every fact the flow can ask, and only those (the author's order, owner 2026-11-27). |
 
 ## Open placeholders
 

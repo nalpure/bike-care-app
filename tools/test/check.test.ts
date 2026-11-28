@@ -506,6 +506,29 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r, 'outcomes-match-states').length, show(r)).toBe(2);
   });
 
+  it("a flow's questions name every fact it can ask, and only those, with 3D last (owner, 2026-11-27)", () => {
+    const r = sandbox()
+      .edit(JOB, (d) => (d.flow.questions = ['drive.gear_type', 'bike.ebike', 'drive.barrel_adjuster']))
+      .edit('content/diagnoses/gears-shift-badly.yaml', (d) => delete d.diagnosis.questions)
+      .edit('content/checks/routine.yaml', (d) => (d.check.questions = ['drive.gear_type', 'drive.shifting']))
+      .run();
+    const e = errorsOf(r, 'questions-list');
+    // tutorial: shifting missing, ebike never read; diagnosis: gear type and shifting missing; routine: shifting never read
+    expect(e.map((x) => `${x.id}: ${x.message.split(',')[0]}`).sort(), show(r)).toEqual([
+      'check routine-check: questions names drive.shifting',
+      'diagnosis gears-shift-badly: The flow can ask drive.gear_type',
+      'diagnosis gears-shift-badly: The flow can ask drive.shifting',
+      'tutorial adjust-rear-shifting: The flow can ask drive.shifting',
+      'tutorial adjust-rear-shifting: questions names bike.ebike',
+    ]);
+    expect(e.find((x) => x.id.startsWith('tutorial'))!.file).toBe(JOB);
+    box!.dispose();
+    const r2 = sandbox().edit(JOB, (d) => (d.flow.questions = ['drive.gear_type', 'drive.barrel_adjuster', 'drive.shifting'])).run();
+    const [late] = errorsOf(r2, 'questions-3d-last');
+    expect(late?.message, show(r2)).toContain('drive.shifting is a plain question after drive.barrel_adjuster');
+    expect(formatIssue(late)).toMatch(ERROR_LINE);
+  });
+
   it('a fact may carry 3D fields, checked like a card', () => {
     const r = sandbox()
       .edit('content/facts.yaml', (d) => {

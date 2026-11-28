@@ -5,6 +5,7 @@
 check:
   id: routine-check
   title: "Routine check"
+  questions: [drive.gear_type]   # the facts phase
   inspections:
     - inspect: derailleur-alignment
     - inspect: chain-condition

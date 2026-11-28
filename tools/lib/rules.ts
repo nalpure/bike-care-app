@@ -37,6 +37,7 @@ export const STATIC_RULES: Record<string, string> = {
   'fact-needs-question': 'Every fact a condition reads has a beginner question.',
   'fact-answers': 'An enum fact with answers has an answer text for every value; answers name only its values, or unknown (the wording of the unknown answer).',
   'fact-3d': 'A fact with 3D fields (focus, show, view, animation) has a question: only asked facts show the 3D view.',
+  'questions-3d-last': "In a flow's questions, a fact with 3D fields comes after every plain fact (owner, 2026-11-27).",
   'fact-group':"Every fact's group (the key before the first dot) has an entry in fact_groups, and every group has a fact.",
   'fact-range': 'Number facts: min is below max, and every value in values and in profiles lies between them.',
   'condition-value': 'Conditions use only allowed values (or unknown).',

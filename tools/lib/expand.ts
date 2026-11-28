@@ -47,6 +47,16 @@ export function enumerate<T>(c: Content, resolve: (r: R.Reader) => T, fixed: Rec
   return R.enumerate(bundleOf(c).index, resolve, fixed);
 }
 
+export function factsAhead(c: Content, resolve: (r: R.Reader) => unknown, reader: (assumed: Record<string, Value>) => R.Reader): string[] {
+  return R.factsAhead(bundleOf(c).index, resolve, reader);
+}
+
+export function readRoutine(c: Content, ch: Entry, r: R.Reader): void {
+  R.readRoutine(bundleOf(c).index, ch.def, r);
+}
+
+export { nextQuestion } from './resolve.js';
+
 // ---------------------------------------------------------------- tutorial path variants
 
 export interface Variant {

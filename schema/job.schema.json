@@ -110,6 +110,7 @@
           "description": "Which bikes the tutorial covers beyond the job's covers: what the user needs to do the job themselves (a shop still can). Read by the tutorial only, after the job's covers and before any way, so its facts are asked in the facts phase. A diagnosis with covers_like does not read it.",
           "$ref": "#/$defs/covers"
         },
+        "questions": { "$ref": "common.schema.json#/$defs/questions" },
         "ways": {
           "description": "Where the order of work differs (one branch by mechanism or by how the bike is held): each way's name and when. Evaluated top to bottom; the first match wins. Without ways the flow has one way and no branch.",
           "type": "object",

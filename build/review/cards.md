@@ -524,7 +524,7 @@ Help behind "?": A small ribbed knob where the gear cable goes in. Look at the r
 - `inline`: On the cable / Im Schaltzug
 - `unknown`: I cannot find it / Ich finde ihn nicht <sub>(never stored on the bike)</sub>
 
-<sub>Asked with the 3D view, after every plain question of the flow.</sub>
+<sub>Asked with the 3D view; a flow lists it after its plain questions.</sub>
 
 <sub>3D: focus rear_barrel, front_barrel · show bike · view barrel_adjuster_close</sub>
 

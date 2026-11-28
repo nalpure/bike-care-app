@@ -4,7 +4,7 @@
 import type { Content, Entry, TutorialEntry } from './content.js';
 import { substParams, type Value } from './conditions.js';
 import {
-  combined, comboId, diagnosisPaths, enumerate, paramCombos, resolveDiagnosis, resolveTutorial, variantsOf,
+  combined, comboId, diagnosisPaths, enumerate, paramCombos, readRoutine, resolveDiagnosis, resolveTutorial, variantsOf,
   type DiagnosisPath, type DiagnosisRun, type Exit, type PathItem, type Src, type TutorialRun, type Variant,
 } from './expand.js';
 import type { Issues } from './issues.js';
@@ -112,7 +112,40 @@ export const SIM_RULES: Record<string, string> = {
   'skip-not-ahead': 'A button skips only steps that come later in the same sequence.',
   'inspection-not-applicable': 'An inspection called on a path applies to that bike.',
   'diagnosis-tutorial-coverage': 'A diagnosis that leads to a job with a tutorial is covered by that tutorial for the same bike.',
+  'questions-list': "A flow's questions name every fact the flow can ask, and only those (the author's order, owner 2026-11-27).",
 };
+
+/**
+ * The facts phase in the author's order (owner, 2026-11-27): the listed facts first, as listed, then the
+ * choices and tools in the order they are read. Path ids and the reviewers' question lists follow it.
+ */
+function inOrder(res: { asked: string[] }, order: string[] | undefined, params: Record<string, string>): { asked: string[] } {
+  const o = (order ?? []).map((k) => substParams(k, params));
+  const rank = (k: string) => (o.includes(k) ? o.indexOf(k) : o.length);
+  return { ...res, asked: [...res.asked].sort((a, b) => rank(a) - rank(b)) };
+}
+
+/** Collects, over every combination of a flow, the facts it asks; then reports what its questions miss or list in vain. */
+class QuestionList {
+  private asked = new Set<string>();
+  private seen = new Map<string, string>();
+  constructor(private order: string[] | undefined, private src: Src, private id: string) {}
+
+  add(asked: string[], params: Record<string, string>, pathId: string): void {
+    const o = (this.order ?? []).map((k) => substParams(k, params));
+    for (const k of asked) {
+      if (k.startsWith('choice.') || k.startsWith('tool.')) continue;
+      const i = o.indexOf(k);
+      if (i >= 0) this.asked.add(this.order![i]);
+      else if (!this.seen.has(k)) this.seen.set(k, pathId);
+    }
+  }
+
+  report(agg: Aggregator): void {
+    for (const [k, pathId] of this.seen) agg.add('questions-list', this.src, this.id, `The flow can ask ${k}, but its questions do not name it. Add it to questions, where the user should meet it.`, pathId);
+    for (const k of this.order ?? []) if (!this.asked.has(k)) agg.add('questions-list', this.src, this.id, `questions names ${k}, but no path of the flow reads it. Take it off the list.`, '-');
+  }
+}
 
 /** Merges the same problem found on many paths into one issue that names the first path. */
 class Aggregator {
@@ -183,11 +216,13 @@ export function simulateVariant(v: Variant, params: Record<string, string>, onPr
 function buildTutorialFlow(c: Content, t: TutorialEntry, agg: Aggregator): TutorialFlow {
   const flow: TutorialFlow = { id: t.def.id, entry: t, paths: [], exits: [] };
   const ids = new ComboIds();
+  const list = new QuestionList(t.def.questions, { file: t.file, path: ['tutorial', 'questions'] }, `tutorial ${t.def.id}`);
   for (const params of paramCombos(t.def.params)) {
-    const results = enumerate(c, (r) => resolveTutorial(c, t, r, params));
+    const results = enumerate(c, (r) => resolveTutorial(c, t, r, params)).map((x) => ({ ...x, ...inOrder(x, t.def.questions, params) }));
     for (const res of results) {
       const run = res.result;
       const sig = run.exit ? `exit|${run.exit.kind}|${run.exit.message}` : combined(run).map((i) => `${i.id}${i.generic ? '*' : ''}:${i.buttons.length}`).join(',');
+      list.add(res.asked, params, comboId(c, res.asked, res.assign));
       const combo = ids.claim(res, params, sig, c);
       if (!combo) continue;
       const baseId = combo.baseId;
@@ -219,6 +254,7 @@ function buildTutorialFlow(c: Content, t: TutorialEntry, agg: Aggregator): Tutor
       }
     }
   }
+  list.report(agg);
   return flow;
 }
 
@@ -318,11 +354,13 @@ function checkVariant(c: Content, t: TutorialEntry, p: TutorialPath, params: Rec
 function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlow {
   const flow: DiagnosisFlow = { id: d.def.id, entry: d, paths: [], exits: [] };
   const ids = new ComboIds();
+  const list = new QuestionList(d.def.questions, { file: d.file, path: [...d.path, 'questions'] }, `diagnosis ${d.def.id}`);
   for (const params of paramCombos(d.def.params)) {
-    const results = enumerate(c, (r) => resolveDiagnosis(c, d, r, params));
+    const results = enumerate(c, (r) => resolveDiagnosis(c, d, r, params)).map((x) => ({ ...x, ...inOrder(x, d.def.questions, params) }));
     for (const res of results) {
       const run = res.result;
       const sig = run.exit ? `exit|${run.exit.kind}|${run.exit.message}` : run.checks.map((x) => `${x.id}${x.skipped ? '-' : ''}`).join(',');
+      list.add(res.asked, params, comboId(c, res.asked, res.assign));
       const combo = ids.claim(res, params, sig, c);
       if (!combo) continue;
       const baseId = combo.baseId;
@@ -354,7 +392,15 @@ function buildDiagnosisFlow(c: Content, d: Entry, agg: Aggregator): DiagnosisFlo
       }
     }
   }
+  list.report(agg);
   return flow;
+}
+
+/** The routine check's facts phase reads each item's applies_when: its questions must name those facts. */
+function checkRoutineQuestions(c: Content, ch: Entry, agg: Aggregator): void {
+  const list = new QuestionList(ch.def.questions, { file: ch.file, path: [...ch.path, 'questions'] }, `check ${ch.def.id}`);
+  for (const res of enumerate(c, (r) => readRoutine(c, ch, r))) list.add(res.asked, {}, comboId(c, res.asked, res.assign));
+  list.report(agg);
 }
 
 /** Time range of the complete paths of a tutorial for a bike whose facts are fixed (choices stay open). */
@@ -375,6 +421,7 @@ export function buildFlows(c: Content, issues: Issues): Flows {
   const agg = new Aggregator(rules);
   const tutorials = [...c.tutorials.values()].map((t) => buildTutorialFlow(c, t, agg));
   const diagnoses = [...c.diagnoses.values()].map((d) => buildDiagnosisFlow(c, d, agg));
+  for (const ch of c.checks.values()) checkRoutineQuestions(c, ch, agg);
   agg.flush(issues);
   return { tutorials, diagnoses, rules };
 }

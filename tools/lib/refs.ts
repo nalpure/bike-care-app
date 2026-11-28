@@ -436,8 +436,38 @@ function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'se
   }
 }
 
+/** A fact asked with the 3D view: it has any of focus, show, view, animation (owner, 2026-11-27). */
+export function has3dFields(f: any): boolean {
+  return ['focus', 'show', 'view', 'animation'].some((k) => f?.[k] !== undefined);
+}
+
+/**
+ * A flow's questions (the author's order of its facts phase): asked facts, each with a question, and
+ * every fact with 3D after every plain one. Whether the list names exactly what the flow asks is a
+ * path rule (questions-list, flows.ts).
+ */
+function checkQuestions(x: Ctx, list: string[] | undefined, loc: Loc): void {
+  let plainAfter3d = false;
+  let seen3d = '';
+  (list ?? []).forEach((k, i) => {
+    const l = sub(loc, 'questions', i);
+    const f = factDef(x.c, k);
+    if (!f) {
+      err(x, l, 'unknown-fact', `questions names fact "${k}", which is not in content/facts.yaml.`);
+      return;
+    }
+    if (f.def.ask === 'never' || !f.def.question) err(x, l, 'fact-needs-question', `questions names ${k}, which the app never asks (${f.def.ask === 'never' ? 'ask: never' : 'no question'}).`);
+    if (has3dFields(f.def)) seen3d ||= k;
+    else if (seen3d && !plainAfter3d) {
+      plainAfter3d = true;
+      err(x, l, 'questions-3d-last', `${k} is a plain question after ${seen3d}, which has 3D. Questions with 3D come after every plain one (owner, 2026-11-27): move ${k} up.`);
+    }
+  });
+}
+
 function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile> }): void {
   const loc = locOf(e, 'tutorial');
+  checkQuestions(x, t.questions, loc);
   (t.choices ?? []).forEach((ch: string, i: number) => {
     if (!x.c.choices.has(ch)) err(x, sub(loc, 'choices', i), 'unknown-choice', `Choice "${ch}" is not in content/choices.yaml.`);
   });
@@ -470,6 +500,7 @@ function checkDiagnosis(x: Ctx, e: Entry): void {
     else if (!job.def.covers) err(x, sub(loc, 'covers_like'), 'unknown-job', `covers_like names job "${d.covers_like}", which has no covers.`);
   }
   checkText(x, d.symptom, loc);
+  checkQuestions(x, d.questions, loc);
   d.checks.forEach((ch: any, i: number) => {
     const l = sub(loc, 'checks', i);
     const insp = x.c.inspections.get(ch.inspect);
@@ -484,6 +515,7 @@ function checkDiagnosis(x: Ctx, e: Entry): void {
 
 function checkRoutine(x: Ctx, e: Entry): void {
   const loc = locOf(e, 'check');
+  checkQuestions(x, e.def.questions, loc);
   e.def.inspections.forEach((it: any, i: number) => {
     const insp = x.c.inspections.get(it.inspect);
     if (!insp) err(x, sub(loc, 'inspections', i), 'unknown-inspection', `Inspection "${it.inspect}" is not in content/inspections.yaml.`);
@@ -625,8 +657,7 @@ export function checkStatic(c: Content, issues: Issues): void {
       if (k !== 'unknown' && !allowed.includes(k)) err(x, sub(loc, 'answers', k), 'fact-answers', `Fact ${f.key} has an answer for "${k}", which is not one of its values (${allowed.join(', ') || 'none'}). Only its values, or unknown for the wording of the unknown answer.`);
     }
     // Optional 3D, as on a card (owner, 2026-11-27): only an asked fact shows it.
-    const has3d = ['focus', 'show', 'view', 'animation'].some((k) => f[k] !== undefined);
-    if (has3d) {
+    if (has3dFields(f)) {
       checkScene(x, f, loc);
       if (!f.question) err(x, loc, 'fact-3d', `Fact ${f.key} has 3D fields but no question. Only an asked fact shows the 3D view; give it a question or drop the 3D fields.`);
     }

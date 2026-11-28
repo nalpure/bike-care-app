@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "c0b59c234d9dd640",
+  "content_hash": "859cc03932f57a49",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -1660,6 +1660,11 @@
           }
         ]
       },
+      "questions": [
+        "drive.gear_type",
+        "drive.shifting",
+        "drive.barrel_adjuster"
+      ],
       "cases": [
         {
           "when": {
@@ -1758,6 +1763,10 @@
       "id": "gears-shift-badly",
       "symptom": "My gears don't shift cleanly",
       "covers_like": "adjust-rear-shifting",
+      "questions": [
+        "drive.gear_type",
+        "drive.shifting"
+      ],
       "checks": [
         {
           "inspect": "derailleur-alignment"
@@ -1778,6 +1787,9 @@
     {
       "id": "routine-check",
       "title": "Routine check",
+      "questions": [
+        "drive.gear_type"
+      ],
       "inspections": [
         {
           "inspect": "derailleur-alignment"

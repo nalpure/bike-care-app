@@ -39,7 +39,7 @@ export function unknownAnswer(f: any): string {
   return f?.answers?.unknown?.en ?? "I'll check later";
 }
 
-/** A fact asked with the 3D view (any of focus, show, view, animation): asked after the plain questions. */
+/** A fact asked with the 3D view (any of focus, show, view, animation); a flow lists it after its plain questions. */
 export function has3d(f: any): boolean {
   return !!f && ['focus', 'show', 'view', 'animation'].some((k) => f[k] !== undefined);
 }

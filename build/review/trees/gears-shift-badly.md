@@ -2,12 +2,14 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:diagnosis:gears-shift-badly` · hash `6dda312c4612` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:diagnosis:gears-shift-badly` · hash `1ad6946ca6c2` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
 
 Symptom: "My gears don't shift cleanly"
+
+- Questions, in this order, each only when not yet known and a path ahead reads it: `drive.gear_type`, `drive.shifting`
 
 ## Bikes covered
 

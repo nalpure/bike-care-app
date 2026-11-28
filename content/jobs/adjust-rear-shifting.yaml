@@ -45,6 +45,9 @@ job:
     price_source: "<source, date>"
 
 flow:
+  # The facts phase, in this order (owner, 2026-11-27). A fact is asked only while a path still ahead reads it;
+  # the barrel adjuster has 3D, so it comes last.
+  questions: [drive.gear_type, drive.shifting, drive.barrel_adjuster]
   # A tutorial runs no checks before the work (owner, 2026-11-27); the diagnosis is where they are run.
   # Doing it yourself needs a barrel adjuster: its place is asked in the facts phase, as the last question,
   # with the 3D view (the fact has 3D fields). "I cannot find it" is the unknown answer: never stored, so the

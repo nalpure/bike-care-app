@@ -214,22 +214,22 @@ describe('the barrel adjuster: a fact with 3D, asked last in the facts phase (ow
     expect(j.learned()).toContainEqual([BARREL, 'shifter']);
   });
 
-  it('asks a plain question the flow reads after the barrel before the barrel', () => {
-    // No content reads a plain fact after the barrel today, so the test adds one to the tutorial's covers.
-    const { j } = start(PLAIN, (b) => {
-      const t = b.tutorials.find((x: any) => x.id === 'adjust-rear-shifting');
-      t.covers.when['bike.ebike'] = [false];
-      t.covers.not_covered.push({ when: { 'bike.ebike': [true, 'unknown'] }, text: 'Not covered.' });
+  it('asks in the order the author wrote, each fact only while a path ahead reads it (owner, 2026-11-27)', () => {
+    const tut = (b: any) => b.tutorials.find((x: any) => x.id === 'adjust-rear-shifting');
+    // the author's order wins over the order the flow reads the facts
+    const { j } = start(null, (b) => (tut(b).questions = ['drive.shifting', 'drive.gear_type', BARREL]));
+    expect(answer(j, { ...PLAIN, [BARREL]: 'derailleur' })).toEqual(['drive.shifting', 'drive.gear_type', BARREL]);
+    // a fact no path ahead reads is not asked: hub gears end before the shifting and the barrel are read
+    const { j: k } = start(null);
+    expect(answer(k, { 'drive.gear_type': 'hub_gear' })).toEqual(['drive.gear_type']);
+    expect(k.screen().kind).toBe('not-covered');
+    // a plain fact the flow reads after the barrel is asked before it, as listed
+    const { j: m } = start(PLAIN, (b) => {
+      tut(b).covers.when['bike.ebike'] = [false];
+      tut(b).covers.not_covered.push({ when: { 'bike.ebike': [true, 'unknown'] }, text: 'Not covered.' });
+      tut(b).questions = ['drive.gear_type', 'drive.shifting', 'bike.ebike', BARREL];
     });
-    expect(answer(j, { 'bike.ebike': false, [BARREL]: 'derailleur' })).toEqual(['bike.ebike', BARREL]);
-    // a plain fact read only after one of the barrel's answers is asked first too
-    const { j: k } = start(PLAIN, (b) => {
-      const t = b.tutorials.find((x: any) => x.id === 'adjust-rear-shifting');
-      t.covers.not_covered.unshift({ when: { [BARREL]: ['inline'], 'bike.ebike': [true] }, text: 'Not covered.' });
-      t.covers.when = { [BARREL]: ['derailleur', 'shifter'] };
-      t.covers.not_covered.push({ when: { [BARREL]: ['inline'] }, text: 'Not covered either.' });
-    });
-    expect(answer(k, { 'bike.ebike': false, [BARREL]: 'derailleur' })).toEqual(['bike.ebike', BARREL]);
+    expect(answer(m, { 'bike.ebike': false, [BARREL]: 'derailleur' })).toEqual(['bike.ebike', BARREL]);
   });
 
   it('"I cannot find it" ends on the not-covered screen before any work, and is never stored', () => {

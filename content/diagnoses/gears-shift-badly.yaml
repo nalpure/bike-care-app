@@ -7,6 +7,7 @@ diagnosis:
   id: gears-shift-badly
   symptom: "My gears don't shift cleanly"
   covers_like: adjust-rear-shifting        # the same bikes as the job, with its not-covered texts
+  questions: [drive.gear_type, drive.shifting]   # the facts phase, in this order
   checks:
     - inspect: derailleur-alignment
     - inspect: chain-condition

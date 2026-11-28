@@ -14,6 +14,7 @@
           "description": "A job whose covers this diagnosis uses: it runs only for the bikes that job covers, and ends with the job's not_covered texts for the others.",
           "$ref": "common.schema.json#/$defs/id"
         },
+        "questions": { "$ref": "common.schema.json#/$defs/questions" },
         "checks": {
           "description": "Cheapest and most likely first. The first state that leads to a job ends the diagnosis.",
           "type": "array",

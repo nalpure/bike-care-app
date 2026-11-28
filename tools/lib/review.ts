@@ -211,7 +211,7 @@ export function cardUnits(c: Content, flows: Flows): Unit[] {
     if (f.question.picture) body.push('', `<sub>Picture set: ${f.question.picture}</sub>`);
     // Optional 3D (owner, 2026-11-27): asked with the 3D view, after the plain questions.
     const scene = sceneLine(f);
-    if (scene || f.animation) body.push('', '<sub>Asked with the 3D view, after every plain question of the flow.</sub>');
+    if (scene || f.animation) body.push('', '<sub>Asked with the 3D view; a flow lists it after its plain questions.</sub>');
     if (scene) body.push('', scene);
     if (f.animation) body.push('', `Animation: ${anim(f.animation)}`);
     add('fact', key, `Question: ${key}`, f, ['beginner'], body);
@@ -303,13 +303,10 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   const used = { steps: new Set<string>(), inspections: new Set<string>(), procedures: new Set<string>() };
 
   // Questions and choices
-  const asked = new Set<string>();
   const silent = new Set<string>();
-  for (const p of flow.paths) for (const k of p.combo.asked) asked.add(k);
-  for (const e of flow.exits) for (const k of e.combo.asked) asked.add(k);
   for (const x of [...flow.paths.map((p) => p.combo), ...flow.exits.map((e) => e.combo)]) for (const k of x.silent ?? []) silent.add(k);
   L.push('## Before the first step', '');
-  L.push(`- Questions, only when not yet known: ${[...asked].filter((k) => !k.startsWith('choice.')).map((k) => `\`${k}\``).join(', ') || 'none'}`);
+  L.push(questionsLine(def.questions));
   if (silent.size) L.push(`- Read from the bike's data, never asked: ${[...silent].map((k) => `\`${k}\``).join(', ')}`);
   L.push(`- Run choices: ${(def.choices ?? []).map((x: string) => `\`${x}\``).join(', ') || 'none'}`, `- Difficulty ${def.difficulty}`, '');
 
@@ -432,8 +429,14 @@ function coverageLines(c: Content, jobId: string, via?: string): string[] {
   return L;
 }
 
+/** The author's order of the facts phase (owner, 2026-11-27). */
+function questionsLine(order: string[] | undefined): string {
+  const list = (order ?? []).map((k) => `\`${k}\``).join(', ') || 'none';
+  return `- Questions, in this order, each only when not yet known and a path ahead reads it: ${list}`;
+}
+
 function diagnosisTree(c: Content, d: any): { lines: string[]; structure: unknown } {
-  const L = [`Symptom: "${d.symptom}"`, ''];
+  const L = [`Symptom: "${d.symptom}"`, '', questionsLine(d.questions), ''];
   if (d.covers_like) L.push(...coverageLines(c, d.covers_like, 'The same bikes as the job (covers_like).'));
   L.push('Checks, in order. The first state that leads to a job ends the diagnosis:', '');
   d.checks.forEach((ch: any, i: number) => {
@@ -450,7 +453,7 @@ function diagnosisTree(c: Content, d: any): { lines: string[]; structure: unknow
 }
 
 function checkTree(c: Content, ch: any): { lines: string[]; structure: unknown } {
-  const L = ['Every state that leads to a job becomes a to-do item. Inspections that do not apply to the bike are skipped.', ''];
+  const L = [questionsLine(ch.questions), '', 'Every state that leads to a job becomes a to-do item. Inspections that do not apply to the bike are skipped.', ''];
   ch.inspections.forEach((it: any, i: number) => {
     const insp = c.inspections.get(it.inspect)?.def;
     L.push(`${i + 1}. ${itemTitle(c, 'inspect', it.inspect)}${it.pos ? ` (${it.pos.join(', ')})` : ''}${insp?.applies_when ? ` · only when ${cond(insp.applies_when)}` : ''}`);

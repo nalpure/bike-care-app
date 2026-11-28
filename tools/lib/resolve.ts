@@ -196,6 +196,42 @@ export function enumerate<T>(ix: Index, resolve: (r: Reader) => T, fixed: Record
   return out;
 }
 
+/**
+ * The facts phase (owner, 2026-11-27): the facts a flow can still ask, in the order first needed. Runs
+ * `resolve` with `reader(assumed)` and, at every key it still needs, tries each value of that key, so a
+ * fact counts only when some remaining path reads it. Choices and tools are tried, never listed.
+ */
+export function factsAhead(ix: Index, resolve: (r: Reader) => unknown, reader: (assumed: Record<string, Value>) => Reader): string[] {
+  const out: string[] = [];
+  let runs = 0;
+  const walk = (assumed: Record<string, Value>): void => {
+    if (++runs > 20000) throw new Error('The facts phase exceeded 20000 combinations. Split the flow.');
+    try {
+      resolve(reader(assumed));
+    } catch (e) {
+      if (!(e instanceof NeedKey)) throw e;
+      const k = e.key;
+      if (!k.startsWith('choice.') && !k.startsWith('tool.') && !out.includes(k)) out.push(k);
+      for (const v of domainOf(ix, k)) walk({ ...assumed, [k]: v });
+    }
+  };
+  walk({});
+  return out;
+}
+
+/** The question to ask next: the first fact of the author's list (`questions` of the flow) still ahead; the first one ahead if the list misses it (a build error). */
+export function nextQuestion(order: string[] | undefined, ahead: string[], params: Record<string, string> = {}): string | undefined {
+  return (order ?? []).map((k) => substParams(k, params)).find((k) => ahead.includes(k)) ?? ahead[0];
+}
+
+/** The routine check's reads, for its facts phase: each item's applies_when, per position. */
+export function readRoutine(ix: Index, ch: any, r: Reader): void {
+  for (const item of ch?.inspections ?? []) {
+    const def = inspectionDef(ix, item.inspect);
+    for (const pos of item.pos ?? [undefined]) evaluate(substCondition(def?.applies_when, pos ? { pos } : {}), r.ask);
+  }
+}
+
 /** Minutes of a list of items. */
 export function minutesOf(items: { def: any }[]): number {
   return items.reduce((s, it) => s + (it.def.minutes ?? 0), 0);

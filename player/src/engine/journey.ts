@@ -9,7 +9,7 @@
 
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
 import {
-  combined, enumerate, findJumpTarget, knownCoverageExit, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, domainOf,
+  combined, enumerate, factsAhead, findJumpTarget, knownCoverageExit, minutesOf, NeedKey, neverAsked, nextQuestion, readRoutine, resolveDiagnosis, resolveTutorial, skippedBy,
   type DiagnosisRun, type PathItem, type Reader, type ToolList, type ToolSetUse, type TutorialRun, mergeTools,
 } from '../../../tools/lib/resolve.js';
 import type { Content } from './content.js';
@@ -416,7 +416,7 @@ export class Journey {
     return undefined;
   };
 
-  /** assumed: facts taken as answered, to look past a question with 3D (`plainAhead`) */
+  /** assumed: keys taken as answered, to look at the paths ahead (`nextFact`) */
   private reader(t?: TutState, assumed: Record<string, Value> = {}): Reader {
     const ask = (key: string): Value => {
       if (key in assumed) return assumed[key];
@@ -483,27 +483,11 @@ export class Journey {
   }
 
   /**
-   * The fact to ask next. Questions with 3D come at the end of the facts phase, after every plain question the
-   * flow asks (owner, 2026-11-27). While the flow needs a fact with 3D, it is tried with each of its answers;
-   * a plain fact the flow then reads with any of them is asked first. Choices and tools end the look-ahead
-   * (they come after the facts phase), so do more than three facts with 3D in a row.
+   * The facts phase: the fact to ask next, in the order the flow's author wrote (`questions`, owner 2026-11-27).
+   * A fact is asked only while a path still ahead reads it (`factsAhead` tries every open choice and answer).
    */
-  private nextQuestion(need: string, run: (r: Reader) => unknown, t?: TutState): string {
-    return this.with3d(need) ? this.plainAhead(run, t, {}, 0) ?? need : need;
-  }
-
-  private plainAhead(run: (r: Reader) => unknown, t: TutState | undefined, assumed: Record<string, Value>, depth: number): string | undefined {
-    const res = this.tryResolve(() => run(this.reader(t, assumed)));
-    if (!('need' in res)) return undefined;
-    const k = res.need;
-    if (k.startsWith('choice.') || k.startsWith('tool.')) return undefined;
-    if (!this.with3d(k)) return k;
-    if (depth >= 3) return undefined;
-    for (const v of domainOf(this.c.ix, k)) {
-      const p = this.plainAhead(run, t, { ...assumed, [k]: v }, depth + 1);
-      if (p) return p;
-    }
-    return undefined;
+  private nextFact(order: string[] | undefined, run: (r: Reader) => unknown, t: TutState | undefined, params: Record<string, string>): string | undefined {
+    return nextQuestion(order, factsAhead(this.c.ix, run, (assumed) => this.reader(t, assumed)), params);
   }
 
   /** Answer to a fact question; "unknown" is "I'll check later" and is kept for this sitting only. */
@@ -680,8 +664,10 @@ export class Journey {
     if (!d) return { kind: 'not-covered', message: 'This symptom is not covered yet.', canBack: this.canBack };
     const pos = this.positionOf(d.params, s.params);
     if (pos) return pos;
+    const q = this.nextFact(d.questions, (r) => resolveDiagnosis(this.c.ix, d, r, s.params), undefined, s.params);
+    if (q) return this.questionScreen(q);
     const res = this.diagRun(s);
-    if ('need' in res) return this.questionScreen(this.nextQuestion(res.need, (r) => resolveDiagnosis(this.c.ix, d, r, s.params)));
+    if ('need' in res) return this.questionScreen(res.need);
     const run = res.ok;
     if (run.exit) return { kind: 'not-covered', message: run.exit.message, canBack: this.canBack };
     const ch = run.checks[s.i];
@@ -775,7 +761,10 @@ export class Journey {
 
   private routineScreen(s: Extract<Stage, { k: 'routine' }>): Screen {
     const items = this.routineItems(s.id);
-    // Skip what does not apply to this bike; a missing fact becomes a question.
+    // The facts phase first, in the author's order; then skip what does not apply to this bike.
+    const check = this.c.ix.checks.get(s.id);
+    const q = this.nextFact(check?.questions, (r) => readRoutine(this.c.ix, check, r), undefined, {});
+    if (q) return this.questionScreen(q);
     while (s.i < items.length) {
       const it = items[s.i];
       const params: Record<string, string> = it.pos ? { pos: it.pos } : {};
@@ -1089,15 +1078,13 @@ export class Journey {
     if (early) return early;
     const pos = this.positionOf(def.params, t.params);
     if (pos) return pos;
+    // The facts phase comes first: every fact a path ahead reads, in the author's order, before parts and choices.
+    const q = this.nextFact(def.questions, (r) => resolveTutorial(this.c.ix, def, r, t.params), t, t.params);
+    if (q) return this.questionScreen(q);
     const res = this.tutRun(t);
     if ('need' in res) {
-      const key = res.need;
-      if (!key.startsWith('choice.')) {
-        // A tool question waits until the run choices are made (a choice may bring the tool).
-        if (!(key.startsWith('tool.') && (def.choices ?? []).some((c: string) => !(c in t.choices)))) {
-          return this.questionScreen(this.nextQuestion(key, (r) => resolveTutorial(this.c.ix, def, r, t.params), t));
-        }
-      }
+      // A tool question waits until the run choices are made (a choice may bring the tool).
+      if (res.need.startsWith('tool.') && !(def.choices ?? []).some((c: string) => !(c in t.choices))) return this.questionScreen(res.need);
     } else if (res.ok.exit) {
       const ex = res.ok.exit;
       if (ex.kind === 'not_covered' || ex.kind === 'uncovered') return { kind: 'not-covered', message: ex.message, canBack: this.canBack };
@@ -1108,7 +1095,7 @@ export class Journey {
       if (!(ch in t.choices)) return { kind: 'choice', choice: this.c.ix.choices.get(ch), canBack: this.canBack };
     }
     if ('need' in res) {
-      return res.need.startsWith('choice.') ? { kind: 'not-covered', message: 'This guide is not available for this choice.', canBack: this.canBack } : this.questionScreen(this.nextQuestion(res.need, (r) => resolveTutorial(this.c.ix, def, r, t.params), t));
+      return res.need.startsWith('choice.') ? { kind: 'not-covered', message: 'This guide is not available for this choice.', canBack: this.canBack } : this.questionScreen(res.need);
     }
     if (!t.tools) {
       const tools = this.toolSummary(combined(res.ok));
