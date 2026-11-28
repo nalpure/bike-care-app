@@ -57,21 +57,21 @@ interface ShotBike {
 const BIKES: ShotBike[] = [
   {
     id: 'road-stand', garage: 'road-bike-stand', facts: { 'bike.category': 'road_gravel', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 11 }, hold: 'stand',
-    tutorial: { 'barrel-adjuster-present': 'at-derailleur' }, solve: { 'check-cable-tension': 'slow-easier' },
+    answers: { 'drive.barrel_adjuster': 'derailleur' }, solve: { 'check-cable-tension': 'slow-easier' },
   },
   {
     id: 'road-inline', garage: 'road-bike-stand', facts: { 'bike.category': 'road_gravel', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 11 }, hold: 'stand',
-    tutorial: { 'barrel-adjuster-present': 'cant-find', 'barrel-adjuster-search': 'on-cable' }, solve: { 'check-cable-tension': 'slow-easier' },
+    answers: { 'drive.barrel_adjuster': 'inline' }, solve: { 'check-cable-tension': 'slow-easier' },
   },
   { id: 'mtb12-stand', garage: 'road-bike-stand', facts: { 'bike.category': 'mtb', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 12 }, hold: 'stand' },
   {
     id: 'city-upside-down', garage: 'city-derailleur-no-stand', facts: { 'bike.category': 'city', 'bike.ebike': false, 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.rear_speeds': 8 }, hold: 'upside_down',
-    tutorial: { 'barrel-adjuster-present': 'at-shifter' }, solve: { 'check-cable-tension': 'slow-harder' },
+    answers: { 'drive.barrel_adjuster': 'shifter' }, solve: { 'check-cable-tension': 'slow-harder' },
   },
   {
     id: 'unknown-ground', garage: 'unknown', facts: {}, hold: 'ground',
-    answers: { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical' },
-    tutorial: { 'barrel-adjuster-present': 'cant-find', 'barrel-adjuster-search': 'on-cable' }, solve: { 'check-cable-tension-riding': 'slow-easier' },
+    answers: { 'drive.gear_type': 'derailleur', 'drive.shifting': 'mechanical', 'drive.barrel_adjuster': 'inline' },
+    solve: { 'check-cable-tension-riding': 'slow-easier' },
   },
 ];
 const SIZES = [{ width: 390, height: 844 }, { width: 667, height: 375 }];

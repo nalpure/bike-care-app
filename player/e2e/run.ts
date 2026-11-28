@@ -106,7 +106,7 @@ async function walk(page: Page, p: any, j: any, shotDir: string, demoIds: string
     if (kind === 'keep') {
       await click(page, 'keep-skip');
     } else if (kind === 'question') {
-      const ans = p.answers?.[id];
+      const ans = { ...(p.answers ?? {}), ...(j.answers ?? {}) }[id];
       if (ans === undefined) return { ending: 'incomplete profile', error: `question ${id}` };
       await click(page, `answer-${ans}`);
     } else if (kind === 'position') {
@@ -228,6 +228,13 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     await shot('02b-help');
     await click(page, 'answer-derailleur');
     await click(page, 'answer-mechanical');
+    // The barrel adjuster comes last, with the 3D view and its own wording of the unknown answer (owner, 2026-11-27).
+    expect(await view(page) === 'journey:question:drive.barrel_adjuster', `the barrel question is not the last one (${await view(page)})`);
+    expect(await page.locator('[data-test="question-3d"] .stage').count() === 1, 'the barrel question has no 3D view');
+    expect((await page.locator('[data-test="answer-unknown"]').textContent())?.trim() === 'I cannot find it', 'the unknown answer is not "I cannot find it"');
+    await page.waitForTimeout(1500);
+    await shot('02c-barrel-3d');
+    await click(page, 'answer-shifter');
     expect(await view(page) === 'journey:keep:', 'no keep screen after the questions');
     expect(await page.locator('[data-test="keep-save"]').isDisabled(), 'a new bike could be saved without a name');
     await page.fill('[data-test="keep-name"]', 'Blue city bike');
@@ -251,7 +258,7 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     expect(await page.locator('[data-test="note-group"]').count() === 1, 'the notes are not grouped by screen');
     await shot('07-notes');
     const exported = await page.locator('[data-test="notes-export"]').inputValue();
-    const want = ['Screen: card:inspection:derailleur-alignment', 'Flow: adjust-rear-shifting', 'Last steps:', 'Details', 'drive.gear_type=derailleur', 'Which side is behind?', 'Bike: Blue city bike'];
+    const want = ['Screen: card:step:clamp-in-stand','Flow: adjust-rear-shifting', 'Last steps:', 'Details', 'drive.gear_type=derailleur', 'Which side is behind?', 'Bike: Blue city bike'];
     const missing = want.filter((w) => !exported.includes(w));
     expect(!missing.length, `notes export lacks: ${missing.join('; ')}`);
 
@@ -665,33 +672,14 @@ async function laptop(browser: import('playwright').Browser): Promise<Result> {
     expect(wv === first, `the wheel did not go back to the previous step (${second} -> ${wv})`);
     wv = await wheelTo(400, second);
     expect(wv === second, `the wheel did not go to the next step again (${first} -> ${wv})`);
-    // With motion: Next, and an answer that moves on at once (the tutorial's derailleur check), scroll
-    // the column to the next card, and it stays there. A stray scrollend from the jump that starts that
-    // scroll once read as scrolling back and undid the answer.
+    // With motion: Next scrolls the column to the next card, and it stays there. A stray scrollend from the
+    // jump that starts that scroll once read as scrolling back. (An answer that moves on at once, on a tutorial
+    // inspection without a default, was tested here too; no tutorial calls an inspection since 2026-11-27.)
     await click(page, 'back');
     await viewAfter(page, second);
     await click(page, 'next');
     await page.waitForTimeout(1500);
     expect(await view(page) === second, `Next did not stay on the next step (${await view(page)})`);
-    await page.goto(URL); // a fresh sitting, so the tutorial asks the check the diagnosis answered
-    await page.waitForFunction(() => (window as any).__app?.store);
-    await page.evaluate(() => { const a = (window as any).__app; a.start({ tutorial: 'adjust-rear-shifting' }, a.store.bike('road-bike-stand')); });
-    for (let i = 0; i < 30 && !(await view(page)).includes('derailleur-alignment'); i++) {
-      await page.evaluate(() => {
-        const a = (window as any).__app;
-        const s = a.journey.screen();
-        if (s.kind === 'card') a.act((x: any) => x.next());
-        else if (s.kind === 'tools') a.act((x: any) => x.startTutorial());
-        else if (s.kind === 'choice') a.act((x: any) => x.choose(s.choice.id, s.choice.options[0].id));
-      });
-      await page.waitForTimeout(200);
-    }
-    const check = await view(page);
-    expect(check === 'journey:card:derailleur-alignment', `the tutorial did not reach the derailleur check (${check})`);
-    await page.locator('[data-test^="btn-"]').first().click();
-    await page.waitForTimeout(2000);
-    const after = await view(page);
-    expect(after !== check && after.startsWith('journey:card'), `the answer that goes on did not stay on the next card (${after})`);
     return { id, ending: 'ok', expected: 'ok', error: errors.length ? errors.join('; ') : undefined };
   } catch (e: any) {
     await shot_fail(page, dir);

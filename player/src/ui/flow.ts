@@ -188,19 +188,33 @@ function renderQuestion(app: App, j: Journey, s: Extract<Screen, { kind: 'questi
     },
   }, '?');
   const body: (HTMLElement | null)[] = [h('div.qhead', h('h1.h2q', q ? c.t(q) : s.key), helpText ? hb : null), helpText ? box : null];
+  // A fact may word its unknown answer ("I cannot find it"): then it is one of the answers, not the link below.
+  const ownUnknown = f?.answers?.unknown ? c.t(f.answers.unknown) : '';
+  const unknownBtn = ownUnknown ? h('button.opt', { 'data-test': 'answer-unknown', onclick: () => answer(UNKNOWN) }, h('span.ol', ownUnknown)) : null;
   if (values.length) {
     body.push(h('div.qopts', values.map((v) =>
       h('button.opt', { 'data-test': `answer-${v}`, onclick: () => answer(v) },
         pic ? h('span.pic', { 'aria-hidden': 'true' }, 'Picture') : null,
         h('span.ol', c.valueText(s.key, v)),
       ),
-    )));
+    ), unknownBtn));
   } else {
     const inp = h('input.text', { type: f?.type === 'number' ? 'number' : 'text', 'aria-label': 'Your answer' }) as HTMLInputElement;
     body.push(inp, h('button.btn.primary.wide', { onclick: () => inp.value.trim() && answer(f?.type === 'number' ? Number(inp.value) : inp.value.trim()) }, 'Continue'));
+    if (unknownBtn) body.push(unknownBtn);
   }
-  body.push(h('button.link', { 'data-test': 'answer-unknown', onclick: () => answer(UNKNOWN) }, 'I\'ll check later'));
-  return screenWith(app, top(app, app.bikeName, 'Before you start · one question'), body);
+  if (!ownUnknown) body.push(h('button.link', { 'data-test': 'answer-unknown', onclick: () => answer(UNKNOWN) }, 'I\'ll check later'));
+  const head = top(app, app.bikeName, 'Before you start · one question');
+  // A fact with 3D fields (owner, 2026-11-27): the question hosts the 3D view, like a card. The view is one
+  // element that moves from screen to screen.
+  if (!s.stage || app.store.data.textOnly) return screenWith(app, head, body);
+  app.stage.show({
+    id: `fact:${s.key}`, bike: app.bikeName, focus: s.stage.focus, show: s.stage.show, view: s.stage.view, animation: s.stage.animation,
+    labels: [], labelsBefore: [], facts: j.bikeFacts,
+  });
+  return h('section.screen', head,
+    h('main.app.exitapp.qapp', { 'data-test': 'question-3d' }, app.stage.el, h('section.side', h('div.scroll', body))),
+  );
 }
 
 function renderChoice(app: App, s: Extract<Screen, { kind: 'choice' }>): HTMLElement {
