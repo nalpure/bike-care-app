@@ -1,6 +1,6 @@
 # Build tool: guide for agents
 
-Read first: `docs/decisions.md` (the section "Where approach.md is out of date") and `docs/approach.md` from "Building blocks" to "Build tool". For the content rules the tool enforces, `content/CLAUDE.md` ("Hard rules for content").
+Read first: `docs/architecture/content-model.md` (the words and how they fit) and, for the content rules the tool enforces, `content/CLAUDE.md` ("Hard rules for content"). `docs/decisions.md` wins where it touches a rule you change. Every rule and its one-line meaning is in `lib/rules.ts`; `build/report.md` lists each with its result.
 
 `npm run check` runs `tools/check.ts`, which runs `lib/run.ts` in four stages. A stage runs only when the stages before it found no errors.
 

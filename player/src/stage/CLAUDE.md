@@ -2,7 +2,7 @@
 
 `player/src/stage/` is the 3D view. Its element is created once and moved into each card, so the canvas carries on while the text changes. On an exit reached while something is still apart, the stage shows how the bike is held. Without WebGL it shows a text box; if three.js can't start at all, `main.ts` falls back to `PlaceholderStage` (`ui/stage.ts`).
 
-Read first: `docs/decisions.md`, section "3D view". Then only what you need: `library.md` (library parts, how to add one), `gaps.md` (what still looks generated). Commands for the parts library are in `tools/assets/CLAUDE.md`. `npm run manifest` writes `build/3d-manifest.json` from `registry.ts`; `npm run check` validates content against it. `npm run shots -- --only road` (after `npm run build`) walks the rear-shifting tutorial and writes one screenshot per card to `scratch/shots/slow/NN-<card>.png`, and prints per card how far the drawn parts sit from each edge of the 3D view (`ThreeStage.framing()`) and how much of each marked part is in sight (`seen`: a box cannot tell a part hidden behind another); it reads them with the card held (`holdClip(0)`: a clip at 0 s, crank, wheels, sprockets and pulleys at their start angle), so two runs print the same numbers and a refactor can be compared exactly; `-- --card <words>` limits it to some cards and also lists the parts drawn. Judge framing from those numbers; look at 2 to 4 pictures only to confirm.
+Read first: `docs/decisions.md`, section "3D view". Then only what you need: `library.md` (library parts, how to add one), `gaps.md` (what still looks generated). Commands for the parts library are in `tools/assets/CLAUDE.md`. `npm run manifest` writes `build/3d-manifest.json` from `registry.ts`; `npm run check` validates content against it. To see and measure a change (`npm run shots` and its framing numbers, the stage digest, which pictures to look at): the `check-3d` skill. Judge framing from the numbers; look at 2 to 4 pictures only to confirm.
 
 ## Files
 
@@ -50,14 +50,15 @@ stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any 
 - Without WebGL the host shows a one-line note.
 - A button in the corner (`preview-full`) puts the preview over the whole screen (`setFull`, class `full`, like explore on a card); close button, Escape or leaving the preview end it. `.stage-full` on the page hides the assistant button meanwhile.
 
-## Changing the 3D bike: recipe
+## Where to change what
 
-1. Shape or proportions of a part: edit the builder in `bike.ts`, `drivetrain.ts`, `derailleur.ts` or `cockpit.ts`. Keep the part id; content refers to it.
-2. A new part that content may name: add it to `NODES` (and `NODE_PARTS` if it groups meshes), build it with that id (`bike.ts` or the builder module of its area), then run `npm run manifest` and `npm run check`. `player/test/stage.test.ts` fails until every node is built and the manifest matches.
-3. Renaming a node used by content: rename it in `content/` and `registry.ts` together, then run the manifest and the check.
-4. Which bike the facts produce: `bikeSpec` in `spec.ts`. Write a new rule as a comment there and list it in `docs/open.md`.
-5. Camera: `views.ts`. Holding poses: `LABEL_SCENES` plus `poseVals` in `three-stage.ts`. Look and lights: `three-stage.ts`.
-6. Check it: `npm run build && npm run shots -- --only road`, look at 2 to 4 PNGs, then run the `verify` skill. `stage.test.ts` checks that the derailleur, chain and frame stay off the sprockets in every gear of every kind of bike, and that tyres clear the frame, also with extreme geometry.
+- Shape or proportions of a part: the builder in `bike.ts`, `drivetrain.ts`, `derailleur.ts` or `cockpit.ts`. Keep the part id; content refers to it.
+- A new part that content may name: add it to `NODES` (and `NODE_PARTS` if it groups meshes), build it with that id (`bike.ts` or the builder module of its area), then run `npm run manifest` and `npm run check`. `player/test/stage.test.ts` fails until every node is built and the manifest matches.
+- Renaming a node used by content: rename it in `content/` and `registry.ts` together, then run the manifest and the check.
+- Which bike the facts produce: `bikeSpec` in `spec.ts`. Write a new rule as a comment there and list it in `docs/open.md`.
+- Camera: `views.ts`. Holding poses: `LABEL_SCENES` plus `poseVals` in `three-stage.ts`. Look and lights: `three-stage.ts`.
+- `stage.test.ts` checks that the derailleur, chain and frame stay off the sprockets in every gear of every kind of bike, and that tyres clear the frame, also with extreme geometry.
+- Then check it with the `check-3d` skill and run the `verify` skill.
 
 ## Learnt
 

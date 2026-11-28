@@ -1,15 +1,10 @@
 # Writing content: guide for agents
 
-Read first, in this order: `docs/idea.md` (what the app should be), `docs/decisions.md` (owner decisions; where `approach.md` is out of date), and `docs/approach.md` from "Building blocks" to "Build tool". These win over anything in `legacy/`.
+Read first, in this order: `docs/idea.md` (what the app should be), `docs/decisions.md` (owner decisions) and `docs/architecture/content-model.md` (the words: fact, check, card, job, flow, and how they fit). These win over anything in `legacy/`.
 
 Everything the user reads about repairs lives here. The schema in `schema/` defines every field; the golden example (`diagnoses/gears-shift-badly.yaml`, `jobs/adjust-rear-shifting.yaml`) shows how they are used. Copy its patterns, not its mechanics: they are unverified.
 
-## Workflow
-
-1. Edit the YAML here (and `profiles/` when a journey changes).
-2. Run `npm run check` and fix every error from its message.
-3. Read what the user will see in `build/review/` (cards, trees, journeys), not the YAML. `npm run walk -- <path-id>` prints one path.
-4. A doubt about mechanics goes to `review/<job>.md`. Something the schema cannot express goes to `docs/schema-requests.md`.
+How to make a change, check it and read it as the user sees it (`walk`, `build/review/`, review units and sign-off): the `change-content` skill. This guide holds the rules.
 
 ## Texts
 
@@ -64,9 +59,3 @@ Numbers are kept from the repo's list (the other rules, 1 to 3 and 7 to 10, are 
 6. Diagnoses and the routine check use only `hands_off` inspections.
 11. Ask only what changes the steps. A fact read by a condition must have a question, unless it is `ask: never` (a beginner cannot tell; it comes only from the bike's data). Any other fact is only used in text when it is known (`{fact.key|fallback}` or `details`).
 12. Never the same check twice in a session. An inspection the user already answered is not shown again before the work starts; after the work, a check is a re-check and is shown.
-
-## Commands and reviewing
-
-- `npm run check` after every edit; `npm run walk -- --list` and `npm run walk -- <path-id>` render paths on demand.
-- `npm run review -- status` lists review units; `npm run review -- sign <unit> --role <role> --by <name>` signs one.
-- Review units, not paths: cards (`build/review/cards.md`), flow trees (`build/review/trees/`) and profile journeys (`build/review/journeys/`). Each has a hash; a sign-off in `reviews/ledger.yaml` holds while the hash is unchanged. Findings name the unit id, and the path id when it came from a single path. Never edit the ledger by hand except to append; never sign a unit you did not read.

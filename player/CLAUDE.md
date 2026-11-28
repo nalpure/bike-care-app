@@ -19,7 +19,7 @@ Each part has its own guide that loads when you work in it: `src/engine/CLAUDE.m
 | `npm run typecheck` | `tsc` for the tools and the player |
 | `npm test` | Vitest: build tool tests and `player/test/` (engine, all profile journeys, 3D registry). On Windows only through `npm test` |
 | `npm run test:e2e` | Builds the player, clicks every profile journey in headless Chromium (portrait and landscape), compares endings with `build/report.md`. Screenshots in `scratch/shots/e2e/`. `-- --no-build` reuses `dist/`; `-- --only <words>` runs only the journeys whose id contains one of the comma-separated words. Profile journeys run text-only, except those in `WITH_3D` (`run.ts`); the `extras/` keep the 3D view |
-| `npm run shots` | 3D screenshots, see `src/stage/CLAUDE.md` |
+| `npm run shots` | 3D screenshots with framing numbers, see the `check-3d` skill |
 
 Before you commit: the `verify` skill. Run commands from the repo root.
 
