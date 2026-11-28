@@ -17,9 +17,7 @@ A phone app that helps a beginner diagnose and fix their bike step by step, with
 
 - **Questions first, then act.** Ask what you need before you start, in one batch. After that, take the cautious default and carry on; stop and ask only before a change that would be expensive to revert (rule 8).
 - **Your choices become questions at the end of the session**, never entries in a file. Ask each as a clear question the owner can answer without opening the code: what you chose and why, what it affects, the other options, how to undo it, and your recommendation. Never write your own choice into the documentation as if the owner had decided it.
-- **An owner answer** that will matter later goes where it applies, as a rule: the area's guide, the job file's header comment, `docs/architecture/content-model.md`, or `docs/architecture/planned.md` while it is not built. Only what the code, the schema and the check's rules do not already enforce. Never a decisions file or a log. Say where you put it in your final message.
-- **A prompt that names an owner decision by title** (they were in `docs/decisions.md` until 2026-11-27): read it with `git show $(git log -n1 --diff-filter=D --format=%h -- docs/decisions.md)^:docs/decisions.md`. Its rule now lives in the places above.
-- A doubt about mechanics goes to `content/review/<job>.md`, never into the content as a fact; a missing schema construct to `docs/schema-requests.md` (rule 2).
+- **An owner answer** that will matter later goes where it applies, as a rule: the area's guide, the job file's header comment, `docs/architecture/content-model.md`, or `docs/architecture/planned.md` while it is not built. Only what the code, the schema and the check's rules do not already enforce. Never a decisions file or a log. Say where you put it in your final message.- A doubt about mechanics goes to `content/review/<job>.md`, never into the content as a fact; a missing schema construct to `docs/schema-requests.md` (rule 2).
 
 ## Git
 
