@@ -10,5 +10,10 @@ The one place for what an agent chose or asked while you were not there. **Nothi
 - **`questions` lists exactly what a flow can ask**: a missing fact and a listed fact no path reads are both errors (`questions-list`); a flow that asks nothing leaves the list out. `flows.ts`.
 - **Facts phase first everywhere**: "a path ahead" tries every open answer, choice and tool, so a fact read after a choice is still asked before it; the routine check asks before its first card. `resolve.ts` (`factsAhead`), `journey.ts`.
 - **Review path lists** of the shifting tutorial now run hold by hold (ids unchanged: they follow the questions list). `flows.ts`.
+- **The map is read, not imported:** the root `CLAUDE.md` says "read `docs/architecture/overview.md` first" instead of `@`-importing it, so its cost stays visible and the root stays short. `CLAUDE.md`.
+- **The content model (fact, check, card, job, flow …) is its own page**, `docs/architecture/content-model.md`, read first by the content and build-tool guides and linked from the map; in the map itself it cost every 3D and app session about 550 tokens.
+- **`approach.md`'s plans that are agreed but not built** (bike data routes, the assistant's hand-over, content roles, price table) moved to `docs/architecture/planned.md`, with today's names (review output, job, decisions).
+- **decisions.md:** the four undated rule lines (ending a flow, state labels, `hands_off`, run choices) sit under a new heading "Content model"; "3D names" under "3D view", "Review" under "Tools for review". The "Content files" and "History only" lines were pointers only and are gone.
+- **`docs/sharing.md` stays** as the owner's page on hosting and tester feedback; the `deploy-test-build` skill is the agent's recipe and deploys only when the owner asks in that session.
 
 ## Questions for the owner
