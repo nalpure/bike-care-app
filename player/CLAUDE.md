@@ -8,7 +8,7 @@ Each part has its own guide that loads when you work in it: `src/engine/CLAUDE.m
 
 - Keep `engine/` free of the DOM. The UI only renders `Journey.screen()` and calls its actions.
 - Screenshots go to `scratch/shots/e2e/` (`test:e2e`) and `scratch/shots/slow/` (`shots`); each command wipes only its own folder, and they are never committed. Look at a few critical screens only (2 to 4: a new layout, a 3D view you just changed, both orientations where it matters). The owner clicks through the rest.
-- When you change which bike `bikeSpec` draws, write the rule as a comment in `spec.ts` and list it in `docs/open.md`.
+- When you change which bike `bikeSpec` draws, write the rule as a comment in `spec.ts` and ask the owner about it at the end of the session.
 
 ## Commands
 

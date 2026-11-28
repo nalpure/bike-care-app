@@ -71,7 +71,6 @@ A probe you need only once goes in `scratch/`. One you needed twice gets a heade
 | --- | --- |
 | `docs/idea.md` | the owner's intent: what the app should be (read it when your guide says so or the task is about what the app should do) |
 | `docs/decisions.md` | the owner's decisions; they win over `idea.md` |
-| `docs/open.md` | agents' choices the owner has not seen yet, and questions for the owner |
 | `docs/schema-requests.md` | what the schema cannot express yet (hard rule 2) |
 | `docs/sharing.md` | publishing the test build, how testers send feedback |
 | `docs/architecture/content-model.md` | the shared words, and how checks, findings, jobs and flows fit |

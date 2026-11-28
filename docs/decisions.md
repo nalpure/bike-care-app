@@ -34,6 +34,7 @@ Decisions the owner made after `idea.md` was written that still guide future wor
 - **2026-11-27 Disc brake pads.** Diagnosis and routine check only look (wheel in, light from above), with a third answer "I can't see it clearly"; worn and unclear both lead to one tutorial, "Check and replace the brake pads". The pads come out only there; a compare card then decides between the same pads back and new pads, so nothing is put together only to be taken apart again. New pads are optional on the parts screen, with a warning that worn pads without new ones leave the bike unrideable. After a diagnosis that found them worn, the compare card is skipped.
 - **2026-11-27 Holding options per job.** A job offers only the ways of holding that suit it (SR-08 accepted).
 - **2026-11-27 Agents' choices.** No commit trailers. An agent states each choice in its final message with context, effects, the other options and how to undo it. A choice that is hard to undo: stop and ask.
+- **2026-11-27 No open.md.** After the question round agents act; they stop and ask only before a change that is expensive to revert. Choices are never listed in a file: at the end of the session each is asked as a clear question with enough context to answer it.
 - **2026-11-26 Shifting stops on a tap.** The cable-tension card shows the pedals turning and the chain going through every gear until a problem is tapped; then the pedals stand still while the barrel turns.
 
 ## Content model

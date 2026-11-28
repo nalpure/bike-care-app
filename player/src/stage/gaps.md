@@ -1,6 +1,6 @@
 # Known 3D shortcomings
 
-Read this before you promise a visual change, or when you wonder why something looks generated. What is still undecided is in `docs/open.md`.
+Read this before you promise a visual change, or when you wonder why something looks generated.
 
 - **One look per part.** Every derailleur, crank, saddle, stem and bar looks like the one library part (a touring bike's; 784 mm flat bar on every flat and riser bike). The bike's model and brand facts are not drawn.
 - **Not from a real source yet:** drop bar, hoods and brake levers, the shifter, disc brakes (no brakes at the wheels at all, only the levers), suspension fork, front derailleur, an MTB derailleur and the electronic derailleur. The next sources to find: a road bike model for drop bar, levers, rim brakes and front derailleur; an MTB derailleur (the library's one is a touring/road design).

@@ -13,8 +13,8 @@ The rule behind it: **all repair knowledge lives in `content/`; the player has n
 There are no session prompt files. You describe a task in chat; for a big one the agent proposes a plan and a split into parts and waits for your okay. All state is in:
 
 - **`git log`**: what was done.
-- **`docs/open.md`**: what agents chose without you and what they want you to answer. Answer an item and it moves to `decisions.md` or disappears.
 - **`docs/decisions.md`**: your decisions.
+- **the agent's final message**: the choices it made without you, each asked as a question with enough context to answer it. Nothing is kept in a file; an answer that matters later becomes a line in `decisions.md`.
 - **the `CLAUDE.md` guides**: how each area works, kept short and next to its code, so an agent loads only the area it works in. The root `CLAUDE.md` has only the rules for every agent.
 - **the skills** in `.claude/skills/`: step-by-step recipes (finish a task, change content, check the 3D view, deploy the test build, verify, add a 3D part).
 

@@ -1,6 +1,6 @@
 // The barrel adjusters: where they are drawn and which one the fact drive.barrel_adjuster picks.
 // Pure (no three.js), so player/test/stage.test.ts can check it. The rules are also in the comment
-// above bikeSpec (spec.ts) and in docs/open.md.
+// above bikeSpec (spec.ts).
 //
 // Every bike with a rear derailleur has two barrels, always drawn (owner decision 2026-11-25):
 // - rear_barrel: at the rear derailleur, where the cable goes in. It belongs to the drivetrain group.

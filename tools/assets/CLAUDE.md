@@ -68,4 +68,4 @@ Findings (shifter, `^fv1_ts`):
 - A pattern that matches an assembly takes only parts inside it. Without that, screws named `ts_...` but used all over the bike came with it as loose parts. With no assembly matched, every instance of a matched part is taken.
 - `casep1` and `teeth` are the heaviest shifter parts.
 
-Not done or not verified: only the shifter has been extracted and looked at. Nothing from the hardtail is in `library.yaml` or the player; `library.yaml` has a single `source` and the touring bike's node names, so a second source is not wired up. Usage rights are open (see `docs/open.md`).
+Not done or not verified: only the shifter has been extracted and looked at. Nothing from the hardtail is in `library.yaml` or the player; `library.yaml` has a single `source` and the touring bike's node names, so a second source is not wired up. The hardtail may be used (owner, decisions.md 2026-11-27).

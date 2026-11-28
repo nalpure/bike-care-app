@@ -55,7 +55,7 @@ stage.snapshot(facts, width, height, name)     // a still PNG (data URL) of any 
 - Shape or proportions of a part: the builder in `bike.ts`, `drivetrain.ts`, `derailleur.ts` or `cockpit.ts`. Keep the part id; content refers to it.
 - A new part that content may name: add it to `NODES` (and `NODE_PARTS` if it groups meshes), build it with that id (`bike.ts` or the builder module of its area), then run `npm run manifest` and `npm run check`. `player/test/stage.test.ts` fails until every node is built and the manifest matches.
 - Renaming a node used by content: rename it in `content/` and `registry.ts` together, then run the manifest and the check.
-- Which bike the facts produce: `bikeSpec` in `spec.ts`. Write a new rule as a comment there and list it in `docs/open.md`.
+- Which bike the facts produce: `bikeSpec` in `spec.ts`. Write a new rule as a comment there and ask the owner about it at the end of the session.
 - Camera: `views.ts`. Holding poses: `LABEL_SCENES` plus `poseVals` in `three-stage.ts`. Look and lights: `three-stage.ts`.
 - `stage.test.ts` checks that the derailleur, chain and frame stay off the sprockets in every gear of every kind of bike, and that tyres clear the frame, also with extreme geometry.
 - Then check it with the `check-3d` skill and run the `verify` skill.
