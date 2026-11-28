@@ -69,7 +69,7 @@
             "additionalProperties": false
           },
           "answers": {
-            "description": "The answer button for each value, in the user's words. The key unknown words the answer for the unknown value instead of the app's \"I'll check later\" (for example \"I cannot find it\"); it is shown as an answer button and, like every unknown answer, never stored on the bike.",
+            "description": "The answer button for each value, in the user's words.",
             "type": "object",
             "additionalProperties": {
               "type": "object",
@@ -80,6 +80,10 @@
               "required": ["en"],
               "additionalProperties": false
             }
+          },
+          "allow_unknown": {
+            "description": "false: the question offers only the fact's values, no \"I'll check later\" (owner, 2026-11-27, the barrel adjuster). The user must pick one; the help and the assistant are how to get on. Conditions and profiles then never use unknown for it. Default true.",
+            "type": "boolean"
           },
           "ask": {
             "description": "when_needed (default): asked when a condition reads it. never: conditions may read it, but the app never asks; it is unknown unless the bike's data (parts list, partner, lookup) provides it. Use never for facts a beginner cannot tell.",

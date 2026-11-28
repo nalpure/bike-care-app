@@ -93,7 +93,7 @@ class Run {
       if (key.startsWith('tool.')) return this.toolValue(key);
       if (this.known.has(key)) return this.known.get(key)!;
       if (neverAsked(this.c, key)) return UNKNOWN;
-      const answers = { ...(this.p.def.answers ?? {}), ...(this.j.answers ?? {}) };
+      const answers = this.p.def.answers ?? {};
       if (key in answers) {
         this.known.set(key, answers[key]);
         this.asked.push({ stage, key, value: answers[key] });
@@ -418,8 +418,6 @@ export function runProfile(c: Content, p: Entry, issues: Issues): { markdown: st
   prof.journeys.forEach((j: any, ji: number) => {
     const r = new Run(c, p, j, ji, issues);
     r.L.push(`## Journey ${ji + 1}: ${j.title}`, '', `<sub>journey id \`${j.id}\`</sub>`, '');
-    const own = Object.entries<Value>(j.answers ?? {});
-    if (own.length) r.L.push(`Answers on this journey: ${own.map(([k, v]) => factLine(c, k, v)).join('; ')}`, '');
     let ending = '';
     if (j.start.diagnosis) {
       const d = c.diagnoses.get(j.start.diagnosis)!;

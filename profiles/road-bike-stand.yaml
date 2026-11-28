@@ -46,12 +46,6 @@ profile:
         check-high-limit: too-far-out
         test-ride-gears: chain-off
 
-    - id: no-barrel-adjuster
-      title: "Opens the tutorial directly, but finds no barrel adjuster"
-      start: { tutorial: adjust-rear-shifting }
-      answers:
-        drive.barrel_adjuster: unknown   # "I cannot find it"
-
     - id: routine-check-dirty-chain
       title: "Routine check finds a dirty chain"
       start: { check: routine-check }

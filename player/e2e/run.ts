@@ -106,7 +106,7 @@ async function walk(page: Page, p: any, j: any, shotDir: string, demoIds: string
     if (kind === 'keep') {
       await click(page, 'keep-skip');
     } else if (kind === 'question') {
-      const ans = { ...(p.answers ?? {}), ...(j.answers ?? {}) }[id];
+      const ans = p.answers?.[id];
       if (ans === undefined) return { ending: 'incomplete profile', error: `question ${id}` };
       await click(page, `answer-${ans}`);
     } else if (kind === 'position') {
@@ -228,10 +228,11 @@ async function extras(browser: import('playwright').Browser): Promise<Result> {
     await shot('02b-help');
     await click(page, 'answer-derailleur');
     await click(page, 'answer-mechanical');
-    // The barrel adjuster comes last, with the 3D view and its own wording of the unknown answer (owner, 2026-11-27).
+    // The barrel adjuster comes last, with the 3D view, and offers only the places: no unknown answer (owner, 2026-11-27).
     expect(await view(page) === 'journey:question:drive.barrel_adjuster', `the barrel question is not the last one (${await view(page)})`);
     expect(await page.locator('[data-test="question-3d"] .stage').count() === 1, 'the barrel question has no 3D view');
-    expect((await page.locator('[data-test="answer-unknown"]').textContent())?.trim() === 'I cannot find it', 'the unknown answer is not "I cannot find it"');
+    expect(await page.locator('[data-test="answer-unknown"]').count() === 0, 'the barrel question offers an unknown answer');
+    expect(await page.locator('[data-test^="answer-"]').count() === 3, 'the barrel question does not offer the three places');
     await page.waitForTimeout(1500);
     await shot('02c-barrel-3d');
     await click(page, 'answer-shifter');

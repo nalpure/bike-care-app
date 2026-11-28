@@ -79,7 +79,10 @@ export function checkCondition(x: Ctx, cond: Condition | undefined, loc: Loc): v
       err(x, loc, 'fact-needs-question', `Condition reads fact "${key}", so the app may need to ask it, but the fact has no question in content/facts.yaml.`);
     }
     const v = String(value);
-    if (v === 'unknown') continue;
+    if (v === 'unknown') {
+      if (f.def.allow_unknown === false) err(x, loc, 'condition-value', `Fact ${key} has allow_unknown: false, so it is never unknown. Values: ${f.def.values?.join(', ') ?? 'true, false'}.`);
+      continue;
+    }
     if (f.def.values && !f.def.values.map(String).includes(v))
       err(x, loc, 'condition-value', `Fact ${key} has no value "${v}". Values: ${f.def.values.join(', ')}, unknown.`);
     if (f.def.type === 'boolean' && v !== 'true' && v !== 'false')
@@ -474,15 +477,6 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
   (t.parts ?? []).forEach((p: string, i: number) => {
     if (!x.c.parts.has(p)) err(x, sub(loc, 'parts', i), 'unknown-part', `Part "${p}" does not exist.`);
   });
-  // The flow's own covers: what doing it yourself needs (read by the tutorial only).
-  if (t.covers) {
-    const cl = sub(loc, 'covers');
-    checkCondition(x, t.covers.when, sub(cl, 'when'));
-    t.covers.not_covered.forEach((nc: any, i: number) => {
-      checkCondition(x, nc.when, sub(cl, 'not_covered', i, 'when'));
-      checkText(x, nc.text, sub(cl, 'not_covered', i));
-    });
-  }
   // One case per way of the job file's flow (jobfile.ts).
   t.cases.forEach((cs: any, i: number) => checkCondition(x, cs.when, sub(loc, 'cases', i, 'when')));
   for (const [, cf] of e.cases ?? new Map()) {
@@ -529,7 +523,6 @@ function checkProfile(x: Ctx, e: Entry): void {
   const lists: Array<{ field: 'facts' | 'answers'; values: Record<string, any>; at: YPath }> = [
     { field: 'facts', values: p.facts ?? {}, at: ['facts'] },
     { field: 'answers', values: p.answers ?? {}, at: ['answers'] },
-    ...p.journeys.map((j: any, i: number) => ({ field: 'answers' as const, values: j.answers ?? {}, at: ['journeys', i, 'answers'] })),
   ];
   for (const { field, values, at } of lists) {
     for (const [k, v] of Object.entries<any>(values)) {
@@ -541,6 +534,7 @@ function checkProfile(x: Ctx, e: Entry): void {
       }
       const s = String(v);
       if (field === 'facts' && s === 'unknown') err(x, l, 'profile-fact', `Leave "${k}" out of facts instead of setting it to unknown.`);
+      else if (s === 'unknown' && f.def.allow_unknown === false) err(x, l, 'condition-value', `Fact ${k} has allow_unknown: false: its question offers no "I'll check later". Answer one of ${f.def.values?.join(', ') ?? 'true, false'}.`);
       if (s !== 'unknown' && f.def.values && !f.def.values.map(String).includes(s)) err(x, l, 'condition-value', `Fact ${k} has no value "${s}".`);
       if (s !== 'unknown' && f.def.type === 'number') checkNumber(x, l, k, f.def, v);
       if (field === 'answers' && k in (p.facts ?? {})) err(x, l, 'profile-fact', `"${k}" is in both facts and answers. A known fact is never asked.`);
@@ -654,9 +648,10 @@ export function checkStatic(c: Content, issues: Issues): void {
     }
     for (const k of Object.keys(f.answers ?? {})) {
       const allowed = f.type === 'boolean' ? ['true', 'false'] : (f.values ?? []).map(String);
-      if (k !== 'unknown' && !allowed.includes(k)) err(x, sub(loc, 'answers', k), 'fact-answers', `Fact ${f.key} has an answer for "${k}", which is not one of its values (${allowed.join(', ') || 'none'}). Only its values, or unknown for the wording of the unknown answer.`);
+      if (!allowed.includes(k)) err(x, sub(loc, 'answers', k), 'fact-answers', `Fact ${f.key} has an answer for "${k}", which is not one of its values (${allowed.join(', ') || 'none'}). The app words the unknown answer itself ("I'll check later").`);
     }
     // Optional 3D, as on a card (owner, 2026-11-27): only an asked fact shows it.
+    if (f.allow_unknown === false && f.type !== 'enum' && f.type !== 'boolean') err(x, loc, 'allow-unknown', `Fact ${f.key} is ${f.type}: only an enum or boolean fact can do without "I'll check later" (allow_unknown: false).`);
     if (has3dFields(f)) {
       checkScene(x, f, loc);
       if (!f.question) err(x, loc, 'fact-3d', `Fact ${f.key} has 3D fields but no question. Only an asked fact shows the 3D view; give it a question or drop the 3D fields.`);

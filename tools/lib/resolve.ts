@@ -133,14 +133,15 @@ export interface Enumerated<T> {
   result: T;
 }
 
-/** Every value a key can take: tools true or false, a choice's options, a fact's values plus unknown. */
+/** Every value a key can take: tools true or false, a choice's options, a fact's values plus unknown (unless it has allow_unknown: false). */
 export function domainOf(ix: Index, key: string): Value[] {
   if (key.startsWith('tool.')) return [true, false];
   if (key.startsWith('choice.')) return (ix.choices.get(key.slice(7))?.options ?? []).map((o: any) => o.id);
   const f = factOf(ix, key);
   if (!f) return [UNKNOWN];
-  if (f.type === 'enum') return [...f.values, UNKNOWN];
-  if (f.type === 'boolean') return [true, false, UNKNOWN];
+  const unknown = f.allow_unknown === false ? [] : [UNKNOWN];
+  if (f.type === 'enum') return [...f.values, ...unknown];
+  if (f.type === 'boolean') return [true, false, ...unknown];
   return [UNKNOWN];
 }
 
@@ -247,8 +248,6 @@ export interface Exit<S = unknown> {
   kind: ExitKind | 'uncovered';
   message: string;
   src: S;
-  /** from the tutorial's own covers (what doing it yourself needs), not the job's: a shop still can */
-  own?: boolean;
 }
 
 export interface Problem<S = unknown> {
@@ -363,18 +362,13 @@ export interface TutorialRun<S = unknown> {
  */
 export function coverageExit<S = unknown>(ix: Index, jobId: string, r: Reader, params: Record<string, string> = {}, loc: Locate<S> = noLocation): Exit<S> | undefined {
   const job = ix.jobs.get(jobId);
-  return coversExit(job, `Job ${jobId}`, r, params, loc);
-}
-
-/** A covers block ({ when, not_covered }) on `node` (a job, or a tutorial with the flow's own covers). */
-function coversExit<S>(node: any, name: string, r: Reader, params: Record<string, string>, loc: Locate<S>): Exit<S> | undefined {
-  const cv = node?.covers;
+  const cv = job?.covers;
   if (!cv || evaluate(substCondition(cv.when, params), r.ask)) return undefined;
   const ncs: any[] = cv.not_covered;
   for (let i = 0; i < ncs.length; i++) {
-    if (evaluate(substCondition(ncs[i].when, params), r.ask)) return { kind: 'not_covered', message: ncs[i].text, src: loc(node, 'covers', 'not_covered', i) };
+    if (evaluate(substCondition(ncs[i].when, params), r.ask)) return { kind: 'not_covered', message: ncs[i].text, src: loc(job, 'covers', 'not_covered', i) };
   }
-  return { kind: 'uncovered', message: `${name} does not cover this bike, and none of its not_covered entries matches.`, src: loc(node, 'covers') };
+  return { kind: 'uncovered', message: `Job ${jobId} does not cover this bike, and none of its not_covered entries matches.`, src: loc(job, 'covers') };
 }
 
 /**
@@ -398,12 +392,6 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
   const outside = coverageExit(ix, t.job, r, params, loc);
   if (outside) {
     run.exit = outside;
-    return run;
-  }
-  // The flow's own covers: what doing it yourself needs (a shop can still do the job). Read before any way.
-  const own = coversExit(t, `Tutorial ${t.id}`, r, params, loc);
-  if (own) {
-    run.exit = { ...own, own: true };
     return run;
   }
   const pick = (cases: any[]) => {

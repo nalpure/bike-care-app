@@ -34,17 +34,17 @@ describe('the real content', () => {
     const r = runCheck(REPO, { write: false });
     expect(show(r)).toBe('');
     const t = r.flows!.tutorials.find((f) => f.id === 'adjust-rear-shifting')!;
-    // The barrel's place is asked (the flow's covers), so each way has one path per place: the same cards, another barrel in 3D.
+    // The barrel's place is asked (the cable-tension cards read it), so each way has one path per place: the same cards, another barrel in 3D.
     expect(t.paths).toHaveLength(36);
     const holds = ['stand', 'hang', 'upside-down', 'ground'];
     expect(t.paths.filter((p) => p.variant.ending === 'complete').map((p) => p.id)).toEqual(
-      ['derailleur', 'shifter', 'inline'].flatMap((b) => holds.map((h) => `derailleur.mechanical.${b}.${h}`)),
+      holds.flatMap((h) => ['derailleur', 'shifter', 'inline'].map((b) => `derailleur.mechanical.${b}.${h}`)),
     );
     // A tutorial runs no checks (2026-11-27): every path starts with the work.
     for (const p of t.paths) expect(p.variant.items[0].kind, p.id).toBe('step');
     // no stop is reached while the bike is held (2026-11-26), so no path jumps ahead
     expect(t.paths.filter((p) => p.variant.ending === 'jump')).toHaveLength(0);
-    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(7).fill('not_covered'));
+    expect(t.exits.map((e) => e.exit.kind)).toEqual(Array(6).fill('not_covered'));
     const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
     expect(d.paths).toHaveLength(6);
     expect(d.exits).toHaveLength(6);
@@ -56,7 +56,6 @@ describe('the real content', () => {
       'city-derailleur-no-stand/routine-check-slow-shifting': '1 to-do item(s)',
       'e-trekking-hub-gear/hub-gear-not-covered': 'not covered (gears-shift-badly)',
       'road-bike-stand/chain-falls-off-on-test-ride': 'exit (unsafe) at test-ride-gears',
-      'road-bike-stand/no-barrel-adjuster': 'not covered',
       'road-bike-stand/routine-check-dirty-chain': '1 to-do item(s)',
       'unknown-bike/test-rides': 'tutorial complete',
     });
@@ -551,7 +550,7 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r2, 'fact-3d'), show(r2)).toHaveLength(1);
   });
 
-  it("a fact's answers name only its values, or unknown", () => {
+  it("a fact's answers name only its values", () => {
     const r = sandbox()
       .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'drive.gear_type').answers.chain = { en: 'Chain' }))
       .run();
@@ -560,25 +559,27 @@ describe('rules broken on purpose', () => {
     expect(e[0].message).toContain('"chain"');
   });
 
-  it('the barrel position is asked by the tutorial only: its own covers, not the diagnosis', () => {
+  it('the barrel position is asked by the tutorial only, with no unknown answer (owner, 2026-11-27)', () => {
     const r = runCheck(REPO, { write: false });
     const d = r.flows!.diagnoses.find((f) => f.id === 'gears-shift-badly')!;
     for (const p of d.paths) expect(p.combo.asked).not.toContain('drive.barrel_adjuster');
     const t = r.flows!.tutorials.find((f) => f.id === 'adjust-rear-shifting')!;
-    const own = t.exits.filter((e) => e.exit.own);
-    expect(own.map((e) => e.exit.message)).toEqual(['Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.']);
-    // an uncovered value points at the flow's covers in the job file
+    // allow_unknown: false: no path and no exit for an unknown barrel
+    for (const x of [...t.paths.map((p) => p.combo), ...t.exits.map((e) => e.combo)]) expect(String(x.assign['drive.barrel_adjuster'])).not.toBe('unknown');
+    // a condition or a profile may not use unknown for it, and only an enum or boolean fact can do without it
     const r2 = sandbox()
-      .edit(JOB, (d) => d.flow.covers.not_covered.splice(0))
+      .edit(JOB, (d) => (step(d, 'check-cable-tension').when['drive.barrel_adjuster'].push('unknown')))
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.answers['drive.barrel_adjuster'] = 'unknown'))
+      .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'drive.rear_derailleur_model').allow_unknown = false))
       .run();
-    expect(show(r2)).toContain('content/jobs/adjust-rear-shifting.yaml');
-  });
-
-  it('a journey may answer a question its own way, over the profile', () => {
-    const r = sandbox()
-      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys.find((j: any) => j.id === 'no-barrel-adjuster').answers = { 'drive.barrel_adjuster': 'bar' }))
+    expect(errorsOf(r2, 'condition-value').map((e) => e.file).sort(), show(r2)).toEqual([JOB, 'profiles/road-bike-stand.yaml']);
+    expect(errorsOf(r2, 'allow-unknown'), show(r2)).toHaveLength(1);
+    // the answers no longer word an unknown answer
+    box!.dispose();
+    const r3 = sandbox()
+      .edit('content/facts.yaml', (d) => (d.facts.find((x: any) => x.key === 'drive.barrel_adjuster').answers.unknown = { en: 'I cannot find it' }))
       .run();
-    expect(errorsOf(r, 'condition-value'), show(r)).toHaveLength(1);
+    expect(errorsOf(r3, 'fact-answers'), show(r3)).toHaveLength(1);
   });
 
   it('an unknown key, including on: which YAML 1.2 keeps as a string', () => {

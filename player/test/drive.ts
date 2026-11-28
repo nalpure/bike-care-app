@@ -49,7 +49,7 @@ export function drive(c: Content, profile: any, j: any, onScreen?: (journey: Jou
         break;
       }
       case 'question': {
-        const answers = { ...(profile.answers ?? {}), ...(j.answers ?? {}) };
+        const answers = profile.answers ?? {};
         if (!(s.key in answers)) return fail(`question ${s.key} has no answer`);
         journey.answerFact(s.key, answers[s.key]);
         break;

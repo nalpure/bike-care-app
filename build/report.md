@@ -15,7 +15,7 @@
 
 | Flow | Kind | Paths | Complete paths | Time of complete paths | Stop paths | Exits before the first step |
 | --- | --- | --- | --- | --- | --- | --- |
-| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 36 | 12 | 24 to 29 min | 24 | 7 |
+| [adjust-rear-shifting](review/trees/adjust-rear-shifting.md) | tutorial | 36 | 12 | 24 to 29 min | 24 | 6 |
 | [gears-shift-badly](review/trees/gears-shift-badly.md) | diagnosis | 6 | 6 | 1 to 5 min | - | 6 |
 | [routine-check](review/trees/routine-check.md) | routine check | - | - | - | - | - |
 
@@ -29,23 +29,23 @@ Details per unit in [review/index.md](review/index.md).
 | --- | --- | --- | --- | --- |
 | card | 42 | 0 of 31 | 0 of 42 | 0 |
 | tree | 3 | 0 of 3 | — | 0 |
-| journey | 8 | — | 0 of 8 | 0 |
+| journey | 7 | — | 0 of 7 | 0 |
 
 ## Time per bike and choice (complete paths)
 
 | Flow | Combination | Time |
 | --- | --- | --- |
 | adjust-rear-shifting | `derailleur.mechanical.derailleur.stand` | 24 min |
-| adjust-rear-shifting | `derailleur.mechanical.derailleur.hang` | 25 min |
-| adjust-rear-shifting | `derailleur.mechanical.derailleur.upside-down` | 24 min |
-| adjust-rear-shifting | `derailleur.mechanical.derailleur.ground` | 29 min |
 | adjust-rear-shifting | `derailleur.mechanical.shifter.stand` | 24 min |
-| adjust-rear-shifting | `derailleur.mechanical.shifter.hang` | 25 min |
-| adjust-rear-shifting | `derailleur.mechanical.shifter.upside-down` | 24 min |
-| adjust-rear-shifting | `derailleur.mechanical.shifter.ground` | 29 min |
 | adjust-rear-shifting | `derailleur.mechanical.inline.stand` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.hang` | 25 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.hang` | 25 min |
 | adjust-rear-shifting | `derailleur.mechanical.inline.hang` | 25 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.upside-down` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.upside-down` | 24 min |
 | adjust-rear-shifting | `derailleur.mechanical.inline.upside-down` | 24 min |
+| adjust-rear-shifting | `derailleur.mechanical.derailleur.ground` | 29 min |
+| adjust-rear-shifting | `derailleur.mechanical.shifter.ground` | 29 min |
 | adjust-rear-shifting | `derailleur.mechanical.inline.ground` | 29 min |
 
 ## Where bikes end at a shop or not covered
@@ -54,7 +54,6 @@ Use this list to decide what to cover next.
 
 | Flow | Bike | Exit | Message |
 | --- | --- | --- | --- |
-| adjust-rear-shifting | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = mechanical ("With a cable")<br>`drive.barrel_adjuster` = unknown ("I cannot find it") | not_covered | Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you. |
 | adjust-rear-shifting | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = electronic ("Electronically") | not_covered | Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable. |
 | adjust-rear-shifting | `drive.gear_type` = derailleur ("Chain and derailleur")<br>`drive.shifting` = unknown ("I'll check later") | not_covered | We need to know whether your gears use a cable. Look at the right shifter and come back. |
 | adjust-rear-shifting | `drive.gear_type` = hub_gear ("Hub gear") | not_covered | Hub gears are not covered yet. They are adjusted differently from gears with a derailleur. |
@@ -77,11 +76,10 @@ Use this list to decide what to cover next.
 | [city-derailleur-no-stand](review/journeys/city-derailleur-no-stand.md) | Routine check finds slow shifting; the to-do item opens the guide | 1 to-do item(s) | 5 min | 0 |
 | [e-trekking-hub-gear](review/journeys/e-trekking-hub-gear.md) | Gears do not shift cleanly on a hub gear | not covered (gears-shift-badly) | 0 min | 0 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Adjusting in the stand, but the chain falls off on the test ride | exit (unsafe) at test-ride-gears | 29 min | 1 |
-| [road-bike-stand](review/journeys/road-bike-stand.md) | Opens the tutorial directly, but finds no barrel adjuster | not covered | 0 min | 1 |
 | [road-bike-stand](review/journeys/road-bike-stand.md) | Routine check finds a dirty chain | 1 to-do item(s) | 5 min | 0 |
 | [unknown-bike](review/journeys/unknown-bike.md) | Slow shifting, adjusted between short test rides | tutorial complete | 34 min | 3 |
 
-Journeys that end at a shop, a stop or not covered: 3 of 8.
+Journeys that end at a shop, a stop or not covered: 2 of 7.
 
 ## Rules
 
@@ -119,12 +117,13 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `unknown-state` | pass | Every inspection state referenced exists. |
 | `unknown-button` | pass | Every button a profile taps exists. |
 | `fact-needs-question` | pass | Every fact a condition reads has a beginner question. |
-| `fact-answers` | pass | An enum fact with answers has an answer text for every value; answers name only its values, or unknown (the wording of the unknown answer). |
+| `fact-answers` | pass | An enum fact with answers has an answer text for every value, and answers name only its values. |
+| `allow-unknown` | pass | allow_unknown: false (no "I'll check later") only on enum and boolean facts; conditions and profiles then never use unknown for it. |
 | `fact-3d` | pass | A fact with 3D fields (focus, show, view, animation) has a question: only asked facts show the 3D view. |
 | `questions-3d-last` | pass | In a flow's questions, a fact with 3D fields comes after every plain fact (owner, 2026-11-27). |
 | `fact-group` | pass | Every fact's group (the key before the first dot) has an entry in fact_groups, and every group has a fact. |
 | `fact-range` | pass | Number facts: min is below max, and every value in values and in profiles lies between them. |
-| `condition-value` | pass | Conditions use only allowed values (or unknown). |
+| `condition-value` | pass | Conditions and profiles use only allowed values (or unknown, unless the fact has allow_unknown: false). |
 | `condition-on-text` | pass | Conditions never test free-text facts. |
 | `placeholder-fallback` | pass | Every placeholder has fallback wording for an unknown value. |
 | `details-needs` | pass | A details line uses only facts listed in its needs. |

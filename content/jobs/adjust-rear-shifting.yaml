@@ -22,7 +22,7 @@ job:
   difficulty: 2
   choices: [hold_bike]
   # Only a mechanical derailleur is covered, so the flow has no branch by mechanism.
-  # Every diagnosis with covers_like this job reads these covers too (not the flow's own covers below).
+  # Every diagnosis with covers_like this job reads these covers too.
   covers:
     when: { drive.gear_type: [derailleur], drive.shifting: [mechanical] }
     not_covered:
@@ -49,14 +49,8 @@ flow:
   # the barrel adjuster has 3D, so it comes last.
   questions: [drive.gear_type, drive.shifting, drive.barrel_adjuster]
   # A tutorial runs no checks before the work (owner, 2026-11-27); the diagnosis is where they are run.
-  # Doing it yourself needs a barrel adjuster: its place is asked in the facts phase, as the last question,
-  # with the 3D view (the fact has 3D fields). "I cannot find it" is the unknown answer: never stored, so the
-  # next sitting asks again. A shop can still do the job, so the diagnosis does not read this.
-  covers:
-    when: { drive.barrel_adjuster: [derailleur, shifter, inline] }
-    not_covered:
-      - when: { drive.barrel_adjuster: [unknown] }
-        text: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
+  # The barrel adjuster's place: the cable-tension cards read it (they turn that barrel), so only the tutorial asks it,
+  # never the diagnosis. Its question offers only the places (allow_unknown: false, owner 2026-11-27).
   # The ways differ by how the bike is held: with the rear wheel free the user turns the pedals
   # by hand; on its wheels the user adjusts while the bike stands and tests with short rides.
   ways:
@@ -213,6 +207,9 @@ cards:
   - id: check-cable-tension
     kind: check
     title: "Set the cable tension"
+    # Turning needs the barrel adjuster's place (the 3D view turns that one), so the tutorial asks it before the start.
+    when: { drive.barrel_adjuster: [derailleur, shifter, inline] }
+    if_unknown: ask
     minutes: 5
     text: "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet."
     question: "Slow or noisy?"
@@ -237,6 +234,8 @@ cards:
   - id: check-cable-tension-riding
     kind: check
     title: "Set the cable tension on short rides"
+    when: { drive.barrel_adjuster: [derailleur, shifter, inline] }   # as check-cable-tension
+    if_unknown: ask
     minutes: 10
     text: "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything."
     question: "Slow or noisy?"

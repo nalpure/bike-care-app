@@ -5,7 +5,7 @@ import { fillText, UNKNOWN, type Value } from './conditions.js';
 import { combined, type DiagnosisCheck, type PathItem } from './expand.js';
 import { mergeTools, type ToolList, type ToolSetUse } from './resolve.js';
 import { tutorialTimeRange, type Combo, type DiagnosisFlow, type DiagnosisFlowPath, type TutorialFlow, type TutorialPath } from './flows.js';
-import { factDef } from './refs.js';
+import { factDef, has3dFields } from './refs.js';
 
 export const NOTICE = 'Test build. The repair steps are unverified drafts and were not checked by a mechanic.';
 
@@ -30,26 +30,16 @@ export function factLine(c: Content, key: string, value: Value): string {
   if (key.startsWith('tool.')) return `${toolName(c, key.slice(5))}: ${value ? 'has it' : 'does not have it'}`;
   const f = factDef(c, key);
   const ans = f?.def.answers?.[String(value)]?.en;
-  if (String(value) === UNKNOWN) return `\`${key}\` = unknown ("${unknownAnswer(f?.def)}")`;
+  if (String(value) === UNKNOWN) return `\`${key}\` = unknown ("I'll check later")`;
   return ans ? `\`${key}\` = ${value} ("${ans}")` : `\`${key}\` = ${value}`;
-}
-
-/** The unknown answer as the user reads it: the fact's own wording (answers.unknown), else the app's "I'll check later". */
-export function unknownAnswer(f: any): string {
-  return f?.answers?.unknown?.en ?? "I'll check later";
-}
-
-/** A fact asked with the 3D view (any of focus, show, view, animation); a flow lists it after its plain questions. */
-export function has3d(f: any): boolean {
-  return !!f && ['focus', 'show', 'view', 'animation'].some((k) => f[k] !== undefined);
 }
 
 export function questionLine(c: Content, key: string, value: Value): string {
   if (key.startsWith('choice.')) return factLine(c, key, value);
   const f = factDef(c, key);
   const q = f?.def.question?.en ?? key;
-  const with3d = has3d(f?.def) ? ' <sub>(with the 3D view)</sub>' : '';
-  if (String(value) === UNKNOWN) return `"${q}" → ${unknownAnswer(f?.def)}${with3d}`;
+  const with3d = has3dFields(f?.def) ? ' <sub>(with the 3D view)</sub>' : '';
+  if (String(value) === UNKNOWN) return `"${q}" → I'll check later${with3d}`;
   const ans = f?.def.answers?.[String(value)]?.en ?? String(value);
   return `"${q}" → ${ans}${with3d}`;
 }

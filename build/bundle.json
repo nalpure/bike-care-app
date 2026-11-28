@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "content_hash": "859cc03932f57a49",
+  "content_hash": "e37e51dbae5d48ec",
   "notice": "Test build. The repair steps are unverified drafts and were not checked by a mechanic.",
   "unverified": true,
   "fact_groups": [
@@ -212,7 +212,7 @@
         "inline"
       ],
       "safety": false,
-      "note": "Where the rear gear cable's barrel adjuster is. Asked by the shifting tutorial only (its flow's covers), as the last question before the first card, with the 3D barrel tour (owner, 2026-11-27). 'I cannot find it' is the unknown answer: never stored, and the tutorial ends as not covered. The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars.",
+      "note": "Where the rear gear cable's barrel adjuster is. Asked by the shifting tutorial only (its cable-tension cards read it), as the last question before the first card, with the 3D barrel tour (owner, 2026-11-27). No unknown answer: the user picks one of the places (owner, 2026-11-27). The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars.",
       "question": {
         "en": "Where is the barrel adjuster?",
         "de": "Wo ist der Zugeinsteller?"
@@ -233,12 +233,9 @@
         "inline": {
           "en": "On the cable",
           "de": "Im Schaltzug"
-        },
-        "unknown": {
-          "en": "I cannot find it",
-          "de": "Ich finde ihn nicht"
         }
       },
+      "allow_unknown": false,
       "focus": [
         "rear_barrel",
         "front_barrel"
@@ -1413,6 +1410,14 @@
       "id": "check-cable-tension",
       "kind": "check",
       "title": "Set the cable tension",
+      "when": {
+        "drive.barrel_adjuster": [
+          "derailleur",
+          "shifter",
+          "inline"
+        ]
+      },
+      "if_unknown": "ask",
       "minutes": 5,
       "text": "Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.",
       "question": "Slow or noisy?",
@@ -1464,6 +1469,14 @@
       "id": "check-cable-tension-riding",
       "kind": "check",
       "title": "Set the cable tension on short rides",
+      "when": {
+        "drive.barrel_adjuster": [
+          "derailleur",
+          "shifter",
+          "inline"
+        ]
+      },
+      "if_unknown": "ask",
       "minutes": 10,
       "text": "Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.",
       "question": "Slow or noisy?",
@@ -1641,25 +1654,6 @@
       "choices": [
         "hold_bike"
       ],
-      "covers": {
-        "when": {
-          "drive.barrel_adjuster": [
-            "derailleur",
-            "shifter",
-            "inline"
-          ]
-        },
-        "not_covered": [
-          {
-            "when": {
-              "drive.barrel_adjuster": [
-                "unknown"
-              ]
-            },
-            "text": "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
-          }
-        ]
-      },
       "questions": [
         "drive.gear_type",
         "drive.shifting",

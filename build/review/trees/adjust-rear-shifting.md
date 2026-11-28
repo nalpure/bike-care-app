@@ -2,7 +2,7 @@
 
 > Test build. The repair steps are unverified drafts and were not checked by a mechanic.
 
-<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `2dd1c12edb3e` · mechanic: ⬜ not reviewed</sub>
+<sub>Unit `tree:tutorial:adjust-rear-shifting` · hash `8877c7c8dd05` · mechanic: ⬜ not reviewed</sub>
 
 The structure of the flow, each part once: order, branches, what is apart, exits and jumps. Card texts are in [cards.md](../cards.md).
 To read one complete path as the user sees it: `npm run walk -- --list`, then `npm run walk -- <path-id>`.
@@ -23,12 +23,6 @@ From job `adjust-rear-shifting` (content/jobs/adjust-rear-shifting.yaml). Covers
 - when drive.gear_type is unknown → **EXIT, not covered**: "We need to know what kind of gears your bike has. Look at the rear wheel and come back."
 - when drive.shifting is electronic → **EXIT, not covered**: "Electronic shifting is not covered yet. It is adjusted with the maker's app or buttons, not with a cable."
 - when drive.shifting is unknown → **EXIT, not covered**: "We need to know whether your gears use a cable. Look at the right shifter and come back."
-
-## Bikes covered by the tutorial
-
-Read after the job's covers, by the tutorial only (a shop can still do the job). Covers bikes where drive.barrel_adjuster is derailleur or shifter or inline. Any other bike ends at the first match:
-
-- when drive.barrel_adjuster is unknown → **EXIT, not covered**: "Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you."
 
 ## Branches
 
@@ -52,7 +46,7 @@ Time of the complete path: 24 min (stand), 25 min (hang), 24 min (upside_down)
 6. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - buttons: `too-far-in` (BLOCK)
 7. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
-8. Set the cable tension · `check-cable-tension` · check <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
+8. Set the cable tension · `check-cable-tension` · check · only when drive.barrel_adjuster is derailleur or shifter or inline <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
 9. procedure `release-bike` <sub>apart: bike_in_stand / bike_hung / bike_upside_down</sub>
    - when choice.hold_bike is stand: Take the bike out of the stand · `unclamp-from-stand` (−bike_in_stand)
    - when choice.hold_bike is hang: Take the bike down · `take-bike-down` (−bike_hung)
@@ -75,7 +69,7 @@ Time of the complete path: 29 min (ground)
 6. Double-check the inner limit · `check-low-limit-by-hand` · safety check <sub>apart: nothing</sub>
    - buttons: `too-far-in` (BLOCK)
 7. Check the gap to the sprockets · `check-b-gap` · check <sub>apart: nothing</sub>
-8. Set the cable tension on short rides · `check-cable-tension-riding` · check <sub>apart: nothing</sub>
+8. Set the cable tension on short rides · `check-cable-tension-riding` · check · only when drive.barrel_adjuster is derailleur or shifter or inline <sub>apart: nothing</sub>
 
 **Finish** (good path only; skipped after an exit):
 
@@ -84,7 +78,6 @@ Time of the complete path: 29 min (ground)
 
 ## Exits before the first step
 
-- drive.gear_type = derailleur, drive.shifting = mechanical, drive.barrel_adjuster = unknown → **EXIT, not covered**
 - drive.gear_type = derailleur, drive.shifting = electronic → **EXIT, not covered**
 - drive.gear_type = derailleur, drive.shifting = unknown → **EXIT, not covered**
 - drive.gear_type = hub_gear → **EXIT, not covered**

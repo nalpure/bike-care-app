@@ -377,11 +377,13 @@ Tools. Needed: none. One of these, depending on your part: A tool for the small 
 
 ### Set the cable tension
 
-<sub>Unit `card:step:check-cable-tension` · hash `825f49f70849` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension` · hash `83ca5a504d14` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 5 min</sub>
 
 Turn the pedals by hand and shift one gear at a time, through all gears and back. Watch the chain: every shift should be quick and quiet.
+
+<sub>Only when drive.barrel_adjuster is derailleur or shifter or inline; if unknown: ask.</sub>
 
 <sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
@@ -398,11 +400,13 @@ Animation: "Shift through every gear and back" (clip shift-through-gears)
 
 ### Set the cable tension on short rides
 
-<sub>Unit `card:step:check-cable-tension-riding` · hash `cca05def3dce` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:step:check-cable-tension-riding` · hash `d1b65c550b0e` · mechanic: ⬜ not reviewed · beginner: ⬜ not reviewed</sub>
 
 <sub>check · 10 min</sub>
 
 Ride slowly and shift one gear at a time, through all gears and back: every shift should be quick and quiet. Stop and park the bike before you turn anything.
+
+<sub>Only when drive.barrel_adjuster is derailleur or shifter or inline; if unknown: ask.</sub>
 
 <sub>3D: focus chain · show drivetrain · view drive_side</sub>
 
@@ -511,7 +515,7 @@ Help behind "?": Follow the shifter on the right of the handlebar to the rear de
 
 ### Question: drive.barrel_adjuster
 
-<sub>Unit `card:fact:drive.barrel_adjuster` · hash `000078534e30` · beginner: ⬜ not reviewed</sub>
+<sub>Unit `card:fact:drive.barrel_adjuster` · hash `dbc63f9f9fb2` · beginner: ⬜ not reviewed</sub>
 
 "Where is the barrel adjuster?" / "Wo ist der Zugeinsteller?"
 
@@ -522,7 +526,7 @@ Help behind "?": A small ribbed knob where the gear cable goes in. Look at the r
 - `derailleur`: At the derailleur / Am Schaltwerk
 - `shifter`: At the shifter / Am Schalthebel
 - `inline`: On the cable / Im Schaltzug
-- `unknown`: I cannot find it / Ich finde ihn nicht <sub>(never stored on the bike)</sub>
+- <sub>No "I'll check later": the user picks one of the answers (allow_unknown: false).</sub>
 
 <sub>Asked with the 3D view; a flow lists it after its plain questions.</sub>
 

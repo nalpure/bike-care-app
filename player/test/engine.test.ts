@@ -208,7 +208,6 @@ describe('the barrel adjuster: a fact with 3D, asked last in the facts phase (ow
     const q = seen[2];
     expect(q.stage.animation.clip).toBe('barrel-tour');
     expect(q.stage.focus).toEqual(expect.arrayContaining(['rear_barrel', 'front_barrel']));
-    expect(q.fact.answers.unknown.en).toBe('I cannot find it');
     // the answer is a fact of this flow, offered on the keep screen like any other
     expect(j.screen().kind).toBe('keep');
     expect(j.learned()).toContainEqual([BARREL, 'shifter']);
@@ -223,24 +222,23 @@ describe('the barrel adjuster: a fact with 3D, asked last in the facts phase (ow
     const { j: k } = start(null);
     expect(answer(k, { 'drive.gear_type': 'hub_gear' })).toEqual(['drive.gear_type']);
     expect(k.screen().kind).toBe('not-covered');
-    // a plain fact the flow reads after the barrel is asked before it, as listed
+    // a plain fact the flow reads after the barrel (here: by the finish) is asked before it, as listed
     const { j: m } = start(PLAIN, (b) => {
-      tut(b).covers.when['bike.ebike'] = [false];
-      tut(b).covers.not_covered.push({ when: { 'bike.ebike': [true, 'unknown'] }, text: 'Not covered.' });
+      Object.assign(b.steps.find((x: any) => x.id === 'test-ride-gears'), { when: { 'bike.ebike': [true, false] }, if_unknown: 'ask' });
       tut(b).questions = ['drive.gear_type', 'drive.shifting', 'bike.ebike', BARREL];
     });
     expect(answer(m, { 'bike.ebike': false, [BARREL]: 'derailleur' })).toEqual(['bike.ebike', BARREL]);
   });
 
-  it('"I cannot find it" ends on the not-covered screen before any work, and is never stored', () => {
-    const { j, store, bike } = start(PLAIN);
-    expect(answer(j, { [BARREL]: 'unknown' })).toEqual([BARREL]);
+  it('offers only the places, no unknown answer, and the diagnosis never asks it (owner, 2026-11-27)', () => {
+    const { j } = start(PLAIN);
     const s = j.screen();
-    expect(s.kind).toBe('not-covered');
-    expect(s.kind === 'not-covered' && s.message).toBe('Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.');
-    expect(j.shownPath).toEqual([]);
-    expect(BARREL in j.bikeFacts).toBe(false);
-    expect(BARREL in store.data.bikes.find((x) => x.id === bike!.id)!.facts).toBe(false);
+    expect(s.kind === 'question' && s.key).toBe(BARREL);
+    expect(s.kind === 'question' && s.fact.allow_unknown).toBe(false);
+    expect(s.kind === 'question' && s.fact.answers.unknown).toBeUndefined();
+    const { j: d } = start(null, () => {}, { diagnosis: 'gears-shift-badly' });
+    expect(answer(d, PLAIN)).toEqual(['drive.gear_type', 'drive.shifting']);
+    expect(d.screen().kind).toBe('card');
   });
 
   it('is not asked when the bike knows it, and the cards get it for the 3D view', () => {

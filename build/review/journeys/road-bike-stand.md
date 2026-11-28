@@ -243,29 +243,7 @@ Buttons: [Find a shop]
 
 ---
 
-## Journey 2: Opens the tutorial directly, but finds no barrel adjuster
-
-<sub>journey id `no-barrel-adjuster`</sub>
-
-Answers on this journey: `drive.barrel_adjuster` = unknown ("I cannot find it")
-
-### Tutorial: Adjust the rear gears
-
-#### Before you start
-
-Questions:
-
-1. "Where is the barrel adjuster?" → I cannot find it <sub>(with the 3D view)</sub>
-
-**Not covered yet:** Bikes without a barrel adjuster are not supported yet. A shop can set the gear cable for you.
-
-Buttons: [Find a shop] [Ask the assistant]
-
-**Journey ends:** not covered. **Time:** 0 min. **Questions asked:** 1.
-
----
-
-## Journey 3: Routine check finds a dirty chain
+## Journey 2: Routine check finds a dirty chain
 
 <sub>journey id `routine-check-dirty-chain`</sub>
 

@@ -98,7 +98,7 @@ facts:
     type: enum
     values: [derailleur, shifter, inline]
     safety: false
-    note: "Where the rear gear cable's barrel adjuster is. Asked by the shifting tutorial only (its flow's covers), as the last question before the first card, with the 3D barrel tour (owner, 2026-11-27). 'I cannot find it' is the unknown answer: never stored, and the tutorial ends as not covered. The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars."
+    note: "Where the rear gear cable's barrel adjuster is. Asked by the shifting tutorial only (its cable-tension cards read it), as the last question before the first card, with the 3D barrel tour (owner, 2026-11-27). No unknown answer: the user picks one of the places (owner, 2026-11-27). The 3D view draws the barrel there; inline is drawn in the cable just behind a drop bar, and at the shifter on flat and riser bars."
     question:
       en: "Where is the barrel adjuster?"
       de: "Wo ist der Zugeinsteller?"
@@ -109,7 +109,7 @@ facts:
       derailleur: { en: "At the derailleur", de: "Am Schaltwerk" }
       shifter: { en: "At the shifter", de: "Am Schalthebel" }
       inline: { en: "On the cable", de: "Im Schaltzug" }
-      unknown: { en: "I cannot find it", de: "Ich finde ihn nicht" }
+    allow_unknown: false   # only the places, no "I'll check later" (owner, 2026-11-27)
     # 3D (owner, 2026-11-27): a tour from the derailleur along the cable to the front, both barrel places the
     # bar type has marked (clip barrel-tour). Shown with the question, after every plain question.
     focus: [rear_barrel, front_barrel]
