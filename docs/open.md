@@ -73,13 +73,10 @@ Each with the recommended answer.
 1. Derailleur on 11-42 and 10-51 cassettes: the upper pulley sits 26 to 43 mm below the small sprockets, and 10-51 needs a 64 mm hanger. Accept until a mountain bike derailleur source exists? Recommended: yes.
 2. Bars 784 mm on city and riser bikes: keep, or cut to about 640 mm? Recommended: keep until a second bar source exists.
 3. Is the sprocket and chainring shade enough depth? Stronger (`EDGE_DARK` 0.5) reads more but darkens the chainring. Recommended: keep 0.7.
-4. The hardtail model (`assets-src/hardtail-by-fehe`): usage rights are not settled and it has no `credit.txt`. Settle before any part from it ships.
 5. Garage: "Do it now" on a job with a tutorial starts the tutorial without the diagnosis. Fine? Keep both the Facts and Components tabs? Recommended: yes, and decide after a test round.
 6. Swipes: also a right-edge swipe, and swipe up with a mouse drag? Recommended: no.
 7. Profiles: add an optional `bike_name` (for example "Corvana Strada") if the scenario names look odd in the garage? Recommended: yes, if they do.
 8. Split the brake levers into front and rear nodes? Recommended: not until brake content needs them.
-9. No content uses a tutorial's `checks`, follow-up inspections or an inspection's `sets` since 2026-11-27. Remove them from the schema and the tools? Recommended: yes, in a separate cleanup task.
-10. On the barrel question, should tapping an answer first mark that barrel in 3D, with a confirm button? Not built (it adds a step to every answer). Recommended: only if testers pick the wrong place.
 
 ## What still looks generated in 3D (sources to find)
 
