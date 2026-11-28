@@ -1,5 +1,5 @@
 // Expands every tutorial and diagnosis, simulates each path with the state labels,
-// enforces the rules from approach.md "Build tool" and checks coverage.
+// enforces the simulation rules (SIM_RULES, listed with the others in rules.ts) and checks coverage.
 
 import type { Content, Entry, TutorialEntry } from './content.js';
 import { substParams, type Value } from './conditions.js';

@@ -1,6 +1,6 @@
 # Owner decisions
 
-Decisions the owner made after `idea.md` and `approach.md` were written that still guide future work. Where they disagree with those two documents, this file wins. Only owner decisions go here, one or two lines each; an agent that adds one tells the owner. What the schema, the build tool or a guide already shows is not repeated here.
+Decisions the owner made after `idea.md` was written that still guide future work. Where they disagree with it, this file wins. Only owner decisions go here, one or two lines each; an agent that adds one tells the owner. What the schema, the build tool or a guide already shows is not repeated here.
 
 ## Experience
 
@@ -36,8 +36,16 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 - **2026-11-27 Agents' choices.** No commit trailers. An agent states each choice in its final message with context, effects, the other options and how to undo it. A choice that is hard to undo: stop and ask.
 - **2026-11-26 Shifting stops on a tap.** The cable-tension card shows the pedals turning and the chain going through every gear until a problem is tapped; then the pedals stand still while the barrel turns.
 
+## Content model
+
+- **Ending a flow:** one construct, `exit: { kind: unsafe | not_covered | not_needed | shop_only, text, show_how_from? }`, replaces `stop`, `end`, and `shop` / `not_covered` on cases. `block` is unchanged. The schema is the reference.
+- **Session state labels** cover anything to undo before riding, including a bike in a stand, hung or upside down.
+- **`hands_off`** means nothing is taken apart and no setting is changed. Riding and shifting count as hands-off.
+- **Run choices** (`choice.<id>`, such as `hold_bike`) are asked fresh in each tutorial and never stored. The one nested branch may test one.
+
 ## 3D view
 
+- **3D names** come from the player's registry through `build/3d-manifest.json`, not from `schema/3d-catalog.yaml`.
 - **2026-11-21 Parts library.** Realistic parts come from CC BY models in `assets-src/` (first the "Rigid Bike [Touring Bike]"), split into a parts library. Frame, wheels, sprockets, chainrings and chain stay generated from the facts. The app credits every model it uses (title, creator, link, licence, "modified").
 - **2026-11-21 Real sprocket spacing.** Sprockets sit at their real spacing; closer camera views make up for it.
 - **2026-11-21 Wide cassettes.** Above 36 teeth the same derailleur gets a longer cage, until a source for a mountain bike derailleur exists. The trigger is the largest sprocket only; the wrap only sets the cage's length.
@@ -54,15 +62,5 @@ Decisions the owner made after `idea.md` and `approach.md` were written that sti
 
 ## Tools for review
 
-- **2026-11-27 Review grid.** On a laptop, several phone screens side by side with one Next for all; a column whose path has fewer steps waits until the others reach the next shared step. Default columns: one test bike, every way of holding it; a dropdown switches to another test bike the job covers. Tapping a problem in one column shows its solution and animation there.
-
-## Where approach.md is out of date
-
-- **Content files:** one file per job (2026-11-27) replaces `jobs.yaml`, `tutorials/<job>/` with its case files, and the job's own steps file; the format is in `content/CLAUDE.md` and `schema/job.schema.json`.
-- **Ending a flow:** one construct, `exit: { kind: unsafe | not_covered | not_needed | shop_only, text, show_how_from? }`, replaces `stop`, `end`, and `shop` / `not_covered` on cases. `block` is unchanged. The schema is the reference.
 - **Review:** review units (cards, flow trees, journeys), each with a hash and signed in `reviews/ledger.yaml`, replace walkthroughs per path and "sign-off follows paths".
-- **Session state labels** cover anything to undo before riding, including a bike in a stand, hung or upside down.
-- **`hands_off`** means nothing is taken apart and no setting is changed. Riding and shifting count as hands-off.
-- **Run choices** (`choice.<id>`, such as `hold_bike`) are asked fresh in each tutorial and never stored. The one nested branch may test one.
-- **3D names** come from the player's registry through `build/3d-manifest.json`, not from `schema/3d-catalog.yaml`.
-- **History only:** the sections "Changes to the existing YAML files", "Requirements check" and the build order, and in "How content gets made" the policy book and the assumption list (replaced by "Decisions" in `CLAUDE.md`).
+- **2026-11-27 Review grid.** On a laptop, several phone screens side by side with one Next for all; a column whose path has fewer steps waits until the others reach the next shared step. Default columns: one test bike, every way of holding it; a dropdown switches to another test bike the job covers. Tapping a problem in one column shows its solution and animation there.
