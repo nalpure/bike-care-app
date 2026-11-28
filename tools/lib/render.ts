@@ -122,12 +122,10 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
     if (outc && typeof outc === 'object') {
       if (outc.block) res = `→ **BLOCK**: ${fill(outc.block, o.known)}`;
       if (outc.exit) res = `→ ${exitTag(outc.exit.kind)}: ${fill(outc.exit.text, o.known)}${outc.exit.show_how_from ? ` · jump: \`${outc.exit.show_how_from}\`` : ''}`;
-      if (outc.inspect) res = `→ next card: "${c.inspections.get(outc.inspect)?.def.title ?? outc.inspect}" (\`${outc.inspect}\`), shown only after this answer`;
     }
     const mark = o.chosen === st.id ? ' ◀ **this path**' : '';
-    return `- [ ] **${fill(st.label, o.known)}** — ${fill(st.meaning, o.known)} ${res}${setsText(c, st)}${mark}`;
+    return `- [ ] **${fill(st.label, o.known)}** — ${fill(st.meaning, o.known)} ${res}${mark}`;
   };
-  if (it.after) L.push(`<sub>Shown only after the answer "${c.inspections.get(it.after.id)?.def.states.find((s: any) => s.id === it.after!.state)?.label ?? it.after.state}" to \`${it.after.id}\`.</sub>`, '');
   // Answers are the exception: Next without an answer is the good answer.
   const nextMark = o.onPath && o.chosen === undefined ? ' ◀ **this path**' : '';
   const dflt = it.kind === 'inspect' ? it.def.states.find((s: any) => s.id === it.def.default) : undefined;
@@ -180,17 +178,6 @@ export function renderCard(c: Content, it: PathItem, o: CardOptions): string[] {
   }
   L.push('');
   return L;
-}
-
-/** " · keeps on the bike: Barrel adjuster = At the shifter" for a state with sets. */
-export function setsText(c: Content, st: any): string {
-  const e = Object.entries<any>(st.sets ?? {});
-  if (!e.length) return '';
-  const parts = e.map(([k, v]) => {
-    const f = c.facts.get(k)?.def;
-    return `${f?.label?.en ?? k} = ${f?.answers?.[String(v)]?.en ?? v}`;
-  });
-  return ` · sets for the bike (the app does not read it yet; never in a tutorial): ${parts.join(', ')}`;
 }
 
 export function toolSummary(_c: Content, items: PathItem[]): ToolList {
@@ -283,11 +270,9 @@ export function exitScreen(kind: string, message: string, canJump: boolean): str
 export function endingText(p: TutorialPath, all: PathItem[]): string {
   const v = p.variant;
   if (v.ending === 'complete' && v.skip) return `Complete; "${v.skip.label}" at \`${all[v.skip.index].id}\` skips ${v.skip.ids.map((s) => `\`${s}\``).join(', ')}`;
-  const via = v.follow ? `"${v.follow.label}" at \`${all[v.follow.index].id}\` shows its follow-up` : '';
-  if (v.ending === 'complete') return via ? `Complete; ${via}` : 'Complete: all steps and the finish';
+  if (v.ending === 'complete') return 'Complete: all steps and the finish';
   const sp = v.stop!;
-  // Step numbers count only the cards shown on this path.
-  const n = v.hidden.slice(0, sp.index + 1).filter((h) => !h).length;
+  const n = sp.index + 1;
   const at = `exit (${sp.kind}) at step ${n} (\`${all[sp.index].id}\`: "${sp.label}")`;
   if (v.ending === 'stop') return p.before[sp.index].size ? `${at}; user leaves with "${[...p.before[sp.index]].join(', ')}" still set` : `${at}; nothing apart`;
   return `${at}; user taps "Show me how to put it back", jumps ahead to \`${all[v.jumpIndex ?? 0].id}\` (step ${n + 1} below) and ends with the shop summary`;
@@ -327,7 +312,6 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
   let jumpShown = false;
   let number = 0;
   v.items.forEach((it, i) => {
-    if (v.hidden[i]) return;
     number++;
     if (it.list === 'finish' && !finishShown) {
       L.push('#### Finish (good path only)', '');
@@ -338,7 +322,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
       L.push(`> **Jumped ahead** in the same tutorial: the user tapped "Show me how to put it back". ${skipped > 0 ? `${skipped} step(s) skipped.` : 'No steps skipped.'} The progress bar moves forward once.`, '');
       jumpShown = true;
     }
-    const chosen = v.stop && i === v.stop.index ? v.stop.key : v.skip && i === v.skip.index ? v.skip.buttonId : v.follow && i === v.follow.index ? v.follow.state : undefined;
+    const chosen = v.stop && i === v.stop.index ? v.stop.key : v.skip && i === v.skip.index ? v.skip.buttonId : undefined;
     const after = i + 1 < p.before.length ? p.before[i + 1] : p.final;
     const beforeWork = !v.items.slice(0, i).some((x) => x.kind === 'step');
     const note = it.kind === 'inspect' && beforeWork ? '<sub>Not shown again if this session already answered it, for example in the diagnosis. The earlier answer decides the outcome.</sub>' : undefined;
@@ -360,7 +344,7 @@ export function renderTutorialPath(c: Content, flow: TutorialFlow, p: TutorialPa
     L.push(`- Job: ${job?.title ?? t.job}`);
     L.push(`- Tell the mechanic: "${job?.shop.tell ?? ''}"`);
     L.push(`- Found: "${v.stop!.label}" at \`${all[v.stop!.index].id}\``);
-    L.push(`- Already done: steps 1 to ${v.hidden.filter((h) => !h).length} of this tutorial`);
+    L.push(`- Already done: steps 1 to ${v.items.length} of this tutorial`);
     L.push(`- Price: ${priceText(job)}`);
     if (p.final.size) L.push(`- **Still set: ${[...p.final].join(', ')}**`);
   }

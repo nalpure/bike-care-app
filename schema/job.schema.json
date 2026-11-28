@@ -110,20 +110,6 @@
           "description": "Which bikes the tutorial covers beyond the job's covers: what the user needs to do the job themselves (a shop still can). Read by the tutorial only, after the job's covers and before any way, so its facts are asked in the facts phase. A diagnosis with covers_like does not read it.",
           "$ref": "#/$defs/covers"
         },
-        "checks": {
-          "description": "Hands-off inspection calls that run before the work, in every way. Not used since 2026-11-27: a tutorial runs no checks (decisions.md). One the user already answered in this session (in a diagnosis) is not shown again (hard rule 12).",
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "properties": {
-              "inspect": { "$ref": "common.schema.json#/$defs/id" },
-              "outcomes": { "$ref": "common.schema.json#/$defs/outcomes" }
-            },
-            "required": ["inspect", "outcomes"],
-            "additionalProperties": false
-          }
-        },
         "ways": {
           "description": "Where the order of work differs (one branch by mechanism or by how the bike is held): each way's name and when. Evaluated top to bottom; the first match wins. Without ways the flow has one way and no branch.",
           "type": "object",

@@ -61,13 +61,6 @@ export interface Variant {
   afterJump: boolean[];
   /** a complete path where a button skipped later steps */
   skip?: { index: number; buttonId: string; label: string; ids: string[] };
-  /**
-   * For each item, whether this path leaves it out: a follow-up inspection whose state was not
-   * tapped. Hidden items stay in `items` so indexes match the combined list; they are not shown.
-   */
-  hidden: boolean[];
-  /** a path through a follow-up: the inspection at `index` was answered with `state` */
-  follow?: { index: number; state: string; label: string };
 }
 
 /** "The chain falls off, or touches the spokes" -> "chain-falls-off-or" */
@@ -83,48 +76,29 @@ export function slug(label: string): string {
 
 export function variantsOf(run: TutorialRun, baseId: string, stateAt: (v: Variant, index: number) => Set<string>): Variant[] {
   const all = R.combined(run);
-  // Follow-ups are hidden unless the path goes through them (`through`: index of that follow-up).
-  const hide = (items: PathItem[], through?: number) => items.map((x) => !!x.after && x !== all[through ?? -1]);
-  const parentOf = (i: number): number => {
-    let p = i - 1;
-    while (p >= 0 && !(all[p].kind === 'inspect' && all[p].id === all[i].after!.id)) p--;
-    return p;
-  };
-  const followOf = (i: number): Variant['follow'] => {
-    const p = parentOf(i);
-    const state = all[i].after!.state;
-    return { index: p, state, label: all[p]?.def.states.find((s: any) => s.id === state)?.label ?? state };
-  };
-  const complete: Variant = { id: baseId, ending: 'complete', items: all, afterJump: all.map(() => false), hidden: hide(all) };
+  const complete: Variant = { id: baseId, ending: 'complete', items: all, afterJump: all.map(() => false) };
   const out: Variant[] = [complete];
   all.forEach((item, index) => {
-    // A complete path through a follow-up, when one of its states goes on.
-    if (item.after && Object.values(item.outcomes ?? {}).some((o: any) => o === 'continue')) {
-      out.push({ id: `${baseId}--${item.after.id}-${item.after.state}`, ending: 'complete', items: all, afterJump: all.map(() => false), hidden: hide(all, index), follow: followOf(index) });
-    }
     for (const b of item.buttons) {
       if (!b.skips?.length) continue;
       const skipped = R.skippedBy(all, index, b);
       // A shared step may name targets that this case does not have; then the skip changes nothing here.
       if (!skipped.size) continue;
       const items = all.filter((_x, i) => !skipped.has(i));
-      out.push({ id: `${baseId}--skip-${item.id}-${b.id}`, ending: 'complete', items, afterJump: items.map(() => false), hidden: hide(items), skip: { index, buttonId: b.id, label: b.label, ids: b.skips } });
+      out.push({ id: `${baseId}--skip-${item.id}-${b.id}`, ending: 'complete', items, afterJump: items.map(() => false), skip: { index, buttonId: b.id, label: b.label, ids: b.skips } });
     }
   });
   for (const sp of R.stopPoints(run)) {
     const sid = `${baseId}--${sp.kind.replace(/_/g, '-')}-${all[sp.index].id}-${sp.key}`;
     const upTo = all.slice(0, sp.index + 1);
-    const through = all[sp.index].after ? sp.index : undefined;
-    const follow = through !== undefined ? followOf(through) : undefined;
-    const stopV: Variant = { id: sid, ending: 'stop', stop: sp, items: upTo, afterJump: upTo.map(() => false), hidden: hide(upTo, through), follow };
-    out.push(stopV);
+    out.push({ id: sid, ending: 'stop', stop: sp, items: upTo, afterJump: upTo.map(() => false) });
     const state = stateAt(complete, sp.index);
     if (sp.showHowFrom && state.size) {
       const j = R.findJumpTarget(run, sp.index, sp.showHowFrom);
       if (j !== undefined) {
         const tail = all.slice(j, run.sequence.length);
         const items = [...upTo, ...tail];
-        out.push({ id: `${sid}--jump`, ending: 'jump', stop: sp, jumpIndex: j, items, afterJump: [...upTo.map(() => false), ...tail.map(() => true)], hidden: hide(items, through), follow });
+        out.push({ id: `${sid}--jump`, ending: 'jump', stop: sp, jumpIndex: j, items, afterJump: [...upTo.map(() => false), ...tail.map(() => true)] });
       }
     }
   }

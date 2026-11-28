@@ -196,9 +196,9 @@ export function enumerate<T>(ix: Index, resolve: (r: Reader) => T, fixed: Record
   return out;
 }
 
-/** Minutes of a list of items; follow-ups (`after`) are the exception and do not count. */
-export function minutesOf(items: { def: any; after?: unknown }[]): number {
-  return items.reduce((s, it) => s + (it.after ? 0 : (it.def.minutes ?? 0)), 0);
+/** Minutes of a list of items. */
+export function minutesOf(items: { def: any }[]): number {
+  return items.reduce((s, it) => s + (it.def.minutes ?? 0), 0);
 }
 
 // ---------------------------------------------------------------- shared shapes
@@ -244,8 +244,6 @@ export interface PathItem<S = unknown> {
   /** procedure id this step came from, if any (top-level call) */
   via?: string;
   outcomes?: Record<string, any>;
-  /** a follow-up inspection: shown only when the inspection `id` before it was answered with `state` */
-  after?: { id: string; state: string };
   /** step buttons after their when conditions */
   buttons: any[];
   /** show generic_text instead of text */
@@ -396,13 +394,10 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
     return run;
   }
   run.caseLabel = cf.name;
-  // The tutorial's checks run first, in every case (declared once in the job file's flow).
-  const pre: any[] = t.checks ?? [];
-  for (let i = 0; i < pre.length; i++) expandItem(ix, pre[i], 'sequence', loc(t, 'checks', i), r, params, run, t.id, loc, undefined, (...s) => loc(t, 'checks', i, ...s));
   for (const list of ['sequence', 'finish'] as const) {
     const items: any[] = cf[list] ?? [];
     for (let i = 0; i < items.length; i++) {
-      const exit = expandItem(ix, items[i], list, loc(cf, list, i), r, params, run, t.id, loc, undefined, (...s) => loc(cf, list, i, ...s));
+      const exit = expandItem(ix, items[i], list, loc(cf, list, i), r, params, run, t.id, loc);
       if (exit) {
         run.exit = exit;
         return run;
@@ -415,8 +410,6 @@ export function resolveTutorial<S = unknown>(ix: Index, t: any, r: Reader, param
 function expandItem<S>(
   ix: Index, it: any, list: 'sequence' | 'finish', src: S, r: Reader,
   params: Record<string, string>, run: TutorialRun<S>, tid: string, loc: Locate<S>, via?: string,
-  /** where a part of this item is (its follow-ups live in its outcomes) */
-  srcAt?: (...sub: (string | number)[]) => S,
 ): Exit<S> | undefined {
   const out = list === 'sequence' ? run.sequence : run.finish;
   if (it.step) {
@@ -432,32 +425,8 @@ function expandItem<S>(
       run.problems.push({ rule: 'inspection-not-applicable', id: `tutorial ${tid} / inspect ${id}`, src, message: `Inspection ${id} does not apply to this bike (its applies_when fails), but the case calls it.` });
     }
     out.push({ kind: 'inspect', id, def: insp, list, via, outcomes: it.outcomes, buttons: [], generic: false, src, defSrc: loc(insp), tools: toolsOf(ix, insp, r) });
-    // A follow-up ({ inspect, outcomes } as an outcome) comes right after, shown only after that state.
-    for (const [state, o] of Object.entries<any>(it.outcomes ?? {})) {
-      if (!o || typeof o !== 'object' || o.inspect === undefined) continue;
-      const fid = substParams(o.inspect, params);
-      const fdef = inspectionDef(ix, fid);
-      if (!fdef) continue;
-      out.push({ kind: 'inspect', id: fid, def: fdef, list, via, outcomes: o.outcomes, after: { id, state }, buttons: [], generic: false, src: srcAt ? srcAt('outcomes', state) : src, defSrc: loc(fdef), tools: toolsOf(ix, fdef, r) });
-    }
   }
   return;
-}
-
-/**
- * Follow-ups that the taps so far leave out: an item with `after` is shown only when the
- * inspection it follows (the nearest earlier item with that id) was answered with that state.
- * An unanswered parent hides its follow-ups too.
- */
-export function hiddenFollowUps<S>(all: PathItem<S>[], tapAt: (index: number) => string | undefined): Set<number> {
-  const out = new Set<number>();
-  all.forEach((it, i) => {
-    if (!it.after) return;
-    let p = i - 1;
-    while (p >= 0 && !(all[p].kind === 'inspect' && all[p].id === it.after.id)) p--;
-    if (p < 0 || tapAt(p) !== it.after.state) out.add(i);
-  });
-  return out;
 }
 
 function pushStep<S>(ix: Index, id: string, list: 'sequence' | 'finish', src: S, r: Reader, params: Record<string, string>, out: PathItem<S>[], loc: Locate<S>, via?: string): void {

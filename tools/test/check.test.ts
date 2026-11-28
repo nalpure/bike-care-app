@@ -108,10 +108,10 @@ describe('the real content', () => {
   });
 
   it('does not repeat an inspection answered earlier in the session, but re-checks after the work', () => {
-    // No tutorial calls an inspection any more (2026-11-27), so the test puts one before the work and one in the finish.
+    // No tutorial calls an inspection any more (2026-11-27), so the test puts one first in the work and one in the finish.
     const r = sandbox()
       .edit(JOB, (d) => {
-        d.flow.checks = [{ inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' } } } }];
+        d.flow.work.unshift({ inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' } } } });
         const inspect = { inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } };
         d.flow.finish.unshift({ branch: { 'wheel-free': [inspect], 'test-rides': [] } });
       })
@@ -498,57 +498,12 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r, 'placeholder-fallback'), show(r)).toHaveLength(1);
   });
 
-  it('an inspection sets only facts no condition reads, to allowed values', () => {
-    // chain-condition is used by the diagnosis and the routine check only, so sets is allowed there
+  it("an inspection call's outcomes match its states", () => {
+    // No tutorial calls an inspection since 2026-11-27, so the test adds a call to the finish.
     const r = sandbox()
-      .edit('content/inspections.yaml', (d) => {
-        const st = d.inspections.find((i: any) => i.id === 'chain-condition').states;
-        st[0].sets = { 'drive.shifting': 'mechanical' };
-        st[1].sets = { 'drive.rear_derailleur_screws': 'slot' };
-      })
+      .edit(JOB, (d) => d.flow.finish.unshift({ branch: { 'wheel-free': [{ inspect: 'chain-condition', outcomes: { clean: 'continue', 'dry-or-rusty': 'continue', found: 'continue' } }], 'test-rides': [] } }))
       .run();
-    expect(errorsOf(r, 'sets-fact').length, show(r)).toBe(2);
-    expect(errorsOf(r, 'condition-value').length, show(r)).toBe(1);
-    expect(errorsOf(r, 'tutorial-learns-fact'), show(r)).toHaveLength(0);
-  });
-
-  it('a tutorial learns no facts: an inspection it uses has no sets (owner, 2026-11-27)', () => {
-    const r = sandbox()
-      .edit('content/inspections.yaml', (d) => {
-        d.inspections.find((i: any) => i.id === 'shift-test-ride').states[2].sets = { 'drive.rear_derailleur_model': 'Shimano' };
-      })
-      .edit(JOB, (d) => {
-        const exit = { kind: 'shop_only', text: 'Your gears still do not shift cleanly. A shop can check it.' };
-        const inspect = { inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': { exit }, 'slow-to-smaller': 'continue' } };
-        d.flow.finish.unshift({ branch: { 'wheel-free': [inspect], 'test-rides': [] } });
-      })
-      .run();
-    const e = errorsOf(r, 'tutorial-learns-fact');
-    expect(e, show(r)).toHaveLength(1);
-    expect(e[0].file).toBe('content/inspections.yaml');
-    expect(e[0].message).toContain('adjust-rear-shifting');
-  });
-
-  it('a follow-up is another inspection, and its outcomes match its states', () => {
-    // No content has a follow-up since 2026-11-27, so the test adds one to a work item.
-    const call = (follow: any) => ({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': follow, 'slow-to-smaller': 'continue' } });
-    const r = sandbox()
-      .edit(JOB, (d) => d.flow.finish.unshift({ branch: { 'wheel-free': [call({ inspect: 'shift-test-ride', outcomes: { fine: 'continue', 'slow-to-bigger': 'continue', 'slow-to-smaller': 'continue' } })], 'test-rides': [] } }))
-      .run();
-    expect(errorsOf(r, 'follow-up').length, show(r)).toBe(1);
-    box!.dispose();
-    const r2 = sandbox()
-      .edit(JOB, (d) => d.flow.finish.unshift({ branch: { 'wheel-free': [call({ inspect: 'chain-condition', outcomes: { clean: 'continue', 'dry-or-rusty': 'continue', found: 'continue' } })], 'test-rides': [] } }))
-      .run();
-    expect(errorsOf(r2, 'outcomes-match-states').length, show(r2)).toBe(2);
-  });
-
-  it("a tutorial's checks use only hands-off inspections", () => {
-    const r = sandbox()
-      .edit(JOB, (d) => (d.flow.checks = [{ inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' } } } }]))
-      .edit('content/inspections.yaml', (d) => (d.inspections.find((i: any) => i.id === 'derailleur-alignment').hands_off = false))
-      .run();
-    expect(errorsOf(r, 'hands-off-only').some((e) => e.message.includes("tutorial's checks")), show(r)).toBe(true);
+    expect(errorsOf(r, 'outcomes-match-states').length, show(r)).toBe(2);
   });
 
   it('a fact may carry 3D fields, checked like a card', () => {
@@ -714,7 +669,7 @@ describe('rules broken on purpose', () => {
   it("an inspection's default must continue in every tutorial call, and a journey may not tap it", () => {
     // No tutorial calls an inspection since 2026-11-27, so the test adds a call to the flow.
     const exit = { kind: 'unsafe', text: 'Do not ride. Take the bike to a shop.' };
-    const withCall = (b: Sandbox) => b.edit(JOB, (d) => (d.flow.checks = [{ inspect: 'derailleur-alignment', outcomes: { straight: { exit }, crooked: 'continue' } }]));
+    const withCall = (b: Sandbox) => b.edit(JOB, (d) => d.flow.work.unshift({ inspect: 'derailleur-alignment', outcomes: { straight: { exit }, crooked: 'continue' } }));
     const r = withCall(sandbox())
       .edit('content/inspections.yaml', (d) => {
         const i = d.inspections.find((x: any) => x.id === 'derailleur-alignment');
@@ -725,13 +680,13 @@ describe('rules broken on purpose', () => {
     expect(errorsOf(r, 'default-continues').length, show(r)).toBeGreaterThan(0);
     box!.dispose();
     const r2 = withCall(sandbox())
-      .edit(JOB, (d) => (d.flow.checks[0].outcomes = { straight: 'continue', crooked: { exit } }))
+      .edit(JOB, (d) => (d.flow.work[0].outcomes = { straight: 'continue', crooked: { exit } }))
       .edit('content/inspections.yaml', (d) => {
         const i = d.inspections.find((x: any) => x.id === 'derailleur-alignment');
         i.default = 'straight';
         i.question = 'Looks bent?';
       })
-      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys.find((j: any) => j.id === 'no-barrel-adjuster').tutorial_sees = { 'derailleur-alignment': 'straight' }))
+      .edit('profiles/road-bike-stand.yaml', (d) => (d.profile.journeys.find((j: any) => j.id === 'chain-falls-off-on-test-ride').tutorial_sees['derailleur-alignment'] = 'straight'))
       .run();
     // the journey names "straight" in tutorial_sees; Next means it now
     const e = errorsOf(r2, 'unknown-button');

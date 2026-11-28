@@ -132,7 +132,7 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `default-continues` | pass | An inspection's default state is a good state: it leads to no job, and every tutorial call maps it to continue. |
 | `unsafe-only-in-safety-checks` | pass | block and unsafe exits only in safety checks and inspection calls. |
 | `no-solution-on-exit` | pass | An exit button offers no solution. |
-| `exit-jump-outside` | pass | Exits in procedures and in a tutorial's checks run before anything is opened and never jump. |
+| `exit-jump-outside` | pass | Exits in procedures run before anything is opened and never jump. |
 | `block-needs-fix` | pass | Every block has a good state to tap once fixed (with a question, Next is that state). |
 | `button-needs-text` | pass | Every button has text, block or exit. |
 | `same-outcome` | pass | Each button leads somewhere different: no two buttons of a step, and no two states of an inspection call that block or exit, have the same result. |
@@ -141,12 +141,9 @@ Journeys that end at a shop, a stop or not covered: 3 of 8.
 | `item-kind` | pass | Each flow item is exactly one of a card, procedure, inspect or branch. |
 | `inspect-needs-outcomes` | pass | Each inspection call in a tutorial maps its states to outcomes. |
 | `outcomes-match-states` | pass | Outcomes name exactly the states of the inspection. |
-| `outcome-kind` | pass | An outcome is continue, block, exit, or a follow-up inspection. |
-| `follow-up` | pass | A follow-up inspection is another inspection and has no follow-up of its own. |
-| `sets-fact` | pass | An inspection state sets only facts that no condition reads (no question, not ask: never), to allowed values; no two states set the same. |
-| `tutorial-learns-fact` | pass | A tutorial learns no facts about the bike, only its current state: no inspection a tutorial uses has a state with sets (owner, 2026-11-27). |
+| `outcome-kind` | pass | An outcome is continue, block or exit. |
 | `jump-in-finish` | pass | No jump-ahead from finish. |
-| `hands-off-only` | pass | Diagnoses, the routine check and a tutorial's checks use only hands-off inspections. |
+| `hands-off-only` | pass | Diagnoses and the routine check use only hands-off inspections. |
 | `profile-missing-answer` | pass | Every question a profile journey reaches is answered. |
 | `profile-missing-sees` | pass | Every inspection and safety check a profile journey reaches has an answer, unless Next answers it (a step with a question, an inspection with a default in a tutorial). |
 | `profile-missing-choice` | pass | Every run choice a profile journey reaches is chosen. |

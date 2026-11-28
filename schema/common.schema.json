@@ -168,21 +168,6 @@
       }
     },
     "outcome": {
-      "description": "continue, an object with exactly one of block, exit, or a follow-up: { inspect, outcomes }, an inspection shown next only after this state (for example 'I cannot find it' -> 'Look along the cable'). A follow-up's own outcomes cannot have another follow-up.",
-      "anyOf": [
-        { "$ref": "#/$defs/plainOutcome" },
-        {
-          "type": "object",
-          "properties": {
-            "inspect": { "$ref": "#/$defs/id" },
-            "outcomes": { "$ref": "#/$defs/followOutcomes" }
-          },
-          "required": ["inspect", "outcomes"],
-          "additionalProperties": false
-        }
-      ]
-    },
-    "plainOutcome": {
       "description": "continue, or an object with exactly one of block, exit.",
       "anyOf": [
         { "const": "continue" },
@@ -197,13 +182,6 @@
           "additionalProperties": false
         }
       ]
-    },
-    "followOutcomes": {
-      "description": "Per state of a follow-up inspection: continue, block or exit.",
-      "type": "object",
-      "minProperties": 2,
-      "maxProperties": 3,
-      "additionalProperties": { "$ref": "#/$defs/plainOutcome" }
     },
     "card": {
       "description": "One card (a step): a job file's cards and the shared cards in content/steps/. Its id is unique across all cards, inspections and procedures.",

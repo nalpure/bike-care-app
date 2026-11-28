@@ -138,10 +138,10 @@ describe('engine', () => {
     const insp = b.inspections.find((x: any) => x.id === 'derailleur-alignment');
     insp.default = 'straight';
     insp.question = 'Looks bent?';
-    // No tutorial runs a check since 2026-11-27, so the test gives the tutorial one.
-    b.tutorials.find((t: any) => t.id === 'adjust-rear-shifting').checks = [
-      { inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride.' } } } },
-    ];
+    // No tutorial calls an inspection since 2026-11-27, so the test puts one first in the work of every way.
+    for (const cs of b.tutorials.find((t: any) => t.id === 'adjust-rear-shifting').cases) {
+      cs.case.sequence.unshift({ inspect: 'derailleur-alignment', outcomes: { straight: 'continue', crooked: { exit: { kind: 'unsafe', text: 'Do not ride.' } } } });
+    }
     const store = new Store(memoryKV());
     const bike = store.addBike('Test bike', KNOWN);
     const j = new Journey(new Content(b), store, bike, s, { tutorial: 'adjust-rear-shifting' });

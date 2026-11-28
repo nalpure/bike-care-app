@@ -9,7 +9,7 @@
 
 import { evaluate, substCondition, substParams, UNKNOWN, type Value } from '../../../tools/lib/conditions.js';
 import {
-  combined, enumerate, findJumpTarget, hiddenFollowUps, knownCoverageExit, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, domainOf,
+  combined, enumerate, findJumpTarget, knownCoverageExit, minutesOf, NeedKey, neverAsked, resolveDiagnosis, resolveTutorial, skippedBy, domainOf,
   type DiagnosisRun, type PathItem, type Reader, type ToolList, type ToolSetUse, type TutorialRun, mergeTools,
 } from '../../../tools/lib/resolve.js';
 import type { Content } from './content.js';
@@ -967,12 +967,9 @@ export class Journey {
     const limit = t.jumped ? run.sequence.length : all.length;
     let workStarted = t.path.some((i) => all[i].kind === 'step');
     const auto: Array<{ idx: number; state: string }> = [];
-    const tapAt = (j: number) => auto.find((a) => a.idx === j)?.state ?? t.taps[String(j)];
     for (let i = from + 1; i < limit; i++) {
       if (skipped.has(i)) continue;
       const it = all[i];
-      // A follow-up shows only after the answer it follows (taps so far, and answers passed on the way).
-      if (it.after && hiddenFollowUps(all, tapAt).has(i)) continue;
       if (it.kind === 'inspect' && !workStarted) {
         const earlier = this.session.answers[it.id];
         if (earlier !== undefined) {

@@ -224,8 +224,6 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
   let finishShown = false;
   let n = 1;
   const skipIds = new Map<string, string>();
-  /** index -> state the owner tapped (or Next took) on each inspection so far */
-  const taps = new Map<number, string>();
   // Before the first step, an inspection answered earlier in this session is not shown again.
   // After work has started it is a re-check of the result and is always shown.
   let workStarted = false;
@@ -239,12 +237,6 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
     if (skipIds.has(it.id)) {
       r.L.push(`##### – ${it.def.title} · \`${it.id}\` · skipped: the owner answered "${skipIds.get(it.id)}" earlier`, '');
       continue;
-    }
-    // A follow-up shows only after the answer it follows.
-    if (it.after) {
-      let p = i - 1;
-      while (p >= 0 && !(all[p].kind === 'inspect' && all[p].id === it.after.id)) p--;
-      if (p < 0 || taps.get(p) !== it.after.state) continue;
     }
     const before = new Set(state);
     if (it.kind === 'step') {
@@ -262,7 +254,6 @@ function runTutorial(c: Content, r: Run, t: TutorialEntry): string {
       if (!repeat && chosen !== undefined) r.usedTutorialSees.add(it.id);
       // In a tutorial, Next takes the inspection's default state.
       if (chosen === undefined && it.def.default !== undefined) chosen = it.def.default;
-      if (chosen !== undefined) taps.set(i, chosen);
       if (chosen === undefined) {
         r.error('profile-missing-sees', `The tutorial reaches inspection "${it.id}", but the journey has no tutorial_sees.${it.id}.`, 'tutorial_sees');
         return 'incomplete profile';

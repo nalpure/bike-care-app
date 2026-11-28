@@ -346,22 +346,7 @@ function checkInspection(x: Ctx, e: Entry): void {
     if (s.leads_to && !x.c.jobs.has(s.leads_to.job)) err(x, sl, 'unknown-job', `leads_to names job "${s.leads_to.job}", which has no file in content/jobs/.`);
     checkText(x, s.label, sl);
     checkText(x, s.meaning, sl);
-    for (const [k, v] of Object.entries<any>(s.sets ?? {})) {
-      const kl = sub(sl, 'sets', k);
-      const f = factDef(x.c, k);
-      if (!f) {
-        err(x, kl, 'unknown-fact', `sets names fact "${k}", which is not in content/facts.yaml.`);
-        continue;
-      }
-      // A fact a condition reads would change the planned path in the middle of the flow.
-      if (f.def.question || f.def.ask === 'never') err(x, kl, 'sets-fact', `Fact ${k} has a question or ask: never, so conditions may read it. An inspection sets only facts that no condition reads.`);
-      if (f.def.values && !f.def.values.map(String).includes(String(v))) err(x, kl, 'condition-value', `Fact ${k} has no value "${v}". Values: ${f.def.values.join(', ')}.`);
-      if (f.def.type === 'boolean' && typeof v !== 'boolean') err(x, kl, 'condition-value', `Fact ${k} is true or false, not "${v}".`);
-    }
   });
-  // Two states that set the same facts cannot be told apart when the facts are already known.
-  const sigs = d.states.filter((s: any) => s.sets).map((s: any) => JSON.stringify(Object.entries(s.sets).sort()));
-  if (new Set(sigs).size !== sigs.length) err(x, sub(loc, 'states'), 'sets-fact', 'Two states set the same facts to the same values.');
   if (d.states.every((s: any) => s.leads_to)) warn(x, sub(loc, 'states'), 'no-ok-state', 'Every state leads to a job. Usually one state is the good state, without leads_to.');
 }
 
@@ -385,7 +370,7 @@ function checkProcedure(x: Ctx, e: Entry): void {
   });
 }
 
-/** Items of a way's sequence or finish (a view of the job file's flow), or of the tutorial's checks (base ['tutorial', 'checks']). */
+/** Items of a way's sequence or finish (a view of the job file's flow). */
 function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list: 'sequence' | 'finish', tid: string): void {
   items.forEach((it, i) => {
     const loc: Loc = { file, path: [...base, i], id: `tutorial ${tid}` };
@@ -403,12 +388,12 @@ function checkFlowItems(x: Ctx, items: any[], file: YamlFile, base: YPath, list:
       loc.id = `tutorial ${tid} / procedure ${it.procedure}`;
       if (!procedureExists(x.c, it.procedure)) err(x, loc, 'unknown-procedure', `Procedure "${it.procedure}" is not in content/procedures.yaml.`);
     }
-    if (it.inspect) checkInspectCall(x, loc, it.inspect, it.outcomes, list, tid, false);
+    if (it.inspect) checkInspectCall(x, loc, it.inspect, it.outcomes, list, tid);
   });
 }
 
-/** One inspection call in a tutorial and its outcomes; a follow-up ({ inspect, outcomes }) is checked the same way. */
-function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'sequence' | 'finish', tid: string, follow: boolean): void {
+/** One inspection call in a tutorial and its outcomes. */
+function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'sequence' | 'finish', tid: string): void {
   loc.id = `tutorial ${tid} / inspect ${id}`;
   const insp = x.c.inspections.get(id);
   if (!insp) {
@@ -425,25 +410,18 @@ function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'se
     const ol = sub(loc, 'outcomes', s);
     if (!states.includes(s)) err(x, ol, 'outcomes-match-states', `Inspection ${id} has no state "${s}". States: ${states.join(', ')}.`);
     if (typeof o !== 'object') continue;
-    if (o.inspect !== undefined) {
-      if (follow) err(x, ol, 'follow-up', 'A follow-up inspection cannot have a follow-up of its own.');
-      else if (o.inspect === id) err(x, ol, 'follow-up', 'A follow-up is a different inspection.');
-      else checkInspectCall(x, { ...ol }, o.inspect, o.outcomes, list, tid, true);
-      continue;
-    }
     const k = ['block', 'exit'].filter((key) => o[key] !== undefined);
-    if (k.length !== 1) err(x, ol, 'outcome-kind', 'An outcome is continue, a follow-up { inspect, outcomes }, or has exactly one of block, exit.');
+    if (k.length !== 1) err(x, ol, 'outcome-kind', 'An outcome is continue, or has exactly one of block, exit.');
     const sh = o.exit?.show_how_from;
     if (sh && list === 'finish') err(x, ol, 'jump-in-finish', 'finish runs only on the good path, so its exits cannot jump ahead.');
     if (sh && !stepOrProcedureExists(x.c, sh)) err(x, ol, 'unknown-show-how-from', `show_how_from "${sh}" is neither a step nor a procedure.`);
     checkText(x, o.block ?? o.exit?.text, ol);
   }
-  // One button per result: two states that end the same way, and tell nothing different about the bike, are one answer.
+  // One button per result: two states that end the same way are one answer.
   const ends = new Map<string, string>();
   for (const [s, o] of Object.entries<any>(outcomes)) {
     if (typeof o !== 'object' || (o.block === undefined && o.exit === undefined)) continue;
-    const sets = insp.def.states.find((st: any) => st.id === s)?.sets;
-    const key = canonical({ block: o.block, exit: o.exit, sets });
+    const key = canonical({ block: o.block, exit: o.exit });
     const first = ends.get(key);
     if (first !== undefined) {
       err(x, sub(loc, 'outcomes', s), 'same-outcome', `States "${first}" and "${s}" of ${id} end the same way. Map them to different results, or give the inspection one state for both.`);
@@ -458,11 +436,6 @@ function checkInspectCall(x: Ctx, loc: Loc, id: string, outcomes: any, list: 'se
   }
 }
 
-/** The follow-up calls inside an inspection call's outcomes: [state, { inspect, outcomes }]. */
-function followUps(outcomes: any): Array<[string, any]> {
-  return Object.entries<any>(outcomes ?? {}).filter(([, o]) => o && typeof o === 'object' && o.inspect !== undefined);
-}
-
 function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile> }): void {
   const loc = locOf(e, 'tutorial');
   (t.choices ?? []).forEach((ch: string, i: number) => {
@@ -470,19 +443,6 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
   });
   (t.parts ?? []).forEach((p: string, i: number) => {
     if (!x.c.parts.has(p)) err(x, sub(loc, 'parts', i), 'unknown-part', `Part "${p}" does not exist.`);
-  });
-  // The tutorial's checks run before anything is apart, in every case.
-  checkFlowItems(x, t.checks ?? [], e.file, [...e.path, 'checks'], 'sequence', t.id);
-  (t.checks ?? []).forEach((it: any, i: number) => {
-    const l = sub(loc, 'checks', i);
-    const calls: Array<[Loc, any]> = [[l, it], ...followUps(it.outcomes).map(([s, f]): [Loc, any] => [sub(l, 'outcomes', s), f])];
-    for (const [cl, call] of calls) {
-      const insp = x.c.inspections.get(call.inspect);
-      if (insp && !insp.def.hands_off) err(x, cl, 'hands-off-only', `Inspection ${call.inspect} is not hands_off. A tutorial's checks run before the work and use only hands-off inspections.`);
-      for (const [s, o] of Object.entries<any>(call.outcomes ?? {})) {
-        if (o?.exit?.show_how_from) err(x, sub(cl, 'outcomes', s), 'exit-jump-outside', "A tutorial's checks run before anything is apart, so their exits cannot jump.");
-      }
-    }
   });
   // The flow's own covers: what doing it yourself needs (read by the tutorial only).
   if (t.covers) {
@@ -498,35 +458,6 @@ function checkTutorial(x: Ctx, t: any, e: Entry & { cases?: Map<string, YamlFile
   for (const [, cf] of e.cases ?? new Map()) {
     checkFlowItems(x, cf.data.sequence ?? [], cf, ['sequence'], 'sequence', t.id);
     checkFlowItems(x, cf.data.finish ?? [], cf, ['finish'], 'finish', t.id);
-  }
-}
-
-/** Every inspection a tutorial calls: its checks, its ways' items, and their follow-ups. */
-function inspectionsOf(t: { def: any; cases: Map<string, YamlFile> }): Set<string> {
-  const out = new Set<string>();
-  const add = (it: any) => {
-    if (!it?.inspect) return;
-    out.add(it.inspect);
-    for (const [, f] of followUps(it.outcomes)) out.add(f.inspect);
-  };
-  for (const it of t.def.checks ?? []) add(it);
-  for (const cf of t.cases.values()) for (const it of [...(cf.data.sequence ?? []), ...(cf.data.finish ?? [])]) add(it);
-  return out;
-}
-
-/** A tutorial learns no facts about the bike, only its current state (owner, 2026-11-27): no sets on what it uses. */
-function checkTutorialLearnsNoFacts(x: Ctx): void {
-  const users = new Map<string, string[]>();
-  for (const t of x.c.tutorials.values()) {
-    for (const id of inspectionsOf(t)) users.set(id, [...(users.get(id) ?? []), t.def.id]);
-  }
-  for (const [id, tids] of users) {
-    const insp = x.c.inspections.get(id);
-    if (!insp) continue;
-    insp.def.states.forEach((s: any, i: number) => {
-      if (!s.sets) return;
-      err(x, sub(locOf(insp, 'inspection'), 'states', i, 'sets'), 'tutorial-learns-fact', `State "${s.id}" sets ${Object.keys(s.sets).join(', ')}, but tutorial ${tids.join(', ')} uses this inspection. A tutorial learns no facts about the bike (owner, 2026-11-27): ask the fact in the facts phase (a question in content/facts.yaml, read by a condition such as the flow's covers), and take sets off.`);
-    });
   }
 }
 
@@ -660,7 +591,6 @@ export function checkStatic(c: Content, issues: Issues): void {
   for (const e of c.checks.values()) checkRoutine(x, e);
   for (const e of c.profiles.values()) checkProfile(x, e);
   checkCards(x);
-  checkTutorialLearnsNoFacts(x);
   for (const e of c.jobs.values()) {
     const loc = locOf(e, 'job');
     if (e.def.covers) {
@@ -728,12 +658,6 @@ function checkUnused(x: Ctx): void {
         if (it.procedure) usedProcs.add(it.procedure);
         if (it.inspect) usedInsp.add(it.inspect);
       }
-    for (const it of t.def.checks ?? []) {
-      usedInsp.add(it.inspect);
-      for (const [, f] of followUps(it.outcomes)) usedInsp.add(f.inspect);
-    }
-    for (const cf of t.cases.values())
-      for (const it of [...(cf.data.sequence ?? []), ...(cf.data.finish ?? [])]) for (const [, f] of followUps(it.outcomes)) usedInsp.add(f.inspect);
   }
   for (const d of x.c.diagnoses.values()) for (const ch of d.def.checks) usedInsp.add(ch.inspect);
   for (const ch of x.c.checks.values()) for (const it of ch.def.inspections) usedInsp.add(it.inspect);

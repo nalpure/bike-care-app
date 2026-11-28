@@ -15,7 +15,7 @@ import type { Condition } from './conditions.js';
 import { combined } from './expand.js';
 import type { Flows, TutorialFlow } from './flows.js';
 import type { JourneyResult } from './journeys.js';
-import { exitTag, NOTICE, setsText, toolName } from './render.js';
+import { exitTag, NOTICE, toolName } from './render.js';
 import { lineAt } from './yamlfile.js';
 import type { Issues } from './issues.js';
 
@@ -85,7 +85,6 @@ function contextsOf(c: Content, flows: Flows): Map<string, Map<string, Context>>
       if (p.variant.ending === 'stop') continue;
       const choice = p.combo.asked.filter((k) => k.startsWith('choice.')).map((k) => String(p.combo.assign[k])).join(', ');
       p.variant.items.forEach((it, i) => {
-        if (p.variant.hidden[i]) return;
         const where = `case ${p.run.caseLabel}${it.list === 'finish' ? ', finish' : ''}${p.variant.afterJump[i] ? ', after a jump ahead' : ''}`;
         add(`${it.kind === 'inspect' ? 'inspection' : 'step'}:${it.id}`, `tutorial ${t.id}`, where, choice, p.before[i], it.via);
       });
@@ -186,7 +185,7 @@ function inspectionCard(c: Content, d: any, ctx: Map<string, Context> | undefine
   if (d.question) L.push(`**${d.question}**${d.default ? ` <sub>In tutorials "${d.states.find((s: any) => s.id === d.default)?.label}" has no button; Next means it.</sub>` : ''}`, '');
   for (const st of d.states) {
     const lead = st.leads_to ? ` → usually: **${c.jobs.get(st.leads_to.job)?.def.title ?? st.leads_to.job}** (${st.leads_to.urgency})` : '';
-    L.push(`- [ ] **${st.label}** <sub>\`${st.id}\`</sub> — ${st.meaning}${lead}${setsText(c, st)}`);
+    L.push(`- [ ] **${st.label}** <sub>\`${st.id}\`</sub> — ${st.meaning}${lead}`);
   }
   L.push('', '<sub>What each state does in a tutorial is part of that tutorial\'s flow tree.</sub>', '', ...contextLines(ctx));
   return L;
@@ -278,7 +277,7 @@ function structureOfStep(s: any) {
 }
 
 function structureOfInspection(d: any) {
-  return { id: d.id, applies_when: d.applies_when, hands_off: d.hands_off, states: d.states.map((s: any) => ({ id: s.id, leads_to: s.leads_to, sets: s.sets })) };
+  return { id: d.id, applies_when: d.applies_when, hands_off: d.hands_off, states: d.states.map((s: any) => ({ id: s.id, leads_to: s.leads_to })) };
 }
 
 function itemTitle(c: Content, kind: 'step' | 'inspect', id: string): string {
@@ -328,25 +327,11 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
   for (const cs of def.cases) L.push(`- when ${cs.when ? cond(cs.when) : 'always'} → case \`${cs.way}\``);
   L.push('');
 
-  const outcomeLines = (it: any, indent = '   '): string[] =>
-    Object.entries<any>(it.outcomes ?? {}).flatMap(([state, o]) => {
-      if (o?.inspect) {
-        used.inspections.add(o.inspect);
-        return [`${indent}- \`${state}\` → follow-up: ${itemTitle(c, 'inspect', o.inspect)} · inspection`, ...outcomeLines(o, `${indent}  `)];
-      }
+  const outcomeLines = (it: any): string[] =>
+    Object.entries<any>(it.outcomes ?? {}).map(([state, o]) => {
       const res = o === 'continue' ? 'continue' : o.block ? `**BLOCK**: "${o.block}"` : `${exitTag(o.exit.kind)}: "${o.exit.text}"${o.exit.show_how_from ? ` · jump to \`${o.exit.show_how_from}\`` : ''}`;
-      return [`${indent}- \`${state}\` → ${res}`];
+      return `   - \`${state}\` → ${res}`;
     });
-
-  // The tutorial's checks, once for every case
-  if (def.checks?.length) {
-    L.push('## Checks before the work, in every case', '', 'Not shown again when the user already answered them in this session, for example in a diagnosis.', '');
-    def.checks.forEach((it: any, i: number) => {
-      used.inspections.add(it.inspect);
-      L.push(`${i + 1}. ${itemTitle(c, 'inspect', it.inspect)} · inspection`, ...outcomeLines(it));
-    });
-    L.push('');
-  }
 
   // Each case once
   for (const [name, cf] of t.cases) {
@@ -365,7 +350,7 @@ function tutorialTree(c: Content, flow: TutorialFlow): { lines: string[]; struct
       }
       return [...sets].join(' / ') || '?';
     };
-    let n = (def.checks?.length ?? 0) + 1;
+    let n = 1;
     for (const list of ['sequence', 'finish'] as const) {
       const items: any[] = cf.data[list] ?? [];
       if (!items.length) continue;
