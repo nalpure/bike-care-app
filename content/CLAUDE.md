@@ -1,6 +1,6 @@
 # Writing content: guide for agents
 
-Read first, in this order: `docs/idea.md` (what the app should be), `docs/decisions.md` (owner decisions) and `docs/architecture/content-model.md` (the words: fact, check, card, job, flow, and how they fit). These win over anything in `legacy/`.
+Read first: `docs/architecture/content-model.md` (the words: fact, check, card, job, flow; and how a flow runs). It and this guide win over anything in `legacy/`. A job's own rules from the owner are in its file's header comment.
 
 Everything the user reads about repairs lives here. The schema in `schema/` defines every field; the golden example (`diagnoses/gears-shift-badly.yaml`, `jobs/adjust-rear-shifting.yaml`) shows how they are used. Copy its patterns, not its mechanics: they are unverified.
 
@@ -12,18 +12,20 @@ How to make a change, check it and read it as the user sees it (`walk`, `build/r
 - Name the part and say where it is: "the small screw marked L on the back of the derailleur".
 - **Turning: say which way.** "Turn the screw marked L clockwise a quarter turn." Never "screw in", "screw out", "tighten" or "loosen" on their own. Clockwise is seen looking at the screw head; where that is unclear (a barrel adjuster), say where to look from. The animation's `direction` uses the same words.
 - Buttons describe what the user sees ("The chain rattles on the largest sprocket"), never a judgement ("L limit too tight"). At most three.
-- **One button per result** (decisions.md, 2026-11-26). Count what happens next, not the symptoms: two problems with the same fix or the same exit share one button; split only where the fix, the exit or its severity differs. One button is fine; word it as the answer to the question ("Does it go further in?" / "Yes, past the largest sprocket"). The check's `same-outcome` rule enforces it.
-- **Answers are the exception** (decisions.md, 2026-11-22; example `check-high-limit`). The `text` states the goal ("… should be in line with the smallest sprocket."); `question` ("Not in line?") stands above buttons that are only the problems. Each says briefly what goes wrong and what to do, with a `solution` that plays at once. No "all good" button: Next means it (the build cannot tell one, so leave it out). Steps without `question` work the old way until converted. An inspection may name `default` and `question`: in tutorials that state has no button and Next takes it; leave it out of a profile's `tutorial_sees`.
-- **A tutorial learns no facts about the bike** (decisions.md, 2026-11-27), only its current state (state labels, to-dos). An inspection answer is never stored as a fact. Something about the bike the steps need is a fact with a question, asked in the facts phase (example `drive.barrel_adjuster`).
+- **One button per result.** Count what happens next, not the symptoms: two problems with the same fix or the same exit share one button; split only where the fix, the exit or its severity differs. One button is fine; word it as the answer to the question ("Does it go further in?" / "Yes, past the largest sprocket"). The check's `same-outcome` rule enforces it.
+- **Answers are the exception** (example `check-high-limit`). The `text` states the goal ("… should be in line with the smallest sprocket."); `question` ("Not in line?") stands above buttons that are only the problems. Each says briefly what goes wrong and what to do, with a `solution` that plays at once. No "all good" button: Next means it (the build cannot tell one, so leave it out). Steps without `question` work the old way until converted. An inspection may name `default` and `question`: in tutorials that state has no button and Next takes it; leave it out of a profile's `tutorial_sees`.
+- **A tutorial learns no facts about the bike**, only its current state (state labels, to-dos). An inspection answer is never stored as a fact. Something about the bike the steps need is a fact with a question, asked in the facts phase (example `drive.barrel_adjuster`).
 - **Warnings** go in the step text, and only when they are about safety or a very common mistake. A wrong screwdriver size does not qualify.
 - Facts that are only nice to know appear in text only when known: `{fact.key|fallback wording}` or `details`.
+- **Missing data never blocks the user:** ask one simple question or use wording that is right for every bike.
+- **A shop is a normal outcome** at any point, never a failure; word shop exits that way.
 
 ## Questions (facts)
 
 - Ask by the part's name and offer the types the user can see: "Which gears does your bike have?" with "Chain and derailleur" and "Hub gear". Put the longer explanation, how to tell the answers apart, in the fact's `help: { en, de }`, not in the question. The app adds a last line pointing to the assistant; do not write it.
 - Ask only what changes the steps (hard rule 11). Never ask what a beginner cannot tell; mark it `ask: never`.
-- **You order the questions** (decisions.md, 2026-11-27): each flow lists its facts in `questions` (the job file's `flow`, the diagnosis, the routine check), in the order the user meets them; the app does not reorder them and asks a fact only while a path still ahead reads it. The check (`questions-list`) wants every fact the flow can ask, and only those.
-- **3D on a question** (decisions.md, 2026-11-27; example `drive.barrel_adjuster`): a fact found by looking may carry the card's 3D fields (`focus`, `show`, `view`, `animation`), checked like a card's. List it after every plain question of the flow (rule `questions-3d-last`). `allow_unknown: false` leaves out "I'll check later" (enum and boolean facts; the barrel question offers only its places, owner 2026-11-27); the help and the assistant are then the way on. Any unknown answer is never stored.
+- **You order the questions:** each flow lists its facts in `questions` (the job file's `flow`, the diagnosis, the routine check), in the order the user meets them; the app does not reorder them and asks a fact only while a path still ahead reads it. The check (`questions-list`) wants every fact the flow can ask, and only those.
+- **3D on a question** (example `drive.barrel_adjuster`): a fact found by looking may carry the card's 3D fields (`focus`, `show`, `view`, `animation`), checked like a card's. List it after every plain question of the flow (rule `questions-3d-last`). `allow_unknown: false` leaves out "I'll check later" (enum and boolean facts; the barrel question offers only its places, owner 2026-11-27); the help and the assistant are then the way on. Any unknown answer is never stored.
 - Every fact has a short `label` for the bike sheet ("Gears", "Rear derailleur"). Its group is the key before the first dot and needs an entry in `fact_groups`. Number facts get `unit`, and `min` and `max` (plausible values, not safety values) or a fixed `values` list.
 
 ## Tools
@@ -35,7 +37,7 @@ How to make a change, check it and read it as the user sees it (`walk`, `build/r
 
 ## 3D view
 
-- `focus` lists the small parts the step marks in colour; `show` lists the parts drawn plain; the 3D view will hide every other part (decisions.md, 2026-11-22). A node goes in one list only, and the check rejects both. `show: [bike]` draws the whole bike (every part, not the work stand clamp); `drivetrain` and `rear_end` are groups. `show` is optional; a step without it keeps the old 3D look until it gets one.
+- `focus` lists the small parts the step marks in colour; `show` lists the parts drawn plain; the 3D view hides every other part completely (no grey). A node goes in one list only, and the check rejects both. `show: [bike]` draws the whole bike (every part, not the work stand clamp); `drivetrain` and `rear_end` are groups. `show` is optional; a step without it keeps the old 3D look until it gets one.
 
 ## Safety
 
@@ -45,8 +47,8 @@ How to make a change, check it and read it as the user sees it (`walk`, `build/r
 ## Structure
 
 - Diagnoses and the routine check: `hands_off` inspections only, cheapest and most likely first.
-- **One file per job** (decisions.md, 2026-11-27): `jobs/<job id>.yaml`, read top to bottom. `job`: the header (covers, service, shop; with a tutorial also difficulty and choices). `flow`: the tutorial as a short outline. `cards`: the job's own cards, each once, in the order the flow first uses them (the check warns otherwise). A job without a tutorial has only `job`. Jobs are split by mechanism, so a file stays a few hundred lines.
-- **The flow:** `work` ending with the safety checks, then `finish`. A tutorial runs no checks before the work (decisions.md, 2026-11-27): running checks is what a diagnosis does. An item is a card id, `{ procedure: id }` (a shared sequence) or `{ inspect: id, outcomes }` (a shared check). Where the order of work differs (by mechanism or how the bike is held), `ways` names each way with its `when` (first match wins), and a `branch` at each point where they differ lists every way's items (`[]` for none). No branch inside a branch.
+- **One file per job:** `jobs/<job id>.yaml`, read top to bottom. `job`: the header (covers, service, shop; with a tutorial also difficulty and choices). `flow`: the tutorial as a short outline. `cards`: the job's own cards, each once, in the order the flow first uses them (the check warns otherwise). A job without a tutorial has only `job`. Jobs are split by mechanism, so a file stays a few hundred lines.
+- **The flow:** `work` ending with the safety checks (always, after work on brakes, wheels or anything load-bearing), then `finish`. A tutorial runs no checks before the work: running checks is what a diagnosis does. An item is a card id, `{ procedure: id }` (a shared sequence) or `{ inspect: id, outcomes }` (a shared check). Where the order of work differs (by mechanism or how the bike is held), `ways` names each way with its `when` (first match wins), and a `branch` at each point where they differ lists every way's items (`[]` for none). No branch inside a branch.
 - Anything not covered ends in `not_covered` with a clear message (hard rule 7). Which bikes a job covers is written once, in the job file's `covers`. Its tutorial reads it before any way; a diagnosis reads it with `covers_like: <job>`. A fact only the tutorial's cards need is read by those cards (`when` with `if_unknown: ask`; example `drive.barrel_adjuster` on `check-cable-tension`), so the tutorial asks it in its facts phase and the diagnosis never does. The ways then only split the covered bikes. The not-covered screen offers a shop and the assistant itself, so the texts say only why.
 - Write each thing once. A card two jobs use, or a procedure uses, goes in `steps/` (the check rejects a job's own card anywhere else); a run used by more than one job is a procedure. Card ids differ from every inspection and procedure id. Never copy a text or a condition into a second file.
 
@@ -56,6 +58,6 @@ Numbers are kept from the repo's list (the other rules, 1 to 3 and 7 to 10, are 
 
 4. At most three state buttons per screen. Labels describe what the user sees, never a technical judgement.
 5. `block` and `exit: { kind: unsafe }` only in safety checks and inspection calls. Any exit (unsafe, not_covered, not_needed, shop_only) reached with something apart (or the bike not ready to ride) names what to put back and has `show_how_from`.
-6. Diagnoses and the routine check use only `hands_off` inspections.
+6. Diagnoses and the routine check use only `hands_off` inspections. Hands-off means nothing is taken apart and no setting is changed; riding and shifting count as hands-off.
 11. Ask only what changes the steps. A fact read by a condition must have a question, unless it is `ask: never` (a beginner cannot tell; it comes only from the bike's data). Any other fact is only used in text when it is known (`{fact.key|fallback}` or `details`).
 12. Never the same check twice in a session. An inspection the user already answered is not shown again before the work starts; after the work, a check is a re-check and is shown.

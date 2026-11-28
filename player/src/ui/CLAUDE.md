@@ -2,7 +2,9 @@
 
 `player/src/ui/` renders one screen at a time. Neutral UI wording only; repair text comes from the bundle (hard rule 1).
 
-Read first: `docs/decisions.md`, section "Experience".
+Read first: `docs/architecture/content-model.md`, section "How a flow runs".
+
+- **Owner's rules for screens:** Next on a card with a question is never locked and stays a plain "Next"; after a problem answer it means "fixed now". An answer that exits still exits. Safety cards carry a red label next to the title. Tapping a question's answer does not first mark it in 3D. The tutorials list is not grouped: it lists every tutorial, and one that does not fit the chosen bike says why and offers another bike.
 
 - **ui/** renders one screen at a time with `h()` from `dom.ts`. `flow.ts` has every journey screen; one card component serves inspections, steps and checks. `#root[data-view]` names the screen (`journey:card:<id>`); the e2e tests and `window.__app` (the App) rely on it.
 - **Questions** (`renderQuestion`): the answers, then the "I'll check later" link, left out for a fact with `allow_unknown: false` (the barrel adjuster; its help and the assistant are the way on). A question whose screen has `stage` (a fact with 3D) hosts the 3D view like the exit screen does (`main.app.exitapp.qapp`, `data-test="question-3d"`); in text-only mode it is a plain question.

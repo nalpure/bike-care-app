@@ -6,12 +6,24 @@
 # Turning: clockwise or counterclockwise, as seen looking at the head of the screw. The barrel
 # adjuster is seen from the side where the cable goes in. Positions are "in line with", not "below",
 # because the bike may be upside down.
-# Limit screws, the owner's method (2026-11-20): shift to the matching sprocket (H: smallest, L: largest) and
+# Limit screws, the owner's method: shift to the matching sprocket (H: smallest, L: largest) and
 # turn the screw until the upper toothed wheel is in line with that sprocket. If the chain then
 # rattles or jumps towards the next sprocket, turn the screw counterclockwise until the wheel is
 # in line again and the chain runs quietly. Clockwise moves the wheel inwards
 # for H and outwards for L, so clockwise always narrows the range and counterclockwise widens it.
 # Then the hand push towards the spokes double-checks the inner limit.
+# Owner's rules for this job:
+# - Of the limit screws only L is safety relevant (the chain must not fall towards the spokes): setting L
+#   is a plain check, the hand push that follows (check-low-limit-by-hand) is the safety check. H is a plain check.
+# - The cable-tension cards are about shifting: focus the chain, show the drivetrain. They show the pedals
+#   turning and the chain going through every gear until a problem is tapped; then the pedals stand still
+#   while the barrel turns. Their solution clip adds what is around the picked barrel (derailleur: rear end,
+#   hanger, cable; front: handlebar, shifter, cable, frame), marks it and turns it; afterwards the card
+#   returns to its own scene. The barrel tour on the barrel question plays once; its caption says what to
+#   look for and where.
+# - Every way of holding the bike ends with one safety check, "Test ride the gears". Two problems, both to a
+#   shop: slow or rattling (ride there carefully), the chain jumps or falls off (do not ride). Each exit names
+#   the likely causes: the inner cable or its housing, a hanger or derailleur bent too little to see.
 # Gear words: "easier gear" always means a bigger sprocket, "harder gear" a smaller one.
 
 # Prices are placeholders until a curated price table exists. The app shows "no estimate yet".

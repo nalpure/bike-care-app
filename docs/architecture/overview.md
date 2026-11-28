@@ -30,7 +30,8 @@ Every agent reads this first. It says where things are and which guide or skill 
 | Parts library | `tools/assets/`, `assets-src/` (source models, CC BY; `overview.md` has the owner's notes on each) |
 
 - **Generated, never edited by hand:** `build/`, `player/public/parts/`, `player/src/stage/mounts.ts`, `player/src/stage/rd-rig.ts`.
-- `reviews/ledger.yaml`: review sign-offs. `scratch/`: git-ignored, yours (`npm run clean` empties it). `legacy/`: the old prototype, reference only, never imported. `wishlist.md`: agents' ideas for faster work.
+- `reviews/ledger.yaml`: review sign-offs. `scratch/`: git-ignored, yours (`npm run clean` empties it). `legacy/`: the old prototype, reference only, never imported. `wishlist.md`: agents' ideas for faster work. `archive/`: the owner's old documents, not for agents.
+- **The owner's rules live next to what they rule:** the area's guide, a job file's header comment, code comments, `content-model.md`; agreed but not built: `planned.md`. There is no decisions file.
 
 ## Which guide, which skill
 
@@ -69,10 +70,8 @@ A probe you need only once goes in `scratch/`. One you needed twice gets a heade
 
 | File | What it holds |
 | --- | --- |
-| `docs/idea.md` | the owner's intent: what the app should be (read it when your guide says so or the task is about what the app should do) |
-| `docs/decisions.md` | the owner's decisions; they win over `idea.md` |
 | `docs/schema-requests.md` | what the schema cannot express yet (hard rule 2) |
 | `docs/sharing.md` | publishing the test build, how testers send feedback |
-| `docs/architecture/content-model.md` | the shared words, and how checks, findings, jobs and flows fit |
+| `docs/architecture/content-model.md` | the shared words, and how a flow runs (the owner's rules) |
 | `docs/architecture/planned.md` | plans agreed with the owner that are not built yet |
 | `content/review/<job>.md` | doubts about mechanics, for a mechanic |

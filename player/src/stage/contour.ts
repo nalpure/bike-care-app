@@ -1,5 +1,5 @@
 // Contours (Frame.contour): the outline of parts where they rest, the correct or starting pose, drawn on top
-// while a clip moves the parts themselves. Only named clips ask for them (decisions.md, "Clips own the scene").
+// while a clip moves the parts themselves. Only named clips ask for them ("Clips own the scene", stage/CLAUDE.md).
 // The lines are the parts' sharp edges (35 deg, as their dark outlines), in one colour that is neither the
 // highlight nor the "bad" red; they ease in and out with the clip and fade with the part they belong to.
 

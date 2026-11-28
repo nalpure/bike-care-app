@@ -31,7 +31,7 @@ tools/assets/
 | `npm run parts:rig` | measure the derailleur rig on the source model (about 25 s); only when the derailleur pieces or their source change |
 | `npm run manifest` | write `build/3d-manifest.json` from the player's registry |
 
-Read first: `docs/decisions.md`, section "3D view". How the player uses the library (names, space, what is library and what is generated): `player/src/stage/library.md`. To add a part: the `new-part` skill.
+Source models (owner): realistic parts come from CC BY models only; the app credits every model it uses (title, creator, link, licence, "modified"). Only the touring bike's source is committed; the others stay out of git (`.gitignore`) until they are used. How the player uses the library (names, space, what is library and what is generated): `player/src/stage/library.md`. To add a part: the `new-part` skill.
 
 ## Rules
 
@@ -68,4 +68,4 @@ Findings (shifter, `^fv1_ts`):
 - A pattern that matches an assembly takes only parts inside it. Without that, screws named `ts_...` but used all over the bike came with it as loose parts. With no assembly matched, every instance of a matched part is taken.
 - `casep1` and `teeth` are the heaviest shifter parts.
 
-Not done or not verified: only the shifter has been extracted and looked at. Nothing from the hardtail is in `library.yaml` or the player; `library.yaml` has a single `source` and the touring bike's node names, so a second source is not wired up. The hardtail may be used (owner, decisions.md 2026-11-27).
+Not done or not verified: only the shifter has been extracted and looked at. Nothing from the hardtail is in `library.yaml` or the player; `library.yaml` has a single `source` and the touring bike's node names, so a second source is not wired up. The owner allows the hardtail to be used.

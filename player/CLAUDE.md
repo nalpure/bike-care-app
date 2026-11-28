@@ -47,4 +47,4 @@ tools/lib/conditions.ts            |  screen(): Screen  (what to show; one union
 - The bike page's 3D preview and the garage pictures need the 3D stage; with `PlaceholderStage` they are left out.
 - `npm audit` reports a ReDoS in `picomatch` (dev tools only, nothing in `dist/`).
 
-Owner decisions are in `docs/decisions.md`; open schema requests in `docs/schema-requests.md`. Smaller choices are explained in comments where they are implemented.
+How a flow runs (the owner's rules for phases, diagnosis, routine check and tutorial): `docs/architecture/content-model.md`. Open schema requests: `docs/schema-requests.md`. Smaller choices are explained in comments where they are implemented.

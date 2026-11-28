@@ -932,7 +932,7 @@ export class Journey {
   }
 
   /**
-   * Answers are the exception (decisions.md, 2026-11-22): on a step with a question, and on an
+   * Answers are the exception (owner; content/CLAUDE.md): on a step with a question, and on an
    * inspection with a default in a tutorial, Next means the goal is met and is never locked.
    */
   private nextAnswers(it: PathItem): boolean {

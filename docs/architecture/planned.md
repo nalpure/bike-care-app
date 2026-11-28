@@ -1,6 +1,16 @@
 # Planned, not built
 
-Parts of the solution approach agreed with the owner on 16 November 2026 that are not built yet. Where `docs/decisions.md` says otherwise, it wins. Build one only when a task asks for it; mechanics and prices are not verified.
+What the owner agreed to that is not built yet. Build one only when a task asks for it, and remove it here once it is built (its rule then lives in the guide of its area). Keep this file short; it is not a log. Mechanics and prices are not verified.
+
+## Agreed on 27 November 2026
+
+- **Restructure** (the target architecture page, version 6, accepted): a shared `core/` for the flow logic; one flow walker, with the committed journey review files as the cross-check and the sign-off ledger removed; bundle, report and 3D manifest out of git; SR-07 (a branch chosen by an answer) for the disc-pad compare card; on the exit screen of a bike not saved, "Save this bike to keep the to-do". Built in parts; each part's commits start with `Part <id>:`.
+- **Disc brake pads.** Diagnosis and routine check only look (wheel in, light from above), with a third answer "I can't see it clearly"; worn and unclear both lead to one tutorial, "Check and replace the brake pads". The pads come out only there; a compare card then decides between the same pads back and new pads, so nothing is put together only to be taken apart again. New pads are optional on the parts screen, with a warning that worn pads without new ones leave the bike unrideable. After a diagnosis that found them worn, the compare card is skipped.
+- **Review grid.** On a laptop, several phone screens side by side with one Next for all; a column whose path has fewer steps waits until the others reach the next shared step. Default columns: one test bike, every way of holding it; a dropdown switches to another test bike the job covers. Tapping a problem in one column shows its solution and animation there. Review happens in files first, in the app later.
+- **Phones** get the web app in a Capacitor shell.
+- **Holding options per job** (SR-08, accepted): a job offers only the ways of holding that suit it.
+
+The rest is from the solution approach agreed on 16 November 2026.
 
 ## Bike data
 
@@ -39,7 +49,7 @@ Agents write, a script checks, a second agent reads the result cold, and a mecha
 
 | Role | Does | Sees |
 | --- | --- | --- |
-| Writer agent | Writes or revises one job, one diagnosis or a set of checks | Schema, decisions, one polished example, checked part rows |
+| Writer agent | Writes or revises one job, one diagnosis or a set of checks | Schema, the guides, one polished example, checked part rows |
 | Build script | Validates, expands, simulates, writes the review output | Everything |
 | Auditor agent | Reads the review output as a mechanic and as a beginner; files findings | The review output and source pages only, never the writer's context |
 | Research agent | Finds the maker document for one part family and fills its row | Web, the table schema |
